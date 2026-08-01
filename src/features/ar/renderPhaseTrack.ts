@@ -25,6 +25,12 @@ import type { EclipseSample } from '../../core/astro/types';
 import type { Viewport } from './cameraGeometry';
 import { projectToScreen, type CameraPointing, type Calibration } from './orientation';
 import { canvasFont, withAlpha, type Palette } from '../../styles/palette';
+/*
+ * L'HORA, PER `screens/format` I EN LA ZONA DEL DISPOSITIU. Aquí hi havia un
+ * `toLocaleTimeString` clavat a `Europe/Madrid`: a les Canàries l'etiqueta de
+ * l'indicador actiu anava una hora per davant del rellotge de l'usuari.
+ */
+import { formatClockShort } from '../../screens/format';
 
 const DEG = Math.PI / 180;
 
@@ -87,14 +93,6 @@ function formatPhaseObscuration(sample: EclipseSample): string {
   }
   return '<100%';
 }
-
-const fmt = (d: Date, locale: 'ca' | 'es') =>
-  d.toLocaleTimeString(locale === 'ca' ? 'ca-ES' : 'es-ES', {
-    timeZone: 'Europe/Madrid',
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 
 /**
  * Tria quines mostres mereixen un indicador.
@@ -183,7 +181,7 @@ export function renderPhaseTrack(
     drawPhase(ctx, p.x, p.y, r, sample, hidden, isCurrent, palette);
 
     if (isCurrent) {
-      const label = `${fmt(sample.time, locale)} · ${formatPhaseObscuration(sample)}`;
+      const label = `${formatClockShort(sample.time, locale)} · ${formatPhaseObscuration(sample)}`;
       ctx.lineWidth = 3;
       ctx.strokeStyle = withAlpha(palette.bgPage, 0.75);
       ctx.strokeText(label, p.x, p.y - r - 8);
