@@ -44,7 +44,8 @@ import { getEclipse } from '../../core/eclipses/catalog';
 import { declination } from '../../core/geomag';
 import { horizonSampler, type HorizonProfile } from '../../core/horizon/profile';
 import { detectSkyline, fitSkyline, type SkylineFix } from './skyline';
-import { canRemoveFilter, FILTER_OFF_DELAY_SEC } from '../../core/timer';
+import { nakedEyeAllowedAt, type FilterGateInput } from '../../core/timer';
+import { useNow } from '../../state/useNow';
 import { Icon, ICON_LG } from '../../ui';
 import { SafetyBanner } from '../guide/SafetyBanner';
 import { renderOverlay } from './renderOverlay';
@@ -291,32 +292,52 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
    * finestra segura, i que la barra no s'estigui fent servir per mirar un
    * altre instant. En simulació, mai.
    */
-  const filterGate = useMemo(
-    () =>
-      canRemoveFilter({
-        kind: circumstances.kind,
-        contacts: {
-          c1: circumstances.contacts.c1?.time.getTime(),
-          c2: circumstances.contacts.c2?.time.getTime(),
-          max: circumstances.contacts.max.time.getTime(),
-          c3: circumstances.contacts.c3?.time.getTime(),
-          c4: circumstances.contacts.c4?.time.getTime(),
-        },
-        edgeUncertain: circumstances.edgeUncertain,
-      }),
+  // L'entrada de la comporta es memoritza a part perquè la fan servir DUES
+  // preguntes diferents —«aquí es podrà, en algun moment?» i «ara mateix?»— i
+  // construir-la dues vegades és com les dues respostes es desincronitzen.
+  const filterGateInput: FilterGateInput = useMemo(
+    () => ({
+      kind: circumstances.kind,
+      contacts: {
+        c1: circumstances.contacts.c1?.time.getTime(),
+        c2: circumstances.contacts.c2?.time.getTime(),
+        max: circumstances.contacts.max.time.getTime(),
+        c3: circumstances.contacts.c3?.time.getTime(),
+        c4: circumstances.contacts.c4?.time.getTime(),
+      },
+      edgeUncertain: circumstances.edgeUncertain,
+    }),
     [circumstances],
   );
 
-  const nakedEyeNow = useMemo(() => {
-    if (!filterGate.allowed) return false;
-    const c2 = circumstances.contacts.c2?.time.getTime();
-    const c3 = circumstances.contacts.c3?.time.getTime();
-    if (c2 === undefined || c3 === undefined) return false;
-    const now = Date.now();
-    // Els mateixos marges que la veu: dotze segons després de C2 —perquè el C2
-    // calculat va sistemàticament avançat— i quinze abans de C3.
-    return now >= c2 + FILTER_OFF_DELAY_SEC * 1000 && now <= c3 - 15_000;
-  }, [filterGate.allowed, circumstances]);
+
+  /*
+   * EL RELLOTGE HA DE SER ESTAT, I ABANS NO HO ERA.
+   *
+   * Aquí hi havia `Date.now()` dins d'aquest mateix `useMemo`, amb
+   * `[filterGate.allowed, circumstances]` de dependències: cap de les dues es
+   * mou amb el temps, o sigui que la comparació es feia UNA vegada, quan es
+   * muntava la vista, i el resultat es quedava clavat tota la sessió.
+   *
+   * Les dues direccions eren dolentes i una era perillosa. Qui obria la càmera
+   * abans de C2 no veia mai el rètol, ni durant la totalitat. I qui l'obria
+   * DINS de la finestra segura —el gest més probable del dia: «mira, apunta-hi!»
+   * quan ja és fosc— es quedava amb «ara pots mirar sense filtre» encès per
+   * sempre: a C3, amb la fotosfera tornant, i a C4, i una hora després.
+   *
+   * I EL MÉS EMPIPADOR: el rellotge que faltava JA HI ERA. Seixanta línies més
+   * avall hi havia un `useState(new Date())` amb el seu interval d'un segon,
+   * per moure el Sol del calibratge. Aquesta decisió, que és la que pot fer
+   * mal, no el mirava. Ara n'hi ha un de sol, monòton, i el comparteixen totes
+   * dues: dos rellotges en una pantalla és com es divergeix sense adonar-se'n.
+   */
+  const nowMs = useNow(1000);
+  const now = useMemo(() => new Date(nowMs), [nowMs]);
+
+  const nakedEyeNow = useMemo(
+    () => nakedEyeAllowedAt(filterGateInput, nowMs),
+    [filterGateInput, nowMs],
+  );
 
   // Els planetes només es calculen quan de veritat es veuran: durant la resta
   // de l'eclipsi el cel és massa clar i seria informació falsa.
@@ -352,12 +373,9 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
     };
   });
 
-  // Posició del Sol ARA, que és la referència del calibratge.
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
+  // Posició del Sol ARA, que és la referència del calibratge. El rellotge que
+  // la mou és el de dalt: aquí hi havia un segon `setInterval` amb el seu propi
+  // `new Date()`, i és el que va deixar la comporta de seguretat sense tic.
   const sunNow = useMemo(() => sampleAt(now, location).sun, [now, location]);
 
   const start = useCallback(async () => {

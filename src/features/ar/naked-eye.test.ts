@@ -16,27 +16,37 @@
 
 import { describe, expect, it } from 'vitest';
 import { computeLocalCircumstances } from '../../core/astro/contacts';
-import { canRemoveFilter, FILTER_OFF_DELAY_SEC } from '../../core/timer';
+import { FILTER_OFF_DELAY_SEC, nakedEyeAllowedAt } from '../../core/timer';
 import type { LocalCircumstances } from '../../core/astro/types';
 
-/** La mateixa condició que aplica `ARView`, extreta per poder-la provar. */
+/*
+ * AQUÍ HI HAVIA UNA CÒPIA DE LA CONDICIÓ, I UNA CÒPIA NO VIGILA L'ORIGINAL.
+ *
+ * Aquesta funció reimplementava a mà el que fa `ARView`, amb el comentari
+ * «extreta per poder-la provar». El resultat previsible: el codi de debò
+ * llegia `Date.now()` dins d'un `useMemo` amb dependències estàtiques —una
+ * sola lectura, en muntar la vista— i el rètol «ara pots mirar sense filtre»
+ * es quedava encès després de C3, amb la fotosfera ja tornant. Aquestes sis
+ * proves seguien verdes tot aquell temps, perquè provaven la còpia.
+ *
+ * Ara la composició viu a `core/timer/safety.ts` (`nakedEyeAllowedAt`), la
+ * crida la vista i la crida aquest fitxer. Una sola definició.
+ */
 function nakedEyeAt(circumstances: LocalCircumstances, nowMs: number): boolean {
-  const gate = canRemoveFilter({
-    kind: circumstances.kind,
-    contacts: {
-      c1: circumstances.contacts.c1?.time.getTime(),
-      c2: circumstances.contacts.c2?.time.getTime(),
-      max: circumstances.contacts.max.time.getTime(),
-      c3: circumstances.contacts.c3?.time.getTime(),
-      c4: circumstances.contacts.c4?.time.getTime(),
+  return nakedEyeAllowedAt(
+    {
+      kind: circumstances.kind,
+      contacts: {
+        c1: circumstances.contacts.c1?.time.getTime(),
+        c2: circumstances.contacts.c2?.time.getTime(),
+        max: circumstances.contacts.max.time.getTime(),
+        c3: circumstances.contacts.c3?.time.getTime(),
+        c4: circumstances.contacts.c4?.time.getTime(),
+      },
+      edgeUncertain: circumstances.edgeUncertain,
     },
-    edgeUncertain: circumstances.edgeUncertain,
-  });
-  if (!gate.allowed) return false;
-  const c2 = circumstances.contacts.c2?.time.getTime();
-  const c3 = circumstances.contacts.c3?.time.getTime();
-  if (c2 === undefined || c3 === undefined) return false;
-  return nowMs >= c2 + FILTER_OFF_DELAY_SEC * 1000 && nowMs <= c3 - 15_000;
+    nowMs,
+  );
 }
 
 /** Oviedo, a tocar de la línia central del 12-08-2026: 108 s de totalitat. */
@@ -79,6 +89,45 @@ describe('quan es pot mirar sense filtre des de la vista de càmera', () => {
     expect(nakedEyeAt(OVIEDO, c3 - 16_000)).toBe(true);
     expect(nakedEyeAt(OVIEDO, c3 - 14_000)).toBe(false);
     expect(nakedEyeAt(OVIEDO, c3 + 1000)).toBe(false);
+  });
+
+  /*
+   * EL RÈTOL S'HA D'APAGAR SOL, I DURANT TOT EL PROJECTE NO HO FEIA.
+   *
+   * `ARView` calculava això dins d'un `useMemo` amb `Date.now()` a dins i
+   * dependències que no es mouen amb el temps: una sola lectura, en muntar la
+   * vista. Qui obria la càmera dins de la totalitat —el gest més probable del
+   * dia— es quedava amb «ara pots mirar sense filtre» encès a C3, a C4 i una
+   * hora després.
+   *
+   * Aquest test no mira una finestra: mira que la resposta DEPENGUI del temps i
+   * que el tancament sigui únic. Si algú torna a congelar el rellotge (memo
+   * sense el temps, valor calculat una vegada, ref que no es refresca), la
+   * seqüència es queda plana i això es posa vermell.
+   */
+  it('recorregut sencer: s’encén una vegada i s’apaga sola', () => {
+    const answers: boolean[] = [];
+    for (let t = c2 - 120_000; t <= c3 + 120_000; t += 1000) {
+      answers.push(nakedEyeAt(OVIEDO, t));
+    }
+
+    // Ha de canviar de valor: si es congelés, seria tot true o tot false.
+    expect(new Set(answers).size).toBe(2);
+
+    // Exactament una encesa i exactament una apagada, en aquest ordre.
+    const flips = answers.reduce<number[]>((acc, v, i) => {
+      if (i > 0 && v !== answers[i - 1]) acc.push(i);
+      return acc;
+    }, []);
+    expect(flips).toHaveLength(2);
+    expect(answers[0]).toBe(false);
+    expect(answers.at(-1)).toBe(false);
+
+    // I la finestra oberta ha de ser la totalitat menys els dos marges.
+    const openSec = answers.filter(Boolean).length;
+    const centralSec = (c3 - c2) / 1000;
+    expect(openSec).toBeGreaterThan(0);
+    expect(openSec).toBeLessThan(centralSec - FILTER_OFF_DELAY_SEC);
   });
 
   it('en un eclipsi ANULAR, mai, ni al mig de l’anell', () => {
