@@ -37,6 +37,18 @@
 .off-badge--clear { color: var(--status-clear); border-color: var(--status-clear-quiet); }
 .off-badge--danger { color: var(--status-danger); border-color: var(--status-danger-quiet); }
 
+/* La franja que munta l'App quan no hi ha xarxa. Mateixa recepta d'amplada que
+   `.shell__status` (screens.css) perquè la insígnia quedi alineada amb la
+   resta d'avisos d'estat; viu aquí i no allà perquè els estils de la capa
+   offline viatgen amb els seus components. */
+.off-connection {
+  display: flex;
+  width: 100%;
+  max-width: var(--maxw-web);
+  margin: 0 auto;
+  padding: var(--sp-4) var(--gutter-app) 0;
+}
+
 /* --- contenidor ----------------------------------------------------------- */
 .off-panel {
   display: flex;

@@ -1,16 +1,18 @@
 /* ============================================================================
    Capa offline — API pública.
 
-   Tot el que la resta de l'aplicació ha de conèixer passa per aquí. Qui
-   connecti això a l'App només necessita tres coses:
+   Tot el que la resta de l'aplicació ha de conèixer passa per aquí. On és
+   muntat cada component, i per què allà:
 
      1. `initServiceWorker()` a `main.tsx`, abans de muntar React.
-     2. `<OfflinePanel location={...} />` en una pestanya o full, i
-        `<ConnectionBadge />` a la barra superior. Els estils viatgen amb els
-        components; no cal importar cap CSS.
+     2. `<OfflinePanel />` a la pantalla de la Guia, que és la de preparar-se.
+     3. `<ConnectionBadge />` a l'estructura de l'App, només quan no hi ha
+        xarxa (el motiu és al comentari de l'App).
+     4. `<UpdatePrompt />` a l'arrel de l'App, un sol cop.
 
-   La resta (hooks, planificació, inventari) queda disponible per si es vol
-   ensenyar l'estat en un altre lloc.
+   Els estils viatgen amb els components; no cal importar cap CSS. La resta
+   (hooks, planificació, inventari) queda disponible per si es vol ensenyar
+   l'estat en un altre lloc.
    ========================================================================== */
 
 /* --- arrencada ------------------------------------------------------------ */

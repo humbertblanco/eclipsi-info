@@ -5,16 +5,22 @@
  * botó (el que la persona ha vingut a fer), després l'inventari (el que li
  * dona confiança per marxar de casa) i al final l'espai i les limitacions
  * (el que només consulta si alguna cosa no li quadra).
+ *
+ * JA NO MUNTA `UpdatePrompt`: l'avís de versió nova viu a l'arrel de l'app
+ * des que es va arreglar que no es veiés mai (vegeu el comentari a `App.tsx`).
+ * Mantenir-lo també aquí faria sortir l'avís dues vegades a la mateixa
+ * pantalla el dia que el panell es munta de debò — que és avui.
  */
 
 import { useEffect, useMemo, useRef } from 'react';
 import type { GeoLocation } from '../core/astro/types';
+import type { Locale } from '../i18n';
 import { roundCoordinate } from '../core/horizon/cache';
 import { ConnectionBadge } from './ConnectionBadge';
-import { UpdatePrompt } from './UpdatePrompt';
 import { installHint } from './ios';
 import { formatBytes, planPrepare } from './plan';
-import { defaultPlaceLabel } from './prepare';
+import { defaultPlaceLabel, type PreparePhase } from './prepare';
+import { os, type OfflineStringKey } from './strings';
 import { useOfflineInventory } from './useOfflineInventory';
 import { useOnlineStatus } from './useOnlineStatus';
 import { usePrepare } from './usePrepare';
@@ -28,18 +34,25 @@ export interface OfflinePanelProps {
   location: GeoLocation | null;
   /** Nom del lloc per a la llista. Si no n'hi ha, s'hi posen les coordenades. */
   placeLabel?: string;
+  locale: Locale;
   /** Es crida quan un punt acaba de quedar preparat. */
   onPrepared?: (place: PreparedPlace) => void;
   className?: string;
 }
 
-const dateFormat = new Intl.DateTimeFormat('ca-ES', {
-  day: 'numeric',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-});
+/**
+ * La frase de cada fase es tradueix aquí i no es llegeix de
+ * `progress.message`: el motor de `prepare.ts` no sap l'idioma de la
+ * interfície i no l'ha de saber.
+ */
+const PHASE_KEY: Record<PreparePhase, OfflineStringKey> = {
+  inici: 'phase.inici',
+  relleu: 'phase.relleu',
+  mapa: 'phase.mapa',
+  calcul: 'phase.calcul',
+  desat: 'phase.desat',
+  fet: 'phase.fet',
+};
 
 /** Dies sencers transcorreguts. Serveix per avisar de l'esborrat d'iOS. */
 function daysSince(ms: number): number {
@@ -49,12 +62,25 @@ function daysSince(ms: number): number {
 export function OfflinePanel({
   location,
   placeLabel,
+  locale,
   onPrepared,
   className,
 }: OfflinePanelProps) {
   const { online } = useOnlineStatus();
   const inventory = useOfflineInventory();
   const prepare = usePrepare();
+
+  const dateFormat = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale === 'es' ? 'es-ES' : 'ca-ES', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }),
+    [locale],
+  );
 
   const lat = location === null ? null : roundCoordinate(location.lat);
   const lon = location === null ? null : roundCoordinate(location.lon);
@@ -73,7 +99,7 @@ export function OfflinePanel({
           (place) => place.lat === lat && place.lon === lon,
         );
 
-  const hint = installHint();
+  const hint = installHint(locale);
   const progress = prepare.progress;
   const percent = Math.round((progress?.ratio ?? 0) * 100);
 
@@ -97,26 +123,20 @@ export function OfflinePanel({
 
   return (
     <section className={className ? `off-panel ${className}` : 'off-panel'}>
-      <UpdatePrompt />
-
       <header className="off-panel__head">
-        <h3 className="off-panel__title">Preparar per anar-hi</h3>
-        <ConnectionBadge />
+        <h3 className="off-panel__title">{os('panel.title', locale)}</h3>
+        <ConnectionBadge locale={locale} />
       </header>
 
-      <p className="off-panel__lede">
-        El dia de l’eclipsi la xarxa mòbil estarà saturada. Baixa ara el
-        terreny, el mapa i els càlculs del punt on aniràs: després l’app
-        funciona sencera sense connexió.
-      </p>
+      <p className="off-panel__lede">{os('panel.lede', locale)}</p>
 
       {plan === null ? (
-        <p className="off-note">Tria un punt al mapa o localitza’t per poder preparar-lo.</p>
+        <p className="off-note">{os('panel.needPoint', locale)}</p>
       ) : (
         <>
           <dl className="off-figures">
             <div className="off-figures__item">
-              <dt className="off-figures__key">Punt</dt>
+              <dt className="off-figures__key">{os('figures.point', locale)}</dt>
               {/* Mono només quan hi ha xifres: un topònim en mono no és una
                   dada, és soroll. */}
               <dd
@@ -128,15 +148,15 @@ export function OfflinePanel({
               </dd>
             </div>
             <div className="off-figures__item">
-              <dt className="off-figures__key">Tessel·les</dt>
+              <dt className="off-figures__key">{os('figures.tiles', locale)}</dt>
               <dd className="off-figures__val off-num">{plan.totalTiles}</dd>
             </div>
             <div className="off-figures__item">
-              <dt className="off-figures__key">Pes estimat</dt>
+              <dt className="off-figures__key">{os('figures.weight', locale)}</dt>
               <dd className="off-figures__val off-num">{formatBytes(plan.estimatedBytes)}</dd>
             </div>
             <div className="off-figures__item">
-              <dt className="off-figures__key">Radi del relleu</dt>
+              <dt className="off-figures__key">{os('figures.range', locale)}</dt>
               <dd className="off-figures__val off-num">{plan.maxRangeKm} km</dd>
             </div>
           </dl>
@@ -149,30 +169,43 @@ export function OfflinePanel({
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={percent}
-                aria-label="Progrés de la preparació"
+                aria-label={os('progress.label', locale)}
               >
                 <div className="off-progress__fill" style={{ width: `${percent}%` }} />
               </div>
               <div className="off-progress__row">
                 <span className="off-progress__msg">
-                  {progress?.message ?? 'Preparant…'}
+                  {os(PHASE_KEY[progress?.phase ?? 'inici'], locale)}
                 </span>
                 <span className="off-num off-progress__pct">{percent}%</span>
               </div>
               <div className="off-progress__row">
-                <span className="off-progress__msg">
-                  Deixa l’app oberta i la pantalla encesa.
-                </span>
+                <span className="off-progress__msg">{os('progress.keepOpen', locale)}</span>
                 <span className="off-num off-progress__bytes">
                   {formatBytes(progress?.bytes ?? 0)}
                 </span>
               </div>
               <button className="off-btn off-btn--quiet" onClick={prepare.cancel}>
-                Atura
+                {os('progress.stop', locale)}
               </button>
             </div>
           ) : (
             <div className="off-actions">
+              {/*
+                «Si ja està fet» ha de ser una afirmació, no una deducció: el
+                canvi d'etiqueta del botó tot sol obligava a comparar la llista
+                de sota amb les coordenades del pla per saber si AQUEST punt
+                era el preparat. La data i el pes són els de l'inventari, que
+                és qui ho sap del cert.
+              */}
+              {alreadySaved && prepare.result === null && (
+                <p className="off-note off-note--ok">
+                  {os('note.already', locale, {
+                    date: dateFormat.format(new Date(alreadySaved.savedAtMs)),
+                    bytes: formatBytes(alreadySaved.bytes),
+                  })}
+                </p>
+              )}
               <button
                 className="off-btn off-btn--accent"
                 disabled={!online}
@@ -181,42 +214,41 @@ export function OfflinePanel({
                   prepare.start(location, { label: placeLabel })
                 }
               >
-                {alreadySaved ? 'Torna a preparar aquest punt' : 'Prepara’m per anar-hi'}
+                {alreadySaved ? os('action.again', locale) : os('action.prepare', locale)}
               </button>
               {!online && (
-                <p className="off-note off-note--warn">
-                  Sense xarxa no es pot baixar res. El que ja tinguis desat
-                  segueix disponible.
-                </p>
+                <p className="off-note off-note--warn">{os('note.offline', locale)}</p>
               )}
             </div>
           )}
 
           {prepare.error && (
             <p className="off-note off-note--danger">
-              No s’ha pogut completar la preparació: {prepare.error}
+              {os('note.error', locale, { error: prepare.error })}
             </p>
           )}
 
           {prepare.result && (
             <p className="off-note off-note--ok">
-              Punt preparat. {formatBytes(prepare.result.place.bytes)} desats
               {prepare.result.failedTiles > 0
-                ? `, amb ${prepare.result.failedTiles} tessel·les que no han baixat.`
-                : '.'}
+                ? os('note.doneFailed', locale, {
+                    bytes: formatBytes(prepare.result.place.bytes),
+                    n: prepare.result.failedTiles,
+                  })
+                : os('note.done', locale, {
+                    bytes: formatBytes(prepare.result.place.bytes),
+                  })}
             </p>
           )}
         </>
       )}
 
       <section className="off-section">
-        <h4 className="off-section__title">Desat al telèfon</h4>
+        <h4 className="off-section__title">{os('saved.title', locale)}</h4>
 
         {inventory.places.length === 0 ? (
           <p className="off-note">
-            {inventory.loading
-              ? 'Consultant què hi ha desat…'
-              : 'Encara no has preparat cap punt.'}
+            {inventory.loading ? os('saved.loading', locale) : os('saved.empty', locale)}
           </p>
         ) : (
           <ul className="off-list">
@@ -229,27 +261,25 @@ export function OfflinePanel({
                     <span className="off-list__meta off-num">
                       {dateFormat.format(new Date(place.savedAtMs))} ·{' '}
                       {formatBytes(place.bytes)} · {place.terrainTiles + place.mapTiles}{' '}
-                      tessel·les
+                      {os('saved.tiles', locale)}
                     </span>
                     {place.failedTiles > 0 && (
                       <span className="off-list__warn">
-                        {place.failedTiles} tessel·les no baixades: l’horitzó pot
-                        tenir forats.
+                        {os('saved.holes', locale, { n: place.failedTiles })}
                       </span>
                     )}
                     {hint !== null && age >= 6 && (
                       <span className="off-list__warn">
-                        Fa {age} dies que és desat i l’app no està instal·lada:
-                        el navegador el pot esborrar.
+                        {os('saved.expiry', locale, { n: age })}
                       </span>
                     )}
                   </div>
                   <button
                     className="off-btn off-btn--ghost"
                     onClick={() => void inventory.forget(place.id)}
-                    aria-label={`Treu ${place.label} de la llista`}
+                    aria-label={os('saved.removeLabel', locale, { label: place.label })}
                   >
-                    Treu
+                    {os('saved.remove', locale)}
                   </button>
                 </li>
               );
@@ -259,21 +289,21 @@ export function OfflinePanel({
 
         <dl className="off-figures off-figures--compact">
           <div className="off-figures__item">
-            <dt className="off-figures__key">Relleu desat</dt>
+            <dt className="off-figures__key">{os('figures.terrain', locale)}</dt>
             <dd className="off-figures__val off-num">{inventory.tiles.terrain}</dd>
           </div>
           <div className="off-figures__item">
-            <dt className="off-figures__key">Mapa desat</dt>
+            <dt className="off-figures__key">{os('figures.basemap', locale)}</dt>
             <dd className="off-figures__val off-num">{inventory.tiles.basemap}</dd>
           </div>
           <div className="off-figures__item">
-            <dt className="off-figures__key">Espai ocupat</dt>
+            <dt className="off-figures__key">{os('figures.used', locale)}</dt>
             <dd className="off-figures__val off-num">
               {inventory.storage.supported ? formatBytes(inventory.storage.usageBytes) : '—'}
             </dd>
           </div>
           <div className="off-figures__item">
-            <dt className="off-figures__key">Espai disponible</dt>
+            <dt className="off-figures__key">{os('figures.free', locale)}</dt>
             <dd className="off-figures__val off-num">
               {inventory.storage.supported && inventory.storage.quotaBytes > 0
                 ? formatBytes(
@@ -286,14 +316,14 @@ export function OfflinePanel({
 
         {(inventory.tiles.terrain > 0 || inventory.tiles.basemap > 0) && (
           <button className="off-btn off-btn--ghost" onClick={() => void inventory.clearTiles()}>
-            Allibera l’espai de les tessel·les
+            {os('saved.clear', locale)}
           </button>
         )}
       </section>
 
       {hint !== null && (
         <section className="off-section">
-          <h4 className="off-section__title">Instal·la l’app</h4>
+          <h4 className="off-section__title">{os('install.title', locale)}</h4>
           <p className="off-note">{hint.reason}</p>
           <ol className="off-steps">
             {hint.steps.map((step) => (
@@ -304,25 +334,12 @@ export function OfflinePanel({
       )}
 
       <details className="off-details">
-        <summary className="off-details__summary">Què pot fallar</summary>
+        <summary className="off-details__summary">{os('limits.title', locale)}</summary>
         <ul className="off-details__list">
-          <li>
-            El relleu i el mapa es desen tal com són avui. No canvien mai, per
-            això es guarden un any sense tornar-los a demanar.
-          </li>
-          <li>
-            A l’iPhone, si l’app no està instal·lada a la pantalla d’inici, el
-            sistema pot esborrar tot el que hi ha desat després de set dies
-            sense obrir-la.
-          </li>
-          <li>
-            La baixada només avança amb l’app en primer pla: iOS congela les
-            pestanyes de fons i no hi ha manera de continuar en segon terme.
-          </li>
-          <li>
-            Si el telèfon va just d’espai, el navegador pot alliberar aquestes
-            dades sense avisar. Comprova aquesta pantalla abans de sortir.
-          </li>
+          <li>{os('limits.immutable', locale)}</li>
+          <li>{os('limits.iosSevenDays', locale)}</li>
+          <li>{os('limits.foreground', locale)}</li>
+          <li>{os('limits.eviction', locale)}</li>
         </ul>
       </details>
     </section>

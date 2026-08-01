@@ -73,7 +73,12 @@ export interface PrepareProgress {
   phase: PreparePhase;
   /** Progrés global de 0 a 1. */
   ratio: number;
-  /** Frase curta en català, llesta per ensenyar. */
+  /**
+   * Frase curta en català. El panell NO la pinta: compon la seva pròpia frase
+   * localitzada a partir de `phase`, perquè aquest motor no sap l'idioma de la
+   * interfície. Es manté per a registres i per a qui cridi `prepareLocation`
+   * des de fora de React.
+   */
   message: string;
   /** Bytes baixats fins ara, comptats resposta a resposta. */
   bytes: number;

@@ -63,6 +63,8 @@ import { computeVisibility } from './core/visibility/verdict';
 import { ECLIPSES } from './core/eclipses/catalog';
 import { useObserver } from './state/useObserver';
 import { UpdatePrompt } from './offline/UpdatePrompt';
+import { ConnectionBadge } from './offline/ConnectionBadge';
+import { useOnlineStatus } from './offline/useOnlineStatus';
 import { LOCALES } from './i18n';
 import { SiteFooter } from './screens/SiteFooter';
 import { useCameraSupport } from './features/ar/useCameraSupport';
@@ -130,6 +132,7 @@ function Shell() {
   const { locale, setLocale, t } = useTranslation();
   const narrowHeader = useMediaQuery(NARROW_HEADER);
   const camera = useCameraSupport();
+  const { online } = useOnlineStatus();
   const observer = useObserver();
   const [tab, setTab] = useState<Tab>('countdown');
   const [eclipseId, setEclipseId] = useState(ECLIPSES[0].id);
@@ -315,7 +318,7 @@ function Shell() {
         havia cap manera d'activar-la. És exactament per això que calia obrir
         l'app en una pestanya privada per veure els canvis.
       */}
-      <UpdatePrompt />
+      <UpdatePrompt locale={locale} />
 
       <header className="shell__header">
         {/*
@@ -371,6 +374,28 @@ function Shell() {
           format compacte queda en una línia: el nom del lloc i el botó de
           canviar-lo, que és l'únic que s'hi fa.
         */}
+        {/*
+          L'ESTAT DE LA XARXA, NOMÉS QUAN NO N'HI HA.
+
+          La insígnia existia (`offline/ConnectionBadge`) i no la muntava
+          ningú: al camp, sense cobertura, l'app no deia enlloc si allò era
+          una avaria o el cas previst. Es munta a l'estructura i no dins d'una
+          pantalla perquè la pregunta «em funcionarà sense xarxa?» no és de cap
+          pestanya concreta — al cim se la faran davant de la càmera, a casa
+          davant del mapa.
+
+          NOMÉS APAREIX SENSE XARXA, a posta: en línia és l'estat normal i una
+          píndola permanent que digui «EN LÍNIA» a cada pantalla seria soroll
+          (i a 390 px, la capçalera ja va justa: vegeu NARROW_HEADER). El que
+          la insígnia distingeix quan surt és el que importa: «desat» (l'app
+          funcionarà) o «no desat» (no hi ha res a fer sense xarxa).
+        */}
+        {!online && (
+          <div className="off-connection">
+            <ConnectionBadge locale={locale} />
+          </div>
+        )}
+
         <LocationBar
           fix={observer.fix}
           locale={locale}
