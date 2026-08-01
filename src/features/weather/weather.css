@@ -1,0 +1,386 @@
+/*
+ * Estils del panell de nuvolositat.
+ *
+ * Només variables del sistema de disseny (src/styles/tokens/). Cap color
+ * escrit a mà, cap mida escrita a mà.
+ *
+ * REGLA DE L'ACCENT. Aquest panell no fa servir `--accent` enlloc. El sistema
+ * mana un sol accent ambre per pantalla i aquí l'ambre ja té feina: és
+ * `--status-partial`, el color d'un cel a mitges. Si el botó d'actualitzar
+ * també fos ambre, un cel dolent i una acció es dirien amb el mateix color.
+ * El botó és, doncs, un fantasma amb vora fina.
+ *
+ * REGLA DE LES XIFRES. Tot el que és un número porta `.eclipsi-data` o
+ * `--font-mono` amb `tabular-nums`. Les xifres han de ballar verticalment quan
+ * canvien, no horitzontalment.
+ */
+
+.cloudpanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  padding: var(--sp-6);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface-card);
+  box-shadow: var(--sh-2), var(--sh-inset-top);
+}
+
+/* La vora esquerra porta la semàntica: es veu de reüll, sense llegir res. */
+.cloudpanel--clear { border-left: var(--bw-thick) solid var(--status-clear); }
+.cloudpanel--partial { border-left: var(--bw-thick) solid var(--status-partial); }
+.cloudpanel--cloudy { border-left: var(--bw-thick) solid var(--status-cloudy); }
+
+.cloudpanel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.cloudpanel__empty,
+.cloudpanel__error {
+  margin: 0;
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.cloudpanel__error { color: var(--status-danger); }
+
+/* ------------------------------------------------------------- etiqueta font */
+
+/*
+ * Previsió i climatologia han de ser distingibles sense llegir-les. La previsió
+ * va perfilada; la climatologia, plena i apagada: és una dada d'una altra
+ * naturalesa i ha de semblar-ho.
+ */
+.cloudbadge {
+  flex: 0 0 auto;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-pill);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cloudbadge--forecast {
+  border: var(--bw-hair) solid var(--status-info);
+  color: var(--status-info);
+}
+
+.cloudbadge--climatology {
+  background: var(--status-cloudy-quiet);
+  border: var(--bw-hair) solid transparent;
+  color: var(--text-secondary);
+}
+
+/* --------------------------------------------------------------- dada vella */
+
+.cloudpanel__stale {
+  margin: 0;
+  padding: var(--sp-4);
+  border-radius: var(--r-sm);
+  background: var(--status-cloudy-quiet);
+  font: var(--text-body-sm);
+  color: var(--text-body);
+}
+
+.cloudpanel__stale strong { color: var(--text-primary); font-weight: var(--fw-medium); }
+
+/* ------------------------------------------------------------ número gran */
+
+.cloudscore {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-6);
+  flex-wrap: wrap;
+}
+
+.cloudscore__figure {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.cloudscore__value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-data-xl);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.cloudpanel--clear .cloudscore__value { color: var(--status-clear); }
+.cloudpanel--partial .cloudscore__value { color: var(--status-partial); }
+.cloudpanel--cloudy .cloudscore__value { color: var(--status-cloudy); }
+
+.cloudscore__unit {
+  font-size: var(--fs-body-sm);
+  color: var(--text-muted);
+}
+
+.cloudscore__text { flex: 1 1 14ch; min-width: 14ch; }
+
+.cloudscore__title { margin: 0; font: var(--text-title-3); color: var(--text-primary); }
+
+.cloudscore__meaning,
+.cloudscore__note {
+  margin: var(--sp-2) 0 0;
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+.cloudscore__note { color: var(--text-muted); }
+
+/* -------------------------------------------------------------- les capes */
+
+.cloudlayers { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+.cloudlayer {
+  display: grid;
+  grid-template-columns: 7ch 1fr 5ch 5ch;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.cloudlayer__name {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.cloudlayer--on .cloudlayer__name { color: var(--text-primary); }
+
+.cloudlayer__track {
+  position: relative;
+  height: 10px;
+  border-radius: var(--r-xs);
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+
+/*
+ * L'opacitat del farciment la posa el component: és exactament l'opacitat
+ * física de la capa (0,97 els baixos, 0,35 els alts). Un cel ple de cirrus es
+ * veu translúcid i un cel ple d'estrats es veu sòlid, que és el que passa de
+ * debò quan mires enlaire.
+ */
+.cloudlayer__fill {
+  display: block;
+  height: 100%;
+  background: var(--mist-200);
+  border-radius: var(--r-xs);
+  transition: width var(--dur-base) var(--ease-standard);
+}
+
+.cloudlayer__value {
+  font-size: var(--fs-body-sm);
+  color: var(--text-body);
+  text-align: right;
+}
+
+.cloudlayer__weight {
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.cloudlayers__legend {
+  margin: var(--sp-2) 0 0;
+  font: var(--text-body-sm);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.cloudlayers__legend--warn { color: var(--status-partial); }
+
+/* ------------------------------------------------------- línia de visió */
+
+.cloudlos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-top: var(--sp-5);
+  border-top: var(--bw-hair) solid var(--border-hairline);
+}
+
+.cloudlos__text {
+  margin: 0;
+  font: var(--text-body-sm);
+  color: var(--text-body);
+}
+
+.cloudlos__note {
+  margin: 0;
+  font-size: var(--fs-caption);
+  font-family: var(--font-body);
+  color: var(--text-muted);
+}
+
+/*
+ * Els punts consultats, ordenats per distància. És la prova visible que no
+ * hem mirat només el cel de sobre teu.
+ */
+.cloudlos__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cloudlos__chips li {
+  padding: var(--sp-1) var(--sp-3);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-micro);
+  color: var(--text-secondary);
+}
+
+/* --------------------------------------------------------- climatologia */
+
+.cloudclimo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-top: var(--sp-5);
+  border-top: var(--bw-hair) solid var(--border-hairline);
+}
+
+/*
+ * Pista de 0 a 100 amb les tres zones semàntiques al fons, la caixa
+ * intercuartílica a sobre i una marca a la mediana. Es llegeix "on cau la
+ * meitat central dels anys", que és la pregunta que es fa qui tria destinació.
+ */
+.cloudclimo__track {
+  position: relative;
+  height: 14px;
+  border-radius: var(--r-xs);
+  background: linear-gradient(
+    90deg,
+    var(--status-cloudy-quiet) 0%,
+    var(--status-cloudy-quiet) 35%,
+    var(--status-partial-quiet) 35%,
+    var(--status-partial-quiet) 70%,
+    var(--status-clear-quiet) 70%,
+    var(--status-clear-quiet) 100%
+  );
+}
+
+.cloudclimo__box {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--mist-200);
+  opacity: 0.35;
+  border-radius: var(--r-xs);
+}
+
+.cloudclimo__median {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: var(--bw-thick);
+  margin-left: calc(var(--bw-thick) / -2);
+  background: var(--text-primary);
+}
+
+.cloudclimo__scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
+}
+
+/* -------------------------------------------------------------- metadades */
+
+.cloudmeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.cloudmeta--foot {
+  padding-top: var(--sp-5);
+  border-top: var(--bw-hair) solid var(--border-hairline);
+}
+
+.cloudmeta__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.cloudmeta__row dt {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.cloudmeta__row dd {
+  margin: 0;
+  font-size: var(--fs-body-sm);
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.cloudhaze {
+  margin: 0;
+  padding: var(--sp-4);
+  border-radius: var(--r-sm);
+  background: var(--status-info-quiet);
+  font: var(--text-body-sm);
+  color: var(--text-body);
+}
+
+.cloudpanel__caveat {
+  margin: 0;
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+/* ------------------------------------------------------------------ peu */
+
+.cloudpanel__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  padding-top: var(--sp-4);
+  border-top: var(--bw-hair) solid var(--border-hairline);
+}
+
+.cloudpanel__source {
+  font-size: var(--fs-micro);
+  font-family: var(--font-body);
+  color: var(--text-muted);
+}
+
+.cloudpanel__retry {
+  min-height: var(--tap-min);
+  padding: var(--sp-2) var(--sp-5);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-body);
+  font: var(--text-label);
+  cursor: pointer;
+  transition: var(--t-color);
+}
+
+.cloudpanel__retry:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.cloudpanel__retry:disabled { opacity: 0.5; cursor: default; }
+
+/* Pantalles estretes: les xifres manen i les etiquetes es fan enrere. */
+@media (max-width: 380px) {
+  .cloudlayer { grid-template-columns: 6ch 1fr 5ch; }
+  .cloudlayer__weight { display: none; }
+}

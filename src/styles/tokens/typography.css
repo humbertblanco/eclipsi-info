@@ -1,0 +1,47 @@
+/* Type: Space Grotesk (display/UI headings) + IBM Plex Sans (body, full Catalan diacritics) + IBM Plex Mono (data). */
+:root{
+--font-display:'Space Grotesk','Helvetica Neue',sans-serif;
+--font-body:'IBM Plex Sans','Helvetica Neue',sans-serif;
+--font-mono:'IBM Plex Mono',ui-monospace,monospace;
+
+--fs-display-1:clamp(48px,7vw,88px);
+--fs-display-2:clamp(36px,5vw,60px);
+--fs-title-1:34px;
+--fs-title-2:26px;
+--fs-title-3:20px;
+--fs-body-lg:18px;
+--fs-body:16px;
+--fs-body-sm:14px;
+--fs-caption:13px;
+--fs-micro:11px;
+--fs-data-xl:clamp(44px,9vw,76px);
+--fs-data-lg:32px;
+--fs-data:18px;
+
+--lh-tight:1.04;
+--lh-snug:1.18;
+--lh-normal:1.45;
+--lh-loose:1.62;
+--fw-regular:400;
+--fw-medium:500;
+--fw-semibold:600;
+--fw-bold:700;
+
+--ls-display:-0.03em;
+--ls-title:-0.015em;
+--ls-body:0em;
+--ls-caps:0.14em;
+--ls-data:-0.02em;
+
+--text-display-1:var(--fw-bold) var(--fs-display-1)/var(--lh-tight) var(--font-display);
+--text-display-2:var(--fw-bold) var(--fs-display-2)/var(--lh-tight) var(--font-display);
+--text-title-1:var(--fw-bold) var(--fs-title-1)/var(--lh-snug) var(--font-display);
+--text-title-2:var(--fw-medium) var(--fs-title-2)/var(--lh-snug) var(--font-display);
+--text-title-3:var(--fw-medium) var(--fs-title-3)/var(--lh-snug) var(--font-display);
+--text-body-lg:var(--fw-regular) var(--fs-body-lg)/var(--lh-loose) var(--font-body);
+--text-body-md:var(--fw-regular) var(--fs-body)/var(--lh-normal) var(--font-body);
+--text-body-sm:var(--fw-regular) var(--fs-body-sm)/var(--lh-normal) var(--font-body);
+--text-label:var(--fw-semibold) var(--fs-body-sm)/1.2 var(--font-body);
+--text-overline:var(--fw-medium) var(--fs-micro)/1.2 var(--font-mono);
+--text-data:var(--fw-medium) var(--fs-data)/1.1 var(--font-mono);
+}

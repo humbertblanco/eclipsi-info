@@ -1,0 +1,90 @@
+/* ============================================================================
+   El nom del lloc.
+
+   FITXER PROPI I NO DINS DE `location.css`: el component és d'una altra tasca
+   i tenir-lo separat evita que dues mans escriguin al mateix fitxer. El prefix
+   `pname` no xoca amb cap `loc`, `loc-sheet` ni `loc-list` d'aquell.
+
+   CAP VALOR A PÈL. Tot surt dels tokens de `src/styles/tokens/`.
+
+   CAP FRANJA DE COLOR A L'ESQUERRA, que el sistema prohibeix; i CAP ACCENT
+   AMBRE, que només n'hi pot haver un per pantalla i el té la xifra important.
+   Aquest bloc és estructura: es diu amb jerarquia tipogràfica, no amb color.
+
+   MONO TABULAR per a tota xifra. Les coordenades canvien a cada lectura del
+   GPS i, sense amplada fixa de dígit, la línia sencera ballaria.
+   ========================================================================== */
+
+.pname {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+/*
+ * La línia de dalt. És la resposta a "on ets" i ha de ser la primera cosa que
+ * es llegeix, tant si és un nom com si són unes coordenades.
+ *
+ * `overflow-wrap` i no retallar amb punts suspensius: els noms bilingües
+ * ("Oviedo / Uviéu", "Arespalditza / Respaldiza") són llargs i mig topònim no
+ * és cap topònim. Val més que ocupi dues línies que no que menteixi.
+ */
+.pname__primary {
+  margin: 0;
+  color: var(--text-primary);
+  font: var(--text-title-3);
+  letter-spacing: var(--ls-title);
+  overflow-wrap: anywhere;
+}
+
+/* Quan no hi ha nom, la línia de dalt són les coordenades i van en mono. */
+.pname__primary.eclipsi-data {
+  color: var(--text-body);
+  font: var(--text-data);
+  letter-spacing: var(--ls-data);
+}
+
+/*
+ * La segona línia: comarca, coordenades i altitud, separades per punt volat.
+ * Va apagada perquè és context, no resposta, però no s'amaga mai: les xifres
+ * exactes són la dada de la qual depèn tota la resta de l'app.
+ */
+.pname__detail {
+  margin: 0;
+  color: var(--text-muted);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-data);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * L'atribució. Obligatòria per llicència, i per això és llegible i no un gris
+ * damunt de gris. Va separada perquè no es confongui amb la dada.
+ */
+.pname__source {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-muted);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: none;
+}
+
+/*
+ * Només per a lectors de pantalla.
+ *
+ * Mentre es busca el nom no es pinta res que es mogui: a la vista ja hi ha les
+ * coordenades, que són la resposta bona fins que n'arribi una de millor. Qui
+ * navega amb veu, en canvi, sí que ha de saber que hi ha alguna cosa en marxa.
+ */
+.pname__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

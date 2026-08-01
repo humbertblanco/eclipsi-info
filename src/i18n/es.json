@@ -1,0 +1,47 @@
+{
+  "locale": {
+    "name": "Castellano",
+    "switch": "Idioma",
+    "ca": "Catalán",
+    "es": "Castellano"
+  },
+  "guide": {
+    "title": "Guía del eclipse",
+    "subtitle": "Todo lo que debes saber antes de {{eclipse}}.",
+    "expandAll": "Abrir todo",
+    "collapseAll": "Cerrar todo",
+    "criticalBadge": "Clave para este eclipse",
+    "openHint": "Toca para abrir",
+    "sourcesTitle": "Fuentes",
+    "sourcesNote": "Datos de seguridad y de exposición verificados contra IGN, NASA/GSFC y American Astronomical Society.",
+    "readingTime": "Léela antes de salir de casa: el día del eclipse la red móvil estará saturada."
+  },
+  "safety": {
+    "badge": "Seguridad ocular",
+    "filterRequired": {
+      "title": "Filtro solar homologado, obligatorio",
+      "text": "No te quites nunca el filtro ISO 12312-2 para mirar el Sol. La retina se quema sin dolor y el daño es permanente."
+    },
+    "totalityNow": {
+      "title": "Ahora sí: míralo sin filtro",
+      "text": "Estás dentro de la totalidad. Quítate el filtro y mira la corona a simple vista. Vuelve a ponértelo en cuanto aparezca el primer punto de luz."
+    },
+    "totalitySoon": {
+      "title": "Filtro puesto hasta el segundo contacto",
+      "text": "Todavía estás en fase parcial. Hasta que el Sol no quede tapado del todo y oscurezca de golpe, el filtro no se toca."
+    },
+    "annular": {
+      "title": "Eclipse anular: nunca sin filtro",
+      "text": "En un eclipse anular no hay ningún instante seguro. El anillo de Sol que queda visible quema igual que el Sol entero. El filtro no se quita en ningún momento."
+    },
+    "partial": {
+      "title": "Aquí solo hay fase parcial",
+      "text": "Desde esta posición el Sol no se tapa nunca del todo. El filtro homologado es obligatorio de principio a fin."
+    },
+    "none": {
+      "title": "Sin eclipse visible",
+      "text": "Aunque no haya eclipse, mirar el Sol directamente o por un objetivo sin filtro frontal daña la vista."
+    },
+    "cameraNote": "Usa la pantalla del móvil, no los ojos."
+  }
+}

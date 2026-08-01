@@ -1,0 +1,996 @@
+/* ============================================================================
+   Estructura de l'aplicació i disposició de les quatre pantalles.
+
+   COM ESTÀ MUNTAT: capçalera de 56 px i barra de pestanyes de 64 px, totes dues
+   FIXES i de vidre, amb el contingut desplaçant-s'hi per sota. L'alçada de les
+   dues barres surt dels tokens `--header-app` i `--tabbar-app`; el contingut hi
+   reserva l'espai amb `padding`, mai amb marges, perquè el fons de vidre ha de
+   poder veure el que hi passa per dessota.
+
+   SAFE AREAS: `index.html` declara `viewport-fit=cover`, o sigui que a un iPhone
+   amb osca el contingut arriba de vora a vora. A canvi, TOT el que és fix a
+   dalt o a baix ha de sumar `env(safe-area-inset-*)` o queda sota l'osca i sota
+   la barra d'inici. És el motiu de tots els `calc()` d'aquest fitxer.
+
+   ESCRIPTORI: no és un mòbil estirat. A partir de --bp-rail la barra inferior
+   deixa de tenir sentit (el polze no arriba enlloc) i passa a ser un carril
+   lateral; a partir de --bp-split, les pantalles que tenen dues coses per
+   ensenyar les ensenyen de costat en comptes d'una sota l'altra.
+
+   CAP VALOR A PÈL. Les úniques mides pròpies d'aquest fitxer són les tres
+   variables de sota, i totes tres es componen amb tokens.
+   ========================================================================== */
+
+.shell {
+  /* Amplada del carril lateral: --sp-13 (128) + --sp-9 (40) = 168 px. Just per
+     a una icona, una etiqueta d'una paraula i l'aire de la graella. */
+  --rail-w: calc(var(--sp-13) + var(--sp-9));
+  /* Alçades efectives de les barres, osca inclosa. Es calculen un sol cop aquí
+     perquè el contingut i les capes flotants no les tornin a compondre. */
+  --bar-top: calc(var(--header-app) + env(safe-area-inset-top));
+  --bar-bottom: calc(var(--tabbar-app) + env(safe-area-inset-bottom));
+  /* Alçada de la franja de dades editorial. Al mòbil no existeix, i per això
+     val zero: així les fórmules de posició són una de sola i no dues.
+     Va amb unitat i no amb `--sp-0`: dins d'un `calc()` no es pot sumar una
+     longitud amb un zero sense unitat, i tota la declaració quedaria invàlida
+     — que és exactament com es perd el marge de la capçalera al mòbil. */
+  --bar-dateline: 0px;
+
+  min-height: 100dvh;
+  background: var(--bg-page);
+}
+
+/* --- Barres fixes -------------------------------------------------------- */
+
+.shell__header,
+.shell__nav {
+  position: fixed;
+  z-index: 20;
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+}
+
+.shell__header {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--bar-top);
+  padding-top: env(safe-area-inset-top);
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
+}
+
+.shell__nav {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--bar-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: var(--bw-hair) solid var(--border-hairline);
+}
+
+.shell__main {
+  padding-top: calc(var(--bar-top) + var(--bar-dateline));
+  padding-bottom: var(--bar-bottom);
+}
+
+/*
+ * Pantalles que NO es desplacen: el mapa i la càmera.
+ *
+ * PER QUÈ: un mapa que llisca sota el dit i alhora arrossega la pàgina és
+ * inservible, i la càmera ha d'omplir el marc sencer. És la mateixa distinció
+ * que fa el muntatge original (`overflowY: scroll ? 'auto' : 'hidden'`).
+ *
+ * L'alçada es fixa a la del viewport i el `padding` de les barres ja hi va
+ * inclòs perquè tot el projecte és `border-box`. El `flex` de sota és el que
+ * deixa que la barra d'estat de l'horitzó ocupi el que necessiti i la pantalla
+ * s'endugui la resta, sense que res desbordi.
+ */
+.shell--fixed {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.shell__main--fixed {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+/* --- Capçalera: selector d'eclipsi i avisos ------------------------------ */
+
+/*
+ * El desplegable d'eclipsi. `.ui-select` ocupa tota l'amplada per defecte —
+ * correcte dins d'un formulari, impossible dins d'una barra de 56 px que ja
+ * porta el logotip. Aquí es fa tan estret com el seu contingut, que és una data
+ * en mono tabular.
+ */
+.shell__eclipse {
+  width: auto;
+  flex: none;
+  min-height: var(--tap-min);
+  font-family: var(--font-mono);
+  font-size: var(--fs-body-sm);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--ls-data);
+  padding-left: var(--sp-4);
+  /* Deixa lloc al galó que `Select` dibuixa a sobre: sense això, la data hi
+     passa per sota i es llegeix "12.08.20⌄6". */
+  padding-right: var(--sp-8);
+}
+
+.shell__status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--gutter-app) 0;
+  margin: 0 auto;
+  max-width: var(--maxw-web);
+}
+
+/*
+ * Avís d'estat de l'app (no de seguretat ocular: això és `SafetyNotice`).
+ * El color va a TOTA la caixa i no a una vora esquerra, que el sistema
+ * prohibeix explícitament.
+ */
+.shell__alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: var(--sp-4) var(--sp-5);
+  border: var(--bw-hair) solid var(--status-partial);
+  border-radius: var(--r-md);
+  background: var(--status-partial-quiet);
+  color: var(--text-body);
+  font: var(--text-body-sm);
+}
+
+/* --- Franja de dades (només escriptori) ---------------------------------- */
+
+/*
+ * La franja editorial de la versió web: quatre dades tècniques en mono que
+ * diuen de què va la pantalla abans que ningú llegeixi res. A 390 px no cap en
+ * una línia i partida deixa de ser una franja, així que al mòbil no hi és; la
+ * mateixa informació hi surt dins de les pantalles.
+ */
+.shell__dateline {
+  display: none;
+}
+
+.shell__dateline-accent {
+  color: var(--text-accent);
+}
+
+/* --- Pantalla ------------------------------------------------------------ */
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-5) var(--gutter-app) var(--sp-8);
+  margin: 0 auto;
+  max-width: var(--maxw-sheet);
+}
+
+/* La càmera i el mapa volen tota l'amplada: retallar-los a l'amplada d'un full
+   de text els deixa sense el que fa que serveixin per a res. */
+.screen--wide {
+  max-width: var(--maxw-web);
+}
+
+/*
+ * Pantalla que omple el marc entre les dues barres. La fan servir el mapa i la
+ * càmera, que no són documents sinó superfícies: el que hi flota per sobre s'hi
+ * posiciona en absolut i el contingut no en desborda mai.
+ */
+.screen--full {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  max-width: none;
+  overflow: hidden;
+  /*
+   * El `margin: 0 auto` de `.screen` s'ha d'anul·lar, i no és un detall: dins
+   * d'un contenidor flexible en columna, un marge automàtic a l'eix
+   * transversal impedeix l'estirament, i com que tots els fills d'aquesta
+   * pantalla estan posicionats en absolut, l'amplada resultant és ZERO i no es
+   * veu absolutament res. Amb `width` i `align-self` explícits no depèn de cap
+   * valor per defecte heretat.
+   */
+  margin: 0;
+  width: 100%;
+  align-self: stretch;
+}
+
+/* Sense encoixinat propi: el que hi va a dins ja se'l posa on toca. */
+.screen--flush {
+  gap: var(--sp-0);
+}
+
+/*
+ * Columna. Al mòbil no és res: les dues columnes són una sola pila i el `gap`
+ * el posa `.screen`. Només a partir de --bp-split es converteix en columna de
+ * debò. Definir-la aquí i no dins del `@media` és el que fa que l'ordre del
+ * marcatge sigui l'ordre de lectura al mòbil.
+ */
+.screen__col {
+  display: contents;
+}
+
+.screen__note {
+  margin: 0;
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.screen__overline {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Estat buit mentre no se sap on és l'usuari o mentre es calcula alguna cosa. */
+.screen__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  padding: var(--sp-9) var(--sp-6);
+  border: var(--bw-hair) dashed var(--border-subtle);
+  border-radius: var(--r-xl);
+  color: var(--text-secondary);
+  font: var(--text-body-sm);
+}
+
+/* --- Progrés del perfil d'horitzó ---------------------------------------- */
+
+.shell__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.shell__progressbar {
+  height: var(--sp-2);
+  border-radius: var(--r-pill);
+  background: var(--bg-inset);
+  border: var(--bw-hair) solid var(--border-hairline);
+  overflow: hidden;
+}
+
+.shell__progressfill {
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  transition: width var(--dur-base) var(--ease-standard);
+}
+
+/* ============================================================================
+   Pantalla 1 — Compte enrere
+   ========================================================================== */
+
+/*
+ * Hero. La referència hi posava una fotografia de la totalitat a sang; aquí no
+ * n'hi ha cap perquè el projecte encara no té imatge pròpia amb drets clars, i
+ * carregar-ne una d'un CDN de tercers trencaria el funcionament offline, que és
+ * el requisit dur d'aquesta app. La profunditat la fa la resplendor de corona
+ * sobre la superfície, que és exactament el que el sistema diu que ha de
+ * substituir les ombres en una interfície nocturna.
+ */
+.home__hero {
+  position: relative;
+  overflow: hidden;
+  padding: var(--sp-7) var(--sp-6) var(--sp-6);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-xl);
+  background: var(--bg-inset);
+}
+
+.home__hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--sp-13);
+  height: var(--sp-13);
+  transform: translate(35%, -45%);
+  background: var(--grad-corona);
+  pointer-events: none;
+}
+
+.home__herohead {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-7);
+}
+
+.home__countdown {
+  position: relative;
+}
+
+.home__phase {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+}
+
+.home__stats {
+  display: grid;
+  gap: var(--sp-5);
+  flex: 1;
+  min-width: 0;
+}
+
+/* ============================================================================
+   Taula d'efemèrides
+
+   Files separades per línies d'un píxel, etiqueta a l'esquerra i hora en mono
+   TABULAR a la dreta. C2 —l'instant que decideix si has vingut per res— va en
+   ambre; la resta, en blanc. És l'únic accent de la seva columna.
+   ========================================================================== */
+
+.ephemeris {
+  /* Al mòbil no es pinta: hi ha `TimelineTrack`, que diu el mateix en horitzontal
+     i cap en 390 px. */
+  display: none;
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.ephemeris__row {
+  border-top: var(--bw-hair) solid var(--border-hairline);
+}
+
+.ephemeris__row:first-child {
+  border-top-color: var(--border-subtle);
+}
+
+.ephemeris__label {
+  padding: var(--sp-4) 0;
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+.ephemeris__time {
+  padding: var(--sp-4) 0;
+  text-align: right;
+  font: var(--text-data);
+  letter-spacing: var(--ls-data);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.ephemeris__row--key .ephemeris__time {
+  color: var(--text-accent);
+}
+
+/* Marge sobre el terreny en aquell instant: negatiu vol dir que no el veuràs. */
+.ephemeris__clear {
+  padding: var(--sp-4) 0 var(--sp-4) var(--sp-6);
+  text-align: right;
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.ephemeris__clear--lost {
+  color: var(--status-danger);
+}
+
+/* ============================================================================
+   Pantalla 2 — Mapa
+
+   La cartografia va a sang i la fitxa de vidre hi flota a sobre. És el que
+   demana la referència i també el que demana el sentit comú: un mapa retallat a
+   l'amplada d'un full de text no serveix per decidir on et plantes.
+   ========================================================================== */
+
+/*
+ * L'escenari del mapa.
+ *
+ * `EclipseMap` porta el seu propi encoixinat, la seva llegenda i la seva fitxa
+ * de resultats, pensats per viure dins d'un document. Aquí el llenç ha d'omplir
+ * el marc i la resta queda fora de la retallada; la llegenda es torna a pintar
+ * a sota amb els components del sistema.
+ *
+ * L'ATRIBUCIÓ NO ES PERD. És obligatòria per llicència i per això `EclipseMap`
+ * la posa DINS del llenç (control d'atribució de MapLibre, amb OpenStreetMap i
+ * Espenak), no al paràgraf que aquí queda retallat. La nota del peu de la fitxa
+ * la repeteix en text.
+ */
+.mapscreen__stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.mapscreen__stage .map {
+  height: 100%;
+  margin: 0;
+}
+
+.mapscreen__stage .map__canvas {
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  border: none;
+  border-radius: 0;
+}
+
+.mapscreen__legend {
+  position: absolute;
+  left: var(--gutter-app);
+  top: var(--sp-5);
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-5);
+  padding: var(--sp-3) var(--sp-5);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+.mapscreen__legenditem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+/* La mostra de la franja: el mateix ambre que pinta MapLibre al llenç. */
+.mapscreen__swatch {
+  width: var(--sp-6);
+  height: var(--sp-3);
+  border-radius: var(--r-xs);
+  background: var(--accent-quiet);
+  border: var(--bw-hair) solid var(--accent);
+}
+
+.mapscreen__swatch--line {
+  height: var(--bw-thick);
+  background: var(--corona-100);
+  border: none;
+}
+
+/*
+ * La fitxa. Al mòbil flota damunt del mapa —i per això és de vidre, que és
+ * l'únic ús que el sistema permet del vidre: cromatge que no ha de tapar el
+ * que hi ha a sota. A partir de --bp-split deixa de flotar i passa a ser la
+ * segona columna.
+ */
+.mapscreen__sheet {
+  position: absolute;
+  left: var(--gutter-app);
+  right: var(--gutter-app);
+  bottom: var(--sp-5);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  max-height: 62%;
+  overflow-y: auto;
+}
+
+.mapscreen__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-5) var(--sp-8);
+}
+
+.mapscreen__badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+/* ============================================================================
+   Pantalla 3 — Cel (càmera)
+
+   La imatge omple el marc sencer. A sobre hi ha exactament dues coses: la
+   franja de brúixola amb les insígnies a dalt, i UN SOL HUD prim a baix. Res
+   més pot tapar el cel.
+   ========================================================================== */
+
+/*
+ * El marc de la vista de RA.
+ *
+ * `ARView` està escrit per viure dins d'un document: el seu `.viewport` és una
+ * caixa 3:4 i sota seu hi ha els seus propis controls, lectures i diagnòstic.
+ * Aquí el `.viewport` es posiciona en absolut i tapa la resta, que queda dins
+ * de la retallada. NO s'amaga amb `display:none` a posta: quan s'obren els
+ * controls (`--tools`) tot torna al seu lloc sense remuntar res, o sigui sense
+ * tancar la càmera ni perdre el calibratge.
+ *
+ * Això és una solució de disposició, no el final del camí: el que toca és que
+ * `ARView` accepti `chrome="none"` i l'instant des de fora. Vegeu
+ * `AR_PROPS_NEEDED` a `SkyScreen.tsx`.
+ */
+.skyscreen__ar {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.skyscreen__ar .ar {
+  height: 100%;
+  /* Aire per al botó d'obrir la càmera, que és l'únic que es veu abans que hi
+     hagi imatge. La xifra és la franja de brúixola (--sp-8) més la fila
+     d'insígnies (--sp-10): així el botó queda just a sota i no a sobre. */
+  padding: calc(var(--sp-8) + var(--sp-10)) var(--gutter-app) 0;
+}
+
+.skyscreen__ar .viewport {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+  aspect-ratio: auto;
+}
+
+/* El seu avís de calibratge viu a baix, que és on hi ha el nostre HUD. Puja. */
+.skyscreen__ar .viewport__hint {
+  top: var(--sp-12);
+  bottom: auto;
+}
+
+/* Si la vista de RA cau, el seu substitut ha de quedar sota les insígnies i no
+   a sota seu, o no es pot llegir. */
+.skyscreen__ar .ui-fallback {
+  margin-top: calc(var(--sp-8) + var(--sp-10));
+}
+
+/* Amb els controls oberts, `ARView` recupera la seva disposició de document. */
+.skyscreen__ar--tools {
+  overflow-y: auto;
+}
+
+.skyscreen__ar--tools .ar {
+  height: auto;
+  /* A baix, prou aire perquè la barra de tancament no tapi l'últim control. */
+  padding: var(--sp-6) var(--gutter-app) var(--sp-11);
+}
+
+.skyscreen__ar--tools .viewport {
+  position: relative;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--r-lg);
+  margin: var(--sp-4) 0;
+}
+
+.skyscreen__ar--tools .viewport__hint {
+  top: auto;
+  bottom: var(--sp-5);
+}
+
+.skyscreen__toolsbar {
+  position: absolute;
+  left: var(--gutter-app);
+  bottom: var(--sp-5);
+  z-index: 3;
+}
+
+/* --- Franja de brúixola i insígnies -------------------------------------- */
+
+.skyscreen__top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+}
+
+.skyscreen__compass {
+  position: relative;
+  height: var(--sp-8);
+  border-bottom: var(--bw-hair) solid var(--border-subtle);
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  overflow: hidden;
+}
+
+.skyscreen__tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--text-muted);
+}
+
+.skyscreen__tickline {
+  width: var(--bw-hair);
+  height: var(--sp-3);
+  background: var(--border-strong);
+}
+
+.skyscreen__ticklabel {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* El marcador del Sol és l'únic ambre de la pantalla. */
+.skyscreen__tick--sun {
+  color: var(--text-accent);
+}
+
+.skyscreen__tick--sun .skyscreen__tickline {
+  width: var(--bw-thick);
+  height: var(--sp-4);
+  background: var(--accent);
+}
+
+.skyscreen__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--gutter-app);
+}
+
+/* --- El HUD, un de sol ---------------------------------------------------- */
+
+/*
+ * El degradat de protecció substitueix la càpsula: el sistema demana
+ * exactament això quan hi ha text damunt d'una imatge. Va cap a `--ink-950`,
+ * que és el fons de pàgina, o sigui que el text acaba sobre negre gairebé
+ * sòlid sense que aparegui cap caixa.
+ */
+/*
+ * EL HUD SURA, NO OCUPA.
+ *
+ * Aquí hi havia un bloc que, amb el selector de mode, la barra de recorregut i
+ * un avís de seguretat de dues línies dins d'una caixa vermella, es menjava
+ * gairebé la meitat del mòbil. Sumat a la barra d'ubicació de dalt, del cel en
+ * quedava una franja: la pantalla que ha de ser tota càmera era la que menys
+ * càmera ensenyava.
+ *
+ * Ara el degradat comença més avall i més suau, els controls van més arrapats,
+ * i l'avís de seguretat ha passat a una línia (vegeu `.skyscreen__safety`). El
+ * sostre del 45 % és perquè cap contingut nou hi pugui tornar a créixer sense
+ * que es vegi de seguida: el que hi sobri, es desplaça.
+ */
+.skyscreen__hud {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-10) var(--gutter-app) var(--sp-4);
+  max-height: 45%;
+  overflow-y: auto;
+  background: linear-gradient(180deg, transparent, rgb(0 0 0 / 0.55) 45%, var(--ink-950) 100%);
+}
+
+.skyscreen__status {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: var(--bw-hair) solid var(--border-subtle);
+}
+
+.skyscreen__statustext {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.skyscreen__what {
+  font: var(--text-body-sm);
+  color: var(--text-primary);
+}
+
+.skyscreen__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--sp-6) var(--gutter-app);
+}
+
+/* ============================================================================
+   Pantalla 4 — Guia
+   ========================================================================== */
+
+.guidescreen__list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================================================
+   ESCRIPTORI
+
+   --bp-rail (900px): la barra inferior passa a carril lateral.
+   --bp-split (1180px): les pantalles amb dues coses les posen de costat.
+
+   Els punts de tall van escrits al `@media` perquè les consultes de mitjans no
+   accepten `var()` — és una limitació del CSS, no una excepció a la regla.
+   ========================================================================== */
+
+@media (min-width: 900px) {
+  .shell {
+    /* La franja de dades passa a existir i entra a totes les fórmules de
+       posició alhora, perquè totes surten d'aquesta variable. */
+    --bar-dateline: var(--sp-9);
+  }
+
+  /*
+   * FRANJA DE DADES EDITORIAL.
+   *
+   * Quatre dades tècniques en mono i majúscules d'overline, separades i sobre
+   * una línia d'un píxel. És el primer que canvia de llenguatge respecte del
+   * mòbil: a l'escriptori la jerarquia la fan les regles, no les targetes.
+   * Va clavada sota la capçalera i al costat del carril, no per sobre.
+   */
+  .shell__dateline {
+    position: fixed;
+    top: var(--bar-top);
+    left: var(--rail-w);
+    right: 0;
+    z-index: 19;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-8);
+    height: var(--bar-dateline);
+    padding: 0 var(--gutter-web);
+    border-bottom: var(--bw-hair) solid var(--border-hairline);
+    background: var(--surface-glass);
+    backdrop-filter: var(--blur-glass);
+    -webkit-backdrop-filter: var(--blur-glass);
+    font: var(--text-overline);
+    letter-spacing: var(--ls-caps);
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .shell__nav {
+    top: var(--bar-top);
+    right: auto;
+    bottom: 0;
+    width: var(--rail-w);
+    height: auto;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: none;
+    border-right: var(--bw-hair) solid var(--border-hairline);
+  }
+
+  /* El carril s'apila i les etiquetes van al costat de la icona: en vertical
+     hi ha alçada de sobres i llegir-les de reüll és més ràpid. */
+  .shell__nav .ui-tabbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-1);
+    padding: var(--sp-5) var(--sp-4);
+  }
+
+  .shell__nav .ui-tabbar__item {
+    flex: none;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--sp-4);
+    padding: var(--sp-4) var(--sp-4);
+    border-radius: var(--r-md);
+  }
+
+  /* Al carril l'element actiu sí que porta fons: aquí no hi ha continuïtat amb
+     el contingut que trencar, i la columna necessita una àncora visual. */
+  .shell__nav .ui-tabbar__item--on {
+    background: var(--accent-quiet);
+  }
+
+  .shell__nav .ui-tabbar__label {
+    font: var(--text-label);
+    letter-spacing: var(--ls-body);
+    text-transform: none;
+  }
+
+  .shell__main {
+    margin-left: var(--rail-w);
+    padding-bottom: var(--sp-9);
+  }
+
+  /* Amb la barra inferior convertida en carril, el marc fix ja no li ha de
+     reservar cap alçada a baix. */
+  .shell__main--fixed {
+    padding-bottom: 0;
+  }
+
+  .screen,
+  .shell__status {
+    padding-left: var(--gutter-web);
+    padding-right: var(--gutter-web);
+  }
+
+  .screen--full {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /*
+   * El HUD respira els gutters del web, però els seus controls no s'estiren
+   * fins als 1.400 px: un commutador de dues opcions d'un metre d'ample deixa
+   * de llegir-se com un commutador. El límit és el del full, que és l'amplada
+   * a partir de la qual un control deixa de ser un control.
+   */
+  .skyscreen__hud {
+    padding-left: var(--gutter-web);
+    padding-right: var(--gutter-web);
+  }
+
+  .skyscreen__hud .ui-seg {
+    max-width: var(--maxw-sheet);
+  }
+}
+
+@media (min-width: 1180px) {
+  /*
+   * Dues columnes amb una regla vertical entremig, com la versió web del
+   * sistema: la jerarquia la fan les línies i les columnes, no més targetes.
+   */
+  .screen--split {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    align-items: start;
+    gap: 0;
+    max-width: var(--maxw-web);
+  }
+
+  .screen__col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-5);
+    min-width: 0;
+  }
+
+  /* Sense columnes, `.screen--split` no ha de fer res: torna a ser una pila. */
+  .screen--split > .screen__col {
+    align-self: stretch;
+  }
+
+  .screen__col--main {
+    padding-right: var(--sp-8);
+    border-right: var(--bw-hair) solid var(--border-hairline);
+  }
+
+  .screen__col--side {
+    padding-left: var(--sp-8);
+  }
+
+  /* La fitxa acompanya el mapa mentre es desplaça: comparar dos llocs vol dir
+     veure el veredicte i el mapa alhora, no recordar-ne un. */
+  .screen__col--sticky {
+    position: sticky;
+    top: calc(var(--bar-top) + var(--bar-dateline) + var(--sp-5));
+  }
+
+  /*
+   * MAPA A L'ESCRIPTORI: cartografia i fitxa de costat, que és justament el que
+   * al mòbil va per capes. La fitxa deixa de flotar —ja no tapa res— i per això
+   * també deixa de ser de vidre a efectes de percepció: el vidre és cromatge
+   * sobre una superfície viva, i aquí ja no hi ha res a sota.
+   */
+  .screen--full.screen--split {
+    display: grid;
+    /*
+     * Cartografia a sang i fitxa d'amplada fixa, com fa la secció de la franja
+     * de la versió web. Retallar el mapa a --maxw-web tindria sentit per a text
+     * i cap per a un mapa: el que hi busques és context, i el context és
+     * l'amplada. 3 × --sp-13 = 384 px per a la fitxa, que és on una columna de
+     * dades encara es llegeix sense fer-se estreta.
+     */
+    grid-template-columns: 1fr calc(var(--sp-13) * 3);
+    max-width: none;
+    /* Les dues columnes s'estiren a l'alçada del marc: el mapa ha d'arribar de
+       dalt a baix, i la fitxa ha de poder desplaçar-se dins seu. */
+    align-items: stretch;
+    padding-right: var(--gutter-web);
+  }
+
+  .screen--full.screen--split > .screen__col {
+    min-height: 0;
+  }
+
+  .screen--full.screen--split > .screen__col--main {
+    padding-right: 0;
+    border-right: none;
+  }
+
+  .screen--full.screen--split > .screen__col--side {
+    overflow-y: auto;
+    padding-top: var(--sp-5);
+    padding-bottom: var(--sp-5);
+  }
+
+  .mapscreen__stage {
+    position: relative;
+    inset: auto;
+    flex: 1;
+    border-right: var(--bw-hair) solid var(--border-hairline);
+  }
+
+  /*
+   * La fitxa deixa de flotar, i amb això deixa de tenir dret al vidre: el
+   * sistema el reserva al cromatge que tapa una superfície viva. Aquí ja no
+   * tapa res, o sigui que torna a ser una targeta normal.
+   */
+  .mapscreen__sheet {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    background: var(--surface-card);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-color: var(--border-hairline);
+    box-shadow: none;
+  }
+
+  /* La llegenda sí que continua sobre el mapa, i per tant continua de vidre. */
+  .mapscreen__legend {
+    left: var(--sp-5);
+  }
+
+  /*
+   * TAULA D'EFEMÈRIDES SENCERA, sense cap desplegable al davant. A
+   * l'escriptori hi ha espai i les xifres SÓN el contingut: amagar-les darrere
+   * un «mostra'n més» seria amagar el producte. Al mòbil, en canvi, la mateixa
+   * informació la dona `TimelineTrack`, que hi cap.
+   */
+  .ephemeris {
+    display: table;
+  }
+
+  .home__timeline {
+    display: none;
+  }
+}
+
+/*
+ * L'avís de seguretat de la pantalla de la càmera, en una línia.
+ *
+ * Mateix text i mateix to de perill que el bloc de la guia; el que canvia és
+ * que aquí sura damunt del cel i no se'l pot menjar. Vegeu el comentari de
+ * `SkyScreen.tsx` per què no és un `SafetyNotice`.
+ */
+.skyscreen__safety {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  font: var(--text-body-sm);
+  color: var(--status-danger);
+}
+
+.skyscreen__safety svg {
+  flex: none;
+  margin-top: 2px;
+}

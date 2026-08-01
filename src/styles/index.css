@@ -1,0 +1,74 @@
+/* ============================================================================
+   eclipsi.info — punt d'entrada del sistema de disseny.
+
+   PER QUÈ AQUEST FITXER: agrupa en un sol import tot el que necessita la capa
+   visual (tipografia + tokens). Qui consumeix el sistema fa `import
+   './styles/index.css'` i prou; no ha de conèixer l'ordre intern.
+
+   PER QUÈ AQUEST ORDRE: els tokens es defineixen en cascada. `colors` no depèn
+   de ningú, `typography` composa els shorthands `--text-*` a partir de les
+   famílies, `elevation` fa servir colors per a les ombres i els anells de focus,
+   i `base` (defaults d'element) ha d'anar l'ÚLTIM perquè consumeix variables
+   dels cinc anteriors. Canviar l'ordre deixa variables sense resoldre.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   TIPOGRAFIA AUTOALLOTJADA — decisió deliberada, NO tocar sense llegir això.
+
+   L'original del sistema de disseny feia `@import url('https://fonts.googleapis.com/...')`.
+   Aquí NO ho podem fer: el dia de l'eclipsi hi haurà desenes de milers de
+   persones concentrades dins la franja de totalitat i la xarxa mòbil estarà
+   saturada o caiguda. Un @import a un CDN extern és una petició bloquejant que,
+   sense xarxa, deixa l'app amb tipografia de fallback (o pitjor, retarda el
+   primer render just quan la persona mira el mòbil amb 20 segons de totalitat).
+
+   Solució: els paquets `@fontsource/*` porten els mateixos fitxers .woff2 que
+   serveix Google Fonts, però des de node_modules. Vite els empaqueta a
+   dist/assets/ i queden servits pel mateix origen → funcionen offline i són
+   cacheables per un service worker sense CORS ni cross-origin.
+
+   PER QUÈ IMPORTS PER SUBCONJUNT (`latin-*` / `latin-ext-*`) i no `400.css`:
+   els fitxers de nivell superior arrosseguen TOTS els subconjunts (ciríl·lic,
+   grec, vietnamita...). Amb `latin` + `latin-ext` cobrim el català complet
+   (à è é í ï ò ó ú ü ç, i el punt volat ·), el castellà i els topònims, i
+   evitem ~15 .woff2 que mai es faran servir dins el bundle offline.
+
+   PESOS: exactament els que declarava l'original —
+   Space Grotesk 400/500/700 · IBM Plex Sans 400/500/600 + itàlica 400 ·
+   IBM Plex Mono 400/500. Si algun token de typography.css demana un pes nou,
+   cal afegir-lo aquí o el navegador el sintetitzarà (fals bold, lleig).
+   --------------------------------------------------------------------------- */
+
+/* Space Grotesk — display / titulars (--font-display) */
+@import '@fontsource/space-grotesk/latin-400.css';
+@import '@fontsource/space-grotesk/latin-500.css';
+@import '@fontsource/space-grotesk/latin-700.css';
+@import '@fontsource/space-grotesk/latin-ext-400.css';
+@import '@fontsource/space-grotesk/latin-ext-500.css';
+@import '@fontsource/space-grotesk/latin-ext-700.css';
+
+/* IBM Plex Sans — text corregut (--font-body) */
+@import '@fontsource/ibm-plex-sans/latin-400.css';
+@import '@fontsource/ibm-plex-sans/latin-500.css';
+@import '@fontsource/ibm-plex-sans/latin-600.css';
+@import '@fontsource/ibm-plex-sans/latin-400-italic.css';
+@import '@fontsource/ibm-plex-sans/latin-ext-400.css';
+@import '@fontsource/ibm-plex-sans/latin-ext-500.css';
+@import '@fontsource/ibm-plex-sans/latin-ext-600.css';
+@import '@fontsource/ibm-plex-sans/latin-ext-400-italic.css';
+
+/* IBM Plex Mono — dades, comptes enrere, coordenades (--font-mono) */
+@import '@fontsource/ibm-plex-mono/latin-400.css';
+@import '@fontsource/ibm-plex-mono/latin-500.css';
+@import '@fontsource/ibm-plex-mono/latin-ext-400.css';
+@import '@fontsource/ibm-plex-mono/latin-ext-500.css';
+
+/* --------------------------------------------------------------------------
+   TOKENS — ordre de cascada obligatori (vegeu la capçalera).
+   -------------------------------------------------------------------------- */
+@import './tokens/colors.css';
+@import './tokens/typography.css';
+@import './tokens/spacing.css';
+@import './tokens/elevation.css';
+@import './tokens/motion.css';
+@import './tokens/base.css';

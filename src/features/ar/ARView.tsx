@@ -1,0 +1,1000 @@
+/**
+ * Vista de realitat augmentada.
+ *
+ * Té dos modes, i el que importa és el primer:
+ *
+ *  - MIXED: l'eclipsi compost dins de la imatge de la càmera. Els discos a
+ *    mida angular real, la corona, la caiguda de llum sobre tota l'escena i la
+ *    resplendor de 360° a l'horitzó, tot ancorat al món. És una
+ *    previsualització de com es veurà de veritat des d'aquest punt exacte, amb
+ *    les teves muntanyes al davant.
+ *  - ESQUEMA: la mateixa informació però com a diagrama — recorregut sencer,
+ *    marques horàries, contactes i rosa dels vents. Serveix per planificar i
+ *    per calibrar.
+ *
+ * En tots dos casos la superposició està ancorada al MÓN, no a la pantalla:
+ * quan mous el telèfon, el Sol simulat es queda clavat allà on estarà de
+ * veritat i llisca per la pantalla, com faria el Sol real.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * EL BUCLE DE DIBUIX ES CREA UNA SOLA VEGADA. No és una optimització: és una
+ * correcció. Abans l'efecte del bucle depenia d'`orientation.camera`, que era
+ * un objecte nou a cada esdeveniment del sensor —fins a 67 per segon—. Cada
+ * recreació cancel·lava el `requestAnimationFrame` pendent abans que
+ * s'executés, i amb el sensor per damunt de la freqüència de pantalla molts
+ * fotogrames no arribaven a dibuixar-se mai: la superposició es congelava
+ * mentre el vídeo continuava. Tot el que canvia de pressa viu en refs; React
+ * només s'assabenta del que ha de sortir a la interfície, i a poc a poc.
+ *
+ * LA SUPERPOSICIÓ VA CLAVADA AL FOTOGRAMA QUE ES VEU, no a l'instant. Entre dos
+ * fotogrames de càmera —que a 30 Hz són dos fotogrames de dibuix— la imatge de
+ * la pantalla no canvia, i per tant la superposició tampoc no s'ha de moure. Si
+ * s'hi mogués, es desenganxaria del paisatge i hi tornaria seixanta vegades per
+ * segon, que és tremolor pur.
+ */
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { computeLocalCircumstances } from '../../core/astro/contacts';
+import { formatObscurationPercent } from '../../core/astro/obscuration';
+import { sampleAt } from '../../core/astro/ephemeris';
+import { visibleBodiesDuringTotality } from '../../core/astro/visibleBodies';
+import type { EclipseSample, GeoLocation, LocalCircumstances } from '../../core/astro/types';
+import { getEclipse } from '../../core/eclipses/catalog';
+import { declination } from '../../core/geomag';
+import { horizonSampler, type HorizonProfile } from '../../core/horizon/profile';
+import { detectSkyline, fitSkyline, type SkylineFix } from './skyline';
+import { SafetyBanner } from '../guide/SafetyBanner';
+import { renderOverlay } from './renderOverlay';
+import { lightState, renderMixed, type SkyBody } from './renderMixed';
+import {
+  viewportFromElements,
+  effectiveFov,
+  sensorFovFromFocal,
+  type Viewport,
+} from './cameraGeometry';
+import {
+  calibrateFromTap,
+  normalizeAngle,
+  DEFAULT_CALIBRATION,
+  type CameraPointing,
+  type Calibration,
+} from './orientation';
+import { useDeviceOrientation } from './useDeviceOrientation';
+import { openRearCamera, watchLensChange, type CameraOpenResult } from './camera';
+import {
+  VisualTracker,
+  VideoFrameClock,
+  FocalEstimator,
+  geometryFor,
+  type RotationHint,
+  type VisualRotation,
+} from './visualTracker';
+import { PoseFusion, poseDeltaToRotation, type FusionTelemetry } from './poseFusion';
+import { loadMeasuredFov, saveMeasuredFov } from './focalStore';
+import { readPalette } from '../../styles/palette';
+
+interface Props {
+  location: GeoLocation;
+  eclipseId: string;
+  locale: 'ca' | 'es';
+  /** Perfil d'horitzó del terreny, quan ja s'ha calculat. */
+  horizon: HorizonProfile | null;
+  /** Demana la ubicació. S'invoca des del mateix gest que obre la càmera. */
+  onRequestLocation?: () => void;
+}
+
+type Mode = 'mixed' | 'diagram';
+
+const PATH_SAMPLES = 160;
+
+/** Cada quant es refresca el panell de diagnòstic, en mil·lisegons. */
+const DIAGNOSTICS_MS = 500;
+
+/**
+ * Confiança mínima perquè una mesura visual alimenti l'estimador de focal.
+ *
+ * És més exigent que la de la fusió: una mesura mediocre encara serveix per
+ * moure la superposició, però contaminaria un calibratge que després mana sobre
+ * tota l'escala.
+ */
+const FOCAL_MIN_CONFIDENCE = 0.5;
+
+/** Límits del que pot ser el camp de visió d'una càmera de mòbil, en graus. */
+/** Quant s'ha de moure el camp mesurat perquè valgui la pena desar-lo. */
+const FOV_SAVE_STEP_DEG = 0.2;
+
+/** Cada quants fotogrames de càmera es torna a ancorar al terreny. */
+const ANCHOR_EVERY_FRAMES = 6;
+
+const MIN_FOV_DEG = 25;
+const MAX_FOV_DEG = 140;
+
+const SOURCE_LABEL: Record<string, string> = {
+  'ios-compass': 'webkitCompassHeading (absolut)',
+  'absolute-alpha': 'deviceorientationabsolute (absolut)',
+  'relative-alpha': 'alpha relativa — no fiable sense calibrar',
+  none: '—',
+};
+
+/**
+ * La paleta del sistema, llegida un sol cop.
+ *
+ * `getComputedStyle` obliga el navegador a recalcular estils; fer-ho dins del
+ * bucle de dibuix costaria més que dibuixar. Els renderitzadors la reben com a
+ * dada i així segueixen sense dependre del document.
+ */
+const PALETTE = readPalette();
+
+/** Tot el que el bucle de dibuix necessita i que canvia amb els renders. */
+interface RenderState {
+  calibration: Calibration;
+  circumstances: LocalCircumstances;
+  currentSample: EclipseSample;
+  samples: EclipseSample[];
+  bodies: SkyBody[];
+  horizonProfile: ((azimuthDeg: number) => number) | undefined;
+  locale: 'ca' | 'es';
+  mode: Mode;
+}
+
+/** El que el bucle mesura i el panell de diagnòstic ensenya. */
+interface TrackingDiagnostics {
+  confidence: number;
+  usedBlocks: number;
+  saturated: boolean;
+  residualPx: number;
+  videoFps: number;
+  exactFrameClock: boolean;
+  fusion: FusionTelemetry;
+  focalWindows: number;
+  measuredFovDeg: number | null;
+}
+
+const INITIAL_DIAGNOSTICS: TrackingDiagnostics = {
+  confidence: 0,
+  usedBlocks: 0,
+  saturated: false,
+  residualPx: 0,
+  videoFps: 0,
+  exactFrameClock: false,
+  fusion: {
+    agreement: 0,
+    usingVisual: false,
+    driftDeg: 0,
+    pullTauSec: 0,
+    lastVisualStepDeg: 0,
+    lastSensorStepDeg: 0,
+  },
+  focalWindows: 0,
+  measuredFovDeg: null,
+};
+
+export function ARView({ location, eclipseId, locale, horizon, onRequestLocation }: Props) {
+  // La declinació magnètica converteix el nord de la brúixola en el geogràfic.
+  // Sense ella l'error és de −3,51° a Tenerife i +2,07° a Barcelona: sistemàtic,
+  // i de sis i quatre diàmetres solars respectivament.
+  const magneticDeclination = useMemo(
+    () => declination(location).declinationDeg,
+    [location],
+  );
+  const orientation = useDeviceOrientation(magneticDeclination);
+
+  // El mostrejador s'obté un cop del perfil: el bucle de dibuix el crida
+  // centenars de vegades per fotograma i no ha de reconstruir res.
+  const horizonProfile = useMemo(
+    () => (horizon ? horizonSampler(horizon) : undefined),
+    [horizon],
+  );
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const [cameraOn, setCameraOn] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [calibration, setCalibration] = useState<Calibration>(DEFAULT_CALIBRATION);
+  const [calibrated, setCalibrated] = useState(false);
+  const [mode, setMode] = useState<Mode>('mixed');
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [progress, setProgress] = useState(0.5);
+  const [fovReadout, setFovReadout] = useState<{ horizontal: number; vertical: number } | null>(
+    null,
+  );
+  const [cameraInfo, setCameraInfo] = useState<CameraOpenResult | null>(null);
+  const [diagnostics, setDiagnostics] = useState<TrackingDiagnostics>(INITIAL_DIAGNOSTICS);
+
+  // ---- Ancoratge visual. Tot en refs: s'actualitza a cada fotograma i no ha
+  // de provocar cap render de React.
+  const trackerRef = useRef<VisualTracker | null>(null);
+  const frameClockRef = useRef(new VideoFrameClock());
+  const focalRef = useRef(new FocalEstimator());
+  const fusionRef = useRef(new PoseFusion());
+  const lensWatchRef = useRef<(() => void) | null>(null);
+  const viewportRef = useRef<Viewport | null>(null);
+  const diagnosticsRef = useRef<TrackingDiagnostics>(INITIAL_DIAGNOSTICS);
+  /** Postura del sensor l'últim cop que va arribar un fotograma de càmera. */
+  const sensorAtFrameRef = useRef<{ az: number; alt: number } | null>(null);
+  const lastDrawMsRef = useRef<number | null>(null);
+  /** Camp de visió mesurat, en graus sobre el costat llarg del sensor. */
+  const measuredFovRef = useRef<number | null>(null);
+  /**
+   * L'últim camp de visió que s'ha escrit al disc.
+   *
+   * `saveMeasuredFov` és una escriptura síncrona a `localStorage` i vivia dins
+   * de l'interval de mig segon sense cap comparació: dues per segon, tota la
+   * sessió, al fil que dibuixa. Ara només s'hi va quan la xifra es mou de debò.
+   */
+  const savedFovRef = useRef(Number.NaN);
+  /** Últim ancoratge a la silueta del terreny. Vegeu `skyline.ts`. */
+  const anchorRef = useRef<SkylineFix | null>(null);
+  /** Compta fotogrames de càmera per no ancorar a cadascun. */
+  const anchorTickRef = useRef(0);
+  /**
+   * Última postura amb què s'ha DIBUIXAT, que és la fusionada i no la del
+   * sensor.
+   *
+   * El calibratge per toc inverteix la projecció, i ha d'invertir exactament la
+   * que ha posat el Sol allà on l'usuari acaba de tocar. Amb la postura del
+   * sensor, la correcció s'enduria també la diferència entre el sensor i
+   * l'ancoratge visual —fins a un parell de graus— i el calibratge quedaria
+   * desviat just en la quantitat que l'ancoratge visual havia corregit bé.
+   */
+  const drawnCameraRef = useRef<CameraPointing | null>(null);
+
+  const eclipse = getEclipse(eclipseId);
+
+  const circumstances = useMemo(
+    () => computeLocalCircumstances(eclipseId, location),
+    [eclipseId, location],
+  );
+
+  const samples = useMemo(() => {
+    const { c1, c4, max } = circumstances.contacts;
+    const start = (c1 ?? max).time.getTime();
+    const end = (c4 ?? max).time.getTime();
+    if (end <= start) return [max];
+    const out = [];
+    for (let i = 0; i <= PATH_SAMPLES; i++) {
+      out.push(sampleAt(new Date(start + ((end - start) * i) / PATH_SAMPLES), location));
+    }
+    return out;
+  }, [circumstances, location]);
+
+  const currentSample =
+    samples[Math.max(0, Math.min(samples.length - 1, Math.round(progress * (samples.length - 1))))];
+
+  const isTotality =
+    currentSample.separation <=
+      Math.abs(currentSample.moon.angularRadius - currentSample.sun.angularRadius) &&
+    currentSample.moon.angularRadius >= currentSample.sun.angularRadius;
+
+  // Els planetes només es calculen quan de veritat es veuran: durant la resta
+  // de l'eclipsi el cel és massa clar i seria informació falsa.
+  const bodies = useMemo(
+    () => (isTotality ? visibleBodiesDuringTotality(currentSample.time, location) : []),
+    [isTotality, currentSample.time, location],
+  );
+
+  const light = useMemo(() => lightState(currentSample), [currentSample]);
+
+  // Mirall del que el bucle de dibuix necessita. S'escriu DESPRÉS de cada
+  // render, mai durant: el bucle no s'ha de tornar a crear per això.
+  const renderRef = useRef<RenderState>({
+    calibration,
+    circumstances,
+    currentSample,
+    samples,
+    bodies,
+    horizonProfile,
+    locale,
+    mode,
+  });
+  useEffect(() => {
+    renderRef.current = {
+      calibration,
+      circumstances,
+      currentSample,
+      samples,
+      bodies,
+      horizonProfile,
+      locale,
+      mode,
+    };
+  });
+
+  // Posició del Sol ARA, que és la referència del calibratge.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const sunNow = useMemo(() => sampleAt(now, location).sun, [now, location]);
+
+  const start = useCallback(async () => {
+    // Els tres permisos es demanen junts, des del mateix gest de l'usuari.
+    // Sense ubicació, l'altura i l'azimut del Sol serien els d'un altre lloc i
+    // tota la superposició seria mentida; sense orientació no sabem cap a on
+    // mires; sense càmera no hi ha res a sobre del què dibuixar.
+    onRequestLocation?.();
+    await orientation.request();
+
+    try {
+      const opened = await openRearCamera();
+      setCameraInfo(opened);
+
+      // Si ja hem mesurat el camp de visió d'aquest objectiu en una sessió
+      // anterior, la superposició surt calibrada des del primer fotograma. Si
+      // no, es parteix de la conjectura i l'ancoratge visual el mesurarà.
+      const remembered = loadMeasuredFov(opened.width, opened.height);
+      measuredFovRef.current = remembered;
+      setCalibration((c) => ({
+        ...c,
+        sensorFovDeg: remembered ?? opened.suggestedFovDeg,
+      }));
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = opened.stream;
+        await videoRef.current.play();
+        frameClockRef.current.attach(videoRef.current);
+        setCameraOn(true);
+      }
+
+      // L'iPhone 15 canvia d'objectiu sol a mitja sessió. Quan passa, tot el
+      // que havíem mesurat deixa de valer.
+      lensWatchRef.current = watchLensChange(opened.stream, (info) => {
+        trackerRef.current?.reset();
+        focalRef.current.reset();
+        fusionRef.current.reset();
+        const known = loadMeasuredFov(info.width, info.height);
+        measuredFovRef.current = known;
+        setCameraInfo((prev) =>
+          prev ? { ...prev, width: info.width, height: info.height } : prev,
+        );
+        if (known !== null) setCalibration((c) => ({ ...c, sensorFovDeg: known }));
+      });
+    } catch (err) {
+      setCameraError(err instanceof Error ? err.message : String(err));
+    }
+  }, [orientation, onRequestLocation]);
+
+  useEffect(
+    () => () => {
+      const stream = videoRef.current?.srcObject as MediaStream | null;
+      stream?.getTracks().forEach((t) => t.stop());
+      lensWatchRef.current?.();
+      frameClockRef.current.detach();
+    },
+    [],
+  );
+
+  // El filtre del vídeo va a part del canvas: el compon la GPU i surt gratis.
+  // És el que enfosqueix TOTA l'escena, muntanyes incloses, que és el que
+  // passa de veritat durant un eclipsi.
+  useEffect(() => {
+    if (videoRef.current && mode === 'mixed') {
+      videoRef.current.style.filter = light.cssFilter;
+    } else if (videoRef.current) {
+      videoRef.current.style.filter = '';
+    }
+  }, [light.cssFilter, mode]);
+
+  // ---- Bucle de dibuix. Es crea UNA vegada i no es torna a crear mai. ----
+  const cameraRef = orientation.cameraRef;
+  const smoothingRef = orientation.smoothingRef;
+
+  useEffect(() => {
+    let frame = 0;
+
+    const draw = () => {
+      frame = requestAnimationFrame(draw);
+
+      const canvas = canvasRef.current;
+      const camera = cameraRef.current;
+      if (!canvas || !camera) return;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const state = renderRef.current;
+      const nowMs = performance.now();
+      const dtSec =
+        lastDrawMsRef.current === null ? 1 / 60 : (nowMs - lastDrawMsRef.current) / 1000;
+      lastDrawMsRef.current = nowMs;
+
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      /*
+       * S'ARRODONEIX ABANS DE COMPARAR. `canvas.width` és un enter sense
+       * signe: assignar-li 1023,75 —que és el que dona un Pixel 6, amb dpr
+       * 2,625 i 390 px d'amplada— hi desa 1023. La comparació següent trobava
+       * 1023 ≠ 1023,75 i el buffer es tornava a reservar i a buidar A CADA
+       * FOTOGRAMA: sis megabytes per fotograma, tres-cents seixanta al segon,
+       * amb les pauses del recol·lector que això comporta. I com que les
+       * pauses fan irregular el `dtSec`, la fusió estirava a batzegades: el
+       * mateix tremolor que es veu a la pantalla.
+       *
+       * Els iPhone tenen dpr 2 o 3 i no ho pateixen mai, que és per què no
+       * surt provant amb un iPhone.
+       */
+      const bw = Math.round(w * dpr);
+      const bh = Math.round(h * dpr);
+      if (canvas.width !== bw || canvas.height !== bh) {
+        canvas.width = bw;
+        canvas.height = bh;
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // El camp de visió MESURAT, un cop convergeix, mana: ja no és una
+      // conjectura sobre quin objectiu ens ha tocat, és una mesura feta damunt
+      // de la imatge que tenim al davant.
+      const fovDeg = measuredFovRef.current ?? state.calibration.sensorFovDeg;
+      const viewport = viewportFromElements(videoRef.current, w, h, fovDeg);
+      viewportRef.current = viewport;
+
+      const video = videoRef.current;
+
+      // ---- Ancoratge visual, només amb fotograma NOU de càmera -------------
+      const newFrame = video !== null && frameClockRef.current.consume();
+      let visual: VisualRotation | null = null;
+
+      if (newFrame && video) {
+        if (!trackerRef.current) trackerRef.current = new VisualTracker();
+        const geometry = geometryFor(
+          video.videoWidth,
+          video.videoHeight,
+          w,
+          h,
+          viewport.focalPx,
+        );
+
+        if (geometry) {
+          // Predicció del gir a partir del sensor: centra la finestra de cerca,
+          // i amb això el límit del que es pot mesurar deixa de ser el radi de
+          // cerca (uns 100°/s) i passa a ser el desenfocament de moviment. És el
+          // seguiment assistit per inercials de qualsevol sistema de RA seriós.
+          const previous = sensorAtFrameRef.current;
+          const imageRoll = camera.roll + camera.screenAngle;
+          let hint: RotationHint | null = null;
+          let sensorStep: { pitchRad: number; yawRad: number } | null = null;
+
+          if (previous) {
+            sensorStep = poseDeltaToRotation(
+              normalizeAngle(camera.azimuth - previous.az),
+              camera.altitude - previous.alt,
+              imageRoll,
+              camera.altitude,
+            );
+            hint = { ...sensorStep, rollRad: 0 };
+          }
+          sensorAtFrameRef.current = { az: camera.azimuth, alt: camera.altitude };
+
+          visual = trackerRef.current.measure(video, geometry, hint);
+
+          if (
+            visual &&
+            sensorStep &&
+            visual.confidence >= FOCAL_MIN_CONFIDENCE &&
+            !visual.saturated
+          ) {
+            // Cada eix per separat: la focal és la mateixa als dos, però
+            // acumular-los junts els faria cancel·lar-se.
+            focalRef.current.add(
+              0,
+              visual.yawRad,
+              sensorStep.yawRad,
+              viewport.focalPx,
+              visual.confidence,
+            );
+            focalRef.current.add(
+              1,
+              visual.pitchRad,
+              sensorStep.pitchRad,
+              viewport.focalPx,
+              visual.confidence,
+            );
+          }
+
+          /*
+           * ANCORATGE AL TERRENY.
+           *
+           * Aquí es tanca el forat que tenia tota la vista: el seguiment
+           * visual és RELATIU i necessita textura, i apuntant a cel serè no en
+           * troba i retorna `null` — o sigui que justament fent el que l'app
+           * demana que facis, la superposició es quedava a mercè de la
+           * brúixola. La silueta de la muntanya, en canvi, és el tret amb més
+           * contrast de la imatge quan el Sol és baix, i nosaltres sabem on ha
+           * de ser: la tenim calculada des del model del terreny per al punt
+           * exacte de l'usuari.
+           *
+           * NO A CADA FOTOGRAMA. L'ajust són unes quantes desenes de
+           * projeccions i no cal més sovint: el terreny no es mou, i la deriva
+           * que ha de corregir es compta en dècimes de grau per segon. Cada
+           * sisè fotograma de càmera són uns 5 Hz.
+           */
+          anchorTickRef.current++;
+          if (
+            state.horizonProfile &&
+            trackerRef.current &&
+            anchorTickRef.current % ANCHOR_EVERY_FRAMES === 0
+          ) {
+            const hits = detectSkyline(trackerRef.current.lastGray, geometry, viewport);
+            const fix = fitSkyline(
+              hits,
+              camera,
+              state.calibration,
+              viewport,
+              state.horizonProfile,
+            );
+            anchorRef.current = fix;
+          }
+
+          diagnosticsRef.current = {
+            ...diagnosticsRef.current,
+            confidence: visual?.confidence ?? 0,
+            usedBlocks: visual?.usedBlocks ?? 0,
+            saturated: visual?.saturated ?? false,
+            residualPx: visual?.residualPx ?? 0,
+          };
+        }
+      }
+
+      const fused = fusionRef.current.update({
+        sensorAzimuthDeg: camera.azimuth,
+        sensorAltitudeDeg: camera.altitude,
+        imageRollDeg: camera.roll + camera.screenAngle,
+        newFrame,
+        visual,
+        sensorSpeedDegPerSec: smoothingRef.current.angularSpeedDegPerSec,
+        dtSec,
+        anchor:
+          anchorRef.current === null
+            ? null
+            : {
+                azimuthDeg: anchorRef.current.azimuthDeg,
+                altitudeDeg: anchorRef.current.altitudeDeg,
+                confidence: anchorRef.current.confidence,
+              },
+      });
+
+      const stable: CameraPointing = {
+        ...camera,
+        azimuth: fused.azimuthDeg,
+        altitude: fused.altitudeDeg,
+      };
+      drawnCameraRef.current = stable;
+
+      if (state.mode === 'mixed') {
+        renderMixed(ctx, state.currentSample, {
+          viewport,
+          camera: stable,
+          calibration: state.calibration,
+          horizonProfile: state.horizonProfile,
+          bodies: state.bodies,
+          pathSamples: state.samples,
+          locale: state.locale,
+          palette: PALETTE,
+        });
+      } else {
+        renderOverlay(ctx, state.circumstances, state.samples, {
+          viewport,
+          camera: stable,
+          calibration: state.calibration,
+          currentTime: state.currentSample.time,
+          horizonProfile: state.horizonProfile,
+          locale: state.locale,
+          palette: PALETTE,
+        });
+      }
+    };
+
+    frame = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(frame);
+  }, [cameraRef, smoothingRef]);
+
+  // ---- Diagnòstic i calibratge de focal, desacoblats del bucle de dibuix. --
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (viewportRef.current) setFovReadout(effectiveFov(viewportRef.current));
+
+      // La focal mesurada es converteix a camp de visió del SENSOR, que és el
+      // que es pot desar i el que no depèn de la mida del contenidor.
+      const video = videoRef.current;
+      const viewport = viewportRef.current;
+      const gain = focalRef.current.gain;
+      let measuredFov = measuredFovRef.current;
+
+      if (gain !== null && video && viewport && video.videoWidth > 0) {
+        const fov = sensorFovFromFocal(
+          {
+            videoWidth: video.videoWidth,
+            videoHeight: video.videoHeight,
+            containerWidth: viewport.width,
+            containerHeight: viewport.height,
+          },
+          gain * viewport.focalPx,
+        );
+        if (fov !== null && fov >= MIN_FOV_DEG && fov <= MAX_FOV_DEG) {
+          measuredFov = fov;
+          measuredFovRef.current = fov;
+          /*
+           * ES REINICIA L'ESTIMADOR EN APLICAR EL GUANY. AIXÒ ÉS EL QUE FA QUE
+           * CONVERGEIXI EN COMPTES DE FUGIR.
+           *
+           * `gain` és el quocient entre el gir visual i el del sensor, i el gir
+           * visual s'ha mesurat AMB LA FOCAL QUE HI HAVIA quan es van acumular
+           * les finestres. Si no es buiden, la propera lectura torna a portar
+           * aquell mateix quocient —encara referit a la focal vella— i es
+           * multiplica per la focal nova. Cada mig segon, un altre cop.
+           *
+           * Mesurat contra el mateix bucle: amb el camp real a 50° i una
+           * primera estimació de 66°, el valor tocava els 50,00° exactes als
+           * dos segons i després queia a 37,95°, 29,28° i fins al terra dels
+           * 25°. En pantalla, el Sol es desplaçava dues vegades i mitja més de
+           * pressa que el paisatge i el disc es dibuixava dues vegades i mitja
+           * massa gran. I `saveMeasuredFov` desava el disbarat, o sigui que la
+           * sessió següent —la del dia de l'eclipsi— començava enverinada.
+           *
+           * Buidant-lo, el guany següent es mesura contra la focal que ara s'hi
+           * fa servir: la successió és una iteració de punt fix que tendeix a
+           * 1 i s'hi queda. Costa uns cinquanta graus de panoràmica per volta,
+           * que és el que fa qualsevol que busqui el Sol amb el mòbil.
+           */
+          focalRef.current.reset();
+          // I només s'escriu al disc quan de veritat canvia: això corria dues
+          // vegades per segon tota la sessió.
+          if (Math.abs(fov - savedFovRef.current) > FOV_SAVE_STEP_DEG) {
+            savedFovRef.current = fov;
+            saveMeasuredFov(video.videoWidth, video.videoHeight, fov);
+          }
+        }
+      }
+
+      diagnosticsRef.current = {
+        ...diagnosticsRef.current,
+        videoFps: frameClockRef.current.fps,
+        exactFrameClock: frameClockRef.current.exact,
+        fusion: fusionRef.current.telemetry,
+        focalWindows: focalRef.current.count,
+        measuredFovDeg: measuredFov,
+      };
+      setDiagnostics(diagnosticsRef.current);
+    }, DIAGNOSTICS_MS);
+    return () => clearInterval(id);
+  }, []);
+
+  const handleTap = useCallback(
+    (event: React.MouseEvent<HTMLCanvasElement>) => {
+      const camera = drawnCameraRef.current ?? cameraRef.current;
+      const canvas = canvasRef.current;
+      const viewport = viewportRef.current;
+      if (!camera || !canvas || !viewport) return;
+      const rect = canvas.getBoundingClientRect();
+      setCalibration((prev) =>
+        calibrateFromTap(
+          event.clientX - rect.left,
+          event.clientY - rect.top,
+          sunNow.azimuth,
+          sunNow.altitudeApparent,
+          camera,
+          prev,
+          viewport,
+        ),
+      );
+      setCalibrated(true);
+    },
+    [cameraRef, sunNow.azimuth, sunNow.altitudeApparent],
+  );
+
+  const camera = orientation.camera;
+  const rawError = camera ? normalizeAngle(sunNow.azimuth - camera.azimuth) : null;
+  const agreement = diagnostics.fusion.agreement;
+  const shownFovDeg = diagnostics.measuredFovDeg ?? calibration.sensorFovDeg;
+
+  return (
+    <div className="ar">
+      {!cameraOn && (
+        <button className="btn btn--primary" onClick={start}>
+          Apunta el mòbil al cel
+        </button>
+      )}
+
+      {orientation.permission === 'denied' && (
+        <p className="warn">
+          Permís d'orientació denegat. A iOS s'ha de tornar a donar des de Safari.
+        </p>
+      )}
+      {cameraError && <p className="warn">Càmera: {cameraError}</p>}
+
+      {cameraOn && (
+        <div className="ar__modes">
+          <button
+            className={mode === 'mixed' ? 'tab tab--on' : 'tab'}
+            onClick={() => setMode('mixed')}
+          >
+            Com es veurà
+          </button>
+          <button
+            className={mode === 'diagram' ? 'tab tab--on' : 'tab'}
+            onClick={() => setMode('diagram')}
+          >
+            Esquema
+          </button>
+        </div>
+      )}
+
+      <div className="viewport" hidden={!cameraOn}>
+        <video ref={videoRef} playsInline muted className="viewport__video" />
+        <canvas ref={canvasRef} className="viewport__overlay" onClick={handleTap} />
+
+        {!calibrated && cameraOn && (
+          <div className="viewport__hint">Toca el Sol a la imatge per calibrar</div>
+        )}
+
+        {cameraOn && (
+          <SafetyBanner eclipseKind={circumstances.kind} isInTotality={isTotality} />
+        )}
+      </div>
+
+      {cameraOn && (
+        <>
+          <input
+            className="scrub"
+            type="range"
+            min={0}
+            max={1}
+            step={1 / PATH_SAMPLES}
+            value={progress}
+            onChange={(e) => setProgress(Number(e.target.value))}
+            aria-label="Instant de l'eclipsi"
+          />
+          <div className="scrub__readout">
+            <strong>
+              {currentSample.time.toLocaleTimeString('ca-ES', {
+                timeZone: 'Europe/Madrid',
+                hour12: false,
+              })}
+            </strong>
+            <span>alt {currentSample.sun.altitudeApparent.toFixed(2)}°</span>
+            <span>obsc {formatObscurationPercent(currentSample.obscuration, isTotality)}</span>
+            <span>
+              llum {(light.physicalFraction * 100).toFixed(3)}% · percebuda{' '}
+              {(light.perceived * 100).toFixed(0)}%
+            </span>
+          </div>
+
+          {light.perceived > 0.3 && currentSample.obscuration > 0.9 && (
+            <p className="note">
+              Amb el {formatObscurationPercent(currentSample.obscuration, isTotality, 0)} del Sol tapat encara
+              sembla de dia. La caiguda de llum de veritat arriba en els últims segons
+              abans de la totalitat.
+            </p>
+          )}
+
+          {isTotality && bodies.length > 0 && (
+            <p className="note">
+              Visibles ara mateix al cel: {bodies.map((b) => b.name).join(', ')}.
+            </p>
+          )}
+        </>
+      )}
+
+      {/*
+        La ubicació, ben visible. Tot el que diu aquesta pantalla —l'hora dels
+        contactes, l'azimut, l'altura del Sol, la durada— surt d'aquestes
+        coordenades. Si són les del punt per defecte i no les teves, tot és
+        correcte per a un altre lloc, i fins ara no hi havia manera de saber-ho.
+      */}
+      <p className="note">
+        <button className="linklike" onClick={() => onRequestLocation?.()}>
+          {location.lat.toFixed(4)}°, {location.lon.toFixed(4)}° ·{' '}
+          {Math.round(location.elevation)} m
+        </button>
+        {' — toca-hi per fer servir la teva posició'}
+      </p>
+
+      <p className="note">
+        {eclipse.label[locale]} · {circumstances.kind.toUpperCase()}
+        {circumstances.centralDurationSec > 0 &&
+          ` · ${Math.floor(circumstances.centralDurationSec / 60)}m ${Math.round(
+            circumstances.centralDurationSec % 60,
+          )}s`}
+        {!horizonProfile && ' · perfil del terreny no calculat'}
+      </p>
+
+      <button className="btn" onClick={() => setShowDiagnostics((v) => !v)}>
+        {showDiagnostics ? 'Amagar diagnòstic' : 'Diagnòstic de sensors'}
+      </button>
+
+      {showDiagnostics && (
+        <>
+          <dl className="readout">
+            <div>
+              <dt>Font del rumb</dt>
+              <dd>{SOURCE_LABEL[orientation.headingSource]}</dd>
+            </div>
+            <div>
+              <dt>Freqüència del sensor</dt>
+              <dd>{orientation.sampleRate} Hz</dd>
+            </div>
+            <div>
+              {/*
+                LA PARELLA DE NÚMEROS QUE DECIDEIX SI CAL UNA APLICACIÓ NATIVA.
+                El primer és el soroll que arriba del magnetòmetre; el segon, el
+                que en queda després del filtre. Els dos surten del mateix
+                estimador circular, perquè comparar-los amb estimadors diferents
+                no voldria dir res.
+              */}
+              <dt>Soroll del rumb (brut → filtrat)</dt>
+              <dd className={orientation.jitterFiltered > 0.5 ? 'bad' : 'good'}>
+                ±{orientation.jitter.toFixed(2)}° → ±{orientation.jitterFiltered.toFixed(2)}°
+              </dd>
+            </div>
+            <div>
+              <dt>Velocitat angular</dt>
+              <dd>
+                {orientation.smoothing.angularSpeedDegPerSec.toFixed(1)}°/s · tall{' '}
+                {orientation.smoothing.cutoffHz.toFixed(1)} Hz
+                {orientation.smoothing.frozen ? ' · congelat' : ''}
+              </dd>
+            </div>
+            <div>
+              <dt>Precisió declarada</dt>
+              <dd>
+                {orientation.compassAccuracy != null
+                  ? `±${orientation.compassAccuracy.toFixed(0)}°`
+                  : 'no disponible'}
+              </dd>
+            </div>
+            <div>
+              <dt>Declinació magnètica</dt>
+              <dd>
+                {magneticDeclination >= 0 ? '+' : ''}
+                {magneticDeclination.toFixed(2)}° aplicada a l'azimut
+              </dd>
+            </div>
+            <div>
+              <dt>Càmera apunta a</dt>
+              <dd>
+                {camera
+                  ? `az ${camera.azimuth.toFixed(1)}° · alt ${camera.altitude.toFixed(1)}° · gir ${camera.roll.toFixed(0)}°`
+                  : '—'}
+              </dd>
+            </div>
+            <div>
+              <dt>Sol ara</dt>
+              <dd>
+                az {sunNow.azimuth.toFixed(2)}° · alt {sunNow.altitudeApparent.toFixed(2)}°
+              </dd>
+            </div>
+            <div>
+              <dt>Error de brúixola en brut</dt>
+              <dd className={rawError !== null && Math.abs(rawError) > 10 ? 'bad' : 'good'}>
+                {rawError !== null ? `${rawError > 0 ? '+' : ''}${rawError.toFixed(1)}°` : '—'}
+              </dd>
+            </div>
+            <div>
+              <dt>Correcció aplicada</dt>
+              <dd>
+                az {calibration.azimuthOffset >= 0 ? '+' : ''}
+                {calibration.azimuthOffset.toFixed(2)}°
+              </dd>
+            </div>
+            <div>
+              <dt>Camp de visió a pantalla</dt>
+              <dd>
+                {fovReadout
+                  ? `${fovReadout.horizontal.toFixed(1)}° × ${fovReadout.vertical.toFixed(1)}°`
+                  : '—'}
+              </dd>
+            </div>
+            <div>
+              <dt>Ancoratge visual</dt>
+              <dd className={diagnostics.confidence > 0.5 ? 'good' : 'bad'}>
+                {diagnostics.saturated
+                  ? 'gir massa ràpid — mana el sensor'
+                  : diagnostics.confidence > 0
+                    ? `${(diagnostics.confidence * 100).toFixed(0)}% · ${diagnostics.usedBlocks} blocs · residu ${diagnostics.residualPx.toFixed(2)} px`
+                    : 'sense textura'}
+              </dd>
+            </div>
+            <div>
+              {/*
+                LA XIFRA QUE DIU SI LA FUSIÓ RESTA O SUMA. Si el signe de
+                l'ancoratge visual estigués invertit, la superposició es mouria
+                el DOBLE en comptes de quedar-se quieta, i des de fora això
+                s'assembla molt a un error d'escala. Amb la concordança no cal
+                endevinar-ho: positiva vol dir que la imatge i el sensor diuen el
+                mateix; negativa, que hi ha una inversió de signe en algun lloc.
+              */}
+              <dt>Concordança imatge/sensor</dt>
+              <dd className={agreement > 0.5 ? 'good' : agreement < -0.2 ? 'bad' : undefined}>
+                {agreement >= 0 ? '+' : ''}
+                {agreement.toFixed(2)}
+                {agreement > 0.5
+                  ? ' · les dues fonts coincideixen'
+                  : agreement < -0.2
+                    ? ' · SIGNE INVERTIT'
+                    : ' · sense senyal per comparar'}
+              </dd>
+            </div>
+            <div>
+              <dt>Qui porta la postura</dt>
+              <dd>
+                {diagnostics.fusion.usingVisual ? 'la imatge' : 'només el sensor'} · deriva{' '}
+                {diagnostics.fusion.driftDeg.toFixed(2)}° · estirada{' '}
+                {diagnostics.fusion.pullTauSec.toFixed(2)} s
+              </dd>
+            </div>
+            <div>
+              {/*
+                Fotogrames de càmera NOUS per segon. Si això va molt per sota de
+                la freqüència de dibuix, l'ancoratge visual treballa amb la
+                meitat de la informació que sembla; si cau a zero amb la càmera
+                oberta, el flux s'ha aturat.
+              */}
+              <dt>Fotogrames de càmera</dt>
+              <dd className={diagnostics.videoFps >= 20 ? 'good' : 'bad'}>
+                {diagnostics.videoFps} Hz{' '}
+                {diagnostics.exactFrameClock ? '(comptats)' : '(estimats)'}
+              </dd>
+            </div>
+            <div>
+              <dt>Camp de visió mesurat</dt>
+              <dd className={diagnostics.measuredFovDeg ? 'good' : undefined}>
+                {diagnostics.measuredFovDeg
+                  ? `${diagnostics.measuredFovDeg.toFixed(1)}° al costat llarg · desat`
+                  : `mesurant… (${diagnostics.focalWindows} de 6 finestres)`}
+              </dd>
+            </div>
+            <div>
+              <dt>Objectiu</dt>
+              <dd>
+                {cameraInfo
+                  ? `${cameraInfo.width}×${cameraInfo.height}${
+                      cameraInfo.looksUltraWide ? ' · ULTRA-ANGULAR' : ''
+                    }${
+                      cameraInfo.zoomRange
+                        ? ` · zoom ${cameraInfo.zoomRange.min}-${cameraInfo.zoomRange.max}`
+                        : ''
+                    }`
+                  : '—'}
+              </dd>
+            </div>
+          </dl>
+
+          <label className="slider">
+            Camp de visió del sensor: {shownFovDeg.toFixed(1)}°
+            <input
+              type="range"
+              min={40}
+              max={130}
+              step={0.5}
+              value={shownFovDeg}
+              onChange={(e) => {
+                // Tocar-lo a mà descarta la mesura automàtica: si l'usuari hi
+                // posa la mà és perquè no se'n refia, i seguir sobreescrivint-lo
+                // seria discutir-hi.
+                measuredFovRef.current = null;
+                focalRef.current.reset();
+                setCalibration((c) => ({ ...c, sensorFovDeg: Number(e.target.value) }));
+              }}
+            />
+          </label>
+
+          <p className="note">
+            El camp de visió del sensor no és el que veus a la pantalla: el vídeo es
+            mostra retallat per omplir el marc. La projecció treballa amb la distància
+            focal en píxels, que el retall no altera.
+          </p>
+          <p className="note">
+            El que decideix si això funciona és el <strong>soroll del rumb</strong>, no
+            l'error en brut: l'error el corregeix el calibratge, però el soroll no. Amb
+            l'ancoratge visual actiu, aquell soroll ja no arriba a la superposició
+            mentre la imatge tingui textura; quan no en té, torna a manar el sensor i es
+            torna a notar.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,47 @@
+{
+  "locale": {
+    "name": "Català",
+    "switch": "Idioma",
+    "ca": "Català",
+    "es": "Castellà"
+  },
+  "guide": {
+    "title": "Guia de l'eclipsi",
+    "subtitle": "Tot el que has de saber abans de {{eclipse}}.",
+    "expandAll": "Obre-ho tot",
+    "collapseAll": "Tanca-ho tot",
+    "criticalBadge": "Clau per a aquest eclipsi",
+    "openHint": "Toca per obrir",
+    "sourcesTitle": "Fonts",
+    "sourcesNote": "Dades de seguretat i d'exposició verificades contra IGN, NASA/GSFC i American Astronomical Society.",
+    "readingTime": "Llegeix-la abans de sortir de casa: el dia de l'eclipsi la xarxa mòbil estarà saturada."
+  },
+  "safety": {
+    "badge": "Seguretat ocular",
+    "filterRequired": {
+      "title": "Filtre solar homologat, obligatori",
+      "text": "No et treguis mai el filtre ISO 12312-2 per mirar el Sol. La retina es crema sense dolor i el dany és permanent."
+    },
+    "totalityNow": {
+      "title": "Ara sí: mira-ho sense filtre",
+      "text": "Estàs dins la totalitat. Treu-te el filtre i mira la corona a ull nu. Torna-te'l a posar tan bon punt aparegui el primer punt de llum."
+    },
+    "totalitySoon": {
+      "title": "Filtre posat fins al segon contacte",
+      "text": "Encara ets en fase parcial. Fins que el Sol no quedi tapat del tot i es faci fosc de cop, el filtre no es toca."
+    },
+    "annular": {
+      "title": "Eclipsi anular: mai sense filtre",
+      "text": "En un eclipsi anular no hi ha cap instant segur. L'anell de Sol que queda visible crema igual que el Sol sencer. El filtre no es treu en cap moment."
+    },
+    "partial": {
+      "title": "Només fase parcial aquí",
+      "text": "Des d'aquesta posició el Sol no es tapa mai del tot. El filtre homologat és obligatori de principi a fi."
+    },
+    "none": {
+      "title": "Sense eclipsi visible",
+      "text": "Encara que no hi hagi eclipsi, mirar el Sol directament o per un objectiu sense filtre frontal fa mal a la vista."
+    },
+    "cameraNote": "Fes servir la pantalla del mòbil, no els ulls."
+  }
+}

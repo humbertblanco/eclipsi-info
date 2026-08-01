@@ -1,0 +1,251 @@
+/* ============================================================================
+   Capa offline — estils.
+
+   Tot amb variables del sistema de disseny: aquest fitxer no ha de definir cap
+   color ni cap mida pròpia. Si aquí hi apareix un hex, és un error.
+
+   L'ambre (--accent) s'usa en UN sol lloc per pantalla: el botó de preparar i,
+   mentre baixa, la barra de progrés que n'és la continuació. La resta de
+   senyals fan servir els colors d'estat, que volen dir coses concretes
+   (clar = fet, perill = falta alguna cosa).
+
+   Importa'l des d'on es faci servir el panell:  import './offline/offline.css'
+   ========================================================================== */
+
+/* --- indicador de connexió ------------------------------------------------ */
+.off-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--bg-surface);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.off-badge__dot {
+  width: var(--sp-3);
+  height: var(--sp-3);
+  border-radius: var(--r-pill);
+  background: currentColor;
+}
+.off-badge--muted { color: var(--text-muted); }
+.off-badge--clear { color: var(--status-clear); border-color: var(--status-clear-quiet); }
+.off-badge--danger { color: var(--status-danger); border-color: var(--status-danger-quiet); }
+
+/* --- contenidor ----------------------------------------------------------- */
+.off-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  padding: var(--sp-6);
+  /* La targeta pot ser l'últim element d'una vista amb desplaçament: a
+     l'iPhone, sense això queda sota la barra d'inici. */
+  padding-bottom: max(var(--sp-6), env(safe-area-inset-bottom));
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface-card);
+  box-shadow: var(--sh-2);
+}
+.off-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+.off-panel__title { font: var(--text-title-3); color: var(--text-primary); }
+.off-panel__lede {
+  margin: 0;
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+  max-width: var(--maxw-prose);
+}
+
+/* --- xifres --------------------------------------------------------------- */
+.off-figures {
+  display: grid;
+  /* Dues columnes al mòbil, més si hi cap: les etiquetes són curtes i les
+     xifres han de quedar alineades entre elles. */
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--sp-5) var(--sp-6);
+  margin: 0;
+  padding: var(--sp-5) 0;
+  border-top: var(--bw-hair) solid var(--border-hairline);
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
+}
+.off-figures--compact { border-bottom: none; padding-bottom: 0; }
+.off-figures__item { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+.off-figures__key {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.off-figures__val { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+
+/* Xifres SEMPRE en mono tabular: la barra de progrés canvia de número deu
+   vegades per segon i, sense amplada fixa, el text ballaria. */
+.off-num {
+  font: var(--text-data);
+  letter-spacing: var(--ls-data);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- botons --------------------------------------------------------------- */
+.off-btn {
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-6);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-body);
+  font: var(--text-label);
+  cursor: pointer;
+  transition: var(--t-color);
+}
+.off-btn:hover { background: var(--surface-card-hover); }
+.off-btn:disabled { opacity: .45; cursor: not-allowed; }
+.off-btn--accent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+/* L'acció principal ocupa tota l'amplada; la d'un avís, no. */
+.off-actions .off-btn--accent { width: 100%; }
+.off-btn--accent:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.off-btn--accent:active:not(:disabled) { background: var(--accent-press); }
+.off-btn--quiet { align-self: flex-start; }
+.off-btn--ghost {
+  min-height: auto;
+  padding: var(--sp-2) var(--sp-4);
+  border-color: transparent;
+  color: var(--text-muted);
+  font: var(--text-body-sm);
+}
+.off-btn--ghost:hover { color: var(--text-body); background: var(--surface-card-hover); }
+
+.off-actions { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+/* --- progrés -------------------------------------------------------------- */
+.off-progress { display: flex; flex-direction: column; gap: var(--sp-4); }
+.off-progress__track {
+  height: var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+.off-progress__fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--r-pill);
+  /* Prou lenta per llegir-se com a moviment, prou curta per no anar endarrerida
+     respecte del que ja s'ha baixat. */
+  transition: width var(--dur-base) var(--ease-out);
+}
+.off-progress__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+.off-progress__msg { font: var(--text-body-sm); color: var(--text-secondary); }
+.off-progress__pct { color: var(--text-accent); }
+.off-progress__bytes { color: var(--text-secondary); font-size: var(--fs-body-sm); }
+
+/* --- notes ---------------------------------------------------------------- */
+.off-note {
+  margin: 0;
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+  max-width: var(--maxw-prose);
+}
+.off-note--warn { color: var(--status-partial); }
+.off-note--danger { color: var(--status-danger); }
+.off-note--ok { color: var(--status-clear); }
+
+/* --- seccions i llistes --------------------------------------------------- */
+.off-section { display: flex; flex-direction: column; gap: var(--sp-4); }
+.off-section__title {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.off-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.off-list__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+}
+.off-list__main { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; }
+.off-list__label { font: var(--text-label); color: var(--text-primary); }
+.off-list__meta {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.off-list__warn { font: var(--text-body-sm); color: var(--status-partial); }
+
+.off-steps {
+  margin: 0;
+  padding-left: var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+/* --- limitacions ---------------------------------------------------------- */
+.off-details {
+  border-top: var(--bw-hair) solid var(--border-hairline);
+  padding-top: var(--sp-5);
+}
+.off-details__summary {
+  cursor: pointer;
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  /* Objectiu tàctil mínim: el triangle sol no s'encerta amb el dit. */
+  min-height: var(--tap-min);
+  display: flex;
+  align-items: center;
+}
+.off-details__list {
+  margin: var(--sp-3) 0 0;
+  padding-left: var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+  max-width: var(--maxw-prose);
+}
+
+/* --- avís d'actualització ------------------------------------------------- */
+.off-update {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  padding: var(--sp-4) var(--sp-5);
+  border: var(--bw-hair) solid var(--status-info-quiet);
+  border-radius: var(--r-sm);
+  background: var(--status-info-quiet);
+}
+.off-update__text { margin: 0; font: var(--text-body-sm); color: var(--text-body); }
+.off-update__actions { display: flex; gap: var(--sp-3); }

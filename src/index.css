@@ -1,0 +1,423 @@
+/* ============================================================================
+   Estils de l'aplicació.
+
+   Tot surt dels tokens del sistema de disseny (src/styles/tokens/). Aquí no hi
+   ha d'haver mai un color, una mida de lletra, un espaiat ni un radi escrits a
+   pèl: si en falta algun, s'afegeix als tokens, no aquí.
+
+   Els principis del sistema que aquest fitxer respecta:
+     · Fosc primer. L'app es fa servir al capvespre, a fora, amb una mà, i amb
+       l'ull adaptat a la foscor.
+     · UN sol accent ambre per pantalla. Mai dos botons ambre competint.
+     · Tota xifra —hores, durades, graus, percentatges— va en mono tabular.
+     · La jerarquia surt del valor de la superfície i de la línia d'un píxel.
+       Les ombres en una interfície nocturna són invisibles; el relleu real el
+       dona la resplendor.
+     · Cap emoji.
+   ========================================================================== */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  -webkit-text-size-adjust: 100%;
+}
+
+.app {
+  max-width: var(--maxw-sheet);
+  margin: 0 auto;
+  padding: var(--sp-4) var(--gutter-app) var(--sp-10);
+}
+
+/* --- Navegació ----------------------------------------------------------- */
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.topbar__tabs {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.tab,
+.btn {
+  min-height: var(--tap-min);
+  background: var(--surface-card);
+  color: var(--text-body);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-pill);
+  padding: var(--sp-3) var(--sp-5);
+  font: var(--text-label);
+  cursor: pointer;
+  transition: var(--t-color), var(--t-press);
+}
+
+.tab:active,
+.btn:active {
+  transform: scale(0.972);
+}
+
+.tab--on {
+  border-color: var(--border-accent);
+  color: var(--text-accent);
+}
+
+.btn--primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: transparent;
+  font-weight: var(--fw-semibold);
+}
+
+.btn--primary:hover {
+  background: var(--accent-hover);
+  box-shadow: var(--glow-corona);
+}
+
+.btn:disabled {
+  opacity: 0.42;
+}
+
+.picker {
+  width: 100%;
+  min-height: var(--tap-min);
+  background: var(--bg-inset);
+  color: var(--text-primary);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  font: var(--text-body-sm);
+  margin-bottom: var(--sp-5);
+}
+
+/* --- Text ---------------------------------------------------------------- */
+
+.muted,
+.note {
+  color: var(--text-muted);
+  font: var(--text-body-sm);
+}
+
+.note {
+  margin: var(--sp-4) 0;
+}
+
+/*
+ * Els avisos porten el fons i la vora del seu color semàntic, però mai una
+ * franja lateral: el sistema prohibeix els accents de vora esquerra.
+ */
+.warn {
+  color: var(--status-partial);
+  background: var(--status-partial-quiet);
+  border: var(--bw-hair) solid var(--status-partial);
+  border-radius: var(--r-md);
+  padding: var(--sp-4) var(--sp-5);
+  font: var(--text-body-sm);
+  margin: var(--sp-4) 0;
+}
+
+.sim__head {
+  margin-bottom: var(--sp-4);
+}
+
+.sim__head h2 {
+  font: var(--text-title-3);
+}
+
+/* --- Veredicte ------------------------------------------------------------
+   La targeta que respon la pregunta del producte. La xifra gran són els segons
+   que veuràs DE VERITAT des d'aquest punt, no els teòrics.
+   ------------------------------------------------------------------------- */
+
+.verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-4);
+  background: var(--surface-card);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5) var(--sp-6);
+  margin-bottom: var(--sp-4);
+}
+
+.verdict__kind {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.verdict--total .verdict__kind,
+.verdict--annular .verdict__kind {
+  color: var(--text-accent);
+}
+
+.verdict__dur {
+  font: var(--fw-medium) var(--fs-data-lg) / 1 var(--font-mono);
+  letter-spacing: var(--ls-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.verdict__lost {
+  font: var(--text-body-sm);
+  color: var(--status-partial);
+  font-variant-numeric: tabular-nums;
+}
+
+.verdict__obsc {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  flex-basis: 100%;
+}
+
+/* --- Llenços ------------------------------------------------------------- */
+
+.canvas {
+  display: block;
+  width: 100%;
+  border-radius: var(--r-lg);
+  border: var(--bw-hair) solid var(--border-hairline);
+  background: var(--bg-inset);
+}
+
+.canvas--sky {
+  height: 260px;
+}
+
+.canvas--traj {
+  height: 230px;
+  margin-top: var(--sp-5);
+}
+
+/* --- Línia temporal ------------------------------------------------------ */
+
+.scrub {
+  width: 100%;
+  margin: var(--sp-5) 0 var(--sp-2);
+  accent-color: var(--accent);
+}
+
+.scrub__readout {
+  display: flex;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+  font: var(--text-body-sm);
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.scrub__readout strong {
+  color: var(--text-primary);
+  font-size: var(--fs-data);
+  font-weight: var(--fw-medium);
+}
+
+/* --- Taula de contactes -------------------------------------------------- */
+
+.contacts {
+  width: 100%;
+  margin-top: var(--sp-5);
+  border-collapse: collapse;
+  font: var(--text-body-sm);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.contacts td {
+  padding: var(--sp-3) var(--sp-2);
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
+}
+
+.contacts__label {
+  color: var(--text-muted);
+  width: 72px;
+  font-family: var(--font-body);
+}
+
+.contacts__time {
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+}
+
+.contacts__alt,
+.contacts__az {
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.contacts--sunset td {
+  color: var(--status-partial);
+}
+
+/* --- Càmera -------------------------------------------------------------- */
+
+.ar__modes {
+  display: flex;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.ar__modes .tab {
+  flex: 1;
+  text-align: center;
+}
+
+.ar .btn {
+  margin-top: var(--sp-4);
+}
+
+.viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--ink-950);
+  margin: var(--sp-4) 0;
+}
+
+.viewport__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* La transició acompanya l'enfosquiment de l'escena quan s'arrossega la línia
+     temporal. Corba orbital, que el sistema reserva per al que representa un
+     cos celeste movent-se. */
+  transition: filter var(--dur-base) var(--ease-orbit);
+}
+
+.viewport__overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * Panell flotant sobre la imatge: aquí sí que toca vidre, perquè és cromatge
+ * que no ha de tapar el cel.
+ */
+.viewport__hint {
+  position: absolute;
+  left: 50%;
+  bottom: var(--sp-5);
+  transform: translateX(-50%);
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  border: var(--bw-hair) solid var(--border-accent);
+  color: var(--text-accent);
+  border-radius: var(--r-pill);
+  padding: var(--sp-3) var(--sp-5);
+  font: var(--text-label);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* --- Diagnòstic ---------------------------------------------------------- */
+
+.readout {
+  margin: var(--sp-5) 0;
+  font: var(--text-body-sm);
+}
+
+.readout > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-1);
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
+}
+
+.readout dt {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.readout dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.readout .good {
+  color: var(--status-clear);
+}
+
+.readout .bad {
+  color: var(--status-danger);
+}
+
+.slider {
+  display: block;
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+  margin: var(--sp-4) 0;
+}
+
+.slider input {
+  width: 100%;
+  accent-color: var(--accent);
+  margin-top: var(--sp-2);
+}
+
+/* --- Progrés del càlcul del terreny -------------------------------------- */
+
+.horizonload {
+  margin: var(--sp-4) 0;
+}
+
+.horizonload__bar {
+  height: 4px;
+  background: var(--bg-inset);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+
+.horizonload__fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--r-pill);
+  transition: width var(--dur-base) var(--ease-standard);
+}
+
+.horizonload__msg {
+  display: block;
+  margin-top: var(--sp-2);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Text que actua com a botó sense semblar-ho: la ubicació a la vista de
+   càmera. Ha de ser tocable (44px) però no competir amb l'accent ambre, que
+   el sistema reserva a una sola acció per pantalla. */
+.linklike {
+  background: none;
+  border: none;
+  padding: var(--sp-2) 0;
+  min-height: var(--tap-min);
+  color: var(--text-accent);
+  font: var(--text-body-sm);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

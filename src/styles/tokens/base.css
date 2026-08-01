@@ -1,0 +1,15 @@
+/* Minimal element defaults. */
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-page);color:var(--text-body);font:var(--text-body-md);-webkit-font-smoothing:antialiased;text-wrap:pretty}
+h1,h2,h3,h4{margin:0;color:var(--text-primary);font-family:var(--font-display);letter-spacing:var(--ls-title)}
+h1{font:var(--text-display-2);letter-spacing:var(--ls-display)}
+h2{font:var(--text-title-1)}
+h3{font:var(--text-title-2)}
+h4{font:var(--text-title-3)}
+p{margin:0 0 var(--sp-5)}
+a{color:var(--text-link);text-decoration:none;border-bottom:1px solid rgba(255,165,31,.35);transition:var(--t-color)}
+a:hover{color:var(--text-link-hover);border-bottom-color:var(--text-link-hover)}
+:focus-visible{outline:none;box-shadow:var(--ring-focus)}
+::selection{background:var(--accent-quiet);color:var(--text-primary)}
+.eclipsi-overline{font:var(--text-overline);letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--text-muted)}
+.eclipsi-data{font:var(--text-data);letter-spacing:var(--ls-data);font-variant-numeric:tabular-nums}

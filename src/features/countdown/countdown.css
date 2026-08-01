@@ -1,0 +1,269 @@
+/* ============================================================================
+   Compte enrere i avisos de veu.
+
+   Només fa servir tokens de `src/styles/tokens/`. Res d'aquí no pinta cap
+   color a mà: els estats de filtre són semàntics (--status-*) i l'únic accent
+   ambre de la pantalla és el botó d'activar els avisos.
+
+   PENSAT PER MIRAR-S'HI UN SEGON. Aquesta pantalla es consulta de reüll, amb el
+   braç estirat, a contrallum i amb el pols accelerat. D'aquí venen tres
+   decisions: xifres enormes en mono tabular, un únic bloc de color per dir si
+   el filtre va posat o no, i cap element que canviï d'amplada mentre compta.
+   ========================================================================== */
+
+.countdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  padding: var(--sp-7);
+  background: var(--surface-card);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-2);
+}
+
+/* ------------------------------------------------------------ capçalera --- */
+
+.countdown__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.countdown__target {
+  font: var(--text-title-2);
+  color: var(--text-primary);
+  letter-spacing: var(--ls-title);
+}
+
+/* -------------------------------------------------------------- rellotge --- */
+
+.countdown__clock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  /* Perquè les xifres es puguin mesurar contra AQUESTA caixa i no contra la
+     finestra. Vegeu `.countdown__digits`. */
+  container-type: inline-size;
+  min-width: 0;
+}
+
+/* Les xifres són el contingut, no la decoració: mono tabular perquè cap
+   columna no balli en passar de 9 a 10, i `--ls-data` perquè a mida gran el
+   mono queda massa airejat. */
+.countdown__digits {
+  font-family: var(--font-mono);
+  /*
+   * LA MIDA ES MESURA CONTRA LA CAIXA, NO CONTRA LA FINESTRA.
+   *
+   * `--fs-data-xl` és `clamp(44px, 9vw, 76px)`: a l'escriptori dona 76 px, i
+   * aquest rellotge viu a la columna estreta de la dreta. Amb el compte en
+   * hores acumulades —«265:52:17», nou caràcters— les xifres se sortien de la
+   * targeta. El text ja s'ha escurçat (ara diu «11 d 02:48»), però la mida
+   * també s'ha de saber acotar sola: en mono cada caràcter fa uns 0,6 em, o
+   * sigui que deu caràcters caben si el cos no passa d'un sisè de l'amplada
+   * de la caixa.
+   */
+  font-size: min(var(--fs-data-xl), 15cqw);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  /* La transició és de color i prou: moure aquestes xifres seria il·legible. */
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+/* Els últims segons abans que torni el Sol. L'única vegada que el rellotge
+   canvia de color, perquè és l'única que importa de debò. */
+.countdown__digits--alarm {
+  color: var(--status-danger);
+}
+
+.countdown__at {
+  font: var(--text-body-sm);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.countdown__phase {
+  margin: 0;
+  font: var(--text-body-md);
+  color: var(--text-secondary);
+}
+
+/* ------------------------------------------------------ estat del filtre --- */
+
+/* El bloc més important de la pantalla. Ha de ser llegible d'un cop d'ull i no
+   pot compartir el llenguatge visual de cap altre element. */
+.countdown__filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-5) var(--sp-6);
+  border-radius: var(--r-md);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-left-width: var(--bw-thick);
+}
+
+.countdown__filterstate {
+  font: var(--text-title-3);
+  letter-spacing: var(--ls-title);
+}
+
+.countdown__filternote {
+  margin: 0;
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+/* Filtre posat en un moment tranquil: informatiu, sense alarma. */
+.countdown__filter--on {
+  background: var(--status-info-quiet);
+  border-left-color: var(--status-info);
+}
+.countdown__filter--on .countdown__filterstate { color: var(--status-info); }
+
+/* L'únic minut i mig de tota la vida en què això es pot ensenyar. */
+.countdown__filter--off {
+  background: var(--status-clear-quiet);
+  border-left-color: var(--status-clear);
+  box-shadow: var(--glow-clear);
+}
+.countdown__filter--off .countdown__filterstate { color: var(--status-clear); }
+
+/* Els últims quinze segons: torna-te'l a posar ara. */
+.countdown__filter--alarm {
+  background: var(--status-danger-quiet);
+  border-left-color: var(--status-danger);
+}
+.countdown__filter--alarm .countdown__filterstate { color: var(--status-danger); }
+
+/* ------------------------------------------------------------- accions --- */
+
+.countdown__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.countdown__btn {
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-6);
+  border-radius: var(--r-sm);
+  border: var(--bw-hair) solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-primary);
+  font: var(--text-label);
+  cursor: pointer;
+  transition: var(--t-color);
+}
+
+.countdown__btn:hover:not(:disabled) {
+  background: var(--surface-card-hover);
+  border-color: var(--border-strong);
+}
+
+.countdown__btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* L'ÚNIC accent ambre de la pantalla. Si algun dia n'hi ha un segon, un dels
+   dos ha de deixar de ser-ho. */
+.countdown__btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.countdown__btn--primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* --------------------------------------------------------------- notes --- */
+
+.countdown__notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.countdown__note {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.countdown__note--warn { color: var(--status-partial); }
+
+/* ------------------------------------------------------ properes fites --- */
+
+.countdown__upcoming {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--bw-hair) solid var(--border-hairline);
+}
+
+.countdown__item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-5);
+  padding: var(--sp-3) 0;
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
+}
+
+.countdown__item:last-child { border-bottom: none; }
+
+.countdown__itemtime {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-body-sm);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--ls-data);
+  color: var(--text-secondary);
+}
+
+.countdown__itemlabel {
+  flex: 1 1 auto;
+  font: var(--text-body-sm);
+  color: var(--text-body);
+  min-width: 0;
+}
+
+/* Les fites de seguretat es distingeixen sense color de fons: prou per
+   reconèixer-les a la llista, no tant com per competir amb el bloc gran. */
+.countdown__item--safety .countdown__itemlabel { color: var(--status-danger); }
+
+/* ------------------------------------------------------------- assaig --- */
+
+/* Durant l'assaig tota la targeta es marca, perquè no hi hagi cap manera de
+   confondre una seqüència de prova amb la de debò. */
+.countdown--rehearsing {
+  border-color: var(--border-accent);
+}
+
+.countdown__rehearsal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--r-sm);
+  background: var(--accent-quiet);
+  font: var(--text-body-sm);
+  color: var(--text-accent);
+}
+
+/* ------------------------------------------------------------ mòbil --- */
+
+@media (max-width: 420px) {
+  .countdown { padding: var(--sp-6); gap: var(--sp-5); }
+  .countdown__actions .countdown__btn { flex: 1 1 100%; }
+}

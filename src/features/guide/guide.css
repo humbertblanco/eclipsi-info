@@ -1,0 +1,294 @@
+/**
+ * Estils de la guia i del banner de seguretat.
+ *
+ * Fa servir només les variables de tema de `src/index.css` (--bg, --panel,
+ * --line, --text, --muted, --accent, --warn, --bad, --good) i les classes
+ * genèriques ja existents (.btn). Res d'aquí no toca res de fora.
+ */
+
+/* Encastat sobre la imatge de la càmera: fons opac i sense marges. */
+.viewport /* -------------------------------------------------------------- guia */
+
+.guide__head { margin-bottom: 10px; }
+
+.guide__subtitle {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.guide__banner { margin-top: 12px; }
+
+.guide__hint {
+  margin: 10px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.guide__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.guide__toolbar .btn { font-size: 13px; padding: 6px 12px; }
+
+.guide__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guide__section {
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.guide__section--critical { border-color: var(--accent); }
+
+.guide__summary {
+  display: block;
+  cursor: pointer;
+  padding: 12px 14px;
+  list-style: none;
+  user-select: none;
+}
+
+/* Amaga el triangle natiu per poder posar-hi el nostre indicador. */
+.guide__summary::-webkit-details-marker { display: none; }
+
+.guide__summaryhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.guide__title {
+  font-size: 15px;
+  font-weight: 600;
+  flex: 1 1 auto;
+}
+
+/* Indicador d'obert/tancat, alineat a la dreta del títol. */
+.guide__summaryhead::after {
+  content: '+';
+  color: var(--text-muted);
+  font-size: 17px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.guide__section[open] .guide__summaryhead::after { content: '−'; }
+
+.guide__badge {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 2px 8px;
+  flex: 0 0 auto;
+}
+
+.guide__lead {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.guide__body {
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.guide__p {
+  margin: 12px 0;
+  font-size: 14px;
+  line-height: 1.62;
+}
+
+/* ------------------------------------------------------------ llistes */
+
+.guide__list {
+  margin: 12px 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.guide__list li { margin-bottom: 7px; }
+
+/* Les llistes amb to canvien el color del pic, no el del text: el text
+   ha de continuar sent llegible i el color només marca la categoria. */
+.guide__list--bad li::marker { color: var(--status-danger); }
+.guide__list--warn li::marker { color: var(--status-partial); }
+.guide__list--good li::marker { color: var(--status-clear); }
+.guide__list--info li::marker { color: var(--accent); }
+
+/* --------------------------------------------------------- definicions */
+
+.guide__defs { margin: 12px 0; }
+
+.guide__defs > div {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.guide__defs > div:last-child { border-bottom: none; }
+
+.guide__defs dt {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.guide__defs dd {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------- avisos */
+
+.guide__callout {
+  margin: 14px 0;
+  padding: 11px 13px;
+  /*
+   * Sense franja lateral de color. El sistema de disseny la prohibeix
+   * explícitament ("no coloured left-border accents"), i el motiu és bo: en una
+   * interfície nocturna una barra de quatre píxels al marge esquerre és el
+   * primer que l'ull descarta, i acaba sent decoració que no comunica res. El
+   * to el porten la icona i el fons tènue, com a `SafetyNotice`.
+   */
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.guide__callout strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.guide__callout p {
+  margin: 5px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.guide__callout--info { border-color: color-mix(in oklab, var(--accent) 38%, transparent); }
+.guide__callout--info strong { color: var(--accent); }
+
+.guide__callout--good {
+  border-color: color-mix(in oklab, var(--status-clear) 38%, transparent);
+  background: rgba(93, 220, 138, 0.06);
+}
+.guide__callout--good strong { color: var(--status-clear); }
+
+.guide__callout--warn {
+  border-color: color-mix(in oklab, var(--status-partial) 38%, transparent);
+  background: rgba(255, 159, 67, 0.07);
+}
+.guide__callout--warn strong { color: var(--status-partial); }
+
+.guide__callout--bad {
+  border-color: color-mix(in oklab, var(--status-danger) 38%, transparent);
+  background: rgba(255, 93, 93, 0.08);
+}
+.guide__callout--bad strong { color: var(--status-danger); }
+
+/* ------------------------------------------------------------- taules */
+
+.guide__tablewrap { margin: 14px 0; }
+
+/* Scroll propi: la taula d'exposicions no ha de fer desbordar la pàgina. */
+.guide__tablescroll {
+  overflow-x: auto;
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.guide__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.guide__table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.guide__table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.guide__table tbody tr:last-child td { border-bottom: none; }
+
+/* La columna del filtre és la que decideix si et cremes: en negreta perquè
+   sigui el primer que es llegeix de cada fila. No se li dona color, perquè
+   ni «Sí» ni «NO» són per si mateixos bons o dolents: depenen de la fase. */
+.guide__table td:nth-child(2) { font-weight: 700; }
+
+.guide__caption {
+  margin: 7px 2px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* -------------------------------------------------------------- fonts */
+
+.guide__sources {
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.guide__sources h3 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.guide__sourcesnote {
+  margin: 6px 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.guide__sources ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.guide__sources a { color: var(--accent); }

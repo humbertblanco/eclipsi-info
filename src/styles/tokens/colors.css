@@ -1,0 +1,73 @@
+/* eclipsi.info — colour system. Dark-first: the product is used at dusk, outdoors, one-handed. */
+:root{
+/* Nocturn — the sky */
+--ink-950:#05060B;--ink-900:#0A0C14;--ink-800:#121623;--ink-700:#1B2133;--ink-600:#2A3247;
+/* Umbra — neutrals in shadow */
+--slate-500:#4E5870;--slate-400:#6E7A94;--slate-300:#9AA5BC;--mist-200:#C9D1E2;--mist-100:#E7EBF3;
+/* Corona — the light */
+--corona-100:#F5F0E4;--corona-050:#FBF8F1;--white:#FFFFFF;
+/* Sun — primary accent, the photosphere */
+--sun-600:#E8830A;--sun-500:#FFA51F;--sun-400:#FFC257;--sun-200:#FFE0A8;
+/* Chromosphere — alert / ember */
+--flare-600:#E03B26;--flare-500:#FF5A45;
+/* Clear sky — go signal */
+--aurora-600:#1FAE86;--aurora-500:#2FD3A3;
+/* Daylight — informational */
+--sky-600:#2E86C8;--sky-500:#4FA8E8;
+
+/* ——— semantic ——— */
+--bg-page:var(--ink-950);
+--bg-surface:var(--ink-900);
+--bg-elevated:var(--ink-800);
+--bg-inset:#04050A;
+--bg-scrim:rgba(5,6,11,.72);
+--surface-card:var(--ink-800);
+--surface-card-hover:var(--ink-700);
+--surface-glass:rgba(18,22,35,.62);
+
+--text-primary:var(--corona-050);
+--text-body:var(--mist-200);
+--text-secondary:var(--slate-300);
+--text-muted:var(--slate-400);
+--text-inverse:var(--ink-950);
+--text-accent:var(--sun-400);
+--text-link:var(--sun-400);
+--text-link-hover:var(--sun-200);
+
+--border-hairline:rgba(201,209,226,.10);
+--border-subtle:rgba(201,209,226,.16);
+--border-strong:rgba(201,209,226,.30);
+--border-accent:var(--sun-500);
+
+--accent:var(--sun-500);
+--accent-hover:var(--sun-400);
+--accent-press:var(--sun-600);
+--accent-quiet:rgba(255,165,31,.14);
+--on-accent:var(--ink-950);
+--focus-ring:var(--sun-400);
+
+/* visibility semantics — the core data of the product */
+--status-clear:var(--aurora-500);
+--status-clear-quiet:rgba(47,211,163,.14);
+--status-partial:var(--sun-500);
+--status-partial-quiet:rgba(255,165,31,.14);
+--status-cloudy:var(--slate-400);
+--status-cloudy-quiet:rgba(110,122,148,.18);
+--status-danger:var(--flare-500);
+--status-danger-quiet:rgba(255,90,69,.14);
+--status-info:var(--sky-500);
+--status-info-quiet:rgba(79,168,232,.14);
+
+/* the only two gradients in the system */
+--grad-corona:radial-gradient(circle at 50% 50%,rgba(255,224,168,.55) 0%,rgba(255,165,31,.18) 38%,rgba(255,165,31,0) 68%);
+--grad-horizon:linear-gradient(180deg,var(--ink-950) 0%,#0B1020 58%,#1D1836 82%,#3A2233 100%);
+}
+/* Light scope: used for print, docs and the safety sheet only. */
+.eclipsi-daylight{
+--bg-page:var(--corona-050);--bg-surface:var(--white);--bg-elevated:var(--white);--bg-inset:var(--corona-100);
+--surface-card:var(--white);--surface-card-hover:var(--corona-100);--surface-glass:rgba(255,255,255,.72);
+--text-primary:var(--ink-950);--text-body:var(--ink-700);--text-secondary:var(--slate-500);--text-muted:var(--slate-400);--text-inverse:var(--corona-050);
+--text-accent:var(--sun-600);--text-link:var(--sun-600);--text-link-hover:var(--flare-600);
+--border-hairline:rgba(10,12,20,.08);--border-subtle:rgba(10,12,20,.14);--border-strong:rgba(10,12,20,.28);
+--bg-scrim:rgba(10,12,20,.45);
+}

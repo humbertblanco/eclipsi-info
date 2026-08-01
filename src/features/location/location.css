@@ -1,0 +1,298 @@
+/* ============================================================================
+   Selector d'ubicació.
+
+   CAP VALOR A PÈL. Tots els colors, mides, espaiats i radis surten dels tokens
+   de `src/styles/tokens/`. Si aquí hi apareix mai un `#` o un `px` solt, és un
+   error.
+
+   CAP FRANJA DE COLOR A L'ESQUERRA. El sistema ho prohibeix explícitament: quan
+   una caixa ha de portar color, el porta sencera (vora + fons apagat), com fa
+   `.shell__alert`. Aquest fitxer segueix el mateix tractament perquè els avisos
+   d'estat de l'app es vegin tots iguals vinguin d'on vinguin.
+
+   MONO TABULAR per a tota xifra: coordenades, metres i segons. Les coordenades
+   canvien cada cop que et mous i, sense amplada fixa de dígit, la línia sencera
+   ballaria a cada actualització del GPS.
+   ========================================================================== */
+
+/* --- La barra sempre visible --------------------------------------------- */
+
+.loc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--gutter-app) var(--sp-3);
+  margin: 0 auto;
+  width: 100%;
+  max-width: var(--maxw-web);
+  /*
+   * Enganxada a sota de la capçalera. És el requisit de fons de tota aquesta
+   * feina: no ha de ser possible llegir xifres sense tenir a la vista de quin
+   * lloc són. El desplaçament de la pàgina no és excusa per perdre-la.
+   */
+  position: sticky;
+  top: calc(var(--bar-top) + var(--bar-dateline));
+  z-index: 15;
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+}
+
+.loc__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: var(--t-color);
+}
+
+.loc__bar:hover {
+  background: var(--surface-card-hover);
+  border-color: var(--border-subtle);
+}
+
+.loc__bar:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+
+.loc__where {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  flex: 1;
+}
+
+.loc__name {
+  font: var(--text-label);
+  color: var(--text-primary);
+  /* Un nom llarg no ha de partir la barra en dues línies a 390 px. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loc__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.loc__coords {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--ls-data);
+}
+
+.loc__cta {
+  flex: none;
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+/*
+ * Avís de punt d'exemple. Mateix tractament que `.shell__alert`, a posta: els
+ * avisos d'estat de l'app s'han de veure tots iguals. Color a tota la caixa.
+ */
+/*
+ * AVÍS EN BLAU I NO EN AMBRE.
+ *
+ * Feia servir `--status-partial`, que a `colors.css` és literalment el mateix
+ * hexadecimal que `--accent`. I aquesta caixa surt sempre que no hi ha lloc
+ * fixat, o sigui a les quatre pantalles alhora, competint amb la xifra que
+ * decideix. El sistema de disseny només admet UN accent ambre per pantalla, i
+ * l'ambre l'ha de tenir la durada de la totalitat, no un avís de configuració.
+ *
+ * L'avís és informatiu, no una alarma: `--status-info` és el to que li toca.
+ */
+.loc__warn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-5);
+  border: var(--bw-hair) solid var(--status-info);
+  border-radius: var(--r-md);
+  background: var(--status-info-quiet);
+  color: var(--text-body);
+  font: var(--text-body-sm);
+}
+
+.loc__warntitle {
+  font: var(--text-label);
+  color: var(--text-primary);
+}
+
+.loc__note {
+  margin: 0;
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+/* --- La fulla de tria ---------------------------------------------------- */
+
+.loc-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.loc-sheet__block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.loc-sheet__head {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* --- Llistes de llocs ---------------------------------------------------- */
+
+.loc-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  list-style: none;
+}
+
+.loc-list__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+}
+
+/*
+ * La fila del lloc actiu. Es marca amb la VORA i no amb un fons de color ni
+ * amb una franja lateral: és una marca d'estat, no una alarma, i el sistema
+ * reserva el color ple per a les coses que volen dir alguna cosa del cel.
+ */
+.loc-list__item--on {
+  border-color: var(--border-strong);
+}
+
+.loc-list__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  flex: 1;
+  min-width: 0;
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-4);
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.loc-list__main:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+
+.loc-list__name {
+  font: var(--text-body-sm);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loc-list__meta {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--ls-data);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Comparació ---------------------------------------------------------- */
+
+.loc-cmp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  background: var(--bg-inset);
+}
+
+.loc-cmp__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.loc-cmp__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+/* --- La porta d'entrada -------------------------------------------------- */
+
+.loc-gate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.loc-gate__body {
+  margin: 0;
+  font: var(--text-body-md);
+  color: var(--text-body);
+}
+
+.loc-gate__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/*
+ * FORMAT COMPACTE, PER A LA PANTALLA DE LA CÀMERA.
+ *
+ * Allà la barra ocupava dues línies i mitja de les vuit que té un mòbil, i el
+ * que ha d'ocupar aquella pantalla és el cel. No es duplica el component ni
+ * l'estat —seria la manera segura de tornar a tenir dues ubicacions
+ * diferents—: només s'hi amaga el que allà no es fa servir. El nom del lloc i
+ * el botó de canviar-lo es queden, perquè saber des d'on es mira segueix sent
+ * la meitat de la resposta.
+ */
+.loc--compact .loc__meta,
+.loc--compact .loc__warn {
+  display: none;
+}
+
+.loc--compact .loc__bar {
+  padding-top: var(--sp-3);
+  padding-bottom: var(--sp-3);
+}

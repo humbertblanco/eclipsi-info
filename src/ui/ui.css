@@ -1,0 +1,1611 @@
+/* ============================================================================
+   Fulla d'estil de la capa de components.
+
+   PER QUÈ UN SOL FITXER I NO UN PER COMPONENT: són components petits que
+   comparteixen molts patrons (l'anell de focus, l'objectiu tàctil de 44 px, la
+   superfície de vidre). Repartits en vint fitxers, el patró es duplica vint
+   vegades i deriva. Aquí es veu d'un cop d'ull que tots respecten el mateix.
+
+   PER QUÈ EL PREFIX `ui-`: `src/index.css` ja defineix `.btn`, `.tab` i
+   `.card` per a les vistes de `src/features/**`. Sense prefix, la cascada
+   barrejaria dues definicions del mateix nom segons l'ordre d'importació.
+
+   CAP VALOR A PÈL. Tot surt dels tokens de `src/styles/tokens/`. Els únics
+   nombres literals que hi ha són estructurals i no visuals: `0`, `1`, `100%`,
+   `50%` i factors de flex.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- primitives
+
+   PER QUÈ AQUESTA CLASSE EXISTEIX: el sistema demana objectius tàctils de 44 px
+   com a mínim, però un botó petit dins d'un HUD no pot MESURAR 44 px o se'l
+   menja la pantalla. La solució és separar la mida visual de la mida tàctil:
+   el pseudoelement estén l'àrea sensible sense moure ni un píxel del dibuix.
+   ---------------------------------------------------------------------------- */
+.ui-tappable {
+  position: relative;
+}
+
+.ui-tappable::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  width: 100%;
+  height: 100%;
+}
+
+/* --------------------------------------------------------------------- Button
+
+   Quatre variants i una sola regla de jerarquia: `primary` és l'ambre i només
+   n'hi pot haver UN per pantalla. `secondary` i `ghost` no competeixen mai amb
+   ell. `danger` no és un quart nivell de la jerarquia sinó una altra cosa: el
+   refús de seguretat ocular.
+
+   ALÇADES: 36 / 44 / 56 px, que és el que fixa el sistema (`_ds_bundle.js`,
+   taula SIZES). Abans teníem 32 / 48 / 48, que a més deixava `md` i `lg`
+   indistingibles.
+   ---------------------------------------------------------------------------- */
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  min-height: var(--tap-min);
+  padding: 0 var(--sp-6);
+  border: var(--bw-hair) solid transparent;
+  border-radius: var(--r-pill);
+  font: var(--text-label);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--t-color), var(--t-press), box-shadow var(--dur-base) var(--ease-out);
+}
+
+.ui-btn:active:not(:disabled) {
+  transform: scale(0.972);
+}
+
+.ui-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.ui-btn--full {
+  display: flex;
+  width: 100%;
+}
+
+/* 36 px. No arriba als 44 de l'objectiu tàctil mínim, i el sistema ho accepta
+   perquè `sm` és per a barres denses i files; qui el fa servir sol dins d'un
+   HUD ha d'afegir-hi `.ui-tappable`. */
+.ui-btn--sm {
+  min-height: calc(var(--sp-8) + var(--sp-2));
+  padding: 0 var(--sp-4);
+  gap: var(--sp-2);
+  font: var(--text-body-sm);
+}
+
+.ui-btn--lg {
+  min-height: calc(var(--sp-11) - var(--sp-3));
+  padding: 0 var(--sp-8);
+  font: var(--fw-semibold) var(--fs-body-lg) / var(--lh-snug) var(--font-body);
+}
+
+.ui-btn--primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: var(--fw-semibold);
+}
+
+.ui-btn--primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  /* La resplendor, no l'ombra: en una interfície nocturna una ombra és
+     invisible i la corona és el vocabulari propi d'aquest producte. */
+  box-shadow: var(--glow-corona);
+}
+
+.ui-btn--primary:active:not(:disabled) {
+  background: var(--accent-press);
+}
+
+.ui-btn--secondary {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+.ui-btn--secondary:hover:not(:disabled) {
+  background: var(--surface-card-hover);
+  border-color: var(--border-strong);
+}
+
+.ui-btn--ghost {
+  background: transparent;
+  color: var(--text-body);
+}
+
+.ui-btn--ghost:hover:not(:disabled) {
+  background: var(--accent-quiet);
+  color: var(--text-primary);
+}
+
+/* El color amb què l'app diu que no et pots treure el filtre. Fons apagat i
+   text encès, no a l'inrevés: un rectangle vermell ple crida però no es llegeix
+   a les fosques, i aquest és justament el missatge que s'ha de poder llegir. */
+.ui-btn--danger {
+  background: var(--status-danger-quiet);
+  color: var(--status-danger);
+  border-color: color-mix(in srgb, var(--status-danger) 40%, transparent);
+}
+
+.ui-btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--status-danger) 22%, transparent);
+}
+
+/* ----------------------------------------------------------------- IconButton */
+.ui-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: var(--bw-hair) solid transparent;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--t-color), var(--t-press);
+}
+
+.ui-iconbtn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.ui-iconbtn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+/* La mida VISUAL baixa a 36 px; l'àrea tàctil la manté `.ui-tappable` a 44. */
+.ui-iconbtn--sm {
+  width: calc(var(--sp-8) + var(--sp-2));
+  height: calc(var(--sp-8) + var(--sp-2));
+}
+
+.ui-iconbtn--lg {
+  width: calc(var(--sp-11) - var(--sp-3));
+  height: calc(var(--sp-11) - var(--sp-3));
+}
+
+.ui-iconbtn--secondary {
+  background: var(--bg-elevated);
+  border-color: var(--border-subtle);
+}
+
+.ui-iconbtn--secondary:hover:not(:disabled) {
+  background: var(--surface-card-hover);
+  border-color: var(--border-strong);
+}
+
+.ui-iconbtn--solid {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.ui-iconbtn--solid:hover:not(:disabled) {
+  background: var(--accent-hover);
+  color: var(--on-accent);
+  box-shadow: var(--glow-corona);
+}
+
+.ui-iconbtn--ghost:hover:not(:disabled) {
+  background: var(--accent-quiet);
+}
+
+/*
+ * Damunt de la càmera o del mapa, la caixa neutra desapareix sobre segons quina
+ * imatge. Aquesta variant d'ÚS —no de sistema— la torna de vidre. Es demana per
+ * `className` des de la pantalla, que és qui sap sobre què flota el botó.
+ */
+.ui-iconbtn--over {
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  border-color: var(--border-subtle);
+}
+
+/* ---------------------------------------------------------------------- Badge
+
+   Els colors i els llindars els fixa `guidelines/colors-visibility.card.html`,
+   que és la fitxa de la dada central del producte: clear ≥70 %, partial 40–69,
+   cloudy <40, més danger i info. La fitxa acaba dient com s'han de pintar:
+   «Quiet variants (14% alpha) back the badges and notices». O sigui FONS
+   apagat i text encès, i CAP VORA de color.
+
+   Abans hi posàvem un anell del color ple. Es veia de seguida comparant les
+   dues pantalles: la nostra insígnia de totalitat portava un cèrcol verd que la
+   del sistema no té, i amb quatre insígnies a la mateixa pantalla allò
+   semblava un semàfor.
+   ---------------------------------------------------------------------------- */
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-pill);
+  border: var(--bw-hair) solid transparent;
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* 6 px. Entre --sp-2 (4) i --sp-3 (8) no hi ha cap pas, i a 4 el punt
+   desapareix sobre el fons apagat. */
+.ui-badge__dot {
+  width: calc(var(--sp-2) + var(--sp-1));
+  height: calc(var(--sp-2) + var(--sp-1));
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+.ui-badge--clear {
+  color: var(--status-clear);
+  background: var(--status-clear-quiet);
+}
+
+.ui-badge--partial {
+  color: var(--status-partial);
+  background: var(--status-partial-quiet);
+}
+
+.ui-badge--cloudy {
+  color: var(--status-cloudy);
+  background: var(--status-cloudy-quiet);
+}
+
+.ui-badge--danger {
+  color: var(--status-danger);
+  background: var(--status-danger-quiet);
+}
+
+.ui-badge--info {
+  color: var(--status-info);
+  background: var(--status-info-quiet);
+}
+
+/* El sistema fa servir aquí un vel de llum al 8 %. `--border-hairline` és
+   rgba(201,209,226,.10), el mateix color a una desena part: és el token que
+   diu «el vel més tènue que el sistema coneix». */
+.ui-badge--neutral {
+  color: var(--text-secondary);
+  background: var(--border-hairline);
+}
+
+/* ------------------------------------------------------------------------ Tag */
+.ui-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--sp-8);
+  padding: 0 var(--sp-4);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  /* Transparent, no `--bg-inset`: una fila de deu etiquetes amb fons és una
+     graella de caixes fosques; el sistema les vol com a contorns. */
+  background: transparent;
+  color: var(--text-body);
+  font: var(--text-body-sm);
+  cursor: pointer;
+  transition: var(--t-color), var(--t-press);
+}
+
+.ui-tag:hover {
+  background: var(--surface-card-hover);
+  color: var(--text-primary);
+}
+
+.ui-tag:active {
+  transform: scale(0.96);
+}
+
+.ui-tag--on {
+  color: var(--text-accent);
+  border-color: var(--border-accent);
+  background: var(--accent-quiet);
+}
+
+/* Amb creu, la caixa la porta el contenidor i els dos botons de dins són
+   transparents; si no, se'n dibuixarien dues de concèntriques. */
+.ui-tag--removable {
+  padding-right: var(--sp-2);
+}
+
+.ui-tag__label,
+.ui-tag__remove {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ui-tag__remove {
+  opacity: 0.7;
+  border-radius: var(--r-pill);
+  transition: opacity var(--dur-fast) var(--ease-standard);
+}
+
+.ui-tag__remove:hover {
+  opacity: 1;
+}
+
+/* ----------------------------------------------------------------------- Card
+
+   `glass` només s'usa quan la targeta flota DAMUNT d'una imatge o d'un mapa;
+   sobre el fons pla és vidre sobre res, que només costa GPU.
+   ---------------------------------------------------------------------------- */
+.ui-card {
+  border: var(--bw-hair) solid var(--border-hairline);
+  /*
+   * 18 px, NO 26.
+   *
+   * `guidelines/brand-radii.card.html` ho diu al subtítol mateix de la fitxa:
+   * «Cards 18, sheets 34, controls pill». `--r-xl` (26) és el pas de sobre i
+   * el fèiem servir aquí per error; el resultat era que totes les targetes de
+   * l'app tenien les cantonades visiblement més rodones que el sistema, cosa
+   * que es nota de seguida posant les dues pantalles de costat.
+   */
+  border-radius: var(--r-lg);
+  background: var(--surface-card);
+  /*
+   * L'ombra de la targeta és `--sh-2` i abans no n'hi havia cap.
+   * `guidelines/brand-elevation.card.html` pinta les targetes de mostra amb
+   * ombra, i el component real (`_ds_bundle.js`, `Card`) hi posa `--sh-2`
+   * sempre. En una interfície nocturna quasi no es veu, i justament per això
+   * és el que separa una targeta del fons sense fer soroll.
+   */
+  box-shadow: var(--sh-2);
+  transition: var(--t-color), box-shadow var(--dur-base) var(--ease-out);
+}
+
+.ui-card--glass {
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+}
+
+.ui-card--inset {
+  background: var(--bg-inset);
+}
+
+.ui-card--interactive {
+  cursor: pointer;
+}
+
+.ui-card--interactive:hover {
+  background: var(--surface-card-hover);
+}
+
+/* La resplendor SUBSTITUEIX l'ombra, no s'hi suma: dues elevacions alhora és
+   una targeta que flota i alhora crema. */
+.ui-card--glow {
+  box-shadow: var(--glow-corona);
+}
+
+/* ----------------------------------------------------------------------- Stat */
+.ui-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.ui-stat__label {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ui-stat__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+/* Tota xifra en mono TABULAR: els dígits no poden ballar mentre compta enrere. */
+.ui-stat__value {
+  font: var(--text-data);
+  font-family: var(--font-mono);
+  letter-spacing: var(--ls-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+/* `sm` fa la xifra amb el cos de text llarg: és per quan la dada acompanya una
+   frase i no ha de competir-hi. */
+.ui-stat--sm .ui-stat__value {
+  font-size: var(--fs-body-lg);
+}
+
+.ui-stat--lg .ui-stat__value {
+  font-size: var(--fs-data-lg);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-tight);
+}
+
+.ui-stat--center {
+  align-items: center;
+}
+
+.ui-stat__unit {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.ui-stat--accent .ui-stat__value {
+  color: var(--text-accent);
+}
+
+.ui-stat--clear .ui-stat__value {
+  color: var(--status-clear);
+}
+
+/* ---------------------------------------------------------------- SegmentedControl */
+/* Graella i no flex: amb `repeat(n, 1fr)` totes les opcions fan exactament la
+   mateixa amplada encara que una etiqueta sigui el doble de llarga. Amb
+   `flex: 1` la més llarga s'enduia més espai i el commutador quedava tort. */
+.ui-seg {
+  display: inline-grid;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-pill);
+  background: var(--bg-inset);
+}
+
+.ui-seg--full {
+  display: grid;
+}
+
+.ui-seg__opt {
+  min-width: 0;
+  min-height: var(--sp-9);
+  padding: 0 var(--sp-5);
+  border: none;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font: var(--text-label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: var(--t-color);
+}
+
+.ui-seg__opt:hover {
+  color: var(--text-primary);
+}
+
+/* El segment actiu s'aixeca amb VALOR DE SUPERFÍCIE, no amb ambre: dins d'una
+   pantalla que ja té el seu accent, un segmentat ambre en seria un segon.
+   L'ombra és --sh-1 (la que fa servir el sistema) i no el reflex superior:
+   una pastilla que sura ha de projectar, no brillar per dalt. */
+.ui-seg__opt--on {
+  background: var(--surface-card-hover);
+  color: var(--text-primary);
+  box-shadow: var(--sh-1);
+}
+
+/* ----------------------------------------------------------------------- Tabs
+
+   Pestanyes de contingut, subratllades. Es distingeixen del segmentat perquè
+   naveguen dins d'una pàgina, no commuten l'estat d'un control.
+   ---------------------------------------------------------------------------- */
+.ui-tabs {
+  display: flex;
+  gap: var(--sp-7);
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ui-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.ui-tabs__item {
+  position: relative;
+  min-height: var(--tap-min);
+  padding: var(--sp-3) 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font: var(--text-label);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--t-color);
+}
+
+.ui-tabs__item:hover {
+  color: var(--text-body);
+}
+
+.ui-tabs__item--on {
+  color: var(--text-primary);
+}
+
+.ui-tabs__item--on::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(-1 * var(--bw-hair));
+  height: var(--bw-thick);
+  background: var(--accent);
+  border-radius: var(--r-pill);
+}
+
+/* ---------------------------------------------------------------- RangeSlider */
+.ui-range {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.ui-range__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.ui-range__label {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* La lectura va en text primari, NO en ambre.
+   `guidelines/colors-sun.card.html`: «One amber action per screen. Never two.»
+   A la pantalla del cel l'ambre ja el porta la via del recorregut; posar-l'hi
+   també a l'hora feia que la pantalla tingués dos accents i cap dels dos
+   signifiqués res. */
+.ui-range__value {
+  font: var(--text-data);
+  font-family: var(--font-mono);
+  letter-spacing: var(--ls-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+/* El control natiu, redibuixat. Es manté `input[type=range]` i no es reinventa
+   amb divs perquè el teclat, el lector de pantalla i l'arrossegament amb el dit
+   ja hi funcionen; refer-ho a mà vol dir perdre les tres coses. */
+.ui-range__input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: var(--sp-7);
+  background: transparent;
+  cursor: pointer;
+}
+
+/*
+ * La via porta el tram RECORREGUT en ambre. El degradat de dues parades
+ * dures no és un efecte: és l'única manera de pintar el progrés dins d'un
+ * `input[type=range]` natiu, que no té cap pseudoelement per al tram omplert.
+ * Sense això, el control deia on ets amb el botó i prou, i no d'on véns.
+ */
+.ui-range__input::-webkit-slider-runnable-track {
+  height: var(--sp-2);
+  border-radius: var(--r-pill);
+  background: linear-gradient(
+    to right,
+    var(--accent) 0 var(--ui-range-pct, 0%),
+    var(--ink-600) var(--ui-range-pct, 0%) 100%
+  );
+}
+
+.ui-range__input::-moz-range-track {
+  height: var(--sp-2);
+  border-radius: var(--r-pill);
+  background: linear-gradient(
+    to right,
+    var(--accent) 0 var(--ui-range-pct, 0%),
+    var(--ink-600) var(--ui-range-pct, 0%) 100%
+  );
+}
+
+/*
+ * El botó és de corona (blanc trencat) i no ambre.
+ *
+ * Damunt d'una via que ja és ambre, un botó ambre desapareix precisament allà
+ * on has de mirar. El sistema el fa clar amb un anell fosc, i la resplendor
+ * només mentre l'arrossegues: així el gest té resposta i, en deixar-lo anar,
+ * la pantalla torna a tenir un sol accent.
+ */
+.ui-range__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--sp-6);
+  height: var(--sp-6);
+  border-radius: 50%;
+  background: var(--corona-050);
+  border: var(--bw-thick) solid var(--ink-950);
+  box-shadow: var(--sh-1);
+  /* Centrat sobre una via de --sp-2: (20 − 4) / 2 = 8 px amunt. */
+  margin-top: calc((var(--sp-2) - var(--sp-6)) / 2);
+}
+
+.ui-range__input::-moz-range-thumb {
+  width: var(--sp-6);
+  height: var(--sp-6);
+  border-radius: 50%;
+  background: var(--corona-050);
+  border: var(--bw-thick) solid var(--ink-950);
+  box-shadow: var(--sh-1);
+}
+
+.ui-range__input:active::-webkit-slider-thumb {
+  box-shadow: var(--glow-corona);
+}
+
+.ui-range__input:active::-moz-range-thumb {
+  box-shadow: var(--glow-corona);
+}
+
+.ui-range__ticks {
+  position: relative;
+  height: var(--sp-5);
+}
+
+.ui-range__tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* La marca vertical sobre la via. Sense ella, les etiquetes C1/C2/C4 suren
+   sota el control i no assenyalen cap punt concret del recorregut. */
+.ui-range__tick::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  width: var(--bw-hair);
+  height: var(--sp-3);
+  background: var(--border-strong);
+}
+
+.ui-range__tick--on {
+  color: var(--text-accent);
+}
+
+/* --------------------------------------------------------------------- Switch */
+.ui-switch {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  min-height: var(--tap-min);
+  cursor: pointer;
+}
+
+.ui-switch__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.ui-switch__label {
+  font: var(--text-label);
+  color: var(--text-primary);
+}
+
+.ui-switch__desc {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.ui-switch__track {
+  position: relative;
+  flex: none;
+  width: var(--sp-10);
+  height: var(--sp-7);
+  border-radius: var(--r-pill);
+  /* Apagat = --ink-600, el mateix gris que el sistema. Amb --bg-inset (quasi
+     negre) la via desapareixia sobre el fons i només es veia el botó. */
+  background: var(--ink-600);
+  border: var(--bw-hair) solid var(--border-hairline);
+  transition: var(--t-color);
+}
+
+.ui-switch__knob {
+  position: absolute;
+  top: 50%;
+  left: var(--sp-1);
+  transform: translateY(-50%);
+  width: var(--sp-6);
+  height: var(--sp-6);
+  border-radius: 50%;
+  background: var(--mist-200);
+  box-shadow: var(--sh-1);
+  transition: transform var(--dur-base) var(--ease-out), background-color var(--dur-fast) var(--ease-standard);
+}
+
+/*
+ * ENCÈS = VIA AMBRE PLENA, i el botó fosc a sobre.
+ *
+ * Abans la via encesa era `--accent-quiet` (ambre al 14 %) amb el botó ambre:
+ * de reüll, encès i apagat es distingien només pel color d'un cercle de 20 px.
+ * El sistema omple la via sencera, que és el que fa que l'estat es llegeixi
+ * sense mirar-s'ho.
+ */
+.ui-switch__input:checked + .ui-switch__track {
+  background: var(--accent);
+  border-color: transparent;
+}
+
+.ui-switch__input:checked + .ui-switch__track .ui-switch__knob {
+  background: var(--ink-950);
+  /* 48 − 20 − 2·2 = 24 px de recorregut. */
+  transform: translateY(-50%) translateX(calc(var(--sp-10) - var(--sp-6) - var(--sp-2) - var(--sp-1)));
+}
+
+/* El control natiu no es treu amb `display:none` ni es fa de mida zero: el
+   volem al flux del teclat i sota el focus del navegador. Es tapa i prou. */
+.ui-visually-hidden {
+  position: absolute;
+  width: var(--bw-hair);
+  height: var(--bw-hair);
+  padding: 0;
+  margin: calc(-1 * var(--bw-hair));
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ui-switch__input:focus-visible + .ui-switch__track,
+.ui-check__input:focus-visible + .ui-check__box {
+  box-shadow: var(--ring-focus);
+}
+
+/* ------------------------------------------------------------------- Checkbox */
+.ui-check {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-height: var(--tap-min);
+  cursor: pointer;
+}
+
+.ui-check__box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--sp-6);
+  height: var(--sp-6);
+  border: var(--bw-hair) solid var(--border-strong);
+  border-radius: var(--r-xs);
+  background: var(--bg-inset);
+  color: transparent;
+  transition: var(--t-color);
+}
+
+.ui-check__input:checked + .ui-check__box {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.ui-check__label {
+  font: var(--text-body-md);
+  color: var(--text-body);
+}
+
+.ui-check__input:checked ~ .ui-check__label {
+  color: var(--text-primary);
+}
+
+/* ------------------------------------------------------------- Input / Select */
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/*
+ * Etiqueta de camp en LABEL (14 px semibold) i no en overline en versaleta.
+ * `guidelines/type-utility.card.html` reparteix la feina: l'overline mono és
+ * per a dades («DURADA DE LA TOTALITAT»), i «Label · 14px semibold» és
+ * explícitament per a «camps de formulari i botons». Amb l'overline, els
+ * formularis semblaven llegendes d'una taula.
+ */
+.ui-field__label {
+  font: var(--text-label);
+  color: var(--text-secondary);
+}
+
+/* Ajuda i error sota el camp. Mateixa mida; el que canvia és el color. */
+.ui-field__note {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.ui-field__note--error {
+  color: var(--status-danger);
+}
+
+.ui-input {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: var(--sp-10);
+  padding: 0 var(--sp-5);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  color: var(--text-muted);
+  transition: var(--t-color), box-shadow var(--dur-fast) var(--ease-standard);
+}
+
+.ui-input:focus-within {
+  border-color: var(--border-accent);
+  /* Halo ambre apagat, no l'anell de focus general: aquí el focus és un estat
+     continu mentre s'escriu, i l'anell de dos colors del sistema hi seria un
+     rètol permanent. */
+  box-shadow: 0 0 0 var(--bw-thick) var(--accent-quiet);
+}
+
+.ui-input--error {
+  border-color: var(--status-danger);
+}
+
+.ui-input--error:focus-within {
+  border-color: var(--status-danger);
+  box-shadow: 0 0 0 var(--bw-thick) var(--status-danger-quiet);
+}
+
+.ui-input--glass {
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  border-color: var(--border-subtle);
+}
+
+.ui-input__field {
+  flex: 1;
+  min-width: 0;
+  height: var(--sp-10);
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: var(--text-body-md);
+}
+
+.ui-input__field::placeholder {
+  color: var(--text-muted);
+}
+
+/* Contenidor del desplegable: només existeix per posar-hi el galó a sobre.
+   `inline-flex` perquè, dins d'una barra, s'ajusti al contingut, i dins d'un
+   `.ui-field` (columna amb `stretch`) ompli l'amplada. */
+.ui-selectwrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.ui-selectwrap__caret {
+  position: absolute;
+  right: var(--sp-4);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.ui-select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-height: var(--sp-10);
+  /* El coixí de la dreta ha de deixar lloc al galó, o el text hi passa per sota. */
+  padding: 0 var(--sp-9) 0 var(--sp-5);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  color: var(--text-primary);
+  font: var(--text-body-md);
+  cursor: pointer;
+  transition: var(--t-color);
+}
+
+.ui-select:hover {
+  border-color: var(--border-strong);
+}
+
+.ui-select:focus-visible {
+  border-color: var(--border-accent);
+}
+
+/* Els navegadors d'escriptori pinten la llista desplegada amb el fons del
+   sistema: sense això, sobre un tema clar surt text blanc sobre blanc. */
+.ui-select option {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* ---------------------------------------------------------------------- Toast
+
+   Píndola de vidre, radi de pastilla (no --r-md): el sistema el dibuixa com una
+   càpsula flotant, no com una targeta petita. La distinció importa perquè una
+   targeta sembla contingut de la pàgina i una càpsula sembla una cosa que
+   acaba de passar i marxarà.
+   ---------------------------------------------------------------------------- */
+.ui-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  max-width: var(--maxw-sheet);
+  padding: var(--sp-4) var(--sp-5);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  box-shadow: var(--sh-3);
+  font: var(--text-body-sm);
+  color: var(--text-primary);
+}
+
+.ui-toast__body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Només el glif porta el to. La caixa es queda neutra sempre. */
+.ui-toast__icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--text-accent);
+}
+
+.ui-toast--clear .ui-toast__icon {
+  color: var(--status-clear);
+}
+
+.ui-toast--partial .ui-toast__icon {
+  color: var(--status-partial);
+}
+
+.ui-toast--cloudy .ui-toast__icon {
+  color: var(--status-cloudy);
+}
+
+.ui-toast--danger .ui-toast__icon {
+  color: var(--status-danger);
+}
+
+.ui-toast--info .ui-toast__icon {
+  color: var(--status-info);
+}
+
+/* --------------------------------------------------------------- SafetyNotice
+
+   El component més important de l'app: la resta són comoditats, aquest evita
+   una lesió de retina. Per això NO és descartable i NO fa servir la vora
+   esquerra de color que el sistema prohibeix — porta el color a tota la caixa.
+   ---------------------------------------------------------------------------- */
+/* La vora és el color del nivell al 38 %, no al 100 %. El sistema ho fa així
+   perquè el que ha de cridar és el TEXT, no el marc: un rectangle amb un
+   contorn vermell ple, a les fosques i a mida completa, enlluerna i es llegeix
+   pitjor que el missatge que hi ha a dins. Es deriva del token amb `color-mix`
+   i no s'escriu cap color a pèl. */
+.ui-safety {
+  display: flex;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  border: var(--bw-hair) solid color-mix(in srgb, currentColor 38%, transparent);
+  border-radius: var(--r-md);
+}
+
+.ui-safety__icon {
+  flex: none;
+  margin-top: var(--sp-1);
+}
+
+.ui-safety__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.ui-safety__title {
+  font: var(--text-label);
+  color: currentColor;
+}
+
+.ui-safety__text {
+  font: var(--text-body-sm);
+  color: var(--text-body);
+}
+
+.ui-safety--danger {
+  color: var(--status-danger);
+  background: var(--status-danger-quiet);
+}
+
+.ui-safety--warning {
+  color: var(--status-partial);
+  background: var(--status-partial-quiet);
+}
+
+.ui-safety--info {
+  color: var(--status-info);
+  background: var(--status-info-quiet);
+}
+
+/* --------------------------------------------------------------------- Dialog */
+.ui-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: var(--sp-5);
+  background: var(--bg-scrim);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+}
+
+.ui-dialog__sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  width: 100%;
+  max-width: var(--maxw-sheet);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--sp-7);
+  /* Fulla opaca: el vidre ja el posa el vel del darrere. Dos vidres apilats
+     converteixen el text en fang. */
+  background: var(--bg-elevated);
+  border: var(--bw-hair) solid var(--border-subtle);
+  /*
+   * NOMÉS LES CANTONADES DE DALT, i a --r-2xl (34).
+   * `guidelines/brand-radii.card.html`: «Cards 18, sheets 34». Al mòbil la
+   * fulla puja des de la vora inferior i hi queda enganxada: arrodonir-li les
+   * cantonades de baix la desenganxa de la vora i deixa dos triangles de vel
+   * a sota, que és exactament el que el sistema evita. Fèiem --r-xl (26) a les
+   * quatre, o sigui la mesura equivocada al lloc equivocat.
+   */
+  border-bottom: none;
+  border-radius: var(--r-2xl) var(--r-2xl) 0 0;
+  box-shadow: var(--sh-3);
+  padding-bottom: calc(var(--sp-7) + env(safe-area-inset-bottom));
+}
+
+.ui-dialog__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.ui-dialog__title {
+  font: var(--text-title-3);
+  color: var(--text-primary);
+}
+
+.ui-dialog__body {
+  font: var(--text-body-sm);
+  color: var(--text-body);
+}
+
+.ui-dialog__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+/* A partir de tauleta la fulla deixa de pujar des de la vora i se centra: llavors
+   sí que ha de tenir les quatre cantonades, perquè ja no toca res. */
+@media (min-width: 720px) {
+  .ui-dialog {
+    align-items: center;
+  }
+
+  .ui-dialog__sheet {
+    border-bottom: var(--bw-hair) solid var(--border-subtle);
+    border-radius: var(--r-2xl);
+    padding-bottom: var(--sp-7);
+  }
+}
+
+/* -------------------------------------------------------------- ErrorBoundary
+
+   Substitut d'una pantalla que ha caigut. Vora discontínua i no plena: no és
+   una superfície de contingut, és un forat. No fa servir el to de perill, que
+   en aquesta app està reservat a la seguretat ocular.
+   ---------------------------------------------------------------------------- */
+.ui-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  margin: var(--sp-5) var(--gutter-app);
+  padding: var(--sp-6);
+  border: var(--bw-hair) dashed var(--border-subtle);
+  border-radius: var(--r-lg);
+  background: var(--bg-inset);
+}
+
+.ui-fallback__text {
+  font: var(--text-body-sm);
+  color: var(--text-body);
+}
+
+/* El missatge tècnic, tal com el dona el navegador. Es diu, no s'amaga. */
+.ui-fallback__detail {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-data);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* -------------------------------------------------------------------- Tooltip */
+.ui-tooltip {
+  position: relative;
+  display: inline-flex;
+}
+
+.ui-tooltip__bubble {
+  position: absolute;
+  left: 50%;
+  z-index: 30;
+  padding: var(--sp-2) var(--sp-4);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  /* --ink-700 i no --bg-elevated (--ink-800): la bafarada ha de quedar per
+     damunt de la targeta on sura, i --ink-800 és justament el valor de la
+     targeta. Amb el mateix valor, la bafarada desapareix dins seu. */
+  background: var(--ink-700);
+  color: var(--text-primary);
+  font: var(--text-body-sm);
+  white-space: nowrap;
+  box-shadow: var(--sh-2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-standard);
+}
+
+.ui-tooltip--top .ui-tooltip__bubble {
+  bottom: 100%;
+  transform: translate(-50%, calc(-1 * var(--sp-3)));
+}
+
+.ui-tooltip--bottom .ui-tooltip__bubble {
+  top: 100%;
+  transform: translate(-50%, var(--sp-3));
+}
+
+.ui-tooltip:hover .ui-tooltip__bubble,
+.ui-tooltip:focus-within .ui-tooltip__bubble {
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------- TopBar */
+.ui-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  height: 100%;
+  padding: 0 var(--gutter-app);
+}
+
+.ui-topbar__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.ui-topbar__title {
+  font: var(--text-title-3);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * Logotip de la barra. L'alçada mínima que fixa `brand-logo` és de 22 px i és
+ * exactament la que fem servir: la barra en fa 56 i el logotip hi ha de
+ * conviure amb l'espai lliure, que la guia defineix com el radi de la marca.
+ * `--sp-3` (8 px) és el pas de la retícula més proper a aquell radi a 22 px
+ * d'alçada. El logotip no s'escala mai per sota d'això.
+ */
+.ui-topbar__logo {
+  height: var(--sp-7);
+  width: auto;
+  align-self: flex-start;
+  padding: var(--sp-3) 0;
+  box-sizing: content-box;
+}
+
+.ui-topbar__sub {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ui-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: none;
+}
+
+/* ----------------------------------------------------------------- SiteHeader
+
+   Capçalera de la pàgina pública. Enganxosa i de vidre, amb els gutters amples
+   del web (`--gutter-web`) i no els de l'app: a 1.400 px, 20 px de marge
+   deixaria el logotip enganxat a la vora de la pantalla.
+   ---------------------------------------------------------------------------- */
+.ui-siteheader {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  padding: var(--sp-5) var(--gutter-web);
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
+}
+
+.ui-siteheader__logo {
+  height: var(--sp-7);
+  width: auto;
+  flex: none;
+}
+
+.ui-siteheader__nav {
+  display: flex;
+  gap: var(--sp-7);
+  flex: 1;
+  min-width: 0;
+}
+
+.ui-siteheader__link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--t-color);
+}
+
+.ui-siteheader__link:hover,
+.ui-siteheader__link--on {
+  color: var(--text-primary);
+}
+
+.ui-siteheader__repo {
+  display: inline-flex;
+  flex: none;
+  color: var(--text-secondary);
+  /* `base.css` subratlla tots els enllaços amb una línia ambre; sota una icona
+     de 20 px això és una ratlla solta i prou. */
+  border-bottom: none;
+  transition: var(--t-color);
+}
+
+.ui-siteheader__repo:hover {
+  color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------- TabBar */
+.ui-tabbar {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+}
+
+.ui-tabbar__item {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-width: 0;
+  min-height: var(--tap-min);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--t-color);
+  /* La pestanya activa la marca el COLOR, no un fons: sobre vidre, un
+     rectangle de fons per pestanya converteix la barra en una graella. */
+}
+
+.ui-tabbar__item:hover {
+  color: var(--text-secondary);
+}
+
+.ui-tabbar__item--on {
+  color: var(--text-accent);
+}
+
+.ui-tabbar__label {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ------------------------------------------------------------------ Countdown
+
+   La xifra més gran de l'app. Mono tabular i amb `font-variant-numeric` per
+   força: sense això, cada segon que passa mou els dígits del costat i el
+   compte enrere batega.
+   ---------------------------------------------------------------------------- */
+.ui-countdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.ui-countdown__label {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ui-countdown__digits {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  /* El sistema separa els grups amb --sp-5 en horitzontal i --sp-3 quan el
+     compte ha de partir-se en dues línies. Amb un sol `gap` de --sp-3 els
+     grups s'enganxaven i «04h 51min» semblava un sol número. */
+  column-gap: var(--sp-5);
+  row-gap: var(--sp-3);
+  font-family: var(--font-mono);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  line-height: var(--lh-tight);
+}
+
+.ui-countdown__group {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+/* La unitat va en cos de text i no en overline: al costat d'una xifra de 76 px,
+   una unitat en versaleta mono amb interlletratge ample sembla una etiqueta de
+   secció i no la unitat del número. El sistema hi posa --text-body-sm. */
+.ui-countdown__unit {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.ui-countdown--sm .ui-countdown__digits {
+  font-size: var(--fs-data);
+}
+
+.ui-countdown--md .ui-countdown__digits {
+  font-size: var(--fs-data-lg);
+}
+
+.ui-countdown--lg .ui-countdown__digits {
+  font-size: var(--fs-data-xl);
+}
+
+/* Passat l'esdeveniment ja no és un compte enrere sinó una constatació. */
+.ui-countdown--past .ui-countdown__digits {
+  color: var(--text-secondary);
+}
+
+/* ------------------------------------------------------------ VisibilityMeter */
+.ui-vis {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.ui-vis__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.ui-vis__glyph {
+  display: inline-flex;
+  flex: none;
+  color: currentColor;
+}
+
+/* Nom del lloc en etiqueta (14 semibold) i no en subtítol (20): la xifra és el
+   que ha de manar, i amb el topònim a 20 px la xifra deixava de ser el primer
+   que es llegeix. El sistema hi posa --text-label. */
+.ui-vis__place {
+  flex: 1;
+  min-width: 0;
+  font: var(--text-label);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ui-vis__value {
+  font: var(--text-data);
+  font-family: var(--font-mono);
+  letter-spacing: var(--ls-data);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+.ui-vis__track {
+  height: var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--bg-inset);
+  border: var(--bw-hair) solid var(--border-hairline);
+  overflow: hidden;
+}
+
+.ui-vis__fill {
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: currentColor;
+  transition: width var(--dur-slow) var(--ease-out);
+}
+
+.ui-vis__caption {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.ui-vis--clear {
+  color: var(--status-clear);
+}
+
+.ui-vis--partial {
+  color: var(--status-partial);
+}
+
+.ui-vis--cloudy {
+  color: var(--status-cloudy);
+}
+
+.ui-vis--unknown {
+  color: var(--text-muted);
+}
+
+/* -------------------------------------------------------------------- TipCard
+
+   Fila d'índex, no targeta decorativa: ordinal o icona, títol, una línia de
+   resum i el temps de lectura a la dreta.
+   ---------------------------------------------------------------------------- */
+/* Graella de tres columnes i no flex: així l'ordinal, el títol i el temps de
+   lectura queden en tres columnes RECTES per a totes les files de la llista,
+   que és el que fa que un índex es llegeixi com un índex. */
+.ui-tip {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  column-gap: var(--sp-6);
+  align-items: baseline;
+  width: 100%;
+  padding: var(--sp-6) 0;
+  border: none;
+  border-top: var(--bw-hair) solid var(--border-subtle);
+  background: transparent;
+  text-align: left;
+  transition: var(--t-color);
+}
+
+/* Encaixada per a barres laterals i superposicions damunt del mapa. */
+.ui-tip--card {
+  padding: var(--sp-5);
+  background: var(--surface-card);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-lg);
+}
+
+.ui-tip--action {
+  cursor: pointer;
+}
+
+.ui-tip--action:hover .ui-tip__title,
+.ui-tip--action:hover .ui-tip__lead {
+  color: var(--text-accent);
+}
+
+.ui-tip__lead {
+  display: inline-flex;
+  align-items: center;
+  min-width: calc(var(--sp-7) - var(--sp-1));
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  transition: var(--t-color);
+}
+
+.ui-tip__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* Títol al cos de subtítol (20 px) i no a 14: el sistema tracta cada entrada de
+   la guia com un titular petit, no com una etiqueta de formulari. */
+.ui-tip__title {
+  font: var(--text-title-3);
+  color: var(--text-primary);
+  transition: var(--t-color);
+}
+
+/* 58ch: el sistema hi posa aquest límit perquè el resum és UNA línia de context,
+   no un paràgraf. Sense límit, a l'escriptori s'estira fins als 1.160 px i deixa
+   de llegir-se com un peu de fila. */
+.ui-tip__text {
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+  max-width: 58ch;
+}
+
+.ui-tip__meta {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}

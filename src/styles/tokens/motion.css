@@ -1,0 +1,19 @@
+:root{
+--dur-instant:90ms;
+--dur-fast:160ms;
+--dur-base:240ms;
+--dur-slow:420ms;
+--dur-celestial:1600ms;
+--ease-standard:cubic-bezier(.2,.6,.2,1);
+--ease-out:cubic-bezier(0,.7,.25,1);
+--ease-in:cubic-bezier(.5,0,1,.5);
+--ease-orbit:cubic-bezier(.45,.05,.3,.95);
+--t-press:transform var(--dur-instant) var(--ease-standard);
+--t-color:background-color var(--dur-fast) var(--ease-standard),color var(--dur-fast) var(--ease-standard),border-color var(--dur-fast) var(--ease-standard);
+}
+@media (prefers-reduced-motion:reduce){:root{
+--dur-fast:1ms;
+--dur-base:1ms;
+--dur-slow:1ms;
+--dur-celestial:1ms;
+}}

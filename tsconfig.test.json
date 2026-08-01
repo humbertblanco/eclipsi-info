@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
+    "target": "es2023",
+    /*
+     * Les llibreries del DOM hi han de ser, encara que ni els tests ni els
+     * scripts corrin en un navegador.
+     *
+     * El motiu: importen mòduls de `src/` que sí que en toquen alguns tipus —
+     * `elevation.ts` fa servir `ImageData` per descodificar les tessel·les del
+     * terreny, i els scripts de mesura fan `fetch`. Els tipus només existeixen
+     * en temps de compilació i no arrosseguen res a l'execució; el que sí que
+     * passaria sense això és que la comprovació de tipus fallés per a codi que
+     * funciona perfectament.
+     *
+     * Els mòduls de `src/core/**` segueixen sense DEPENDRE del DOM: fan servir
+     * `OffscreenCanvas` amb reserva i comproven què tenen disponible abans de
+     * cridar res.
+     */
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    /* Els tests i els scripts els executen Vitest i tsx, que resolen els
+       imports com un bundler: sense extensió i sense `exports` de Node. */
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "resolveJsonModule": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["tests", "scripts", "vitest.config.ts"]
+}

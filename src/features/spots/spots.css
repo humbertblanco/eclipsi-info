@@ -1,0 +1,355 @@
+/*
+ * Estils del cercador de llocs.
+ *
+ * Només variables de src/styles/tokens/. Cap color, cap mida de lletra, cap
+ * espaiat ni cap radi escrit a mà.
+ *
+ * REGLA DE L'ACCENT. `--accent` no apareix ni una sola vegada en aquest fitxer.
+ * L'ambre d'aquesta pantalla té amo: és `--status-partial`, el color d'una
+ * totalitat que es veu a mitges. L'única peça que podria disputar-l'hi és el
+ * botó de cercar, i el component ja el passa a fantasma quan hi ha resultats
+ * (vegeu la capçalera de SpotSearchPanel.tsx).
+ *
+ * REGLA DE LES XIFRES. Tot número porta `.eclipsi-data` o `--font-mono` amb
+ * `tabular-nums`. En una llista de vuit llocs, les xifres s'han de poder
+ * comparar en columna sense que ballin horitzontalment.
+ *
+ * LA VORA ESQUERRA DE CADA TARGETA porta el veredicte. Es veu de reüll, sense
+ * llegir res, i és el que permet recórrer la llista amb el polze.
+ */
+
+/* ------------------------------------------------------------------ panell */
+
+.spotpanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.spotpanel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+}
+
+.spotpanel__title {
+  margin: 0;
+  font: var(--text-title-3);
+  letter-spacing: var(--ls-title);
+  color: var(--text-primary);
+}
+
+.spotpanel__lead {
+  margin: var(--sp-2) 0 0;
+  max-width: var(--maxw-prose);
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+.spotpanel__wait,
+.spotpanel__error {
+  margin: 0;
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.spotpanel__error {
+  color: var(--status-danger);
+}
+
+/* ------------------------------------------------------------------ progrés */
+
+.spotpanel__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/*
+ * La barra va en blau i no en ambre: informa d'un procés, no és ni una acció ni
+ * un veredicte. Amb ambre competiria amb el significat de "es veu a mitges".
+ */
+.spotprogress {
+  height: var(--sp-2);
+  border-radius: var(--r-pill);
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+
+.spotprogress__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--status-info);
+  transition: width var(--dur-base) var(--ease-out);
+}
+
+.spotpanel__stage {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin: 0;
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+/* ------------------------------------------------------------------- llista */
+
+.spotlist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.spotlist__context,
+.spotlist__caveat,
+.spotlist__estimate,
+.spotlist__empty {
+  margin: 0;
+  max-width: var(--maxw-prose);
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+.spotlist__estimate {
+  padding: var(--sp-4);
+  border-radius: var(--r-sm);
+  background: var(--status-cloudy-quiet);
+  color: var(--text-body);
+}
+
+.spotlist__caveat {
+  padding-top: var(--sp-4);
+  border-top: var(--bw-hair) solid var(--border-hairline);
+  color: var(--text-muted);
+}
+
+.spotlist__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ----------------------------------------------------------------- targeta */
+
+.spotcard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* El veredicte, llegible de reüll. */
+.spotcard--clear { border-left: var(--bw-thick) solid var(--status-clear); }
+.spotcard--partial { border-left: var(--bw-thick) solid var(--status-partial); }
+.spotcard--cloudy { border-left: var(--bw-thick) solid var(--status-cloudy); }
+
+.spotcard__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+/*
+ * L'ordinal no porta cap disc de color: la jerarquia la fan la mida i el to
+ * apagat, com a les fitxes de la guia.
+ */
+.spotcard__rank {
+  flex: 0 0 auto;
+  min-width: var(--sp-7);
+  font-size: var(--fs-title-3);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.spotcard__where {
+  flex: 1 1 auto;
+  margin: 0;
+  font: var(--text-label);
+  color: var(--text-primary);
+}
+
+.spotcard__alt {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.spotcard__badges {
+  flex: 0 0 auto;
+}
+
+/* ------------------------------------------------------------------ xifres */
+
+.spotcard__figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: var(--sp-5);
+  padding: var(--sp-4) 0;
+  border-top: var(--bw-hair) solid var(--border-hairline);
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
+}
+
+/*
+ * La xifra que decideix pren el color del veredicte; la resta queden neutres.
+ *
+ * Es toca `.ui-stat__value` des d'aquí perquè `Stat` no té cap to semàntic que
+ * cobreixi els tres estats de visibilitat: només `default` i `accent`, i
+ * `accent` és l'ambre, que en aquesta pantalla vol dir «a mitges» i no «mira
+ * això». La classe `.spotcard__headline` la posa el component a la xifra que
+ * mana, de manera que això no depèn de cap posició dins de la graella.
+ */
+.spotcard--clear .spotcard__headline .ui-stat__value { color: var(--status-clear); }
+.spotcard--partial .spotcard__headline .ui-stat__value { color: var(--status-partial); }
+.spotcard--cloudy .spotcard__headline .ui-stat__value { color: var(--status-cloudy); }
+
+.spotcard__blocking,
+.spotcard__climb {
+  margin: 0;
+  max-width: var(--maxw-prose);
+  font: var(--text-body-sm);
+  color: var(--text-body);
+}
+
+.spotcard__climb {
+  color: var(--text-secondary);
+}
+
+/* -------------------------------------------------------------- metadades */
+
+.spotcard__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+}
+
+.spotcard__meta dt {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.spotcard__meta dd {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-body);
+  /* Les coordenades es poden marcar amb el dit per copiar-les a mà. */
+  user-select: text;
+}
+
+.spotcard__notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.spotcard__notes:empty {
+  display: none;
+}
+
+/* -------------------------------------------------------------- accions */
+
+.spotcard__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+}
+
+.spotcard__map {
+  font: var(--text-body-sm);
+  /* Àrea de toc mínima: al camp això es prem amb guants. */
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ------------------------------------------------------------------- cost */
+
+.spotcost {
+  display: block;
+}
+
+.spotcost__summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  min-height: var(--tap-min);
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.spotcost__summary::-webkit-details-marker {
+  display: none;
+}
+
+/*
+ * La taula és ampla a posta: hi ha set columnes de números que s'han de poder
+ * comparar. Es desplaça dins del seu contenidor i mai fa desplaçar la pàgina.
+ */
+.spotcost__scroll {
+  overflow-x: auto;
+  margin-top: var(--sp-4);
+}
+
+.spotcost__table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--text-body-sm);
+  white-space: nowrap;
+}
+
+.spotcost__table th,
+.spotcost__table td {
+  padding: var(--sp-3) var(--sp-4);
+  text-align: right;
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
+}
+
+.spotcost__table thead th {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.spotcost__table tbody th {
+  text-align: left;
+  font: var(--text-body-sm);
+  color: var(--text-body);
+}
+
+.spotcost__totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--sp-4);
+  margin: var(--sp-5) 0 0;
+}
+
+.spotcost__totals dt {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.spotcost__totals dd {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-body);
+}
+
+.spotcost__note {
+  margin: var(--sp-5) 0 0;
+  max-width: var(--maxw-prose);
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}

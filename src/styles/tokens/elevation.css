@@ -1,0 +1,21 @@
+:root{
+--r-xs:4px;
+--r-sm:8px;
+--r-md:12px;
+--r-lg:18px;
+--r-xl:26px;
+--r-2xl:34px;
+--r-pill:999px;
+--bw-hair:1px;
+--bw-thick:2px;
+/* Shadows are near-invisible on a night UI: depth comes from surface value + hairline. Glow is the real elevation. */
+--sh-1:0 1px 2px rgba(0,0,0,.40);
+--sh-2:0 6px 18px -6px rgba(0,0,0,.55);
+--sh-3:0 20px 48px -16px rgba(0,0,0,.70);
+--sh-inset-top:inset 0 1px 0 rgba(255,255,255,.05);
+--glow-corona:0 0 32px rgba(255,194,87,.30);
+--glow-corona-lg:0 0 72px rgba(255,194,87,.34);
+--glow-clear:0 0 24px rgba(47,211,163,.28);
+--ring-focus:0 0 0 2px var(--bg-page),0 0 0 4px var(--focus-ring);
+--blur-glass:blur(18px) saturate(1.15);
+}

@@ -1,0 +1,231 @@
+/* ============================================================================
+   Mapa de la franja de centralitat.
+
+   Tot surt dels tokens de `src/styles/tokens/`. Aquí no hi ha d'haver mai un
+   color, una mida de lletra, un espaiat ni un radi escrits a pèl.
+
+   Principis del sistema que aquest fitxer respecta:
+     · Fosc primer. El mapa es mira al capvespre, a fora, amb l'ull adaptat a la
+       foscor: les tessel·les d'OSM són clares i s'han d'apagar (es fa des del
+       `paint` de la capa ràster, no amb un filtre CSS, perquè el filtre també
+       s'aplicaria a la franja i se la menjaria).
+     · UN sol accent ambre per pantalla. Aquí l'accent és la franja: és l'única
+       cosa que respon la pregunta del producte. Per això la línia central va
+       en to corona i no en un segon color competint.
+     · La jerarquia surt del valor de la superfície i de la línia d'un píxel.
+       El relleu el dona la resplendor, no l'ombra.
+     · El panell de resultats NO redefineix res: reutilitza `.verdict`,
+       `.contacts`, `.note` i `.warn` de `src/index.css`.
+   ========================================================================== */
+
+.map {
+  margin-bottom: var(--sp-3);
+}
+
+/* --- Llenç del mapa ------------------------------------------------------ */
+
+.map__canvas {
+  width: 100%;
+  /* Prou alt per veure la franja sencera creuant la Península sense robar la
+     pantalla al panell de resultats, que és el que es llegeix de debò. */
+  height: 58vh;
+  min-height: 280px;
+  max-height: 520px;
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--bg-inset);
+}
+
+/* --- Llegenda i crèdits -------------------------------------------------- */
+
+.map__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-5);
+  margin: var(--sp-4) var(--sp-1) var(--sp-3);
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+.map__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+/* Mostra de la franja: rectangle ple amb la vora del mateix to, com al mapa. */
+.map__swatch {
+  width: 22px;
+  height: 12px;
+  border-radius: var(--r-xs);
+  background: var(--accent-quiet);
+  border: var(--bw-hair) solid var(--accent);
+  box-shadow: var(--glow-corona);
+  flex: 0 0 auto;
+}
+
+/* Mostra de la línia central: el mateix traç discontinu que es pinta al mapa. */
+.map__swatch--line {
+  height: 0;
+  border: 0;
+  border-top: var(--bw-thick) dashed var(--corona-100);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.map__credits {
+  margin: 0 var(--sp-1) var(--sp-5);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-body);
+  text-transform: none;
+  color: var(--text-muted);
+}
+
+.map__credits a {
+  color: var(--text-muted);
+  border-bottom-color: var(--border-subtle);
+}
+
+.map__credits a:hover {
+  color: var(--text-link-hover);
+}
+
+/* --- Punt escollit -------------------------------------------------------
+   Una diana, no una xinxeta: el que importa és el punt exacte, i tapar-lo amb
+   un globus seria justament perdre'l. La resplendor la fa visible sobre
+   qualsevol tessel·la.
+   ------------------------------------------------------------------------- */
+
+.map__pin {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-pill);
+  border: var(--bw-thick) solid var(--corona-050);
+  background: var(--bg-scrim);
+  box-shadow: var(--glow-corona);
+  cursor: pointer;
+}
+
+/* --- Convit inicial ------------------------------------------------------ */
+
+.map__hint {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  background: var(--surface-card);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5) var(--sp-6);
+  margin: 0;
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+.map__hint svg {
+  flex: 0 0 auto;
+  margin-top: var(--sp-1);
+  color: var(--text-accent);
+}
+
+/* --- Panell de resultats -------------------------------------------------
+   Només el que no cobreixen les classes genèriques.
+   ------------------------------------------------------------------------- */
+
+.map__coords {
+  margin: var(--sp-4) var(--sp-1) 0;
+  font: var(--text-body-sm);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+/* Els noms dels contactes són més llargs que "C1"; cal deixar-los respirar. */
+.map .contacts__label {
+  width: auto;
+}
+
+.map__footnote {
+  margin: var(--sp-4) var(--sp-1) 0;
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+/* ============================================================================
+   Controls de MapLibre.
+
+   Vénen amb un aspecte clar de sèrie: caixa blanca, ombra difusa i icones
+   negres. Res d'això existeix al sistema, així que es reescriuen amb els
+   mateixos tokens que la resta de la interfície.
+   ========================================================================== */
+
+.map__canvas .maplibregl-ctrl-group {
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-md);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.map__canvas .maplibregl-ctrl-group button {
+  width: var(--tap-min);
+  height: var(--tap-min);
+  background: transparent;
+}
+
+.map__canvas .maplibregl-ctrl-group button + button {
+  border-top: var(--bw-hair) solid var(--border-hairline);
+}
+
+.map__canvas .maplibregl-ctrl-group button:hover {
+  background: var(--surface-card-hover);
+}
+
+.map__canvas .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  /* Les icones són SVG negres incrustats com a data-URI: invertir-les és
+     l'única manera curta de fer-les llegibles sobre fons fosc. */
+  filter: invert(1);
+  opacity: 0.72;
+}
+
+/*
+ * L'atribució ha de continuar sent llegible: es fa discreta, mai invisible.
+ * És un requisit de la llicència d'OSM i de l'ús de les efemèrides del GSFC.
+ */
+.map__canvas .maplibregl-ctrl-attrib {
+  background: var(--bg-scrim);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  color: var(--text-secondary);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-body);
+  text-transform: none;
+  padding: var(--sp-1) var(--sp-3);
+  max-width: 100%;
+}
+
+.map__canvas .maplibregl-ctrl-attrib a {
+  color: var(--text-secondary);
+  border-bottom: none;
+}
+
+.map__canvas .maplibregl-ctrl-scale {
+  background: var(--bg-scrim);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-top: none;
+  border-radius: 0 0 var(--r-xs) var(--r-xs);
+  color: var(--text-secondary);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-body);
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.map__canvas .maplibregl-canvas:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}

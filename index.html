@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+
+    <!-- viewport-fit=cover: sense això, l'app instal·lada a un iPhone amb
+         osca queda emmarcada per bandes negres i el mapa no arriba a la vora.
+         A canvi, tot el que sigui fix a dalt o a baix ha de respectar
+         env(safe-area-inset-*) o queda sota la barra d'inici. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+
+    <!-- Color de la barra d'estat / de l'ombra del navegador. Ha de ser el
+         mateix que --bg-page i que el manifest, o es veu una franja d'un altre
+         color sobre el fons nocturn. -->
+    <meta name="theme-color" content="#05060B" />
+
+    <!-- L'app és fosca sempre: així els controls natius (barres de
+         desplaçament, camps de formulari) surten en variant fosca. -->
+    <meta name="color-scheme" content="dark" />
+
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+
+    <!-- iOS ignora el manifest per a la icona de la pantalla d'inici: només
+         llegeix apple-touch-icon, i només en PNG. -->
+    <link rel="apple-touch-icon" href="%BASE_URL%icons/apple-touch-icon.png" />
+
+    <!-- Encara cal, tot i que Safari 15.4+ ja llegeix `display: standalone`
+         del manifest: els iPhone amb iOS anterior només s'obren sense barres
+         del navegador amb aquesta meta. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- 'black-translucent' fa que el contingut passi per sota de la barra
+         d'estat; combinat amb viewport-fit=cover és el que dona la pantalla
+         completa de veritat. -->
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="eclipsi.info" />
+
+    <!-- Els telèfons detecten "12:47:03" o "17:46" com a números de telèfon i
+         els converteixen en enllaços blaus. L'app és tota xifres. -->
+    <meta name="format-detection" content="telephone=no" />
+
+    <title>eclipsi.info</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
