@@ -27,6 +27,9 @@ import {
   type StyleSpecification,
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+// Ha d'anar abans que es construeixi cap mapa: diu a MapLibre on és el seu
+// worker, que amb Vite no és on ell es pensa. Vegeu-hi el perquè.
+import './maplibreWorker';
 import './map.css';
 
 import { Icon } from '../../ui';
@@ -391,8 +394,20 @@ export function EclipseMap({
      * alguna als marges és normal. El que es diu és quan falla l'estil, que és
      * quan de veritat no hi ha mapa.
      */
+    /*
+     * I ES REGISTREN SEMPRE A LA CONSOLA, ENCARA QUE NO ES CANTIN A L'USUARI.
+     *
+     * Aquest `return` silenciós va amagar durant tot el projecte que el worker
+     * de MapLibre no arrencava —vegeu `maplibreWorker.ts`—, i amb ell la franja
+     * de totalitat sencera. El detall que ho feia indetectable és de MapLibre:
+     * TENIR un escoltador d'`error` desactiva el seu registre per consola per
+     * defecte, o sigui que aquest `return` no es limitava a no ensenyar l'error,
+     * l'esborrava del mapa. Ara la decisió de no molestar l'usuari amb una
+     * tessel·la solta no s'endú també la traça que permet trobar el problema.
+     */
     map.on('error', (event) => {
       const source = (event as { sourceId?: string }).sourceId;
+      console.error('[mapa]', source ?? '(estil)', (event as { error?: Error }).error ?? event);
       if (source !== undefined) return;
       setMapError({ reason: 'tiles' });
     });
