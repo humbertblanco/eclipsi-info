@@ -127,9 +127,28 @@ export function formatPercent(fraction: number): string {
   return `${Math.round(fraction * 100)} %`;
 }
 
-/** Graus amb un decimal. Un decimal és el que distingeix veure-ho de no veure-ho. */
-export function formatDegrees(deg: number): string {
-  return `${deg.toFixed(1)}°`;
+/**
+ * Graus amb un decimal. Un decimal és el que distingeix veure-ho de no veure-ho.
+ *
+ * AQUESTA FUNCIÓ ESCRIVIA EL PUNT ANGLOSAXÓ, tres línies per sota del comentari
+ * de `formatDecimal` que explica per què no s'ha de fer servir `toFixed`. El
+ * resultat es veia a la portada: «ALTURA DEL SOL 4.5°» amb punt, al costat de
+ * «40,3581°, 0,4067°» amb coma, a la mateixa targeta. I el projecte ja tenia la
+ * versió bona escrita i provada a `features/spots/format.ts`, que ningú no
+ * podia importar des d'aquí.
+ *
+ * L'IDIOMA VE AMB VALOR PER DEFECTE a posta: les dues llengües de l'app
+ * escriuen el decimal amb coma, o sigui que avui la tria no canvia el resultat,
+ * i posar-lo obligatori voldria dir tocar cinc pantalles per a un canvi que no
+ * en mou cap píxel. Qui el tingui a mà que el passi; el dia que hi hagi una
+ * tercera llengua, el paràmetre ja hi és.
+ *
+ * I EL NO-NÚMERO ES DIU AMB EL GUIÓ DE L'APP. Abans, un valor no finit sortia
+ * com «NaN°» a la pantalla.
+ */
+export function formatDegrees(deg: number, locale: Locale = 'ca'): string {
+  if (!Number.isFinite(deg)) return NO_DATA;
+  return `${formatDecimal(deg, 1, locale)}°`;
 }
 
 /**
