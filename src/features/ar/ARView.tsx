@@ -190,6 +190,21 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
   );
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  /*
+   * EL FLUX DE CÀMERA, GUARDAT A PART DEL VÍDEO.
+   *
+   * La neteja l'anava a buscar a `videoRef.current.srcObject`, i allà no hi és
+   * quan cal: React desassigna les refs dels nodes del DOM a la fase de
+   * mutació, i les neteges dels efectes passius corren DESPRÉS. Quan
+   * s'executava, `videoRef.current` ja era `null`, l'encadenament opcional se
+   * l'empassava sense dir res i cap pista s'aturava mai.
+   *
+   * El resultat: sortir de la pestanya del cel deixava la càmera del mòbil
+   * encesa indefinidament —indicador verd o taronja del sistema actiu, bateria
+   * cremant-se i la sensació que l'app espia—, i el mateix passava quan la
+   * barrera d'error desmuntava la pantalla.
+   */
+  const streamRef = useRef<MediaStream | null>(null);
 
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -378,6 +393,26 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
   // `new Date()`, i és el que va deixar la comporta de seguretat sense tic.
   const sunNow = useMemo(() => sampleAt(now, location).sun, [now, location]);
 
+  /**
+   * Apaga la càmera de debò: pistes aturades, vigilància d'objectiu desada i
+   * rellotge de fotogrames desenganxat.
+   *
+   * Un sol camí perquè el desmuntatge, l'error d'obertura i el cas de quedar-se
+   * sense element de vídeo no puguin divergir: que la càmera quedi encesa és un
+   * dels pocs errors que l'usuari nota al maquinari.
+   */
+  const stopCamera = useCallback(() => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    lensWatchRef.current?.();
+    lensWatchRef.current = null;
+    frameClockRef.current.detach();
+    if (videoRef.current) videoRef.current.srcObject = null;
+    // I la interfície se n'ha d'assabentar: sense això la pantalla es queda
+    // dient que la càmera és oberta damunt d'un vídeo que ja no arriba.
+    setCameraOn(false);
+  }, []);
+
   const start = useCallback(async () => {
     // Els tres permisos es demanen junts, des del mateix gest de l'usuari.
     // Sense ubicació, l'altura i l'azimut del Sol serien els d'un altre lloc i
@@ -400,12 +435,23 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
         sensorFovDeg: remembered ?? opened.suggestedFovDeg,
       }));
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = opened.stream;
-        await videoRef.current.play();
-        frameClockRef.current.attach(videoRef.current);
-        setCameraOn(true);
+      // Es desa ABANS d'enganxar-lo al vídeo: si el muntatge cau entremig, o si
+      // el vídeo encara no hi és, el flux ja té qui l'aturi.
+      streamRef.current = opened.stream;
+
+      if (!videoRef.current) {
+        // Sense element de vídeo no hi ha res on dibuixar i el permís ja està
+        // concedit: deixar el flux obert seria encendre la càmera per a res.
+        // Es surt abans de registrar la vigilància d'objectiu, que si no
+        // quedaria enganxada a un flux ja mort.
+        stopCamera();
+        return;
       }
+
+      videoRef.current.srcObject = opened.stream;
+      await videoRef.current.play();
+      frameClockRef.current.attach(videoRef.current);
+      setCameraOn(true);
 
       // L'iPhone 15 canvia d'objectiu sol a mitja sessió. Quan passa, tot el
       // que havíem mesurat deixa de valer.
@@ -421,19 +467,15 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
         if (known !== null) setCalibration((c) => ({ ...c, sensorFovDeg: known }));
       });
     } catch (err) {
+      // Si l'obertura ha arribat a donar flux i ha petat després —el `play()`
+      // el rebutja iOS quan la pestanya perd el focus a mig gest—, la càmera es
+      // quedaria encesa amb la pantalla ensenyant l'error.
+      stopCamera();
       setCameraError(err instanceof Error ? err.message : String(err));
     }
-  }, [orientation, onRequestLocation]);
+  }, [orientation, onRequestLocation, stopCamera]);
 
-  useEffect(
-    () => () => {
-      const stream = videoRef.current?.srcObject as MediaStream | null;
-      stream?.getTracks().forEach((t) => t.stop());
-      lensWatchRef.current?.();
-      frameClockRef.current.detach();
-    },
-    [],
-  );
+  useEffect(() => () => stopCamera(), [stopCamera]);
 
   // El filtre del vídeo va a part del canvas: el compon la GPU i surt gratis.
   // És el que enfosqueix TOTA l'escena, muntanyes incloses, que és el que
