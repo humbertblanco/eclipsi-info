@@ -1311,10 +1311,29 @@
   text-overflow: ellipsis;
 }
 
+/*
+ * LES ACCIONS CEDEIXEN ABANS QUE LA MARCA.
+ *
+ * Amb `flex: none` les accions demanaven la seva amplada sencera —301,6 px amb
+ * els dos desplegables i el botó d'ubicació— i qui s'espitjava era el text, que
+ * és on hi ha el logotip: a 390 px es llegia «eclip», tallat pel selector de
+ * data, i a 320 el botó d'ubicació sortia de la pantalla.
+ *
+ * Ara qui s'encongeix són les accions. És l'ordre correcte: una data escurçada
+ * segueix essent llegible i una marca partida per la meitat, no. El text de les
+ * etiquetes també s'escurça a mòbil, però això no ho pot fer el CSS amb un
+ * `<select>` natiu; ho decideix `App.tsx`.
+ */
 .ui-topbar__actions {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* La marca no es negocia: si res no hi cap, que cedeixi la resta. */
+.ui-topbar__text:has(.ui-topbar__logo) {
   flex: none;
 }
 

@@ -115,3 +115,4 @@ export type { TimelineContact, TimelineTrackProps } from './eclipse/TimelineTrac
 
 /* --- mides d'icona ------------------------------------------------------- */
 export { ICON_XS, ICON_SM, ICON_MD, ICON_LG } from './sizes';
+export { useMediaQuery } from './useMediaQuery';
