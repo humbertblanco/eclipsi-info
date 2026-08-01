@@ -9,13 +9,18 @@
  *    obligatòria per llicència i és visible sempre, igual que la de les
  *    efemèrides de la NASA.
  *
- * 2. En tocar el mapa, les circumstàncies es calculen al moment i de manera
- *    síncrona. `computeLocalCircumstances` triga uns 10 ms: posar-hi un worker
- *    o un estat de càrrega només afegiria latència percebuda i codi.
+ * 2. En tocar el mapa, aquí només es marca el punt i s'avisa el pare. Les
+ *    circumstàncies i el panell de resultats vivien aquí dins, i NO ELS VEIA
+ *    NINGÚ: l'únic consumidor d'aquest component és `MapScreen`, que retalla
+ *    tot el que no és el llenç (`.mapscreen__stage`, vegeu `screens.css`) i
+ *    pinta la seva pròpia fitxa. Eren ~120 línies de panell invisibles i dues
+ *    respostes a la mateixa pregunta. El panell viu ara a la fitxa de
+ *    `MapScreen`, que és on es veu — i l'única cosa que aquest component ha de
+ *    garantir que es vegi SEMPRE és l'avís de fallada, que per això sura sobre
+ *    el llenç en comptes d'anar-hi a sota.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { formatObscurationPercent } from '../../core/astro/obscuration';
 import { BASEMAP } from '../../offline/config';
 import {
   type GeoJSONSource,
@@ -33,12 +38,10 @@ import './maplibreWorker';
 import './map.css';
 
 import { Icon } from '../../ui';
-import { computeLocalCircumstances } from '../../core/astro/contacts';
-import type { EclipseSample, GeoLocation } from '../../core/astro/types';
+import type { GeoLocation } from '../../core/astro/types';
 import { getEclipse } from '../../core/eclipses/catalog';
 import type { Locale } from '../../i18n';
-import { s, type StringKey } from '../../screens/strings';
-import { formatClock, formatDecimal, formatDuration } from '../../screens/format';
+import { s } from '../../screens/strings';
 import {
   computeEclipsePath,
   eclipsePathToGeoJson,
@@ -68,6 +71,16 @@ interface Props {
    * decidir si s'hi acosta— ha de sortir a la vista juntament amb la banda.
    */
   observer?: GeoLocation | null;
+  /**
+   * El punt tocat, i el mana el PARE, no un estat intern.
+   *
+   * La diana ha d'anar lligada a la fitxa que la descriu: si el pare descarta
+   * el punt («Torna al teu punt»), una diana òrfena que es queda clavada al
+   * mapa diu que encara hi ha alguna cosa seleccionada quan la fitxa ja parla
+   * d'una altra. Amb el punt com a propietat, marcador i fitxa no es poden
+   * dessincronitzar.
+   */
+  picked?: GeoLocation | null;
 }
 
 /** Atribució d'OSM, obligatòria per llicència. */
@@ -248,12 +261,12 @@ export function EclipseMap({
   locale,
   onPickLocation,
   observer = null,
+  picked = null,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
   const [mapError, setMapError] = useState<MapFailure | null>(null);
-  const [picked, setPicked] = useState<GeoLocation | null>(null);
 
   // El handler del clic es registra una sola vegada; el callback del pare pot
   // canviar a cada render, així que hi arriba per referència.
@@ -275,11 +288,6 @@ export function EclipseMap({
   // sempre la darrera franja calculada, no la que hi havia quan es va crear.
   const geojsonRef = useRef(geojson);
   geojsonRef.current = geojson;
-
-  const circumstances = useMemo(
-    () => (picked === null ? null : computeLocalCircumstances(eclipseId, picked)),
-    [eclipseId, picked],
-  );
 
   // --- Creació del mapa (una sola vegada) ---
   useEffect(() => {
@@ -417,18 +425,7 @@ export function EclipseMap({
       // La longitud pot venir de una còpia del món si l'usuari ha arrossegat
       // fora de ±180°; es normalitza abans de calcular res.
       const lon = ((((lng + 180) % 360) + 360) % 360) - 180;
-      const location: GeoLocation = { lat, lon, elevation: 0 };
-
-      setPicked(location);
-      onPickRef.current?.(location);
-
-      if (markerRef.current === null) {
-        const element = document.createElement('div');
-        element.className = 'map__pin';
-        markerRef.current = new Marker({ element }).setLngLat([lng, lat]).addTo(map);
-      } else {
-        markerRef.current.setLngLat([lng, lat]);
-      }
+      onPickRef.current?.({ lat, lon, elevation: 0 });
     });
 
     return () => {
@@ -449,20 +446,54 @@ export function EclipseMap({
     applyPath(map, geojson);
   }, [geojson]);
 
+  // --- La diana del punt tocat, sincronitzada amb la propietat ---
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map === null) return;
+
+    if (picked === null) {
+      markerRef.current?.remove();
+      markerRef.current = null;
+      return;
+    }
+
+    if (markerRef.current === null) {
+      const element = document.createElement('div');
+      element.className = 'map__pin';
+      markerRef.current = new Marker({ element })
+        .setLngLat([picked.lon, picked.lat])
+        .addTo(map);
+    } else {
+      markerRef.current.setLngLat([picked.lon, picked.lat]);
+    }
+  }, [picked]);
+
   const annular = eclipse.kind === 'annular';
   const central = s(annular ? 'map.centralAnnular' : 'map.centralTotal', locale);
 
   return (
     <div className="map">
-      <div className="map__canvas" ref={containerRef} />
+      {/*
+       * L'AVÍS DE FALLADA SURA DINS DEL MARC DEL LLENÇ, no va a sota.
+       *
+       * A sota era invisible en l'únic lloc on aquest component es munta:
+       * `.mapscreen__stage` retalla tot el que desborda el llenç, i amb el
+       * WebGL o les tessel·les caiguts l'usuari veia un rectangle negre mut,
+       * indistingible d'un mapa penjat. Superposat al llenç, es veu igual aquí
+       * que dins d'un document. `role="alert"` perquè la fallada arriba DESPRÉS
+       * de pintar i un lector de pantalla no hi tornarà pas a passar.
+       */}
+      <div className="map__frame">
+        <div className="map__canvas" ref={containerRef} />
 
-      {mapError !== null && (
-        <p className="warn">
-          {mapError.reason === 'webgl'
-            ? s('map.webglFailed', locale, { error: mapError.detail })
-            : s('map.tilesFailed', locale)}
-        </p>
-      )}
+        {mapError !== null && (
+          <p className="warn map__error" role="alert">
+            {mapError.reason === 'webgl'
+              ? s('map.webglFailed', locale, { error: mapError.detail })
+              : s('map.tilesFailed', locale)}
+          </p>
+        )}
+      </div>
 
       <div className="map__legend">
         <span className="map__legend-item">
@@ -484,125 +515,10 @@ export function EclipseMap({
         {ESPENAK_ATTRIBUTION}
       </p>
 
-      {circumstances === null ? (
-        <p className="map__hint">
-          <Icon name="crosshair" size={18} aria-hidden="true" />
-          <span>{s('map.pickPrompt', locale, { central })}</span>
-        </p>
-      ) : (
-        <CircumstancesPanel
-          circumstances={circumstances}
-          annular={circumstances.kind === 'annular'}
-          locale={locale}
-        />
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Panell de resultats
-// ---------------------------------------------------------------------------
-
-/*
- * AQUÍ HI HAVIA UN `fmtTime` I UN `fmtDuration` PROPIS, i els dos mentien.
- *
- * El primer clavava `Europe/Madrid`: a les Canàries el mateix contacte sortia
- * amb una hora de més que a la taula d'efemèrides de la fitxa del costat, o
- * sigui dues hores diferents per al mateix instant a la mateixa pantalla. El
- * segon escrivia «3 min 00 s» on la resta de l'app escriu «3 min».
- *
- * Ara tot passa per `screens/format`, que és on viu la regla. Vegeu-hi el
- * comentari de `formatClock` sobre per què la zona és la del dispositiu.
- */
-
-interface PanelProps {
-  circumstances: ReturnType<typeof computeLocalCircumstances>;
-  annular: boolean;
-  locale: Locale;
-}
-
-/**
- * Panell de circumstàncies del punt tocat.
- *
- * No defineix cap targeta pròpia: reutilitza `.verdict` i `.contacts` de
- * `src/index.css`, que són les mateixes que fa servir la vista de simulació.
- * Que les dues pantalles responguin igual la mateixa pregunta no és estalvi de
- * CSS, és que hagin de ser reconeixibles com la mateixa dada.
- */
-function CircumstancesPanel({ circumstances, annular, locale }: PanelProps) {
-  const { contacts, kind, location } = circumstances;
-  const central = kind === 'total' || kind === 'annular';
-
-  // Les etiquetes dels contactes són les mateixes que fa servir la taula
-  // d'efemèrides de les pantalles: la mateixa fila no es pot dir de dues
-  // maneres segons quin component la pinti.
-  const rows: [StringKey, EclipseSample | undefined][] = [
-    ['web.c1', contacts.c1],
-    [annular ? 'web.c2annular' : 'web.c2total', contacts.c2],
-    ['web.max', contacts.max],
-    [annular ? 'web.c3annular' : 'web.c3total', contacts.c3],
-    ['web.c4', contacts.c4],
-  ];
-
-  return (
-    <section>
-      <header className={`verdict verdict--${kind}`}>
-        <span className="verdict__kind">{s(`kind.${kind}` as 'kind.total', locale)}</span>
-        {central && (
-          <span className="verdict__dur">
-            {formatDuration(circumstances.centralDurationSec)}
-          </span>
-        )}
-        <span className="verdict__obsc">
-          {s('map.obscuredAtMax', locale, {
-            pct: formatObscurationPercent(contacts.max.obscuration, central),
-          })}
-        </span>
-      </header>
-
-      <p className="map__coords">
-        {formatDecimal(location.lat, 4, locale)}°{' '}
-        {formatDecimal(location.lon, 4, locale)}° · {s('map.seaLevel', locale)}
+      <p className="map__hint">
+        <Icon name="crosshair" size={18} aria-hidden="true" />
+        <span>{s('map.pickPrompt', locale, { central })}</span>
       </p>
-
-      {kind === 'none' ? (
-        <p className="note">{s('map.nothingVisible', locale)}</p>
-      ) : (
-        <>
-          <table className="contacts">
-            <tbody>
-              {rows.map(([key, sample]) =>
-                sample ? (
-                  <tr key={key}>
-                    <td className="contacts__label">{s(key, locale)}</td>
-                    <td className="contacts__time">{formatClock(sample.time, locale)}</td>
-                    <td className="contacts__alt">
-                      {formatDecimal(sample.sun.altitudeApparent, 1, locale)}°
-                    </td>
-                    <td className="contacts__az">
-                      {formatDecimal(sample.sun.azimuth, 0, locale)}°
-                    </td>
-                  </tr>
-                ) : null,
-              )}
-            </tbody>
-          </table>
-          <p className="map__footnote">{s('map.contactsNote', locale)}</p>
-        </>
-      )}
-
-      {circumstances.sunBelowHorizonDuringEvent && (
-        <p className="warn">{s('map.sunBelowHorizon', locale)}</p>
-      )}
-
-      {central && contacts.max.sun.altitudeApparent < 10 && (
-        <p className="warn">
-          {s('map.lowSun', locale, {
-            alt: `${formatDecimal(contacts.max.sun.altitudeApparent, 1, locale)}°`,
-          })}
-        </p>
-      )}
-    </section>
+    </div>
   );
 }

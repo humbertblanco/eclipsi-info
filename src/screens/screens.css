@@ -398,10 +398,17 @@
 /*
  * L'escenari del mapa.
  *
- * `EclipseMap` porta el seu propi encoixinat, la seva llegenda i la seva fitxa
- * de resultats, pensats per viure dins d'un document. Aquí el llenç ha d'omplir
- * el marc i la resta queda fora de la retallada; la llegenda es torna a pintar
- * a sota amb els components del sistema.
+ * `EclipseMap` porta el seu propi encoixinat, la seva llegenda i el seu convit
+ * a tocar, pensats per viure dins d'un document. Aquí el llenç ha d'omplir el
+ * marc i la resta queda fora de la retallada; la llegenda es torna a pintar a
+ * sota amb els components del sistema, i la fitxa del punt tocat viu a la
+ * fitxa de la pantalla (abans era un panell dins d'`EclipseMap` i aquesta
+ * mateixa retallada el feia invisible).
+ *
+ * L'ÚNIC QUE HA DE SOBREVIURE LA RETALLADA ÉS L'AVÍS DE FALLADA: per això no
+ * va al flux sota el llenç sinó superposat a dins del seu marc (vegeu
+ * `.map__error`, més avall). Sense això, WebGL o tessel·les caiguts es veien
+ * com un rectangle negre mut, indistingible d'un mapa penjat.
  *
  * L'ATRIBUCIÓ NO ES PERD. És obligatòria per llicència i per això `EclipseMap`
  * la posa DINS del llenç (control d'atribució de MapLibre, amb OpenStreetMap i
@@ -419,12 +426,46 @@
   margin: 0;
 }
 
+.mapscreen__stage .map__frame {
+  height: 100%;
+}
+
 .mapscreen__stage .map__canvas {
   height: 100%;
   min-height: 0;
   max-height: none;
   border: none;
   border-radius: 0;
+}
+
+/*
+ * El marc del llenç i l'avís de fallada que hi sura a sobre.
+ *
+ * Els estils del marc viuen aquí i no a `features/map/map.css` perquè aquell
+ * fitxer el toquen altres feines en paral·lel; el dia que es consolidi, aquest
+ * bloc s'hi pot moure tal qual.
+ *
+ * L'avís va centrat al llenç —que és on l'usuari mira quan no veu mapa— i no
+ * intercepta el punter: amb les tessel·les caigudes la franja encara es
+ * dibuixa i el mapa segueix sent utilitzable per sota. L'ambre de `.warn` no
+ * trenca la regla d'un sol ambre: quan aquest avís surt, la franja del mapa és
+ * justament el que no s'ha pogut pintar.
+ */
+.map__frame {
+  position: relative;
+}
+
+.map__error {
+  position: absolute;
+  top: 50%;
+  left: var(--gutter-app);
+  right: var(--gutter-app);
+  transform: translateY(-50%);
+  z-index: 2;
+  margin: 0 auto;
+  max-width: var(--maxw-sheet);
+  text-align: center;
+  pointer-events: none;
 }
 
 .mapscreen__legend {
@@ -1225,4 +1266,39 @@
   flex-direction: row;
   gap: var(--sp-6);
   flex-wrap: wrap;
+}
+
+/* La taula de contactes dins d'un bloc de la fitxa: el bloc ja posa l'aire,
+   i el marge propi de `.contacts` (pensat per anar solt en un document) hi
+   sumava un buit doble entre l'overline i la primera fila. */
+.mapscreen__block .contacts {
+  margin-top: var(--sp-0);
+}
+
+/* --- Fitxa del punt tocat ------------------------------------------------- */
+
+/* Capçalera del punt tocat: overline i coordenades arrapades l'una a l'altra
+   perquè es llegeixin com una sola etiqueta; l'aire amb la resta el posa el
+   `gap` de la fitxa. */
+.mapscreen__pickhead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+/* Coordenades en mono tabular, com totes les dades de posició de l'app. */
+.mapscreen__coords {
+  margin: 0;
+  font: var(--text-body-sm);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+/* Les dues accions del punt tocat, de costat mentre hi capiguen. Cap de les
+   dues és ambre: l'ambre d'aquesta pantalla és la franja pintada al mapa. */
+.mapscreen__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
 }
