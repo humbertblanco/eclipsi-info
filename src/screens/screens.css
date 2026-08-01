@@ -1133,6 +1133,80 @@
 }
 
 /*
+ * LA SIGNATURA.
+ *
+ * Va primer i és l'única línia del peu amb color de text principal: és el que
+ * respon la primera pregunta de qui baixa fins aquí. Prou pes per llegir-se
+ * com una signatura, no prou per competir amb res de la pantalla — el peu
+ * segueix sense cap ambre (vegeu-hi la nota de sota).
+ */
+.sitefoot__by {
+  color: var(--text-secondary);
+}
+
+.sitefoot__author {
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+}
+
+.sitefoot__and {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/*
+ * ELS ENLLAÇOS DEL PEU NO SÓN AMBRE, I ABANS N'HI HAVIA SET.
+ *
+ * L'ambre del sistema és per a la xifra que decideix, i n'hi ha d'haver un per
+ * pantalla. Els enllaços hereten el color d'accent global, i això posava set
+ * elements ambre a la portada —els set proveïdors— més el «Codi obert», tots
+ * de cop i tots dient «mira'm» al costat de la durada de la totalitat, que és
+ * l'única xifra que de veritat ho hauria de dir.
+ *
+ * Segueixen essent enllaços i es reconeixen com a tals: subratllat fi, i
+ * l'accent només al passar-hi per sobre i al focus, que és quan l'usuari ja hi
+ * està apuntant i el color no compta com a èmfasi de pantalla.
+ */
+.sitefoot a {
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-decoration-color: var(--border-subtle);
+  text-underline-offset: 0.2em;
+}
+
+.sitefoot a:hover,
+.sitefoot a:focus-visible {
+  color: var(--accent);
+  text-decoration-color: currentColor;
+}
+
+/*
+ * A PANTALLA AMPLA EL PEU ÉS UN BLOC, NO UNA COLUMNA PENJANT.
+ *
+ * A 1.440 px les set fonts feien set files d'una columna prima amb dos terços
+ * de l'amplada buits a la dreta, i el peu es llegia com una llista oblidada al
+ * final. En dues columnes ocupa el que li toca, es recorre d'un cop d'ull i la
+ * signatura de dalt queda separada del bloc de dades, que és la distinció que
+ * el peu ha de fer.
+ *
+ * El punt de tall és el mateix que fa servir la resta de l'estructura per
+ * passar a dues coses de costat.
+ */
+@media (min-width: 900px) {
+  .sitefoot__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--sp-8);
+  }
+
+  /* La signatura i la nota de privadesa no es parteixen: són frases. */
+  .sitefoot__by,
+  .sitefoot__what {
+    max-width: 60ch;
+  }
+}
+
+/*
  * Blocs de la fitxa del punt del mapa.
  *
  * Cada bloc respon una pregunta i van separats per una filera fina, perquè la
