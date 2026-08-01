@@ -1,6 +1,7 @@
 import { Button, Card, SafetyNotice } from '../ui';
 import { canRemoveFilter, FILTER_GATE_NOTE } from '../core/timer';
 import { GuideView } from '../features/guide/GuideView';
+import { OfflinePanel } from '../offline/OfflinePanel';
 import type { EclipseContext } from './context';
 import { s } from './strings';
 import { formatClockShort } from './format';
@@ -47,6 +48,8 @@ const ALERT_LEAD_MS = 30 * 60 * 1000;
 export function GuideScreen({
   eclipseId,
   locale,
+  location,
+  placeLabel,
   circumstances,
   verdict,
   onOpenCountdown,
@@ -128,6 +131,37 @@ export function GuideScreen({
           {s('nav.countdown', locale)}
         </Button>
       </Card>
+
+      {/*
+        LA PREPARACIÓ PER ANAR SENSE COBERTURA, QUE NO ES PODIA OBRIR DES
+        D'ENLLOC.
+
+        El panell existia sencer (`src/offline/OfflinePanel.tsx`, amb els seus
+        hooks i la seva planificació provada) i cap pantalla no el muntava: al
+        camp, l'única memòria cau que tenia l'usuari era la de les tessel·les
+        que hagués mirat per casualitat, i «funciona sense cobertura» és un
+        pilar declarat del producte.
+
+        PER QUÈ AQUÍ. La guia és la pantalla de preparar-se: es llegeix a casa,
+        dies abans, que és exactament quan baixar 15-20 MB encara és possible —
+        el mateix argument que la portada de la guia fa amb «llegeix-la abans
+        de sortir de casa». I de les quatre pantalles és una de les dues que es
+        desplacen: al mapa i al cel el marc és fix i un panell d'aquesta alçada
+        no hi cap sense robar espai al que aquelles pantalles han d'ensenyar.
+
+        PER QUÈ EN AQUESTA POSICIÓ: després dels dos avisos curts (seguretat
+        primer, sempre; l'avís de 30 min després, que hi enllaça) i abans del
+        contingut de lectura, perquè és una ACCIÓ amb data de caducitat i
+        enterrada sota vint pantalles de text no la faria ningú.
+
+        El punt i el seu nom venen del context, com a totes les pantalles: el
+        panell prepara el lloc que l'app ja té triat, no un de propi.
+      */}
+      <OfflinePanel
+        location={location}
+        placeLabel={placeLabel ?? undefined}
+        locale={locale}
+      />
 
       <GuideView eclipseId={eclipseId} />
     </div>

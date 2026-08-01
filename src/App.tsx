@@ -39,6 +39,7 @@ import {
   Select,
   TabBar,
   TopBar,
+  useMediaQuery,
   type TabBarItem,
 } from './ui';
 import { CountdownScreen } from './screens/CountdownScreen';
@@ -62,6 +63,8 @@ import { computeVisibility } from './core/visibility/verdict';
 import { ECLIPSES } from './core/eclipses/catalog';
 import { useObserver } from './state/useObserver';
 import { UpdatePrompt } from './offline/UpdatePrompt';
+import { ConnectionBadge } from './offline/ConnectionBadge';
+import { useOnlineStatus } from './offline/useOnlineStatus';
 import { LOCALES } from './i18n';
 import { SiteFooter } from './screens/SiteFooter';
 import { useCameraSupport } from './features/ar/useCameraSupport';
@@ -91,6 +94,32 @@ function shortDate(id: string): string {
   return `${day}.${month}.${year}`;
 }
 
+/**
+ * Amplada per sota de la qual la capçalera no admet etiquetes llargues.
+ *
+ * A 390 px —la mida de mòbil més venuda— les tres accions demanaven 301,6 px
+ * rígids d'una barra que, tret dels marges, en té 350: al títol li'n quedaven
+ * quaranta-vuit i el logotip es llegia «eclip», tallat pel selector de data. A
+ * 320 px, el botó d'ubicació sortia directament de la pantalla.
+ *
+ * El llindar és 480 i no 390 perquè el que no hi cap no hi cap una mica abans
+ * de trencar-se: a 430 ja hi ha frec.
+ */
+const NARROW_HEADER = '(max-width: 480px)';
+
+/**
+ * L'any, quan la data sencera no hi cap.
+ *
+ * No és ambigu: el catàleg té un eclipsi per any i la data sencera surt a la
+ * franja de dades i a la portada. La regla d'ESTAT.md de no canviar de paraula
+ * segons l'amplada és per als NOMS —dues persones han d'anomenar igual la
+ * mateixa pestanya—, i «2026» i «12.08.2026» no són dos noms: són la mateixa
+ * data amb dues precisions.
+ */
+function shortYear(id: string): string {
+  return id.split('-')[0];
+}
+
 export default function App() {
   return (
     <LocaleProvider>
@@ -101,7 +130,9 @@ export default function App() {
 
 function Shell() {
   const { locale, setLocale, t } = useTranslation();
+  const narrowHeader = useMediaQuery(NARROW_HEADER);
   const camera = useCameraSupport();
+  const { online } = useOnlineStatus();
   const observer = useObserver();
   const [tab, setTab] = useState<Tab>('countdown');
   const [eclipseId, setEclipseId] = useState(ECLIPSES[0].id);
@@ -229,7 +260,10 @@ function Shell() {
         onChange={setEclipseId}
         options={ECLIPSES.map((e) => ({
           value: e.id,
-          label: shortDate(e.id),
+          // A la roda desplegada hi ha lloc de sobra i s'hi vol la data
+          // sencera; el que no hi cap a 390 px és l'etiqueta TANCADA. Com que
+          // les dues surten de la mateixa `<option>`, es tria per amplada.
+          label: narrowHeader ? shortYear(e.id) : shortDate(e.id),
         }))}
       />
       {/*
@@ -250,7 +284,12 @@ function Shell() {
         aria-label={t('locale.switch')}
         value={locale}
         onChange={(next) => setLocale(next as typeof locale)}
-        options={LOCALES.map((code) => ({ value: code, label: t(`locale.${code}`) }))}
+        options={LOCALES.map((code) => ({
+          value: code,
+          // El codi en majúscules quan no hi cap el nom. És el que fan servir
+          // els navegadors i els teclats, i qui busca l'idioma el reconeix.
+          label: narrowHeader ? code.toUpperCase() : t(`locale.${code}`),
+        }))}
       />
       {/*
         ABANS AQUEST BOTÓ DISPARAVA EL GPS directament, i era l'únic camí cap a
@@ -260,6 +299,7 @@ function Shell() {
         més de dir on seràs.
       */}
       <IconButton
+        className="shell__locate"
         icon="map-pin"
         variant="ghost"
         label={ls('bar.open', locale)}
@@ -278,7 +318,7 @@ function Shell() {
         havia cap manera d'activar-la. És exactament per això que calia obrir
         l'app en una pestanya privada per veure els canvis.
       */}
-      <UpdatePrompt />
+      <UpdatePrompt locale={locale} />
 
       <header className="shell__header">
         {/*
@@ -290,7 +330,10 @@ function Shell() {
           evident.
         */}
         {tab === 'countdown' ? (
-          <TopBar logo logoSrc={LOGO_SRC} title={titles[tab]} right={headerActions} />
+          // A la portada el títol no es veu —hi ha el logotip—, o sigui que
+          // aquí no ha de ser l'etiqueta curta de la pestanya sinó la frase
+          // que descriu l'app: és l'`h1` del document.
+          <TopBar logo logoSrc={LOGO_SRC} title={s('home.h1', locale)} right={headerActions} />
         ) : (
           <BackTopBar
             title={titles[tab]}
@@ -331,6 +374,28 @@ function Shell() {
           format compacte queda en una línia: el nom del lloc i el botó de
           canviar-lo, que és l'únic que s'hi fa.
         */}
+        {/*
+          L'ESTAT DE LA XARXA, NOMÉS QUAN NO N'HI HA.
+
+          La insígnia existia (`offline/ConnectionBadge`) i no la muntava
+          ningú: al camp, sense cobertura, l'app no deia enlloc si allò era
+          una avaria o el cas previst. Es munta a l'estructura i no dins d'una
+          pantalla perquè la pregunta «em funcionarà sense xarxa?» no és de cap
+          pestanya concreta — al cim se la faran davant de la càmera, a casa
+          davant del mapa.
+
+          NOMÉS APAREIX SENSE XARXA, a posta: en línia és l'estat normal i una
+          píndola permanent que digui «EN LÍNIA» a cada pantalla seria soroll
+          (i a 390 px, la capçalera ja va justa: vegeu NARROW_HEADER). El que
+          la insígnia distingeix quan surt és el que importa: «desat» (l'app
+          funcionarà) o «no desat» (no hi ha res a fer sense xarxa).
+        */}
+        {!online && (
+          <div className="off-connection">
+            <ConnectionBadge locale={locale} />
+          </div>
+        )}
+
         <LocationBar
           fix={observer.fix}
           locale={locale}
@@ -396,7 +461,22 @@ function Shell() {
           retryLabel={s('shell.retry', locale)}
         >
           {tab === 'countdown' && (
-            <CountdownScreen {...context} onOpenCamera={() => setTab('sky')} />
+            <CountdownScreen
+              {...context}
+              /*
+                LA CRIDA A L'ACCIÓ SEGUEIX LA MATEIXA REGLA QUE LA PESTANYA.
+
+                Si el Cel no és a la barra perquè aquest aparell no el pot
+                ensenyar, el botó que hi porta tampoc no hi ha de ser: posava
+                `tab` a `sky`, l'efecte de sota el retornava a `countdown` a
+                l'instant i el resultat era un botó primari gran que no feia
+                res. `camera.unknown` compta com a no disponible mentre no se
+                sap: val més ensenyar el mapa un moment que un botó que potser
+                és mort.
+              */
+              onOpenCamera={camera.supported ? () => setTab('sky') : undefined}
+              onOpenMap={() => setTab('map')}
+            />
           )}
           {tab === 'map' && (
             <MapScreen {...context} onPickLocation={observer.setManual} />

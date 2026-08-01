@@ -12,6 +12,14 @@
    dalt o a baix ha de sumar `env(safe-area-inset-*)` o queda sota l'osca i sota
    la barra d'inici. És el motiu de tots els `calc()` d'aquest fitxer.
 
+   I EN APAÏSAT L'OSCA CAU A UN COSTAT: el dia de l'eclipsi la càmera es fa
+   servir amb el mòbil girat, i tot el que toca una vora LATERAL ha de comptar
+   amb `env(safe-area-inset-left/right)`. La regla lateral és `max(gutter,
+   inset)` i NO la suma que fan les barres verticals: l'inset lateral (~59 px a
+   un iPhone amb illa dinàmica) ja porta l'aire inclòs, i sumar-hi el gutter
+   regalava 79 px per banda justament quan l'amplada és el que sobra i l'alçada
+   el que falta. Amb inset zero, `max()` és el gutter de sempre.
+
    ESCRIPTORI: no és un mòbil estirat. A partir de --bp-rail la barra inferior
    deixa de tenir sentit (el polze no arriba enlloc) i passa a ser un carril
    lateral; a partir de --bp-split, les pantalles que tenen dues coses per
@@ -66,6 +74,12 @@
   bottom: 0;
   height: var(--bar-bottom);
   padding-bottom: env(safe-area-inset-bottom);
+  /* En apaïsat l'osca cau sobre un extrem de la barra: sense això, la primera
+     o l'última pestanya quedava sota l'illa dinàmica i no es podia tocar. Aquí
+     és `env()` a pèl i no `max()` perquè les pestanyes no tenen cap gutter
+     propi amb què quedar-se. */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   border-top: var(--bw-hair) solid var(--border-hairline);
 }
 
@@ -123,7 +137,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  padding: var(--sp-5) var(--gutter-app) 0;
+  /* Amb --maxw-web (1160) d'amplada màxima, en un mòbil girat aquesta franja
+     omple tota l'amplada i l'avís començava sota l'osca. */
+  padding: var(--sp-5) max(var(--gutter-app), env(safe-area-inset-right)) 0
+    max(var(--gutter-app), env(safe-area-inset-left));
   margin: 0 auto;
   max-width: var(--maxw-web);
 }
@@ -170,7 +187,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-5);
-  padding: var(--sp-5) var(--gutter-app) var(--sp-8);
+  /* A --maxw-sheet (520) el `margin: auto` ja aparta el contingut de l'osca en
+     apaïsat, però `.screen--wide` puja el sostre a 1160 i llavors els laterals
+     tornen a tocar la vora: el `max()` és per a aquest cas. */
+  padding: var(--sp-5) max(var(--gutter-app), env(safe-area-inset-right))
+    var(--sp-8) max(var(--gutter-app), env(safe-area-inset-left));
   margin: 0 auto;
   max-width: var(--maxw-sheet);
 }
@@ -398,10 +419,17 @@
 /*
  * L'escenari del mapa.
  *
- * `EclipseMap` porta el seu propi encoixinat, la seva llegenda i la seva fitxa
- * de resultats, pensats per viure dins d'un document. Aquí el llenç ha d'omplir
- * el marc i la resta queda fora de la retallada; la llegenda es torna a pintar
- * a sota amb els components del sistema.
+ * `EclipseMap` porta el seu propi encoixinat, la seva llegenda i el seu convit
+ * a tocar, pensats per viure dins d'un document. Aquí el llenç ha d'omplir el
+ * marc i la resta queda fora de la retallada; la llegenda es torna a pintar a
+ * sota amb els components del sistema, i la fitxa del punt tocat viu a la
+ * fitxa de la pantalla (abans era un panell dins d'`EclipseMap` i aquesta
+ * mateixa retallada el feia invisible).
+ *
+ * L'ÚNIC QUE HA DE SOBREVIURE LA RETALLADA ÉS L'AVÍS DE FALLADA: per això no
+ * va al flux sota el llenç sinó superposat a dins del seu marc (vegeu
+ * `.map__error`, més avall). Sense això, WebGL o tessel·les caiguts es veien
+ * com un rectangle negre mut, indistingible d'un mapa penjat.
  *
  * L'ATRIBUCIÓ NO ES PERD. És obligatòria per llicència i per això `EclipseMap`
  * la posa DINS del llenç (control d'atribució de MapLibre, amb OpenStreetMap i
@@ -419,6 +447,10 @@
   margin: 0;
 }
 
+.mapscreen__stage .map__frame {
+  height: 100%;
+}
+
 .mapscreen__stage .map__canvas {
   height: 100%;
   min-height: 0;
@@ -427,9 +459,39 @@
   border-radius: 0;
 }
 
+/*
+ * El marc del llenç i l'avís de fallada que hi sura a sobre.
+ *
+ * Els estils del marc viuen aquí i no a `features/map/map.css` perquè aquell
+ * fitxer el toquen altres feines en paral·lel; el dia que es consolidi, aquest
+ * bloc s'hi pot moure tal qual.
+ *
+ * L'avís va centrat al llenç —que és on l'usuari mira quan no veu mapa— i no
+ * intercepta el punter: amb les tessel·les caigudes la franja encara es
+ * dibuixa i el mapa segueix sent utilitzable per sota. L'ambre de `.warn` no
+ * trenca la regla d'un sol ambre: quan aquest avís surt, la franja del mapa és
+ * justament el que no s'ha pogut pintar.
+ */
+.map__frame {
+  position: relative;
+}
+
+.map__error {
+  position: absolute;
+  top: 50%;
+  left: var(--gutter-app);
+  right: var(--gutter-app);
+  transform: translateY(-50%);
+  z-index: 2;
+  margin: 0 auto;
+  max-width: var(--maxw-sheet);
+  text-align: center;
+  pointer-events: none;
+}
+
 .mapscreen__legend {
   position: absolute;
-  left: var(--gutter-app);
+  left: max(var(--gutter-app), env(safe-area-inset-left));
   top: var(--sp-5);
   z-index: 2;
   display: flex;
@@ -474,8 +536,8 @@
  */
 .mapscreen__sheet {
   position: absolute;
-  left: var(--gutter-app);
-  right: var(--gutter-app);
+  left: max(var(--gutter-app), env(safe-area-inset-left));
+  right: max(var(--gutter-app), env(safe-area-inset-right));
   bottom: var(--sp-5);
   z-index: 2;
   display: flex;
@@ -531,7 +593,9 @@
   /* Aire per al botó d'obrir la càmera, que és l'únic que es veu abans que hi
      hagi imatge. La xifra és la franja de brúixola (--sp-8) més la fila
      d'insígnies (--sp-10): així el botó queda just a sota i no a sobre. */
-  padding: calc(var(--sp-8) + var(--sp-10)) var(--gutter-app) 0;
+  padding: calc(var(--sp-8) + var(--sp-10))
+    max(var(--gutter-app), env(safe-area-inset-right)) 0
+    max(var(--gutter-app), env(safe-area-inset-left));
 }
 
 .skyscreen__ar .viewport {
@@ -564,7 +628,8 @@
 .skyscreen__ar--tools .ar {
   height: auto;
   /* A baix, prou aire perquè la barra de tancament no tapi l'últim control. */
-  padding: var(--sp-6) var(--gutter-app) var(--sp-11);
+  padding: var(--sp-6) max(var(--gutter-app), env(safe-area-inset-right))
+    var(--sp-11) max(var(--gutter-app), env(safe-area-inset-left));
 }
 
 .skyscreen__ar--tools .viewport {
@@ -582,7 +647,7 @@
 
 .skyscreen__toolsbar {
   position: absolute;
-  left: var(--gutter-app);
+  left: max(var(--gutter-app), env(safe-area-inset-left));
   bottom: var(--sp-5);
   z-index: 3;
 }
@@ -592,8 +657,13 @@
 .skyscreen__top {
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
+  /* La caixa sencera s'encongeix fins a la zona segura, no s'encoixina: les
+     marques de la brúixola es col·loquen amb `left: %` des de `SkyScreen.tsx`,
+     i un coixí no les mouria — el percentatge es resol contra la caixa de
+     coixí. Encongint-la, l'azimut continua alineat amb la imatge i cap marca
+     ni insígnia queda sota l'illa dinàmica. */
+  left: env(safe-area-inset-left);
+  right: env(safe-area-inset-right);
   z-index: 2;
 }
 
@@ -680,7 +750,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  padding: var(--sp-10) var(--gutter-app) var(--sp-4);
+  /* El degradat sí que arriba de vora a vora (left/right: 0); només el
+     contingut s'aparta de l'osca. Apartar la caixa sencera deixava una franja
+     de càmera nua entre el degradat i la vora. */
+  padding: var(--sp-10) max(var(--gutter-app), env(safe-area-inset-right))
+    var(--sp-4) max(var(--gutter-app), env(safe-area-inset-left));
   max-height: 45%;
   overflow-y: auto;
   background: linear-gradient(180deg, transparent, rgb(0 0 0 / 0.55) 45%, var(--ink-950) 100%);
@@ -732,9 +806,21 @@
 
    Els punts de tall van escrits al `@media` perquè les consultes de mitjans no
    accepten `var()` — és una limitació del CSS, no una excepció a la regla.
+
+   AMPLE NO VOL DIR GRAN. Un iPhone 16 Pro Max girat fa 932×440 i passava el
+   tall dels 900: rebia el carril lateral de 168 px i la franja editorial de
+   40 px justament el dia de l'eclipsi, que és quan la càmera es fa servir amb
+   el mòbil en apaïsat. La guarda és `min-height: 500px` i no `orientation` ni
+   `pointer`: cap mòbil girat arriba als 500 d'alçada (el més alt del mercat es
+   queda a 440) i cap finestra d'escriptori ni tauleta raonable hi baixa,
+   mentre que `pointer: fine` deixaria un iPad apaïsat de 1024×768 —que és on
+   el carril té més sentit— clavat a la disposició de mòbil. Les DUES consultes
+   porten la MATEIXA guarda: si només la portés la primera, una pantalla ampla
+   i baixa tindria les columnes de --bp-split sense el carril que les
+   pressuposa.
    ========================================================================== */
 
-@media (min-width: 900px) {
+@media (min-width: 900px) and (min-height: 500px) {
   .shell {
     /* La franja de dades passa a existir i entra a totes les fórmules de
        posició alhora, perquè totes surten d'aquesta variable. */
@@ -853,7 +939,7 @@
   }
 }
 
-@media (min-width: 1180px) {
+@media (min-width: 1180px) and (min-height: 500px) {
   /*
    * Dues columnes amb una regla vertical entremig, com la versió web del
    * sistema: la jerarquia la fan les línies i les columnes, no més targetes.
@@ -1007,6 +1093,76 @@
   max-width: 8.5rem;
 }
 
+/*
+ * TERRA D'AMPLADA DELS DOS DESPLEGABLES.
+ *
+ * Des que les accions cedeixen espai en comptes de retallar la marca
+ * (`.ui-topbar__actions`), calia dir-los fins on poden cedir: sense terra, a
+ * 320 px els dos `<select>` s'encongien fins a superposar-se i el galó d'un
+ * queia damunt del text de l'altre.
+ *
+ * Les xifres surten del contingut més llarg que han d'ensenyar en format curt:
+ * «2026» i «CA», més el galó.
+ */
+/*
+ * El terra va a l'EMBOLCALL i no al `<select>`.
+ *
+ * `Select` posa la classe que li passes a l'element natiu quan no porta
+ * etiqueta, no a `.ui-selectwrap`. Amb el mínim només al `<select>`, qui
+ * s'encongia era l'embolcall i el galó, que hi va posicionat en absolut,
+ * acabava damunt del text: «2026⌄» i «C/».
+ */
+.ui-selectwrap:has(.shell__eclipse) {
+  min-width: 5.75rem;
+}
+
+.ui-selectwrap:has(.shell__locale) {
+  /* 78 px és el que mesura «CA» amb el galó sense encavalcar-s'hi. */
+  min-width: 5rem;
+}
+
+/*
+ * A 360 px I PER SOTA, LA MARCA TAMBÉ CEDEIX UNA MICA.
+ *
+ * Mesurat al navegador: el logotip ocupa 127 px fixos, i amb els dos
+ * desplegables als seus mínims (92 i 80) més els marges de 20 i el buit de 16,
+ * fan 335 px en una barra de 320. Alguna cosa ha de cedir, i entre retallar la
+ * marca —que és el que passava— i fer-la un 25 % més petita, la tria és clara:
+ * a 96 px d'amplada el logotip encara es llegeix sencer.
+ *
+ * Els marges també s'estrenyen: 20 px a cada banda és el gutter del web, i en
+ * una barra de 320 px són el 12 % de tot l'espai.
+ */
+@media (max-width: 360px) {
+  .shell__header .ui-topbar {
+    padding-inline: var(--sp-4);
+    gap: var(--sp-3);
+  }
+
+  .shell__header .ui-topbar__logo {
+    max-width: 96px;
+  }
+}
+
+/*
+ * PER SOTA DE 400 px NO HI CAP TOT, i el que sobra és aquest botó.
+ *
+ * La marca, el selector d'eclipsi i el d'idioma no tenen cap altra porta. El
+ * botó d'ubicació de la capçalera sí que en té: `LocationBar` es munta a TOTES
+ * les pantalles, just a sota, amb el nom del lloc i el seu propi «Canvia el
+ * lloc». Amagar-lo aquí no treu cap camí, només en treu la còpia — i a canvi
+ * els altres tres deixen de barallar-se.
+ *
+ * El llindar és 400 i no 360 perquè a 390 —la mida de mòbil més venuda— els
+ * comptes surten a 415 px de contingut en una barra de 390: mesurat, no
+ * estimat.
+ */
+@media (max-width: 400px) {
+  .shell__locate {
+    display: none;
+  }
+}
+
 /* ------------------------------------------------------------ peu de pàgina */
 
 /*
@@ -1063,6 +1219,87 @@
 }
 
 /*
+ * LA SIGNATURA.
+ *
+ * Va primer i és l'única línia del peu amb color de text principal: és el que
+ * respon la primera pregunta de qui baixa fins aquí. Prou pes per llegir-se
+ * com una signatura, no prou per competir amb res de la pantalla — el peu
+ * segueix sense cap ambre (vegeu-hi la nota de sota).
+ */
+.sitefoot__by {
+  color: var(--text-secondary);
+}
+
+/*
+ * L'`a.` no és decoració de selector: la regla d'enllaços del peu és
+ * `.sitefoot a`, que té més especificitat que una classe sola i li menjaria el
+ * color a la signatura. Amb `a.` empaten en especificitat i mana l'ordre, que
+ * és aquest.
+ */
+.sitefoot__author,
+.sitefoot a.sitefoot__author {
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+}
+
+.sitefoot__and {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/*
+ * ELS ENLLAÇOS DEL PEU NO SÓN AMBRE, I ABANS N'HI HAVIA SET.
+ *
+ * L'ambre del sistema és per a la xifra que decideix, i n'hi ha d'haver un per
+ * pantalla. Els enllaços hereten el color d'accent global, i això posava set
+ * elements ambre a la portada —els set proveïdors— més el «Codi obert», tots
+ * de cop i tots dient «mira'm» al costat de la durada de la totalitat, que és
+ * l'única xifra que de veritat ho hauria de dir.
+ *
+ * Segueixen essent enllaços i es reconeixen com a tals: subratllat fi, i
+ * l'accent només al passar-hi per sobre i al focus, que és quan l'usuari ja hi
+ * està apuntant i el color no compta com a èmfasi de pantalla.
+ */
+.sitefoot a {
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-decoration-color: var(--border-subtle);
+  text-underline-offset: 0.2em;
+}
+
+.sitefoot a:hover,
+.sitefoot a:focus-visible {
+  color: var(--accent);
+  text-decoration-color: currentColor;
+}
+
+/*
+ * A PANTALLA AMPLA EL PEU ÉS UN BLOC, NO UNA COLUMNA PENJANT.
+ *
+ * A 1.440 px les set fonts feien set files d'una columna prima amb dos terços
+ * de l'amplada buits a la dreta, i el peu es llegia com una llista oblidada al
+ * final. En dues columnes ocupa el que li toca, es recorre d'un cop d'ull i la
+ * signatura de dalt queda separada del bloc de dades, que és la distinció que
+ * el peu ha de fer.
+ *
+ * El punt de tall és el mateix que fa servir la resta de l'estructura per
+ * passar a dues coses de costat.
+ */
+@media (min-width: 900px) {
+  .sitefoot__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--sp-8);
+  }
+
+  /* La signatura i la nota de privadesa no es parteixen: són frases. */
+  .sitefoot__by,
+  .sitefoot__what {
+    max-width: 60ch;
+  }
+}
+
+/*
  * Blocs de la fitxa del punt del mapa.
  *
  * Cada bloc respon una pregunta i van separats per una filera fina, perquè la
@@ -1081,4 +1318,39 @@
   flex-direction: row;
   gap: var(--sp-6);
   flex-wrap: wrap;
+}
+
+/* La taula de contactes dins d'un bloc de la fitxa: el bloc ja posa l'aire,
+   i el marge propi de `.contacts` (pensat per anar solt en un document) hi
+   sumava un buit doble entre l'overline i la primera fila. */
+.mapscreen__block .contacts {
+  margin-top: var(--sp-0);
+}
+
+/* --- Fitxa del punt tocat ------------------------------------------------- */
+
+/* Capçalera del punt tocat: overline i coordenades arrapades l'una a l'altra
+   perquè es llegeixin com una sola etiqueta; l'aire amb la resta el posa el
+   `gap` de la fitxa. */
+.mapscreen__pickhead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+/* Coordenades en mono tabular, com totes les dades de posició de l'app. */
+.mapscreen__coords {
+  margin: 0;
+  font: var(--text-body-sm);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+/* Les dues accions del punt tocat, de costat mentre hi capiguen. Cap de les
+   dues és ambre: l'ambre d'aquesta pantalla és la franja pintada al mapa. */
+.mapscreen__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
 }

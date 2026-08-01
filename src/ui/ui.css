@@ -1199,7 +1199,11 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--sp-4);
-  margin: var(--sp-5) var(--gutter-app);
+  /* El forat pot aparèixer dins d'una superfície a sang (la vista de RA el
+     posa dins d'un marc que arriba de vora a vora): en apaïsat, el marge ha de
+     saltar l'osca o el missatge comença sota l'illa dinàmica. */
+  margin: var(--sp-5) max(var(--gutter-app), env(safe-area-inset-right))
+    var(--sp-5) max(var(--gutter-app), env(safe-area-inset-left));
   padding: var(--sp-6);
   border: var(--bw-hair) dashed var(--border-subtle);
   border-radius: var(--r-lg);
@@ -1266,7 +1270,13 @@
   align-items: center;
   gap: var(--sp-4);
   height: 100%;
-  padding: 0 var(--gutter-app);
+  /* La barra viu sempre enganxada a les vores de la pantalla i amb
+     `viewport-fit=cover` en apaïsat l'osca li cau a sobre: la fletxa d'enrere
+     quedava sota l'illa dinàmica. `max()` i no suma, perquè l'inset lateral ja
+     porta l'aire inclòs i sumar-hi el gutter deixava el primer botó a 79 px de
+     la vora; amb inset zero torna a ser el gutter de sempre. */
+  padding: 0 max(var(--gutter-app), env(safe-area-inset-right)) 0
+    max(var(--gutter-app), env(safe-area-inset-left));
 }
 
 .ui-topbar__text {
@@ -1277,7 +1287,12 @@
   min-width: 0;
 }
 
+/*
+ * És un `h1`. Els marges i el pes del navegador es reinicien aquí: el que mana
+ * és la fitxa tipogràfica, no que sigui una capçalera de nivell u.
+ */
 .ui-topbar__title {
+  margin: 0;
   font: var(--text-title-3);
   color: var(--text-primary);
   white-space: nowrap;
@@ -1311,10 +1326,40 @@
   text-overflow: ellipsis;
 }
 
+/*
+ * LES ACCIONS CEDEIXEN ABANS QUE LA MARCA.
+ *
+ * Amb `flex: none` les accions demanaven la seva amplada sencera —301,6 px amb
+ * els dos desplegables i el botó d'ubicació— i qui s'espitjava era el text, que
+ * és on hi ha el logotip: a 390 px es llegia «eclip», tallat pel selector de
+ * data, i a 320 el botó d'ubicació sortia de la pantalla.
+ *
+ * Ara qui s'encongeix són les accions. És l'ordre correcte: una data escurçada
+ * segueix essent llegible i una marca partida per la meitat, no. El text de les
+ * etiquetes també s'escurça a mòbil, però això no ho pot fer el CSS amb un
+ * `<select>` natiu; ho decideix `App.tsx`.
+ */
 .ui-topbar__actions {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
+  flex: 0 1 auto;
+  min-width: 0;
+  /*
+   * I ES QUEDEN A LA DRETA.
+   *
+   * Amb el text a `flex: 1` les accions ja hi quedaven per la pressió del
+   * germà. En treure-li el creixement per protegir el logotip, aquella
+   * pressió va desaparèixer i a la portada d'escriptori les accions se'n van
+   * anar a enganxar-se a la marca, amb mil píxels buits a la dreta. `auto`
+   * torna a clavar-les a la vora sense recuperar l'encongiment del text: quan
+   * hi ha títol i no logotip, el text segueix a `flex: 1` i això és un no-op.
+   */
+  margin-inline-start: auto;
+}
+
+/* La marca no es negocia: si res no hi cap, que cedeixi la resta. */
+.ui-topbar__text:has(.ui-topbar__logo) {
   flex: none;
 }
 

@@ -26,7 +26,9 @@ export type { ScheduleInput } from './schedule';
 
 export {
   canRemoveFilter,
+  nakedEyeAllowedAt,
   FILTER_OFF_DELAY_SEC,
+  FILTER_ON_MARGIN_SEC,
   MIN_TOTALITY_FOR_FILTER_OFF_SEC,
 } from './safety';
 export type { FilterGateInput } from './safety';

@@ -20,6 +20,7 @@ import type { EclipseSample } from '../core/astro/types';
 import type { EclipseContext } from './context';
 import { EphemerisTable } from './EphemerisTable';
 import { s } from './strings';
+import { verdictSummary } from './verdictSummary';
 import {
   formatAge,
   formatClockShort,
@@ -32,8 +33,18 @@ import {
 import './screens.css';
 
 export interface CountdownScreenProps extends EclipseContext {
-  /** Porta l'usuari a la pestanya de la càmera. */
-  onOpenCamera: () => void;
+  /**
+   * Porta l'usuari a la pestanya de la càmera.
+   *
+   * `undefined` quan aquest aparell no la pot ensenyar —cap càmera cap enfora,
+   * cap giroscopi—, i llavors la portada NO pinta el botó: hi posa el de mapa.
+   * Abans es pintava sempre i a l'escriptori no feia res, perquè posava la
+   * pestanya a `sky`, que allà no existeix, i un efecte de `App` la retornava a
+   * `countdown` a l'instant.
+   */
+  onOpenCamera?: () => void;
+  /** Porta l'usuari al mapa. És l'acció principal quan no hi ha càmera. */
+  onOpenMap: () => void;
 }
 
 /** El tipus d'eclipsi mana el color de tot el que en depèn. */
@@ -61,6 +72,7 @@ export function CountdownScreen({
   verdict,
   horizon,
   onOpenCamera,
+  onOpenMap,
 }: CountdownScreenProps) {
   const eclipse = getEclipse(eclipseId);
   const contacts = circumstances?.contacts ?? null;
@@ -70,6 +82,27 @@ export function CountdownScreen({
   // que no existeix seria comptar fins a res.
   const target = contacts?.c2 ?? contacts?.max ?? null;
   const central = circumstances?.kind === 'total' || circumstances?.kind === 'annular';
+
+  /*
+   * SI EL DIBUIX POT ENSENYAR CORONA.
+   *
+   * Tres condicions, i cap és l'obscuració. Ha de ser un eclipsi TOTAL —d'un
+   * anular no se'n veu mai, hi queda anell de fotosfera—, i el relleu no se
+   * l'ha de menjar: amb veredicte mana el veredicte, i mentre no n'hi ha es fa
+   * servir la xifra teòrica, que és la mateixa cascada que fan les xifres del
+   * costat. Un 99,7 % de parcial pur no en veu, i era el cas que dibuixava
+   * corona.
+   */
+  const showsCorona =
+    circumstances?.kind === 'total' &&
+    // I AL CAIRE DE LA FRANJA, TAMPOC. Amb `edgeUncertain` el motor declara
+    // que no pot decidir si des d'aquí hi haurà fase central —la banda de dos
+    // o tres quilòmetres on el nostre error de posició és més gran que el
+    // marge—, i la comporta de seguretat hi respon que no. Que la imatge
+    // prometi una corona que la comporta nega és la contradicció que aquesta
+    // pantalla existeix per no tenir.
+    !circumstances.edgeUncertain &&
+    (verdict ? verdict.centralVisibleSec > 0 : (circumstances.centralDurationSec ?? 0) > 0);
 
   const countdownLabel = central
     ? s(circumstances?.kind === 'annular' ? 'home.untilAnnularity' : 'home.untilTotality', locale)
@@ -149,7 +182,7 @@ export function CountdownScreen({
         </section>
 
         <Card className="home__phase">
-          <PhaseDial obscuration={obscuration} size={96} />
+          <PhaseDial obscuration={obscuration} totality={showsCorona} size={96} />
           <div className="home__stats">
             <Stat
               label={
@@ -170,7 +203,7 @@ export function CountdownScreen({
         </Card>
 
         {!horizon && <p className="screen__note">{s('home.terrainPending', locale)}</p>}
-        {verdict && <p className="screen__note">{verdict.summary}</p>}
+        {verdict && <p className="screen__note">{verdictSummary(verdict, locale)}</p>}
 
         {/*
           Els cinc contactes. Al mòbil, la línia horitzontal; a l'escriptori, la
@@ -228,9 +261,15 @@ export function CountdownScreen({
           centralPhaseVisible={verdict ? verdict.centralVisibleSec > 0 : undefined}
         />
 
-        <Button size="lg" icon="camera" fullWidth onClick={onOpenCamera}>
-          {s('home.openCamera', locale)}
-        </Button>
+        {onOpenCamera ? (
+          <Button size="lg" icon="camera" fullWidth onClick={onOpenCamera}>
+            {s('home.openCamera', locale)}
+          </Button>
+        ) : (
+          <Button size="lg" icon="map" fullWidth onClick={onOpenMap}>
+            {s('home.openMap', locale)}
+          </Button>
+        )}
 
         <p className="screen__note">
           {formatCoords(location.lat, location.lon)} ·{' '}

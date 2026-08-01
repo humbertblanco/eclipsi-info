@@ -55,6 +55,8 @@
  * l'usuari veu i manté viva) i no el service worker.
  */
 
+import type { Locale } from '../i18n';
+
 /** Cert en iPhone i iPad, incloent-hi l'iPad que es fa passar per Mac. */
 export function isIOS(): boolean {
   if (typeof navigator === 'undefined') return false;
@@ -78,39 +80,69 @@ export function isStandalone(): boolean {
 }
 
 export interface InstallHint {
-  /** Passos per instal·lar, en català i en ordre. */
+  /** Passos per instal·lar, en l'idioma demanat i en ordre. */
   steps: string[];
   /** Motiu pel qual val la pena, en una frase. */
   reason: string;
 }
+
+/*
+ * Els textos van aquí i no a `strings.ts` perquè els passos són llistes, i la
+ * taula de cadenes del mòdul només guarda frases soltes. El format `{ ca, es }`
+ * és el mateix.
+ */
+const IOS_HINT: Record<Locale, InstallHint> = {
+  ca: {
+    reason:
+      'A l’iPhone, el que baixis des del navegador es pot esborrar sol al cap de set dies. Instal·lada, no.',
+    steps: [
+      'Obre aquesta pàgina amb Safari.',
+      'Toca el botó de compartir, a la barra de sota.',
+      'Tria «Afegeix a la pantalla d’inici».',
+      'Obre l’app des de la icona nova i prepara-hi el punt des d’allà.',
+    ],
+  },
+  es: {
+    reason:
+      'En el iPhone, lo que descargues desde el navegador se puede borrar solo al cabo de siete días. Instalada, no.',
+    steps: [
+      'Abre esta página con Safari.',
+      'Toca el botón de compartir, en la barra de abajo.',
+      'Elige «Añadir a pantalla de inicio».',
+      'Abre la app desde el icono nuevo y prepara el punto desde allí.',
+    ],
+  },
+};
+
+const GENERIC_HINT: Record<Locale, InstallHint> = {
+  ca: {
+    reason: 'Instal·lada, s’obre sola en pantalla completa i les dades desades duren més.',
+    steps: [
+      'Obre el menú del navegador.',
+      'Tria «Instal·la l’aplicació» o «Afegeix a la pantalla d’inici».',
+    ],
+  },
+  es: {
+    reason: 'Instalada, se abre sola a pantalla completa y los datos guardados duran más.',
+    steps: [
+      'Abre el menú del navegador.',
+      'Elige «Instalar la aplicación» o «Añadir a pantalla de inicio».',
+    ],
+  },
+};
 
 /**
  * Instruccions d'instal·lació, o `null` si ja està instal·lada.
  *
  * A iOS no és cosmètic: instal·lar és l'única manera que les dades desades
  * sobrevisquin una setmana (punts 3 i 4 de dalt).
+ *
+ * L'idioma és paràmetre amb `'ca'` per defecte —el de l'app— i no una
+ * importació de `FALLBACK_LOCALE`: `src/i18n/index.ts` arrossega React, i
+ * aquest mòdul és lògica de plataforma que no n'ha de dependre en temps
+ * d'execució.
  */
-export function installHint(): InstallHint | null {
+export function installHint(locale: Locale = 'ca'): InstallHint | null {
   if (isStandalone()) return null;
-
-  if (isIOS()) {
-    return {
-      reason:
-        'A l’iPhone, el que baixis des del navegador es pot esborrar sol al cap de set dies. Instal·lada, no.',
-      steps: [
-        'Obre aquesta pàgina amb Safari.',
-        'Toca el botó de compartir, a la barra de sota.',
-        'Tria «Afegeix a la pantalla d’inici».',
-        'Obre l’app des de la icona nova i prepara-hi el punt des d’allà.',
-      ],
-    };
-  }
-
-  return {
-    reason: 'Instal·lada, s’obre sola en pantalla completa i les dades desades duren més.',
-    steps: [
-      'Obre el menú del navegador.',
-      'Tria «Instal·la l’aplicació» o «Afegeix a la pantalla d’inici».',
-    ],
-  };
+  return isIOS() ? IOS_HINT[locale] : GENERIC_HINT[locale];
 }

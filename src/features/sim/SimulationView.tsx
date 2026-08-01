@@ -14,6 +14,7 @@ import {
 } from '../../core/astro/obscuration';
 import type { Locale } from '../../i18n';
 import { s } from '../../screens/strings';
+import { verdictSummary } from '../../screens/verdictSummary';
 import { EphemerisTable } from '../../screens/EphemerisTable';
 import {
   formatClock,
@@ -194,7 +195,9 @@ export function SimulationView({ location, eclipseId, locale, horizon }: Props) 
       )}
 
       {verdict && (
-        <p className={verdict.centralLostSec > 1 ? 'warn' : 'note'}>{verdict.summary}</p>
+        <p className={verdict.centralLostSec > 1 ? 'warn' : 'note'}>
+          {verdictSummary(verdict, locale)}
+        </p>
       )}
 
       {verdict?.climbToRecoverM != null && verdict.centralLostSec > 1 && (

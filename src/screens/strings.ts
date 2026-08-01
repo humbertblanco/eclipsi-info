@@ -91,7 +91,31 @@ const STRINGS = {
   'home.obscuration': { ca: 'Ocultació', es: 'Ocultación' },
   'home.sunAltitude': { ca: 'Altura del Sol', es: 'Altura del Sol' },
   'home.contacts': { ca: 'Contactes al teu punt', es: 'Contactos en tu punto' },
+  /*
+   * L'`h1` de la portada.
+   *
+   * No es veu: a la portada la capçalera ensenya el logotip i el títol va
+   * amagat visualment (vegeu `TopBar`). Però és el primer que llegeix un lector
+   * de pantalla i el que llegeix un cercador, i allà «Eclipsi» —que és
+   * l'etiqueta de la pestanya— no diu res. Aquí hi va la promesa sencera.
+   */
+  'home.h1': {
+    ca: 'Quants segons d’eclipsi veuràs des d’on seràs',
+    es: 'Cuántos segundos de eclipse verás desde donde estarás',
+  },
   'home.openCamera': { ca: 'Apunta el mòbil al cel', es: 'Apunta el móvil al cielo' },
+  /*
+   * L'ALTERNATIVA D'ESCRIPTORI.
+   *
+   * A l'escriptori no hi ha càmera cap enfora ni giroscopi, la pestanya del Cel
+   * no existeix i «Apunta el mòbil al cel» era un botó primari que no feia
+   * absolutament res. Qui el prova conclou que l'app està trencada — que és
+   * exactament la percepció que `useCameraSupport` diu voler evitar.
+   *
+   * En lloc seu, l'acció que de veritat toca en una pantalla gran: triar on
+   * seràs. L'escriptori és on es planifica.
+   */
+  'home.openMap': { ca: 'Tria on seràs, al mapa', es: 'Elige dónde estarás, en el mapa' },
   'home.terrainPending': {
     ca: 'La durada encara és la teòrica: el perfil del terreny no està calculat i el relleu de ponent no hi entra.',
     es: 'La duración todavía es la teórica: el perfil del terreno no está calculado y el relieve de poniente no entra.',
@@ -288,6 +312,58 @@ const STRINGS = {
     es: 'Sol a {alt} sobre el horizonte en el máximo. A esta altura el terreno hacia el oeste decide lo que verás — el perfil real de este punto todavía no está calculado.',
   },
 
+  /* --- veredicte del terreny ---
+   *
+   * La frase que resumeix quants segons sobreviuen al relleu. Era un camp
+   * `summary` que el motor (`core/visibility/verdict.ts`) redactava en català
+   * per construcció, i es pintava tal qual amb l'app en castellà. Les variants
+   * total/anular van en claus SEPARADES i no amb un forat `{central}` pel
+   * mateix motiu que `map.legendBandTotal`: davant de vocal l'article i la
+   * preposició s'apostrofen («l'anularitat», «d'anularitat») i una frase amb
+   * forat és exactament la manera de generar la falta.
+   */
+  'verdict.noEclipse': {
+    ca: 'Des d’aquest punt no hi ha eclipsi.',
+    es: 'Desde este punto no hay eclipse.',
+  },
+  'verdict.sunBlocked': {
+    ca: 'El Sol queda darrere el terreny durant tot l’eclipsi: des d’aquí no en veuràs res.',
+    es: 'El Sol queda detrás del terreno durante todo el eclipse: desde aquí no verás nada.',
+  },
+  'verdict.centralBlockedTotal': {
+    ca: 'El terreny tapa la totalitat sencera ({total}). Com a màxim veuràs un {pct} % del Sol cobert.',
+    es: 'El terreno tapa la totalidad entera ({total}). Como máximo verás un {pct} % del Sol cubierto.',
+  },
+  'verdict.centralBlockedAnnular': {
+    ca: 'El terreny tapa l’anularitat sencera ({total}). Com a màxim veuràs un {pct} % del Sol cobert.',
+    es: 'El terreno tapa la anularidad entera ({total}). Como máximo verás un {pct} % del Sol cubierto.',
+  },
+  'verdict.centralPartialTotal': {
+    ca: 'De {total} de totalitat només en veuràs {visible}: el relleu se’n menja {lost}.',
+    es: 'De {total} de totalidad solo verás {visible}: el relieve se come {lost}.',
+  },
+  'verdict.centralPartialAnnular': {
+    ca: 'De {total} d’anularitat només en veuràs {visible}: el relleu se’n menja {lost}.',
+    es: 'De {total} de anularidad solo verás {visible}: el relieve se come {lost}.',
+  },
+  'verdict.centralVisibleTotal': {
+    ca: '{visible} de totalitat sencers per damunt del terreny.',
+    es: '{visible} de totalidad enteros por encima del terreno.',
+  },
+  'verdict.centralVisibleAnnular': {
+    ca: '{visible} d’anularitat sencers per damunt del terreny.',
+    es: '{visible} de anularidad enteros por encima del terreno.',
+  },
+  'verdict.partialOnly': {
+    ca: 'Eclipsi parcial: fins a un {pct} % del Sol cobert per damunt del terreny.',
+    es: 'Eclipse parcial: hasta un {pct} % del Sol cubierto por encima del terreno.',
+  },
+  /* El signe de grau va DINS de la variable {deficit}, com a `sim.climb`. */
+  'verdict.climb': {
+    ca: 'Caldria guanyar {deficit} d’altura sobre l’horitzó (uns {climb} m amunt, amb l’obstacle a {km} km).',
+    es: 'Haría falta ganar {deficit} de altura sobre el horizonte (unos {climb} m de subida, con el obstáculo a {km} km).',
+  },
+
   /* --- cel / càmera --- */
   'camera.title': { ca: 'El cel des d’aquí', es: 'El cielo desde aquí' },
   'camera.intro': {
@@ -339,6 +415,172 @@ const STRINGS = {
   'camera.readout': {
     ca: 'Az {az}° {card} · alt {alt}° · terreny {terrain}',
     es: 'Az {az}° {card} · alt {alt}° · terreno {terrain}',
+  },
+
+  /* --- cel / càmera: vista de RA (`features/ar/ARView.tsx`) ---
+   *
+   * Tot el text d'aquesta vista era català clavat al JSX: qui triava castellà
+   * rebia la pantalla diferencial del producte en català. El botó d'entrada no
+   * és aquí perquè ja existia: és `home.openCamera`.
+   */
+  'camera.inviteNote': {
+    ca: 'Hi veuràs el recorregut del Sol superposat al teu paisatge, a l’hora que triïs. La imatge no surt del telèfon.',
+    es: 'Verás el recorrido del Sol superpuesto a tu paisaje, a la hora que elijas. La imagen no sale del teléfono.',
+  },
+  'camera.orientationDenied': {
+    ca: 'Permís d’orientació denegat. A iOS s’ha de tornar a donar des de Safari.',
+    es: 'Permiso de orientación denegado. En iOS hay que volver a concederlo desde Safari.',
+  },
+  'camera.openError': { ca: 'Càmera: {error}', es: 'Cámara: {error}' },
+  'camera.modeMixed': { ca: 'Com es veurà', es: 'Cómo se verá' },
+  'camera.modeDiagram': { ca: 'Esquema', es: 'Esquema' },
+  'camera.scrub': { ca: 'Instant de l’eclipsi', es: 'Instante del eclipse' },
+  /* Les altres dues lectures del regle són `sim.readoutAlt` i `sim.readoutObsc`. */
+  'camera.readoutLight': {
+    ca: 'llum {phys}% · percebuda {perc}%',
+    es: 'luz {phys}% · percibida {perc}%',
+  },
+  'camera.stillDaylight': {
+    ca: 'Amb el {pct} del Sol tapat encara sembla de dia. La caiguda de llum de veritat arriba en els últims segons abans de la totalitat.',
+    es: 'Con el {pct} del Sol tapado todavía parece de día. La caída de luz de verdad llega en los últimos segundos antes de la totalidad.',
+  },
+  'camera.visibleBodies': {
+    ca: 'Visibles ara mateix al cel: {list}.',
+    es: 'Visibles ahora mismo en el cielo: {list}.',
+  },
+  'camera.useMyPosition': {
+    ca: 'toca-hi per fer servir la teva posició',
+    es: 'tócalo para usar tu posición',
+  },
+  'camera.terrainNotComputed': {
+    ca: 'perfil del terreny no calculat',
+    es: 'perfil del terreno no calculado',
+  },
+  /* Deia «Amagar diagnòstic»: les etiquetes de botó van en imperatiu. */
+  'camera.diagShow': { ca: 'Diagnòstic de sensors', es: 'Diagnóstico de sensores' },
+  'camera.diagHide': { ca: 'Amaga el diagnòstic', es: 'Oculta el diagnóstico' },
+
+  /* --- cel / càmera: panell de diagnòstic ---
+   *
+   * També és interfície, encara que el llegeixin quatre. «az» i «alt» són les
+   * abreviatures d'observació de sempre i queden iguals en tots dos idiomes,
+   * com ja passa a `sim.readoutAlt` i `sim.readoutAz`.
+   */
+  'camera.diag.headingSource': { ca: 'Font del rumb', es: 'Fuente del rumbo' },
+  'camera.diag.sourceIos': {
+    ca: 'webkitCompassHeading (absolut)',
+    es: 'webkitCompassHeading (absoluto)',
+  },
+  'camera.diag.sourceAbsolute': {
+    ca: 'deviceorientationabsolute (absolut)',
+    es: 'deviceorientationabsolute (absoluto)',
+  },
+  'camera.diag.sourceRelative': {
+    ca: 'alpha relativa — no fiable sense calibrar',
+    es: 'alpha relativa — no fiable sin calibrar',
+  },
+  'camera.diag.sampleRate': { ca: 'Freqüència del sensor', es: 'Frecuencia del sensor' },
+  'camera.diag.jitter': {
+    ca: 'Soroll del rumb (brut → filtrat)',
+    es: 'Ruido del rumbo (bruto → filtrado)',
+  },
+  'camera.diag.angularSpeed': { ca: 'Velocitat angular', es: 'Velocidad angular' },
+  'camera.diag.angularSpeedValue': {
+    ca: '{speed}°/s · tall {cutoff} Hz',
+    es: '{speed}°/s · corte {cutoff} Hz',
+  },
+  'camera.diag.frozen': { ca: 'congelat', es: 'congelado' },
+  'camera.diag.accuracy': { ca: 'Precisió declarada', es: 'Precisión declarada' },
+  'camera.diag.notAvailable': { ca: 'no disponible', es: 'no disponible' },
+  'camera.diag.declination': { ca: 'Declinació magnètica', es: 'Declinación magnética' },
+  'camera.diag.declinationValue': {
+    ca: '{deg}° aplicada a l’azimut',
+    es: '{deg}° aplicada al acimut',
+  },
+  'camera.diag.pointing': { ca: 'Càmera apunta a', es: 'Cámara apunta a' },
+  'camera.diag.pointingValue': {
+    ca: 'az {az}° · alt {alt}° · gir {roll}°',
+    es: 'az {az}° · alt {alt}° · giro {roll}°',
+  },
+  'camera.diag.sunNow': { ca: 'Sol ara', es: 'Sol ahora' },
+  'camera.diag.azAlt': { ca: 'az {az}° · alt {alt}°', es: 'az {az}° · alt {alt}°' },
+  'camera.diag.rawError': {
+    ca: 'Error de brúixola en brut',
+    es: 'Error de brújula en bruto',
+  },
+  'camera.diag.applied': { ca: 'Correcció aplicada', es: 'Corrección aplicada' },
+  'camera.diag.appliedValue': { ca: 'az {deg}°', es: 'az {deg}°' },
+  'camera.diag.screenFov': {
+    ca: 'Camp de visió a pantalla',
+    es: 'Campo de visión en pantalla',
+  },
+  'camera.diag.anchor': { ca: 'Ancoratge visual', es: 'Anclaje visual' },
+  'camera.diag.anchorFast': {
+    ca: 'gir massa ràpid — mana el sensor',
+    es: 'giro demasiado rápido — manda el sensor',
+  },
+  'camera.diag.anchorValue': {
+    ca: '{pct}% · {blocks} blocs · residu {res} px',
+    es: '{pct}% · {blocks} bloques · residuo {res} px',
+  },
+  'camera.diag.noTexture': { ca: 'sense textura', es: 'sin textura' },
+  'camera.diag.agreement': {
+    ca: 'Concordança imatge/sensor',
+    es: 'Concordancia imagen/sensor',
+  },
+  'camera.diag.agree': {
+    ca: 'les dues fonts coincideixen',
+    es: 'las dos fuentes coinciden',
+  },
+  'camera.diag.inverted': { ca: 'SIGNE INVERTIT', es: 'SIGNO INVERTIDO' },
+  'camera.diag.noSignal': {
+    ca: 'sense senyal per comparar',
+    es: 'sin señal para comparar',
+  },
+  'camera.diag.pose': { ca: 'Qui porta la postura', es: 'Quién lleva la postura' },
+  'camera.diag.poseValue': {
+    ca: '{source} · deriva {drift}° · estirada {tau} s',
+    es: '{source} · deriva {drift}° · tirón {tau} s',
+  },
+  'camera.diag.poseVisual': { ca: 'la imatge', es: 'la imagen' },
+  'camera.diag.poseSensor': { ca: 'només el sensor', es: 'solo el sensor' },
+  'camera.diag.frames': { ca: 'Fotogrames de càmera', es: 'Fotogramas de cámara' },
+  'camera.diag.framesCounted': { ca: 'comptats', es: 'contados' },
+  'camera.diag.framesEstimated': { ca: 'estimats', es: 'estimados' },
+  'camera.diag.measuredFov': {
+    ca: 'Camp de visió mesurat',
+    es: 'Campo de visión medido',
+  },
+  'camera.diag.measuredFovValue': {
+    ca: '{deg}° al costat llarg · desat',
+    es: '{deg}° en el lado largo · guardado',
+  },
+  'camera.diag.measuring': {
+    ca: 'mesurant… ({n} de 6 finestres)',
+    es: 'midiendo… ({n} de 6 ventanas)',
+  },
+  'camera.diag.lens': { ca: 'Objectiu', es: 'Objetivo' },
+  'camera.diag.ultraWide': { ca: 'ULTRA-ANGULAR', es: 'ULTRA GRAN ANGULAR' },
+  'camera.diag.zoom': { ca: 'zoom {min}-{max}', es: 'zoom {min}-{max}' },
+  'camera.diag.sensorFov': {
+    ca: 'Camp de visió del sensor: {deg}°',
+    es: 'Campo de visión del sensor: {deg}°',
+  },
+  'camera.diag.fovNote': {
+    ca: 'El camp de visió del sensor no és el que veus a la pantalla: el vídeo es mostra retallat per omplir el marc. La projecció treballa amb la distància focal en píxels, que el retall no altera.',
+    es: 'El campo de visión del sensor no es el que ves en la pantalla: el vídeo se muestra recortado para llenar el marco. La proyección trabaja con la distancia focal en píxeles, que el recorte no altera.',
+  },
+  /*
+   * La nota del soroll porta un terme destacat en negreta AL MIG de la frase.
+   * El terme hi va com a marcador `{term}` i la vista el reconstrueix amb el
+   * seu <strong>: partir la frase en dos literals per envoltar la negreta és
+   * exactament el camí cap al castellà amb sintaxi catalana que aquest fitxer
+   * diu d'evitar.
+   */
+  'camera.diag.noiseTerm': { ca: 'soroll del rumb', es: 'ruido del rumbo' },
+  'camera.diag.noiseNote': {
+    ca: 'El que decideix si això funciona és el {term}, no l’error en brut: l’error el corregeix el calibratge, però el soroll no. Amb l’ancoratge visual actiu, aquell soroll ja no arriba a la superposició mentre la imatge tingui textura; quan no en té, torna a manar el sensor i es torna a notar.',
+    es: 'Lo que decide si esto funciona es el {term}, no el error en bruto: el error lo corrige la calibración, pero el ruido no. Con el anclaje visual activo, ese ruido ya no llega a la superposición mientras la imagen tenga textura; cuando no la tiene, vuelve a mandar el sensor y se vuelve a notar.',
   },
 
   /* --- guia --- */

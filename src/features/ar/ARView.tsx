@@ -44,7 +44,8 @@ import { getEclipse } from '../../core/eclipses/catalog';
 import { declination } from '../../core/geomag';
 import { horizonSampler, type HorizonProfile } from '../../core/horizon/profile';
 import { detectSkyline, fitSkyline, type SkylineFix } from './skyline';
-import { canRemoveFilter, FILTER_OFF_DELAY_SEC } from '../../core/timer';
+import { nakedEyeAllowedAt, type FilterGateInput } from '../../core/timer';
+import { useNow } from '../../state/useNow';
 import { Icon, ICON_LG } from '../../ui';
 import { SafetyBanner } from '../guide/SafetyBanner';
 import { renderOverlay } from './renderOverlay';
@@ -74,6 +75,17 @@ import {
 import { PoseFusion, poseDeltaToRotation, type FusionTelemetry } from './poseFusion';
 import { loadMeasuredFov, saveMeasuredFov } from './focalStore';
 import { readPalette } from '../../styles/palette';
+/*
+ * TOT EL TEXT, DEL DICCIONARI; TOTA HORA, DE `screens/format`.
+ *
+ * Aquí tota la interfície era català clavat al JSX —crida a l'acció, permisos,
+ * modes, notes i diagnòstic—: qui triava castellà rebia la pantalla
+ * diferencial del producte en català. I l'instant simulat es formatava amb
+ * `Europe/Madrid` escrit a mà: a les Canàries sortia una hora per davant del
+ * rellotge de l'usuari i diferent de la taula d'efemèrides de la mateixa app.
+ */
+import { s, type StringKey } from '../../screens/strings';
+import { formatClock, formatDecimal, formatDuration, NO_DATA } from '../../screens/format';
 
 interface Props {
   location: GeoLocation;
@@ -81,7 +93,28 @@ interface Props {
   locale: 'ca' | 'es';
   /** Perfil d'horitzó del terreny, quan ja s'ha calculat. */
   horizon: HorizonProfile | null;
-  /** Demana la ubicació. S'invoca des del mateix gest que obre la càmera. */
+  /**
+   * Si des d'aquest punt la fase central es veu DE DEBÒ, un cop descomptat el
+   * terreny. Ve de `computeVisibility(...).centralVisibleSec > 0`.
+   *
+   * PER QUÈ ÉS UNA PROP I NO ES DEDUEIX AQUÍ. `canRemoveFilter` mira el
+   * terreny, però només si algú l'hi passa: per omissió val `true`, perquè un
+   * `false` silenciaria els avisos a tothom que encara no tingui el perfil
+   * calculat. Aquesta vista no el passava, i el resultat era que en un punt on
+   * el veredicte diu 0 s perquè una carena tapa la totalitat sencera, la veu
+   * del compte enrere callava —`CountdownView` sí que l'hi passa— i el rètol
+   * de la càmera, damunt de la imatge i en imperatiu, seguia dient «ara pots
+   * mirar sense filtre».
+   *
+   * `undefined` vol dir «encara no se sap», que és el que toca mentre el
+   * terreny es baixa: allà mana el valor per omissió.
+   */
+  centralPhaseVisible?: boolean;
+  /**
+   * Demana la ubicació. S'invoca des del botó de coordenades de dins de la
+   * vista, no des del gest d'obrir la càmera: quan aquesta vista es munta, el
+   * lloc ja se sap (`SkyScreen` no la munta sense).
+   */
   onRequestLocation?: () => void;
 }
 
@@ -111,11 +144,15 @@ const ANCHOR_EVERY_FRAMES = 6;
 const MIN_FOV_DEG = 25;
 const MAX_FOV_DEG = 140;
 
-const SOURCE_LABEL: Record<string, string> = {
-  'ios-compass': 'webkitCompassHeading (absolut)',
-  'absolute-alpha': 'deviceorientationabsolute (absolut)',
-  'relative-alpha': 'alpha relativa — no fiable sense calibrar',
-  none: '—',
+/*
+ * Cada font del rumb, cap a la seva clau del diccionari. Era un
+ * `Record<string, string>` amb el text ja escrit, i en un sol idioma. `none`
+ * no hi és: sense font es pinta el guió de «dada que no existeix», `NO_DATA`.
+ */
+const SOURCE_KEYS: Partial<Record<string, StringKey>> = {
+  'ios-compass': 'camera.diag.sourceIos',
+  'absolute-alpha': 'camera.diag.sourceAbsolute',
+  'relative-alpha': 'camera.diag.sourceRelative',
 };
 
 /**
@@ -171,7 +208,14 @@ const INITIAL_DIAGNOSTICS: TrackingDiagnostics = {
   measuredFovDeg: null,
 };
 
-export function ARView({ location, eclipseId, locale, horizon, onRequestLocation }: Props) {
+export function ARView({
+  location,
+  eclipseId,
+  locale,
+  horizon,
+  centralPhaseVisible,
+  onRequestLocation,
+}: Props) {
   // La declinació magnètica converteix el nord de la brúixola en el geogràfic.
   // Sense ella l'error és de −3,51° a Tenerife i +2,07° a Barcelona: sistemàtic,
   // i de sis i quatre diàmetres solars respectivament.
@@ -189,6 +233,21 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
   );
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  /*
+   * EL FLUX DE CÀMERA, GUARDAT A PART DEL VÍDEO.
+   *
+   * La neteja l'anava a buscar a `videoRef.current.srcObject`, i allà no hi és
+   * quan cal: React desassigna les refs dels nodes del DOM a la fase de
+   * mutació, i les neteges dels efectes passius corren DESPRÉS. Quan
+   * s'executava, `videoRef.current` ja era `null`, l'encadenament opcional se
+   * l'empassava sense dir res i cap pista s'aturava mai.
+   *
+   * El resultat: sortir de la pestanya del cel deixava la càmera del mòbil
+   * encesa indefinidament —indicador verd o taronja del sistema actiu, bateria
+   * cremant-se i la sensació que l'app espia—, i el mateix passava quan la
+   * barrera d'error desmuntava la pantalla.
+   */
+  const streamRef = useRef<MediaStream | null>(null);
 
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -291,32 +350,54 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
    * finestra segura, i que la barra no s'estigui fent servir per mirar un
    * altre instant. En simulació, mai.
    */
-  const filterGate = useMemo(
-    () =>
-      canRemoveFilter({
-        kind: circumstances.kind,
-        contacts: {
-          c1: circumstances.contacts.c1?.time.getTime(),
-          c2: circumstances.contacts.c2?.time.getTime(),
-          max: circumstances.contacts.max.time.getTime(),
-          c3: circumstances.contacts.c3?.time.getTime(),
-          c4: circumstances.contacts.c4?.time.getTime(),
-        },
-        edgeUncertain: circumstances.edgeUncertain,
-      }),
-    [circumstances],
+  // L'entrada de la comporta es memoritza a part perquè la fan servir DUES
+  // preguntes diferents —«aquí es podrà, en algun moment?» i «ara mateix?»— i
+  // construir-la dues vegades és com les dues respostes es desincronitzen.
+  const filterGateInput: FilterGateInput = useMemo(
+    () => ({
+      kind: circumstances.kind,
+      contacts: {
+        c1: circumstances.contacts.c1?.time.getTime(),
+        c2: circumstances.contacts.c2?.time.getTime(),
+        max: circumstances.contacts.max.time.getTime(),
+        c3: circumstances.contacts.c3?.time.getTime(),
+        c4: circumstances.contacts.c4?.time.getTime(),
+      },
+      edgeUncertain: circumstances.edgeUncertain,
+      // El terreny. Sense això, `canRemoveFilter` el dona per lliure.
+      centralPhaseVisible,
+    }),
+    [circumstances, centralPhaseVisible],
   );
 
-  const nakedEyeNow = useMemo(() => {
-    if (!filterGate.allowed) return false;
-    const c2 = circumstances.contacts.c2?.time.getTime();
-    const c3 = circumstances.contacts.c3?.time.getTime();
-    if (c2 === undefined || c3 === undefined) return false;
-    const now = Date.now();
-    // Els mateixos marges que la veu: dotze segons després de C2 —perquè el C2
-    // calculat va sistemàticament avançat— i quinze abans de C3.
-    return now >= c2 + FILTER_OFF_DELAY_SEC * 1000 && now <= c3 - 15_000;
-  }, [filterGate.allowed, circumstances]);
+
+  /*
+   * EL RELLOTGE HA DE SER ESTAT, I ABANS NO HO ERA.
+   *
+   * Aquí hi havia `Date.now()` dins d'aquest mateix `useMemo`, amb
+   * `[filterGate.allowed, circumstances]` de dependències: cap de les dues es
+   * mou amb el temps, o sigui que la comparació es feia UNA vegada, quan es
+   * muntava la vista, i el resultat es quedava clavat tota la sessió.
+   *
+   * Les dues direccions eren dolentes i una era perillosa. Qui obria la càmera
+   * abans de C2 no veia mai el rètol, ni durant la totalitat. I qui l'obria
+   * DINS de la finestra segura —el gest més probable del dia: «mira, apunta-hi!»
+   * quan ja és fosc— es quedava amb «ara pots mirar sense filtre» encès per
+   * sempre: a C3, amb la fotosfera tornant, i a C4, i una hora després.
+   *
+   * I EL MÉS EMPIPADOR: el rellotge que faltava JA HI ERA. Seixanta línies més
+   * avall hi havia un `useState(new Date())` amb el seu interval d'un segon,
+   * per moure el Sol del calibratge. Aquesta decisió, que és la que pot fer
+   * mal, no el mirava. Ara n'hi ha un de sol, monòton, i el comparteixen totes
+   * dues: dos rellotges en una pantalla és com es divergeix sense adonar-se'n.
+   */
+  const nowMs = useNow(1000);
+  const now = useMemo(() => new Date(nowMs), [nowMs]);
+
+  const nakedEyeNow = useMemo(
+    () => nakedEyeAllowedAt(filterGateInput, nowMs),
+    [filterGateInput, nowMs],
+  );
 
   // Els planetes només es calculen quan de veritat es veuran: durant la resta
   // de l'eclipsi el cel és massa clar i seria informació falsa.
@@ -352,20 +433,49 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
     };
   });
 
-  // Posició del Sol ARA, que és la referència del calibratge.
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
+  // Posició del Sol ARA, que és la referència del calibratge. El rellotge que
+  // la mou és el de dalt: aquí hi havia un segon `setInterval` amb el seu propi
+  // `new Date()`, i és el que va deixar la comporta de seguretat sense tic.
   const sunNow = useMemo(() => sampleAt(now, location).sun, [now, location]);
 
+  /**
+   * Apaga la càmera de debò: pistes aturades, vigilància d'objectiu desada i
+   * rellotge de fotogrames desenganxat.
+   *
+   * Un sol camí perquè el desmuntatge, l'error d'obertura i el cas de quedar-se
+   * sense element de vídeo no puguin divergir: que la càmera quedi encesa és un
+   * dels pocs errors que l'usuari nota al maquinari.
+   */
+  const stopCamera = useCallback(() => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    lensWatchRef.current?.();
+    lensWatchRef.current = null;
+    frameClockRef.current.detach();
+    if (videoRef.current) videoRef.current.srcObject = null;
+    // I la interfície se n'ha d'assabentar: sense això la pantalla es queda
+    // dient que la càmera és oberta damunt d'un vídeo que ja no arriba.
+    setCameraOn(false);
+  }, []);
+
   const start = useCallback(async () => {
-    // Els tres permisos es demanen junts, des del mateix gest de l'usuari.
-    // Sense ubicació, l'altura i l'azimut del Sol serien els d'un altre lloc i
-    // tota la superposició seria mentida; sense orientació no sabem cap a on
-    // mires; sense càmera no hi ha res a sobre del què dibuixar.
-    onRequestLocation?.();
+    /*
+     * AQUÍ ES DEMANAVA LA UBICACIÓ, I NO CALIA MAI.
+     *
+     * El comentari deia que els tres permisos es demanen junts des del mateix
+     * gest. Però `SkyScreen` no munta aquesta vista fins que `location` no és
+     * `null` —abans ensenya la seva pròpia pantalla amb el botó d'ubicar-se—,
+     * o sigui que quan s'arriba aquí el lloc SEMPRE se sap i això només obria
+     * la fulla «On seràs» per no res.
+     *
+     * I l'obria damunt de la càmera: el gest estrella del producte, el dia de
+     * l'eclipsi, amb una mà, i et surt un full modal competint amb el diàleg
+     * de permisos del sistema. Llegeix com una app espatllada justament al
+     * moment de màxima pressió.
+     *
+     * El botó de canviar de lloc segueix existint dins de la vista, on toca
+     * (vegeu `onRequestLocation` més avall), per a qui vulgui moure el punt.
+     */
     await orientation.request();
 
     try {
@@ -382,12 +492,23 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
         sensorFovDeg: remembered ?? opened.suggestedFovDeg,
       }));
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = opened.stream;
-        await videoRef.current.play();
-        frameClockRef.current.attach(videoRef.current);
-        setCameraOn(true);
+      // Es desa ABANS d'enganxar-lo al vídeo: si el muntatge cau entremig, o si
+      // el vídeo encara no hi és, el flux ja té qui l'aturi.
+      streamRef.current = opened.stream;
+
+      if (!videoRef.current) {
+        // Sense element de vídeo no hi ha res on dibuixar i el permís ja està
+        // concedit: deixar el flux obert seria encendre la càmera per a res.
+        // Es surt abans de registrar la vigilància d'objectiu, que si no
+        // quedaria enganxada a un flux ja mort.
+        stopCamera();
+        return;
       }
+
+      videoRef.current.srcObject = opened.stream;
+      await videoRef.current.play();
+      frameClockRef.current.attach(videoRef.current);
+      setCameraOn(true);
 
       // L'iPhone 15 canvia d'objectiu sol a mitja sessió. Quan passa, tot el
       // que havíem mesurat deixa de valer.
@@ -403,19 +524,15 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
         if (known !== null) setCalibration((c) => ({ ...c, sensorFovDeg: known }));
       });
     } catch (err) {
+      // Si l'obertura ha arribat a donar flux i ha petat després —el `play()`
+      // el rebutja iOS quan la pestanya perd el focus a mig gest—, la càmera es
+      // quedaria encesa amb la pantalla ensenyant l'error.
+      stopCamera();
       setCameraError(err instanceof Error ? err.message : String(err));
     }
-  }, [orientation, onRequestLocation]);
+  }, [orientation, stopCamera]);
 
-  useEffect(
-    () => () => {
-      const stream = videoRef.current?.srcObject as MediaStream | null;
-      stream?.getTracks().forEach((t) => t.stop());
-      lensWatchRef.current?.();
-      frameClockRef.current.detach();
-    },
-    [],
-  );
+  useEffect(() => () => stopCamera(), [stopCamera]);
 
   // El filtre del vídeo va a part del canvas: el compon la GPU i surt gratis.
   // És el que enfosqueix TOTA l'escena, muntanyes incloses, que és el que
@@ -717,6 +834,11 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
   const rawError = camera ? normalizeAngle(sunNow.azimuth - camera.azimuth) : null;
   const agreement = diagnostics.fusion.agreement;
   const shownFovDeg = diagnostics.measuredFovDeg ?? calibration.sensorFovDeg;
+  const sourceKey = SOURCE_KEYS[orientation.headingSource];
+  // La nota del soroll porta un terme en negreta al mig de la frase. El
+  // diccionari el marca amb `{term}` i aquí es reconstrueix el <strong>:
+  // vegeu el perquè al costat de `camera.diag.noiseNote`.
+  const [noiseBefore, noiseAfter] = s('camera.diag.noiseNote', locale).split('{term}');
 
   return (
     <div className="ar">
@@ -736,21 +858,18 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
         <div className="ar__invite">
           <button className="ar__open" onClick={start} type="button">
             <Icon name="camera" size={ICON_LG} aria-hidden />
-            <span>Apunta el mòbil al cel</span>
+            <span>{s('home.openCamera', locale)}</span>
           </button>
-          <p className="ar__invitenote">
-            Hi veuràs el recorregut del Sol superposat al teu paisatge, a l’hora
-            que triïs. La imatge no surt del telèfon.
-          </p>
+          <p className="ar__invitenote">{s('camera.inviteNote', locale)}</p>
         </div>
       )}
 
       {orientation.permission === 'denied' && (
-        <p className="warn">
-          Permís d'orientació denegat. A iOS s'ha de tornar a donar des de Safari.
-        </p>
+        <p className="warn">{s('camera.orientationDenied', locale)}</p>
       )}
-      {cameraError && <p className="warn">Càmera: {cameraError}</p>}
+      {cameraError && (
+        <p className="warn">{s('camera.openError', locale, { error: cameraError })}</p>
+      )}
 
       {cameraOn && (
         <div className="ar__modes">
@@ -758,13 +877,13 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
             className={mode === 'mixed' ? 'tab tab--on' : 'tab'}
             onClick={() => setMode('mixed')}
           >
-            Com es veurà
+            {s('camera.modeMixed', locale)}
           </button>
           <button
             className={mode === 'diagram' ? 'tab tab--on' : 'tab'}
             onClick={() => setMode('diagram')}
           >
-            Esquema
+            {s('camera.modeDiagram', locale)}
           </button>
         </div>
       )}
@@ -803,34 +922,48 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
             step={1 / PATH_SAMPLES}
             value={progress}
             onChange={(e) => setProgress(Number(e.target.value))}
-            aria-label="Instant de l'eclipsi"
+            aria-label={s('camera.scrub', locale)}
           />
+          {/*
+            L'HORA, AMB L'IDIOMA ACTIU I EN LA ZONA DEL DISPOSITIU. Hi havia un
+            `toLocaleTimeString('ca-ES', { timeZone: 'Europe/Madrid' })`: a les
+            Canàries l'instant simulat sortia una hora per davant del rellotge
+            de l'usuari. El regle de la simulació ja escriu la mateixa lectura
+            amb `formatClock` i `sim.readout*`; aquí, igual.
+          */}
           <div className="scrub__readout">
-            <strong>
-              {currentSample.time.toLocaleTimeString('ca-ES', {
-                timeZone: 'Europe/Madrid',
-                hour12: false,
-              })}
-            </strong>
-            <span>alt {currentSample.sun.altitudeApparent.toFixed(2)}°</span>
-            <span>obsc {formatObscurationPercent(currentSample.obscuration, isTotality)}</span>
+            <strong>{formatClock(currentSample.time, locale)}</strong>
             <span>
-              llum {(light.physicalFraction * 100).toFixed(3)}% · percebuda{' '}
-              {(light.perceived * 100).toFixed(0)}%
+              {s('sim.readoutAlt', locale, {
+                deg: `${formatDecimal(currentSample.sun.altitudeApparent, 2, locale)}°`,
+              })}
+            </span>
+            <span>
+              {s('sim.readoutObsc', locale, {
+                pct: formatObscurationPercent(currentSample.obscuration, isTotality),
+              })}
+            </span>
+            <span>
+              {s('camera.readoutLight', locale, {
+                phys: formatDecimal(light.physicalFraction * 100, 3, locale),
+                perc: formatDecimal(light.perceived * 100, 0, locale),
+              })}
             </span>
           </div>
 
           {light.perceived > 0.3 && currentSample.obscuration > 0.9 && (
             <p className="note">
-              Amb el {formatObscurationPercent(currentSample.obscuration, isTotality, 0)} del Sol tapat encara
-              sembla de dia. La caiguda de llum de veritat arriba en els últims segons
-              abans de la totalitat.
+              {s('camera.stillDaylight', locale, {
+                pct: formatObscurationPercent(currentSample.obscuration, isTotality, 0),
+              })}
             </p>
           )}
 
           {isTotality && bodies.length > 0 && (
             <p className="note">
-              Visibles ara mateix al cel: {bodies.map((b) => b.name).join(', ')}.
+              {s('camera.visibleBodies', locale, {
+                list: bodies.map((b) => b.name).join(', '),
+              })}
             </p>
           )}
         </>
@@ -844,34 +977,40 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
       */}
       <p className="note">
         <button className="linklike" onClick={() => onRequestLocation?.()}>
-          {location.lat.toFixed(4)}°, {location.lon.toFixed(4)}° ·{' '}
+          {formatDecimal(location.lat, 4, locale)}°, {formatDecimal(location.lon, 4, locale)}° ·{' '}
           {Math.round(location.elevation)} m
         </button>
-        {' — toca-hi per fer servir la teva posició'}
+        {' — '}
+        {s('camera.useMyPosition', locale)}
       </p>
 
+      {/*
+        El tipus d'eclipsi era `kind.toUpperCase()`: «ANNULAR» a pantalla, que
+        no és cap paraula en cap dels dos idiomes — és el nom intern del
+        catàleg. Les claus `kind.*` ja el diuen bé. I la durada era un
+        «{m}m {s}s» fet a mà que amb 119,6 s escrivia «1m 60s»;
+        `formatDuration` arrodoneix el total abans de repartir-lo.
+      */}
       <p className="note">
-        {eclipse.label[locale]} · {circumstances.kind.toUpperCase()}
+        {eclipse.label[locale]} · {s(`kind.${circumstances.kind}`, locale)}
         {circumstances.centralDurationSec > 0 &&
-          ` · ${Math.floor(circumstances.centralDurationSec / 60)}m ${Math.round(
-            circumstances.centralDurationSec % 60,
-          )}s`}
-        {!horizonProfile && ' · perfil del terreny no calculat'}
+          ` · ${formatDuration(circumstances.centralDurationSec)}`}
+        {!horizonProfile && ` · ${s('camera.terrainNotComputed', locale)}`}
       </p>
 
       <button className="btn" onClick={() => setShowDiagnostics((v) => !v)}>
-        {showDiagnostics ? 'Amagar diagnòstic' : 'Diagnòstic de sensors'}
+        {showDiagnostics ? s('camera.diagHide', locale) : s('camera.diagShow', locale)}
       </button>
 
       {showDiagnostics && (
         <>
           <dl className="readout">
             <div>
-              <dt>Font del rumb</dt>
-              <dd>{SOURCE_LABEL[orientation.headingSource]}</dd>
+              <dt>{s('camera.diag.headingSource', locale)}</dt>
+              <dd>{sourceKey ? s(sourceKey, locale) : NO_DATA}</dd>
             </div>
             <div>
-              <dt>Freqüència del sensor</dt>
+              <dt>{s('camera.diag.sampleRate', locale)}</dt>
               <dd>{orientation.sampleRate} Hz</dd>
             </div>
             <div>
@@ -882,77 +1021,94 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
                 estimador circular, perquè comparar-los amb estimadors diferents
                 no voldria dir res.
               */}
-              <dt>Soroll del rumb (brut → filtrat)</dt>
+              <dt>{s('camera.diag.jitter', locale)}</dt>
               <dd className={orientation.jitterFiltered > 0.5 ? 'bad' : 'good'}>
                 ±{orientation.jitter.toFixed(2)}° → ±{orientation.jitterFiltered.toFixed(2)}°
               </dd>
             </div>
             <div>
-              <dt>Velocitat angular</dt>
+              <dt>{s('camera.diag.angularSpeed', locale)}</dt>
               <dd>
-                {orientation.smoothing.angularSpeedDegPerSec.toFixed(1)}°/s · tall{' '}
-                {orientation.smoothing.cutoffHz.toFixed(1)} Hz
-                {orientation.smoothing.frozen ? ' · congelat' : ''}
+                {s('camera.diag.angularSpeedValue', locale, {
+                  speed: orientation.smoothing.angularSpeedDegPerSec.toFixed(1),
+                  cutoff: orientation.smoothing.cutoffHz.toFixed(1),
+                })}
+                {orientation.smoothing.frozen ? ` · ${s('camera.diag.frozen', locale)}` : ''}
               </dd>
             </div>
             <div>
-              <dt>Precisió declarada</dt>
+              <dt>{s('camera.diag.accuracy', locale)}</dt>
               <dd>
                 {orientation.compassAccuracy != null
                   ? `±${orientation.compassAccuracy.toFixed(0)}°`
-                  : 'no disponible'}
+                  : s('camera.diag.notAvailable', locale)}
               </dd>
             </div>
             <div>
-              <dt>Declinació magnètica</dt>
+              <dt>{s('camera.diag.declination', locale)}</dt>
               <dd>
-                {magneticDeclination >= 0 ? '+' : ''}
-                {magneticDeclination.toFixed(2)}° aplicada a l'azimut
+                {s('camera.diag.declinationValue', locale, {
+                  deg: `${magneticDeclination >= 0 ? '+' : ''}${magneticDeclination.toFixed(2)}`,
+                })}
               </dd>
             </div>
             <div>
-              <dt>Càmera apunta a</dt>
+              <dt>{s('camera.diag.pointing', locale)}</dt>
               <dd>
                 {camera
-                  ? `az ${camera.azimuth.toFixed(1)}° · alt ${camera.altitude.toFixed(1)}° · gir ${camera.roll.toFixed(0)}°`
-                  : '—'}
+                  ? s('camera.diag.pointingValue', locale, {
+                      az: camera.azimuth.toFixed(1),
+                      alt: camera.altitude.toFixed(1),
+                      roll: camera.roll.toFixed(0),
+                    })
+                  : NO_DATA}
               </dd>
             </div>
             <div>
-              <dt>Sol ara</dt>
+              <dt>{s('camera.diag.sunNow', locale)}</dt>
               <dd>
-                az {sunNow.azimuth.toFixed(2)}° · alt {sunNow.altitudeApparent.toFixed(2)}°
+                {s('camera.diag.azAlt', locale, {
+                  az: sunNow.azimuth.toFixed(2),
+                  alt: sunNow.altitudeApparent.toFixed(2),
+                })}
               </dd>
             </div>
             <div>
-              <dt>Error de brúixola en brut</dt>
+              <dt>{s('camera.diag.rawError', locale)}</dt>
               <dd className={rawError !== null && Math.abs(rawError) > 10 ? 'bad' : 'good'}>
-                {rawError !== null ? `${rawError > 0 ? '+' : ''}${rawError.toFixed(1)}°` : '—'}
+                {rawError !== null
+                  ? `${rawError > 0 ? '+' : ''}${rawError.toFixed(1)}°`
+                  : NO_DATA}
               </dd>
             </div>
             <div>
-              <dt>Correcció aplicada</dt>
+              <dt>{s('camera.diag.applied', locale)}</dt>
               <dd>
-                az {calibration.azimuthOffset >= 0 ? '+' : ''}
-                {calibration.azimuthOffset.toFixed(2)}°
+                {s('camera.diag.appliedValue', locale, {
+                  deg: `${calibration.azimuthOffset >= 0 ? '+' : ''}${calibration.azimuthOffset.toFixed(2)}`,
+                })}
               </dd>
             </div>
             <div>
-              <dt>Camp de visió a pantalla</dt>
+              <dt>{s('camera.diag.screenFov', locale)}</dt>
               <dd>
                 {fovReadout
                   ? `${fovReadout.horizontal.toFixed(1)}° × ${fovReadout.vertical.toFixed(1)}°`
-                  : '—'}
+                  : NO_DATA}
               </dd>
             </div>
             <div>
-              <dt>Ancoratge visual</dt>
+              <dt>{s('camera.diag.anchor', locale)}</dt>
               <dd className={diagnostics.confidence > 0.5 ? 'good' : 'bad'}>
                 {diagnostics.saturated
-                  ? 'gir massa ràpid — mana el sensor'
+                  ? s('camera.diag.anchorFast', locale)
                   : diagnostics.confidence > 0
-                    ? `${(diagnostics.confidence * 100).toFixed(0)}% · ${diagnostics.usedBlocks} blocs · residu ${diagnostics.residualPx.toFixed(2)} px`
-                    : 'sense textura'}
+                    ? s('camera.diag.anchorValue', locale, {
+                        pct: (diagnostics.confidence * 100).toFixed(0),
+                        blocks: diagnostics.usedBlocks,
+                        res: diagnostics.residualPx.toFixed(2),
+                      })
+                    : s('camera.diag.noTexture', locale)}
               </dd>
             </div>
             <div>
@@ -964,23 +1120,31 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
                 endevinar-ho: positiva vol dir que la imatge i el sensor diuen el
                 mateix; negativa, que hi ha una inversió de signe en algun lloc.
               */}
-              <dt>Concordança imatge/sensor</dt>
+              <dt>{s('camera.diag.agreement', locale)}</dt>
               <dd className={agreement > 0.5 ? 'good' : agreement < -0.2 ? 'bad' : undefined}>
                 {agreement >= 0 ? '+' : ''}
                 {agreement.toFixed(2)}
+                {' · '}
                 {agreement > 0.5
-                  ? ' · les dues fonts coincideixen'
+                  ? s('camera.diag.agree', locale)
                   : agreement < -0.2
-                    ? ' · SIGNE INVERTIT'
-                    : ' · sense senyal per comparar'}
+                    ? s('camera.diag.inverted', locale)
+                    : s('camera.diag.noSignal', locale)}
               </dd>
             </div>
             <div>
-              <dt>Qui porta la postura</dt>
+              <dt>{s('camera.diag.pose', locale)}</dt>
               <dd>
-                {diagnostics.fusion.usingVisual ? 'la imatge' : 'només el sensor'} · deriva{' '}
-                {diagnostics.fusion.driftDeg.toFixed(2)}° · estirada{' '}
-                {diagnostics.fusion.pullTauSec.toFixed(2)} s
+                {s('camera.diag.poseValue', locale, {
+                  source: s(
+                    diagnostics.fusion.usingVisual
+                      ? 'camera.diag.poseVisual'
+                      : 'camera.diag.poseSensor',
+                    locale,
+                  ),
+                  drift: diagnostics.fusion.driftDeg.toFixed(2),
+                  tau: diagnostics.fusion.pullTauSec.toFixed(2),
+                })}
               </dd>
             </div>
             <div>
@@ -990,38 +1154,51 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
                 meitat de la informació que sembla; si cau a zero amb la càmera
                 oberta, el flux s'ha aturat.
               */}
-              <dt>Fotogrames de càmera</dt>
+              <dt>{s('camera.diag.frames', locale)}</dt>
               <dd className={diagnostics.videoFps >= 20 ? 'good' : 'bad'}>
-                {diagnostics.videoFps} Hz{' '}
-                {diagnostics.exactFrameClock ? '(comptats)' : '(estimats)'}
+                {diagnostics.videoFps} Hz (
+                {s(
+                  diagnostics.exactFrameClock
+                    ? 'camera.diag.framesCounted'
+                    : 'camera.diag.framesEstimated',
+                  locale,
+                )}
+                )
               </dd>
             </div>
             <div>
-              <dt>Camp de visió mesurat</dt>
+              <dt>{s('camera.diag.measuredFov', locale)}</dt>
               <dd className={diagnostics.measuredFovDeg ? 'good' : undefined}>
                 {diagnostics.measuredFovDeg
-                  ? `${diagnostics.measuredFovDeg.toFixed(1)}° al costat llarg · desat`
-                  : `mesurant… (${diagnostics.focalWindows} de 6 finestres)`}
+                  ? s('camera.diag.measuredFovValue', locale, {
+                      deg: diagnostics.measuredFovDeg.toFixed(1),
+                    })
+                  : s('camera.diag.measuring', locale, { n: diagnostics.focalWindows })}
               </dd>
             </div>
             <div>
-              <dt>Objectiu</dt>
+              <dt>{s('camera.diag.lens', locale)}</dt>
               <dd>
                 {cameraInfo
                   ? `${cameraInfo.width}×${cameraInfo.height}${
-                      cameraInfo.looksUltraWide ? ' · ULTRA-ANGULAR' : ''
+                      cameraInfo.looksUltraWide
+                        ? ` · ${s('camera.diag.ultraWide', locale)}`
+                        : ''
                     }${
                       cameraInfo.zoomRange
-                        ? ` · zoom ${cameraInfo.zoomRange.min}-${cameraInfo.zoomRange.max}`
+                        ? ` · ${s('camera.diag.zoom', locale, {
+                            min: cameraInfo.zoomRange.min,
+                            max: cameraInfo.zoomRange.max,
+                          })}`
                         : ''
                     }`
-                  : '—'}
+                  : NO_DATA}
               </dd>
             </div>
           </dl>
 
           <label className="slider">
-            Camp de visió del sensor: {shownFovDeg.toFixed(1)}°
+            {s('camera.diag.sensorFov', locale, { deg: shownFovDeg.toFixed(1) })}
             <input
               type="range"
               min={40}
@@ -1039,17 +1216,11 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
             />
           </label>
 
+          <p className="note">{s('camera.diag.fovNote', locale)}</p>
           <p className="note">
-            El camp de visió del sensor no és el que veus a la pantalla: el vídeo es
-            mostra retallat per omplir el marc. La projecció treballa amb la distància
-            focal en píxels, que el retall no altera.
-          </p>
-          <p className="note">
-            El que decideix si això funciona és el <strong>soroll del rumb</strong>, no
-            l'error en brut: l'error el corregeix el calibratge, però el soroll no. Amb
-            l'ancoratge visual actiu, aquell soroll ja no arriba a la superposició
-            mentre la imatge tingui textura; quan no en té, torna a manar el sensor i es
-            torna a notar.
+            {noiseBefore}
+            <strong>{s('camera.diag.noiseTerm', locale)}</strong>
+            {noiseAfter}
           </p>
         </>
       )}

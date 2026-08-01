@@ -88,13 +88,58 @@ const TEXT = {
   sources: { ca: 'D’on surten les dades', es: 'De dónde salen los datos' },
   code: { ca: 'Codi obert', es: 'Código abierto' },
   version: { ca: 'Versió', es: 'Versión' },
+  by: { ca: 'Fet per', es: 'Hecho por' },
+  and: { ca: 'i', es: 'y' },
 } as const;
 
 const REPO_URL = 'https://github.com/humbertblanco/eclipsi-info';
 
+/**
+ * Qui ho signa.
+ *
+ * ELS DOS AL MATEIX NIVELL, a posta: no és una persona amb un despatx a sota
+ * ni un despatx amb una persona a dins. Van a la mateixa línia i amb el mateix
+ * pes tipogràfic.
+ *
+ * PER QUÈ VA ABANS DE LES FONTS I NO AL FINAL. El peu respon tres preguntes i
+ * aquest és l'ordre en què se les fa qui hi arriba: qui ho ha fet, d'on surten
+ * els números, i què estic corrent. L'autoria al final, després de set files
+ * de proveïdors i enganxada a la versió, es llegeix com un peu de pàgina
+ * legal; aquí és una signatura.
+ *
+ * ELS DOS ENLLACEN, i cadascun al lloc que li toca: la persona al seu perfil i
+ * el despatx al seu domini. `url` és opcional perquè el component ha de poder
+ * pintar un crèdit sense enllaç el dia que n'hi hagi un que no en tingui.
+ */
+interface Author {
+  name: string;
+  url?: string;
+}
+
+const AUTHORS: Author[] = [
+  { name: 'Humbert Blanco', url: 'https://x.com/humbertblanco' },
+  { name: 'Damos en el Blanco', url: 'https://damosenelblanco.com' },
+];
+
 export function SiteFooter({ locale }: { locale: Locale }) {
   return (
     <footer className="sitefoot">
+      <p className="sitefoot__by">
+        {TEXT.by[locale]}{' '}
+        {AUTHORS.map((author, i) => (
+          <span key={author.name}>
+            {i > 0 && <span className="sitefoot__and"> {TEXT.and[locale]} </span>}
+            {author.url === undefined ? (
+              <strong className="sitefoot__author">{author.name}</strong>
+            ) : (
+              <a className="sitefoot__author" href={author.url} target="_blank" rel="noreferrer noopener">
+                {author.name}
+              </a>
+            )}
+          </span>
+        ))}
+      </p>
+
       <p className="sitefoot__what">{TEXT.what[locale]}</p>
 
       <p className="screen__overline">{TEXT.sources[locale]}</p>

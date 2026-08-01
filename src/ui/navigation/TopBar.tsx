@@ -56,12 +56,30 @@ export function TopBar({
     <div className="ui-topbar">
       {start}
       <span className="ui-topbar__text">
+        {/*
+          EL TÍTOL DE LA BARRA ÉS L'`h1` DE LA PÀGINA, I ABANS ERA UN `span`.
+
+          El document no tenia cap `h1`: l'esquema de capçaleres començava a
+          `h2` i, per a qui navega amb lector de pantalla saltant de capçalera
+          en capçalera, no hi havia manera de saber en quina de les quatre
+          pantalles s'era. En una aplicació d'una sola pàgina, el nom de la
+          pantalla activa ÉS el títol del document, i posar-l'hi no canvia res
+          de com es veu: `--text-title-3` es manté.
+
+          Amb logotip la marca substitueix el text a la vista, però el títol no
+          pot desaparèixer: va amagat visualment i el llegeixen igual els
+          lectors i els cercadors. El `alt` de la imatge queda buit perquè, si
+          no, el mateix nom es diria dues vegades seguides.
+        */}
         {logo && logoSrc ? (
-          // El `title` va al `alt`: sense això, la pantalla no té nom per a qui
-          // no veu la imatge. Sense títol, el nom del producte hi fa el servei.
-          <img className="ui-topbar__logo" src={logoSrc} alt={title ?? 'eclipsi.info'} />
+          <>
+            <img className="ui-topbar__logo" src={logoSrc} alt="" />
+            <h1 className="ui-topbar__title ui-visually-hidden">
+              {title ?? 'eclipsi.info'}
+            </h1>
+          </>
         ) : (
-          title !== undefined && <span className="ui-topbar__title">{title}</span>
+          title !== undefined && <h1 className="ui-topbar__title">{title}</h1>
         )}
         {subtitle && <span className="ui-topbar__sub">{subtitle}</span>}
       </span>

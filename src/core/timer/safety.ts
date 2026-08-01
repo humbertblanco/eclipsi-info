@@ -160,3 +160,35 @@ export function canRemoveFilter(input: FilterGateInput): FilterGate {
 
   return { allowed: true, reason: 'ok', centralDurationSec };
 }
+
+/**
+ * Si en aquest instant concret es pot mirar sense filtre.
+ *
+ * `canRemoveFilter` diu si aquest LLOC i aquest ECLIPSI permeten treure-se'l en
+ * algun moment; això diu si AQUEST SEGON hi és. Són dues preguntes diferents i
+ * fins ara la segona no vivia enlloc: la componia `ARView` a mà.
+ *
+ * PER QUÈ BAIXA AQUÍ. La regla d'ESTAT.md §3.1 diu que qualsevol camí que parli
+ * de treure's el filtre ha de passar per aquest mòdul, i el rètol de la càmera
+ * no hi passava del tot: agafava `canRemoveFilter` i hi afegia la finestra
+ * horària pel seu compte. La prova que ho vigilava (`features/ar/naked-eye.test.ts`)
+ * s'havia fet una CÒPIA d'aquesta composició per poder-la provar, i una còpia
+ * no vigila l'original: el codi de debò llegia `Date.now()` dins d'un `useMemo`
+ * amb dependències estàtiques —o sigui, una sola vegada, en muntar la vista— i
+ * la prova seguia verda mentre el rètol es quedava encès després de C3.
+ *
+ * Ara la composició és aquesta funció, la fa servir la vista i la prova la
+ * importa. Una sola definició, i vigilada.
+ *
+ * ELS MARGES són els mateixos que la veu, i pel mateix motiu: dotze segons
+ * després de C2 perquè el C2 calculat va sistemàticament avançat, i quinze
+ * abans de C3 perquè el que torna és fotosfera i val més sobrar que faltar.
+ */
+export const FILTER_ON_MARGIN_SEC = 15;
+
+export function nakedEyeAllowedAt(input: FilterGateInput, nowMs: number): boolean {
+  if (!canRemoveFilter(input).allowed) return false;
+  const { c2, c3 } = input.contacts;
+  if (c2 === undefined || c3 === undefined) return false;
+  return nowMs >= c2 + FILTER_OFF_DELAY_SEC * 1000 && nowMs <= c3 - FILTER_ON_MARGIN_SEC * 1000;
+}

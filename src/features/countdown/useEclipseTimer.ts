@@ -2,8 +2,11 @@
  * El nus entre la lògica pura del temporitzador i el navegador.
  *
  * Aquí no es decideix res: la programació d'avisos surt sencera de
- * `src/core/timer/**` i aquest fitxer només la fa sonar, la fa comptar i la
- * dibuixa. Si algun dia cal canviar quan es diu una cosa, el canvi va allà.
+ * `src/core/timer/**`, amb les fites de contingut del guió de la totalitat
+ * (`src/content/totality-script.ts`) fusionades al damunt, i aquest fitxer
+ * només la fa sonar, la fa comptar i la dibuixa. Qui mana en cas de col·lisió,
+ * quines fites es descarten i per què, ho decideix `mergeScriptIntoSchedule`:
+ * si algun dia cal canviar quan es diu una cosa, el canvi va allà.
  *
  * DOS TEMPORITZADORS I NO UN. El de debò està sempre en marxa mentre el
  * component està muntat: és el que mou el compte enrere i el que dispararà els
@@ -29,6 +32,8 @@ import type {
   VoiceAlert,
 } from '../../core/timer';
 import type { LocalCircumstances } from '../../core/astro/types';
+import { buildTotalityScript, mergeScriptIntoSchedule } from '../../content/totality-script';
+import type { TotalityScript } from '../../content/totality-script';
 import { createAnnouncer } from './speech';
 import type { Announcer, VoiceStatus } from './speech';
 import { useWakeLock } from './useWakeLock';
@@ -123,16 +128,75 @@ export function useEclipseTimer(options: UseEclipseTimerOptions): EclipseTimerSt
     [c1Ms, c2Ms, maxMs, c3Ms, c4Ms],
   );
 
+  /*
+   * EL GUIÓ DE LA TOTALITAT, que va estar 1.600 línies escrit i provat sense
+   * que ningú el sentís mai: cap camí de codi no cridava `buildTotalityScript`.
+   * Durant la totalitat ningú no mira el mòbil, o sigui que si el guió no entra
+   * a la programació de veu, no existeix.
+   *
+   * Té memòria pròpia, en una referència, clavada a una clau de valors i no a
+   * la identitat de `circumstances`, per la mateixa raó que aquest fitxer
+   * treballa amb números: el coordinador recrea l'objecte a cada render d'una
+   * vista germana, i una memòria penjada de la identitat refaria el guió —amb
+   * `computeShadowMotion` i `visibleBodiesDuringTotality` a dins— a cada
+   * render, i de retruc destruiria i recrearia el reproductor, que és la fuita
+   * que el comentari de dalt explica. No és un `useMemo` perquè un `useMemo`
+   * amb clau de valors i tanca sobre l'objecte fa saltar `exhaustive-deps`, i
+   * silenciar la regla aquí és amagar exactament la decisió que cal poder
+   * llegir.
+   *
+   * La clau conté tot el que determina el guió: l'eclipsi, el punt,
+   * l'atmosfera, els ms dels contactes i el veredicte de visibilitat. Amb la
+   * mateixa clau, `computeLocalCircumstances` és determinista i el guió també:
+   * reusar-lo no pot tornar res d'estantís, i reconstruir-lo en canviar la clau
+   * és idempotent, que és el que fa segura una escriptura durant el render.
+   */
+  const { eclipseId } = circumstances;
+  const { lat, lon, elevation } = circumstances.location;
+  const { pressureMb, temperatureC } = circumstances.atmosphere;
+  const scriptKey = [
+    eclipseId,
+    lat,
+    lon,
+    elevation,
+    pressureMb,
+    temperatureC,
+    kind,
+    c1Ms,
+    c2Ms,
+    maxMs,
+    c3Ms,
+    c4Ms,
+    maxObscuration,
+    centralPhaseVisible,
+    edgeUncertain,
+  ].join('|');
+
+  const scriptCacheRef = useRef<{ key: string; script: TotalityScript } | null>(null);
+  let scriptCache = scriptCacheRef.current;
+  if (scriptCache === null || scriptCache.key !== scriptKey) {
+    scriptCache = { key: scriptKey, script: buildTotalityScript({ circumstances, centralPhaseVisible }) };
+    scriptCacheRef.current = scriptCache;
+  }
+  const script = scriptCache.script;
+
   const schedule = useMemo(
     () =>
-      buildAlertSchedule({
-        kind,
-        contacts,
-        maxObscuration,
-        centralPhaseVisible,
-        edgeUncertain,
-      }),
-    [kind, contacts, maxObscuration, centralPhaseVisible, edgeUncertain],
+      // La programació de `core/timer` mana; del guió només hi entren les
+      // fites de contingut. La fusió descarta tota fita `naked-eye` si la
+      // porta de seguretat no autoritza i cedeix el pas als avisos de filtre:
+      // tot això es decideix a `mergeScriptIntoSchedule`, no aquí.
+      mergeScriptIntoSchedule(
+        buildAlertSchedule({
+          kind,
+          contacts,
+          maxObscuration,
+          centralPhaseVisible,
+          edgeUncertain,
+        }),
+        script,
+      ),
+    [kind, contacts, maxObscuration, centralPhaseVisible, edgeUncertain, script],
   );
 
   const [nowMs, setNowMs] = useState(() => Date.now());
