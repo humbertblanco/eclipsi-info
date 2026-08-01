@@ -396,7 +396,22 @@ function Shell() {
           retryLabel={s('shell.retry', locale)}
         >
           {tab === 'countdown' && (
-            <CountdownScreen {...context} onOpenCamera={() => setTab('sky')} />
+            <CountdownScreen
+              {...context}
+              /*
+                LA CRIDA A L'ACCIÓ SEGUEIX LA MATEIXA REGLA QUE LA PESTANYA.
+
+                Si el Cel no és a la barra perquè aquest aparell no el pot
+                ensenyar, el botó que hi porta tampoc no hi ha de ser: posava
+                `tab` a `sky`, l'efecte de sota el retornava a `countdown` a
+                l'instant i el resultat era un botó primari gran que no feia
+                res. `camera.unknown` compta com a no disponible mentre no se
+                sap: val més ensenyar el mapa un moment que un botó que potser
+                és mort.
+              */
+              onOpenCamera={camera.supported ? () => setTab('sky') : undefined}
+              onOpenMap={() => setTab('map')}
+            />
           )}
           {tab === 'map' && (
             <MapScreen {...context} onPickLocation={observer.setManual} />

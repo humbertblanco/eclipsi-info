@@ -32,8 +32,18 @@ import {
 import './screens.css';
 
 export interface CountdownScreenProps extends EclipseContext {
-  /** Porta l'usuari a la pestanya de la càmera. */
-  onOpenCamera: () => void;
+  /**
+   * Porta l'usuari a la pestanya de la càmera.
+   *
+   * `undefined` quan aquest aparell no la pot ensenyar —cap càmera cap enfora,
+   * cap giroscopi—, i llavors la portada NO pinta el botó: hi posa el de mapa.
+   * Abans es pintava sempre i a l'escriptori no feia res, perquè posava la
+   * pestanya a `sky`, que allà no existeix, i un efecte de `App` la retornava a
+   * `countdown` a l'instant.
+   */
+  onOpenCamera?: () => void;
+  /** Porta l'usuari al mapa. És l'acció principal quan no hi ha càmera. */
+  onOpenMap: () => void;
 }
 
 /** El tipus d'eclipsi mana el color de tot el que en depèn. */
@@ -61,6 +71,7 @@ export function CountdownScreen({
   verdict,
   horizon,
   onOpenCamera,
+  onOpenMap,
 }: CountdownScreenProps) {
   const eclipse = getEclipse(eclipseId);
   const contacts = circumstances?.contacts ?? null;
@@ -242,9 +253,15 @@ export function CountdownScreen({
           centralPhaseVisible={verdict ? verdict.centralVisibleSec > 0 : undefined}
         />
 
-        <Button size="lg" icon="camera" fullWidth onClick={onOpenCamera}>
-          {s('home.openCamera', locale)}
-        </Button>
+        {onOpenCamera ? (
+          <Button size="lg" icon="camera" fullWidth onClick={onOpenCamera}>
+            {s('home.openCamera', locale)}
+          </Button>
+        ) : (
+          <Button size="lg" icon="map" fullWidth onClick={onOpenMap}>
+            {s('home.openMap', locale)}
+          </Button>
+        )}
 
         <p className="screen__note">
           {formatCoords(location.lat, location.lon)} ·{' '}

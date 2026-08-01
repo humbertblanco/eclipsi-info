@@ -92,6 +92,18 @@ const STRINGS = {
   'home.sunAltitude': { ca: 'Altura del Sol', es: 'Altura del Sol' },
   'home.contacts': { ca: 'Contactes al teu punt', es: 'Contactos en tu punto' },
   'home.openCamera': { ca: 'Apunta el mòbil al cel', es: 'Apunta el móvil al cielo' },
+  /*
+   * L'ALTERNATIVA D'ESCRIPTORI.
+   *
+   * A l'escriptori no hi ha càmera cap enfora ni giroscopi, la pestanya del Cel
+   * no existeix i «Apunta el mòbil al cel» era un botó primari que no feia
+   * absolutament res. Qui el prova conclou que l'app està trencada — que és
+   * exactament la percepció que `useCameraSupport` diu voler evitar.
+   *
+   * En lloc seu, l'acció que de veritat toca en una pantalla gran: triar on
+   * seràs. L'escriptori és on es planifica.
+   */
+  'home.openMap': { ca: 'Tria on seràs, al mapa', es: 'Elige dónde estarás, en el mapa' },
   'home.terrainPending': {
     ca: 'La durada encara és la teòrica: el perfil del terreny no està calculat i el relleu de ponent no hi entra.',
     es: 'La duración todavía es la teórica: el perfil del terreno no está calculado y el relieve de poniente no entra.',

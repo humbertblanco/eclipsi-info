@@ -414,11 +414,23 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
   }, []);
 
   const start = useCallback(async () => {
-    // Els tres permisos es demanen junts, des del mateix gest de l'usuari.
-    // Sense ubicació, l'altura i l'azimut del Sol serien els d'un altre lloc i
-    // tota la superposició seria mentida; sense orientació no sabem cap a on
-    // mires; sense càmera no hi ha res a sobre del què dibuixar.
-    onRequestLocation?.();
+    /*
+     * AQUÍ ES DEMANAVA LA UBICACIÓ, I NO CALIA MAI.
+     *
+     * El comentari deia que els tres permisos es demanen junts des del mateix
+     * gest. Però `SkyScreen` no munta aquesta vista fins que `location` no és
+     * `null` —abans ensenya la seva pròpia pantalla amb el botó d'ubicar-se—,
+     * o sigui que quan s'arriba aquí el lloc SEMPRE se sap i això només obria
+     * la fulla «On seràs» per no res.
+     *
+     * I l'obria damunt de la càmera: el gest estrella del producte, el dia de
+     * l'eclipsi, amb una mà, i et surt un full modal competint amb el diàleg
+     * de permisos del sistema. Llegeix com una app espatllada justament al
+     * moment de màxima pressió.
+     *
+     * El botó de canviar de lloc segueix existint dins de la vista, on toca
+     * (vegeu `onRequestLocation` més avall), per a qui vulgui moure el punt.
+     */
     await orientation.request();
 
     try {
