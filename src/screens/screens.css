@@ -12,6 +12,14 @@
    dalt o a baix ha de sumar `env(safe-area-inset-*)` o queda sota l'osca i sota
    la barra d'inici. És el motiu de tots els `calc()` d'aquest fitxer.
 
+   I EN APAÏSAT L'OSCA CAU A UN COSTAT: el dia de l'eclipsi la càmera es fa
+   servir amb el mòbil girat, i tot el que toca una vora LATERAL ha de comptar
+   amb `env(safe-area-inset-left/right)`. La regla lateral és `max(gutter,
+   inset)` i NO la suma que fan les barres verticals: l'inset lateral (~59 px a
+   un iPhone amb illa dinàmica) ja porta l'aire inclòs, i sumar-hi el gutter
+   regalava 79 px per banda justament quan l'amplada és el que sobra i l'alçada
+   el que falta. Amb inset zero, `max()` és el gutter de sempre.
+
    ESCRIPTORI: no és un mòbil estirat. A partir de --bp-rail la barra inferior
    deixa de tenir sentit (el polze no arriba enlloc) i passa a ser un carril
    lateral; a partir de --bp-split, les pantalles que tenen dues coses per
@@ -66,6 +74,12 @@
   bottom: 0;
   height: var(--bar-bottom);
   padding-bottom: env(safe-area-inset-bottom);
+  /* En apaïsat l'osca cau sobre un extrem de la barra: sense això, la primera
+     o l'última pestanya quedava sota l'illa dinàmica i no es podia tocar. Aquí
+     és `env()` a pèl i no `max()` perquè les pestanyes no tenen cap gutter
+     propi amb què quedar-se. */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   border-top: var(--bw-hair) solid var(--border-hairline);
 }
 
@@ -123,7 +137,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  padding: var(--sp-5) var(--gutter-app) 0;
+  /* Amb --maxw-web (1160) d'amplada màxima, en un mòbil girat aquesta franja
+     omple tota l'amplada i l'avís començava sota l'osca. */
+  padding: var(--sp-5) max(var(--gutter-app), env(safe-area-inset-right)) 0
+    max(var(--gutter-app), env(safe-area-inset-left));
   margin: 0 auto;
   max-width: var(--maxw-web);
 }
@@ -170,7 +187,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-5);
-  padding: var(--sp-5) var(--gutter-app) var(--sp-8);
+  /* A --maxw-sheet (520) el `margin: auto` ja aparta el contingut de l'osca en
+     apaïsat, però `.screen--wide` puja el sostre a 1160 i llavors els laterals
+     tornen a tocar la vora: el `max()` és per a aquest cas. */
+  padding: var(--sp-5) max(var(--gutter-app), env(safe-area-inset-right))
+    var(--sp-8) max(var(--gutter-app), env(safe-area-inset-left));
   margin: 0 auto;
   max-width: var(--maxw-sheet);
 }
@@ -470,7 +491,7 @@
 
 .mapscreen__legend {
   position: absolute;
-  left: var(--gutter-app);
+  left: max(var(--gutter-app), env(safe-area-inset-left));
   top: var(--sp-5);
   z-index: 2;
   display: flex;
@@ -515,8 +536,8 @@
  */
 .mapscreen__sheet {
   position: absolute;
-  left: var(--gutter-app);
-  right: var(--gutter-app);
+  left: max(var(--gutter-app), env(safe-area-inset-left));
+  right: max(var(--gutter-app), env(safe-area-inset-right));
   bottom: var(--sp-5);
   z-index: 2;
   display: flex;
@@ -572,7 +593,9 @@
   /* Aire per al botó d'obrir la càmera, que és l'únic que es veu abans que hi
      hagi imatge. La xifra és la franja de brúixola (--sp-8) més la fila
      d'insígnies (--sp-10): així el botó queda just a sota i no a sobre. */
-  padding: calc(var(--sp-8) + var(--sp-10)) var(--gutter-app) 0;
+  padding: calc(var(--sp-8) + var(--sp-10))
+    max(var(--gutter-app), env(safe-area-inset-right)) 0
+    max(var(--gutter-app), env(safe-area-inset-left));
 }
 
 .skyscreen__ar .viewport {
@@ -605,7 +628,8 @@
 .skyscreen__ar--tools .ar {
   height: auto;
   /* A baix, prou aire perquè la barra de tancament no tapi l'últim control. */
-  padding: var(--sp-6) var(--gutter-app) var(--sp-11);
+  padding: var(--sp-6) max(var(--gutter-app), env(safe-area-inset-right))
+    var(--sp-11) max(var(--gutter-app), env(safe-area-inset-left));
 }
 
 .skyscreen__ar--tools .viewport {
@@ -623,7 +647,7 @@
 
 .skyscreen__toolsbar {
   position: absolute;
-  left: var(--gutter-app);
+  left: max(var(--gutter-app), env(safe-area-inset-left));
   bottom: var(--sp-5);
   z-index: 3;
 }
@@ -633,8 +657,13 @@
 .skyscreen__top {
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
+  /* La caixa sencera s'encongeix fins a la zona segura, no s'encoixina: les
+     marques de la brúixola es col·loquen amb `left: %` des de `SkyScreen.tsx`,
+     i un coixí no les mouria — el percentatge es resol contra la caixa de
+     coixí. Encongint-la, l'azimut continua alineat amb la imatge i cap marca
+     ni insígnia queda sota l'illa dinàmica. */
+  left: env(safe-area-inset-left);
+  right: env(safe-area-inset-right);
   z-index: 2;
 }
 
@@ -721,7 +750,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  padding: var(--sp-10) var(--gutter-app) var(--sp-4);
+  /* El degradat sí que arriba de vora a vora (left/right: 0); només el
+     contingut s'aparta de l'osca. Apartar la caixa sencera deixava una franja
+     de càmera nua entre el degradat i la vora. */
+  padding: var(--sp-10) max(var(--gutter-app), env(safe-area-inset-right))
+    var(--sp-4) max(var(--gutter-app), env(safe-area-inset-left));
   max-height: 45%;
   overflow-y: auto;
   background: linear-gradient(180deg, transparent, rgb(0 0 0 / 0.55) 45%, var(--ink-950) 100%);
@@ -773,9 +806,21 @@
 
    Els punts de tall van escrits al `@media` perquè les consultes de mitjans no
    accepten `var()` — és una limitació del CSS, no una excepció a la regla.
+
+   AMPLE NO VOL DIR GRAN. Un iPhone 16 Pro Max girat fa 932×440 i passava el
+   tall dels 900: rebia el carril lateral de 168 px i la franja editorial de
+   40 px justament el dia de l'eclipsi, que és quan la càmera es fa servir amb
+   el mòbil en apaïsat. La guarda és `min-height: 500px` i no `orientation` ni
+   `pointer`: cap mòbil girat arriba als 500 d'alçada (el més alt del mercat es
+   queda a 440) i cap finestra d'escriptori ni tauleta raonable hi baixa,
+   mentre que `pointer: fine` deixaria un iPad apaïsat de 1024×768 —que és on
+   el carril té més sentit— clavat a la disposició de mòbil. Les DUES consultes
+   porten la MATEIXA guarda: si només la portés la primera, una pantalla ampla
+   i baixa tindria les columnes de --bp-split sense el carril que les
+   pressuposa.
    ========================================================================== */
 
-@media (min-width: 900px) {
+@media (min-width: 900px) and (min-height: 500px) {
   .shell {
     /* La franja de dades passa a existir i entra a totes les fórmules de
        posició alhora, perquè totes surten d'aquesta variable. */
@@ -894,7 +939,7 @@
   }
 }
 
-@media (min-width: 1180px) {
+@media (min-width: 1180px) and (min-height: 500px) {
   /*
    * Dues columnes amb una regla vertical entremig, com la versió web del
    * sistema: la jerarquia la fan les línies i les columnes, no més targetes.
