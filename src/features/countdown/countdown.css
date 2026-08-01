@@ -134,7 +134,6 @@
 /* L'únic minut i mig de tota la vida en què això es pot ensenyar. */
 .countdown__filter--off {
   background: var(--status-clear-quiet);
-  border-left-color: var(--status-clear);
   box-shadow: var(--glow-clear);
 }
 .countdown__filter--off .countdown__filterstate { color: var(--status-clear); }
@@ -142,7 +141,6 @@
 /* Els últims quinze segons: torna-te'l a posar ara. */
 .countdown__filter--alarm {
   background: var(--status-danger-quiet);
-  border-left-color: var(--status-danger);
 }
 .countdown__filter--alarm .countdown__filterstate { color: var(--status-danger); }
 

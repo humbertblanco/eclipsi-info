@@ -12,11 +12,20 @@ import {
   formatObscurationPercent,
   partialCaveat,
 } from '../../core/astro/obscuration';
+import type { Locale } from '../../i18n';
+import { s } from '../../screens/strings';
+import { EphemerisTable } from '../../screens/EphemerisTable';
+import {
+  formatClock,
+  formatDecimal,
+  formatDuration,
+  NO_DATA,
+} from '../../screens/format';
 
 interface Props {
   location: GeoLocation;
   eclipseId: string;
-  locale: 'ca' | 'es';
+  locale: Locale;
   /** Perfil d'horitzó del terreny. Sense ell, el veredicte és optimista. */
   horizon: HorizonProfile | null;
 }
@@ -24,31 +33,20 @@ interface Props {
 /** Nombre de mostres del recorregut. 240 dona una corba suau sense penalitzar. */
 const TRAJECTORY_SAMPLES = 240;
 
-const fmtTime = (d: Date) =>
-  d.toLocaleTimeString('ca-ES', {
-    timeZone: 'Europe/Madrid',
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-
-/**
- * Durada a text.
+/*
+ * NI HORES NI DURADES PRÒPIES: TOT VE DE `screens/format`.
  *
- * S'arrodoneix PRIMER el total i després es reparteix. Fer-ho a l'inrevés
- * —minuts amb `floor` i segons amb `round` per separat— produeix «3 min 60 s»,
- * que no és cap durada: passa amb 239,526 s, que és exactament la totalitat de
- * l'eclipsi del 2027 a l'estret de Gibraltar. Ho va caçar una auditoria, i el
- * paràgraf de sota d'aquella xifra deia «4 min», o sigui que la mateixa
- * pantalla es contradeia.
+ * Aquí hi havia un `fmtTime` clavat a `Europe/Madrid` —a les Canàries donava
+ * una hora de més que la taula d'efemèrides de la mateixa pantalla— i un
+ * `fmtDuration` que escrivia «3 min 00 s» on `formatDuration` escriu «3 min».
+ * Dues maneres d'escriure la mateixa xifra a la mateixa vista és exactament el
+ * que fa dubtar de totes dues.
+ *
+ * La lliçó que sí que valia la pena del `fmtDuration` d'abans —arrodonir el
+ * total ABANS de repartir-lo, perquè si no surt «3 min 60 s» amb 239,526 s, que
+ * és la totalitat del 2027 a l'estret de Gibraltar— ja la incorpora
+ * `formatDuration`.
  */
-const fmtDuration = (sec: number) => {
-  const total = Math.round(sec);
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return m > 0 ? `${m} min ${s.toString().padStart(2, '0')} s` : `${s} s`;
-};
 
 export function SimulationView({ location, eclipseId, locale, horizon }: Props) {
   const eclipse = getEclipse(eclipseId);
@@ -144,44 +142,55 @@ export function SimulationView({ location, eclipseId, locale, horizon }: Props) 
       <header className="sim__head">
         <h2>{eclipse.label[locale]}</h2>
         <p className="muted">
-          {location.lat.toFixed(4)}°, {location.lon.toFixed(4)}° · {Math.round(location.elevation)} m
+          {formatDecimal(location.lat, 4, locale)}°,{' '}
+          {formatDecimal(location.lon, 4, locale)}° ·{' '}
+          {Math.round(location.elevation)} m
         </p>
       </header>
 
       <div className={`verdict verdict--${circumstances.kind}`}>
+        {/* `.verdict__kind` ja ho posa en versaletes des del CSS: aquí va el
+            nom del tipus d'eclipsi tal com l'escriu la resta de l'app. */}
         <span className="verdict__kind">
-          {circumstances.kind === 'total' && 'TOTAL'}
-          {circumstances.kind === 'annular' && 'ANULAR'}
-          {circumstances.kind === 'partial' && 'PARCIAL'}
-          {circumstances.kind === 'none' && 'NO VISIBLE'}
+          {s(`kind.${circumstances.kind}` as 'kind.total', locale)}
         </span>
 
         {isCentral && verdict ? (
           // Amb perfil de terreny, la xifra gran és la que veuràs DE VERITAT.
           // La teòrica queda al costat, perquè entenguis què et roba el relleu.
           <>
-            <span className="verdict__dur">{fmtDuration(verdict.centralVisibleSec)}</span>
+            <span className="verdict__dur">
+              {formatDuration(verdict.centralVisibleSec)}
+            </span>
             {verdict.centralLostSec > 1 && (
               <span className="verdict__lost">
-                de {fmtDuration(verdict.centralTotalSec)} · el terreny te'n roba{' '}
-                {fmtDuration(verdict.centralLostSec)}
+                {s('sim.terrainSteals', locale, {
+                  total: formatDuration(verdict.centralTotalSec),
+                  lost: formatDuration(verdict.centralLostSec),
+                })}
               </span>
             )}
           </>
         ) : (
           isCentral && (
-            <span className="verdict__dur">{fmtDuration(circumstances.centralDurationSec)}</span>
+            <span className="verdict__dur">
+              {formatDuration(circumstances.centralDurationSec)}
+            </span>
           )
         )}
 
         <span className="verdict__obsc">
-          {formatObscurationPercent(verdict?.maxVisibleObscuration ?? c.max.obscuration, isCentral)}{' '}
-          de l'àrea solar tapada
+          {s('sim.obscuredArea', locale, {
+            pct: formatObscurationPercent(
+              verdict?.maxVisibleObscuration ?? c.max.obscuration,
+              isCentral,
+            ),
+          })}
         </span>
       </div>
 
-      {!isCentral && partialCaveat(c.max.obscuration) && (
-        <p className="warn">{partialCaveat(c.max.obscuration)}</p>
+      {!isCentral && partialCaveat(c.max.obscuration, locale) && (
+        <p className="warn">{partialCaveat(c.max.obscuration, locale)}</p>
       )}
 
       {verdict && (
@@ -190,18 +199,20 @@ export function SimulationView({ location, eclipseId, locale, horizon }: Props) 
 
       {verdict?.climbToRecoverM != null && verdict.centralLostSec > 1 && (
         <p className="note">
-          El que et tapa és a {verdict.blockingDistanceKm?.toFixed(1)} km i et falten{' '}
-          {verdict.altitudeDeficitDeg.toFixed(2)}° d'altura. Des d'aquí, això vol dir
-          pujar uns {Math.round(verdict.climbToRecoverM)} m.
+          {s('sim.climb', locale, {
+            // La distància a l'obstacle pot no saber-se encara que sí que se
+            // sàpiga quant s'ha de pujar: un guió, mai un zero que sembli mesura.
+            km:
+              verdict.blockingDistanceKm === null
+                ? NO_DATA
+                : formatDecimal(verdict.blockingDistanceKm, 1, locale),
+            deficit: `${formatDecimal(verdict.altitudeDeficitDeg, 2, locale)}°`,
+            climb: formatDecimal(Math.round(verdict.climbToRecoverM), 0, locale),
+          })}
         </p>
       )}
 
-      {!horizon && (
-        <p className="note">
-          Encara no s'ha calculat el perfil del terreny d'aquest punt: la durada que
-          es mostra és la teòrica, amb horitzó pla.
-        </p>
-      )}
+      {!horizon && <p className="note">{s('sim.terrainPending', locale)}</p>}
 
       <canvas ref={skyRef} className="canvas canvas--sky" />
 
@@ -213,53 +224,65 @@ export function SimulationView({ location, eclipseId, locale, horizon }: Props) 
         step={1 / TRAJECTORY_SAMPLES}
         value={progress}
         onChange={(e) => setProgress(Number(e.target.value))}
-        aria-label="Línia temporal de l'eclipsi"
+        aria-label={s('sim.timeline', locale)}
       />
       <div className="scrub__readout">
-        <strong>{fmtTime(current.time)}</strong>
-        <span>alt {current.sun.altitudeApparent.toFixed(2)}°</span>
-        <span>az {current.sun.azimuth.toFixed(1)}°</span>
-        <span>obsc {formatObscurationPercent(current.obscuration, current.obscuration >= 1)}</span>
+        <strong>{formatClock(current.time, locale)}</strong>
+        <span>
+          {s('sim.readoutAlt', locale, {
+            deg: `${formatDecimal(current.sun.altitudeApparent, 2, locale)}°`,
+          })}
+        </span>
+        <span>
+          {s('sim.readoutAz', locale, {
+            deg: `${formatDecimal(current.sun.azimuth, 1, locale)}°`,
+          })}
+        </span>
+        <span>
+          {s('sim.readoutObsc', locale, {
+            pct: formatObscurationPercent(
+              current.obscuration,
+              current.obscuration >= 1,
+            ),
+          })}
+        </span>
       </div>
 
       <canvas ref={trajRef} className="canvas canvas--traj" />
 
-      <table className="contacts">
-        <tbody>
-          {([['C1', c.c1], ['C2', c.c2], ['Màxim', c.max], ['C3', c.c3], ['C4', c.c4]] as const).map(
-            ([label, sample]) =>
-              sample ? (
-                <tr key={label}>
-                  <td className="contacts__label">{label}</td>
-                  <td className="contacts__time">{fmtTime(sample.time)}</td>
-                  <td className="contacts__alt">{sample.sun.altitudeApparent.toFixed(2)}°</td>
-                  <td className="contacts__az">{sample.sun.azimuth.toFixed(1)}°</td>
-                </tr>
-              ) : null,
-          )}
-          {sunset && (
-            <tr className="contacts--sunset">
-              <td className="contacts__label">Posta</td>
-              <td className="contacts__time">{fmtTime(sunset)}</td>
-              <td colSpan={2}>horitzó pla</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      {/*
+        ELS CINC CONTACTES ELS PINTA `EphemerisTable`, NO UNA TAULA D'AQUÍ.
+        N'hi havia una de pròpia amb les mateixes cinc files, i les dues
+        discrepaven: hores en zona peninsular contra hores del dispositiu, i
+        «3 min 00 s» contra «3 min». Amb una sola taula ja no hi ha res a
+        conciliar, i a més aquesta hi afegeix el marge sobre el terreny.
+
+        La posta no hi cap —no és un contacte de l'eclipsi— i queda a la línia
+        de sota, que és on ja estava el seu avís.
+      */}
+      <EphemerisTable circumstances={circumstances} horizon={horizon} locale={locale} />
+
+      {sunset && (
+        <p className="note">
+          {s('sim.sunset', locale, { time: formatClock(sunset, locale) })}
+        </p>
+      )}
 
       {sunsetMargin !== null && sunsetMargin < 0 && (
         <p className="warn">
-          El Sol es pon {Math.abs(sunsetMargin).toFixed(0)} minuts abans que acabi
-          l'eclipsi. I això comptant un horitzó pla de mar: amb qualsevol relleu a
-          ponent, en perdràs més.
+          {/* En durada i no en «X minuts»: així no surt mai «1 minuts», i un
+              marge de 40 s no s'escriu com un 0. */}
+          {s('sim.sunsetBefore', locale, {
+            gap: formatDuration(Math.abs(sunsetMargin) * 60),
+          })}
         </p>
       )}
 
       {eclipse.lowSunOverSpain && (
         <p className="note">
-          Sol a {c.max.sun.altitudeApparent.toFixed(1)}° sobre l'horitzó al màxim.
-          A aquesta altura el terreny cap a l'oest decideix el que veuràs — el
-          perfil real d'aquest punt encara no està calculat.
+          {s('sim.lowSun', locale, {
+            alt: `${formatDecimal(c.max.sun.altitudeApparent, 1, locale)}°`,
+          })}
         </p>
       )}
     </div>

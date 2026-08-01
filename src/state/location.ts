@@ -51,6 +51,48 @@ export type LocationOrigin =
 export type ElevationSource = 'dem' | 'gps' | 'assumed' | 'pending';
 
 /**
+ * Els valors que existeixen de debò, per poder-los reconèixer en temps
+ * d'execució.
+ *
+ * PER QUÈ CAL RECONÈIXER-LOS. Aquests dos camps viatgen per `localStorage`, que
+ * és de l'usuari i sobreviu a les versions de l'app. Comprovar només que són
+ * text no serveix de res: la barra de la ubicació fa `ORIGIN_KEY[fix.origin]`, i
+ * amb un origen que no existeix això dona `undefined`, la cerca del text peta, i
+ * la barra viu FORA de l'`ErrorBoundary` — o sigui que se'n duu tota l'app. I
+ * com que el valor es torna a llegir del disc a cada arrencada, se l'endú també
+ * a la següent, i a la següent: pantalla blanca fins a buidar les dades del
+ * navegador. El que no entenem es descarta i s'acaba aquí.
+ *
+ * SÓN TAULES `Record<…, true>` I NO LLISTES a posta: si algun dia s'afegeix un
+ * valor a la unió i no s'afegeix aquí, això no compila. Una llista `string[]` no
+ * ho hauria dit mai.
+ */
+const KNOWN_ORIGINS: Record<LocationOrigin, true> = {
+  gps: true,
+  map: true,
+  search: true,
+  recent: true,
+  default: true,
+};
+
+const KNOWN_ELEVATION_SOURCES: Record<ElevationSource, true> = {
+  dem: true,
+  gps: true,
+  assumed: true,
+  pending: true,
+};
+
+/** Cert si el valor és un origen que aquesta versió sap dir en paraules. */
+export function isLocationOrigin(value: unknown): value is LocationOrigin {
+  return typeof value === 'string' && Object.hasOwn(KNOWN_ORIGINS, value);
+}
+
+/** Cert si el valor és una font d'altitud que aquesta versió sap interpretar. */
+export function isElevationSource(value: unknown): value is ElevationSource {
+  return typeof value === 'string' && Object.hasOwn(KNOWN_ELEVATION_SOURCES, value);
+}
+
+/**
  * Un punt fixat, amb tot el que cal per poder-ne respondre «i això d'on surt?».
  */
 export interface FixedLocation {
@@ -120,13 +162,53 @@ export const DEFAULT_LOCATION: GeoLocation = {
 export const ELEVATION_DISAGREEMENT_M = 50;
 
 /**
+ * Ondulació del geoide que suposem sota tot el catàleg, en metres.
+ *
+ * LES DUES XIFRES QUE COMPAREM NO ES COMPTEN DES DE LA MATEIXA SUPERFÍCIE.
+ * L'especificació del W3C diu que `coords.altitude` és l'altura sobre
+ * l'EL·LIPSOIDE WGS84, i Android la dona tal com li arriba del xip. El model
+ * digital del terreny és ortomètric, comptat des del geoide: a Barcelona-el
+ * Prat el model dona 4,0 m i la cota topogràfica de la pista és de 4 m. Entre
+ * les dues superfícies, a Ibèria, hi ha de +49 a +56 m (EGM2008) — que és
+ * exactament la mida d'`ELEVATION_DISAGREEMENT_M`.
+ *
+ * D'ON SURT EL 52: és el mig d'aquest interval. ÉS UNA CONSTANT GROSSERA i cal
+ * dir-ho: no interpolem cap malla del geoide. El residu que deixa dins de la
+ * zona del catàleg és de ±4 m, quinze vegades per sota del llindar d'avís, o
+ * sigui que per a l'única cosa que en fem —decidir si dues altituds discrepen
+ * per damunt de 50 m— no cal res més fi. Fora d'Ibèria aquest número no val.
+ */
+export const GEOID_UNDULATION_M = 52;
+
+/**
  * Cert quan l'altitud del GPS i la del model del terreny discrepen prou com
  * per haver-ho de dir. La que es fa servir per calcular és sempre la del model.
+ *
+ * ES MIRA AMB ELS DOS DATUMS PERQUÈ NO SABEM EN QUIN ENS PARLA EL NAVEGADOR.
+ * A iOS, CoreLocation ja resta el geoide i el que arriba és ortomètric, o sigui
+ * comparable amb el model. A Android arriba sobre l'el·lipsoide i li falta
+ * restar l'ondulació. No hi ha cap manera honesta de saber-ho des d'aquí: la
+ * mateixa propietat, el mateix tipus i cap camp que ho digui. Comparar en cru
+ * feia sortir l'avís a mig Android d'Ibèria sense que passés res —el sol
+ * desnivell de datum ja passa el llindar—, i restar sempre l'hauria fet sortir
+ * a tots els iPhone. Per això només es crida quan les dues xifres discrepen
+ * LLEGIDES DE LES DUES MANERES.
+ *
+ * EL PREU ÉS UNA ZONA CEGA: una altitud del GPS entre 50 i 102 m per damunt del
+ * terreny no s'avisa, perquè llegida com a el·lipsoïdal quadraria. Val la pena:
+ * el que hi havia abans era un avís que sortia gairebé la meitat de les vegades
+ * sense cap motiu, i això és el llop que el llindar de dalt existeix per no
+ * cridar. Un avís que surt per res deixa de llegir-se, i llavors tampoc no
+ * serveix el dia que és bo.
  */
 export function elevationDisagrees(fix: FixedLocation): boolean {
   if (fix.gpsElevationM === null) return false;
   if (fix.elevationSource !== 'dem') return false;
-  return Math.abs(fix.gpsElevationM - fix.location.elevation) > ELEVATION_DISAGREEMENT_M;
+  const asOrthometric = Math.abs(fix.gpsElevationM - fix.location.elevation);
+  const asEllipsoidal = Math.abs(
+    fix.gpsElevationM - GEOID_UNDULATION_M - fix.location.elevation,
+  );
+  return Math.min(asOrthometric, asEllipsoidal) > ELEVATION_DISAGREEMENT_M;
 }
 
 /**

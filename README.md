@@ -36,6 +36,9 @@ mirar, i si hi ha alguna muntanya al mig.**
 En desenvolupament. Es pot provar a
 [lacuinade.estic.online/eclipsi](https://lacuinade.estic.online/eclipsi/).
 
+[**ESTAT.md**](ESTAT.md) explica on som: com es desplega, què s'ha comprovat,
+què queda obert i quines decisions no s'han de desfer per accident.
+
 ## Com córrer-ho
 
 ```bash

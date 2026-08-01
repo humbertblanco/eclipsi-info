@@ -489,31 +489,22 @@ export function EclipseMap({
 // Panell de resultats
 // ---------------------------------------------------------------------------
 
-const fmtTime = (d: Date) =>
-  d.toLocaleTimeString('ca-ES', {
-    timeZone: 'Europe/Madrid',
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-
-const fmtDuration = (sec: number) => {
-  const m = Math.floor(sec / 60);
-  const s = Math.round(sec % 60);
-  return m > 0 ? `${m} min ${s.toString().padStart(2, '0')} s` : `${s} s`;
-};
-
-const KIND_LABEL: Record<string, string> = {
-  total: 'Total',
-  annular: 'Anular',
-  partial: 'Parcial',
-  none: 'No visible',
-};
+/*
+ * AQUÍ HI HAVIA UN `fmtTime` I UN `fmtDuration` PROPIS, i els dos mentien.
+ *
+ * El primer clavava `Europe/Madrid`: a les Canàries el mateix contacte sortia
+ * amb una hora de més que a la taula d'efemèrides de la fitxa del costat, o
+ * sigui dues hores diferents per al mateix instant a la mateixa pantalla. El
+ * segon escrivia «3 min 00 s» on la resta de l'app escriu «3 min».
+ *
+ * Ara tot passa per `screens/format`, que és on viu la regla. Vegeu-hi el
+ * comentari de `formatClock` sobre per què la zona és la del dispositiu.
+ */
 
 interface PanelProps {
   circumstances: ReturnType<typeof computeLocalCircumstances>;
   annular: boolean;
+  locale: Locale;
 }
 
 /**
@@ -524,75 +515,77 @@ interface PanelProps {
  * Que les dues pantalles responguin igual la mateixa pregunta no és estalvi de
  * CSS, és que hagin de ser reconeixibles com la mateixa dada.
  */
-function CircumstancesPanel({ circumstances, annular }: PanelProps) {
+function CircumstancesPanel({ circumstances, annular, locale }: PanelProps) {
   const { contacts, kind, location } = circumstances;
   const central = kind === 'total' || kind === 'annular';
 
-  const rows: [string, EclipseSample | undefined][] = [
-    ['C1 · inici parcial', contacts.c1],
-    [annular ? 'C2 · inici anularitat' : 'C2 · inici totalitat', contacts.c2],
-    ['Màxim', contacts.max],
-    [annular ? 'C3 · fi anularitat' : 'C3 · fi totalitat', contacts.c3],
-    ['C4 · fi parcial', contacts.c4],
+  // Les etiquetes dels contactes són les mateixes que fa servir la taula
+  // d'efemèrides de les pantalles: la mateixa fila no es pot dir de dues
+  // maneres segons quin component la pinti.
+  const rows: [StringKey, EclipseSample | undefined][] = [
+    ['web.c1', contacts.c1],
+    [annular ? 'web.c2annular' : 'web.c2total', contacts.c2],
+    ['web.max', contacts.max],
+    [annular ? 'web.c3annular' : 'web.c3total', contacts.c3],
+    ['web.c4', contacts.c4],
   ];
 
   return (
     <section>
       <header className={`verdict verdict--${kind}`}>
-        <span className="verdict__kind">{KIND_LABEL[kind]}</span>
+        <span className="verdict__kind">{s(`kind.${kind}` as 'kind.total', locale)}</span>
         {central && (
           <span className="verdict__dur">
-            {fmtDuration(circumstances.centralDurationSec)}
+            {formatDuration(circumstances.centralDurationSec)}
           </span>
         )}
         <span className="verdict__obsc">
-          {formatObscurationPercent(contacts.max.obscuration, central)} del disc solar tapat al màxim
+          {s('map.obscuredAtMax', locale, {
+            pct: formatObscurationPercent(contacts.max.obscuration, central),
+          })}
         </span>
       </header>
 
       <p className="map__coords">
-        {location.lat.toFixed(4)}° {location.lon.toFixed(4)}° · al nivell del mar
+        {formatDecimal(location.lat, 4, locale)}°{' '}
+        {formatDecimal(location.lon, 4, locale)}° · {s('map.seaLevel', locale)}
       </p>
 
       {kind === 'none' ? (
-        <p className="note">Des d’aquest punt no es veu res de l’eclipsi.</p>
+        <p className="note">{s('map.nothingVisible', locale)}</p>
       ) : (
         <>
           <table className="contacts">
             <tbody>
-              {rows.map(([label, sample]) =>
+              {rows.map(([key, sample]) =>
                 sample ? (
-                  <tr key={label}>
-                    <td className="contacts__label">{label}</td>
-                    <td className="contacts__time">{fmtTime(sample.time)}</td>
+                  <tr key={key}>
+                    <td className="contacts__label">{s(key, locale)}</td>
+                    <td className="contacts__time">{formatClock(sample.time, locale)}</td>
                     <td className="contacts__alt">
-                      {sample.sun.altitudeApparent.toFixed(1)}°
+                      {formatDecimal(sample.sun.altitudeApparent, 1, locale)}°
                     </td>
-                    <td className="contacts__az">{sample.sun.azimuth.toFixed(0)}°</td>
+                    <td className="contacts__az">
+                      {formatDecimal(sample.sun.azimuth, 0, locale)}°
+                    </td>
                   </tr>
                 ) : null,
               )}
             </tbody>
           </table>
-          <p className="map__footnote">
-            Hores locals peninsulars. Les dues darreres columnes són l’altura i
-            l’azimut del Sol.
-          </p>
+          <p className="map__footnote">{s('map.contactsNote', locale)}</p>
         </>
       )}
 
       {circumstances.sunBelowHorizonDuringEvent && (
-        <p className="warn">
-          Alguna de les fases passa amb el Sol sota l’horitzó: des d’aquí no es
-          veurà l’eclipsi sencer.
-        </p>
+        <p className="warn">{s('map.sunBelowHorizon', locale)}</p>
       )}
 
       {central && contacts.max.sun.altitudeApparent < 10 && (
         <p className="warn">
-          Sol a {contacts.max.sun.altitudeApparent.toFixed(1)}° al màxim. A aquesta
-          altura mana el relleu cap a ponent, no el mapa: cal comprovar l’horitzó
-          real del punt.
+          {s('map.lowSun', locale, {
+            alt: `${formatDecimal(contacts.max.sun.altitudeApparent, 1, locale)}°`,
+          })}
         </p>
       )}
     </section>

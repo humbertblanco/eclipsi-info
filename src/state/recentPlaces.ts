@@ -19,7 +19,12 @@
 
 import type { GeoLocation } from '../core/astro/types';
 import type { ElevationSource } from './location';
-import { isSamePlace, type LocationOrigin } from './location';
+import {
+  isElevationSource,
+  isLocationOrigin,
+  isSamePlace,
+  type LocationOrigin,
+} from './location';
 
 /** Clau de `localStorage`. Prefixada per no xocar amb res més del domini. */
 export const RECENTS_KEY = 'eclipsi.places.recent';
@@ -60,7 +65,19 @@ export interface RecentPlace {
   atMs: number;
 }
 
-/** Cert si el valor té la forma d'una entrada aprofitable. */
+/**
+ * Cert si el valor té la forma d'una entrada aprofitable.
+ *
+ * ELS DOS CAMPS D'ENUMERACIÓ ES COMPROVEN CONTRA ELS VALORS QUE EXISTEIXEN, no
+ * només contra el tipus. Abans n'hi havia prou amb `typeof v.origin === 'string'`
+ * i això deixava passar `origin: 'HACK'` o `elevationSource: 'moon'`, que no són
+ * dades corruptes teòriques: hi arriba qualsevol build vell amb un valor que
+ * després es va treure, i qualsevol persona que obri les eines del navegador.
+ * Un origen desconegut fa petar el text de la barra de la ubicació, que està
+ * FORA de l'`ErrorBoundary`, i com que el valor es rellegeix del disc a cada
+ * arrencada, l'app es queda en blanc també a la propera. Vegeu
+ * `isLocationOrigin` a `location.ts`.
+ */
 function isRecentPlace(value: unknown): value is RecentPlace {
   if (typeof value !== 'object' || value === null) return false;
   const v = value as Record<string, unknown>;
@@ -74,10 +91,30 @@ function isRecentPlace(value: unknown): value is RecentPlace {
     typeof v.elevation === 'number' &&
     Number.isFinite(v.elevation) &&
     (v.label === null || typeof v.label === 'string') &&
-    typeof v.origin === 'string' &&
+    isLocationOrigin(v.origin) &&
+    // Les entrades d'abans que existís el camp no en porten. Que no hi sigui és
+    // legítim i vol dir «no se sap»; el que no pot passar és que hi sigui amb
+    // un valor que no sabem interpretar.
+    (v.elevationSource === undefined || isElevationSource(v.elevationSource)) &&
     typeof v.atMs === 'number' &&
     Number.isFinite(v.atMs)
   );
+}
+
+/**
+ * Com es desa la font de l'altitud.
+ *
+ * `pending` NO ES DESA MAI. Vol dir «la tessel·la del terreny està de camí», i
+ * una petició de xarxa no sobreviu a tancar l'app: en tornar-la a obrir només en
+ * queda el zero que hi havia mentrestant. Desat tal qual, un punt a 1.520 m que
+ * es tanqués abans que arribés la tessel·la tornava com a 1.520 → 0 m i les
+ * hores dels contactes es calculaven al nivell del mar per a algú que és a
+ * mitja muntanya. Es desa com a `assumed`, que és exactament el que era: no ho
+ * sabíem i hi havia un zero. Així l'avís de la barra surt i, en restaurar,
+ * `useObserver` torna a demanar l'altitud de tot el que no sigui `dem`.
+ */
+export function persistedElevationSource(source: ElevationSource): ElevationSource {
+  return source === 'pending' ? 'assumed' : source;
 }
 
 /**
@@ -184,12 +221,26 @@ export function writeRecents(list: readonly RecentPlace[]): void {
  */
 export const LAST_PLACE_KEY = 'eclipsi.places.last';
 
-export function readLastPlace(): RecentPlace | null {
+/**
+ * Llegeix l'últim lloc d'un text JSON. Funció pura, per poder-la provar.
+ *
+ * ÉS LA VALIDACIÓ QUE MÉS IMPORTA de tot el fitxer: aquest és l'únic valor que
+ * es pinta a la barra de la ubicació sense que l'usuari hagi tocat res, o sigui
+ * que si passa alguna cosa que no s'entén, l'app peta abans d'ensenyar res.
+ */
+export function parseLastPlace(raw: string | null): RecentPlace | null {
+  if (raw === null) return null;
   try {
-    const raw = window.localStorage.getItem(LAST_PLACE_KEY);
-    if (raw === null) return null;
     const parsed: unknown = JSON.parse(raw);
     return isRecentPlace(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function readLastPlace(): RecentPlace | null {
+  try {
+    return parseLastPlace(window.localStorage.getItem(LAST_PLACE_KEY));
   } catch {
     return null;
   }

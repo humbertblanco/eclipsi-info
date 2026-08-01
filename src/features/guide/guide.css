@@ -1,50 +1,64 @@
 /**
  * Estils de la guia i del banner de seguretat.
  *
- * Fa servir només les variables de tema de `src/index.css` (--bg, --panel,
- * --line, --text, --muted, --accent, --warn, --bad, --good) i les classes
- * genèriques ja existents (.btn). Res d'aquí no toca res de fora.
+ * TOKENS. Tot surt de `src/styles/tokens/`: colors (`--surface-card`,
+ * `--border-hairline`, `--text-muted`, `--status-*`), tipografia (`--fs-*`,
+ * `--lh-*`, `--fw-*`, `--text-*`), espaiat (`--sp-*`) i elevació (`--r-*`,
+ * `--bw-*`). Aquí no hi ha d'haver cap color, cap mida de lletra, cap espaiat
+ * ni cap radi escrits a pèl.
+ *
+ * La capçalera d'aquest fitxer deia abans que feia servir `--bg`, `--panel`,
+ * `--line` i `--warn`. Cap d'aquestes variables no ha existit mai al projecte,
+ * i el fitxer tampoc no les feia servir: era documentació que apuntava a un
+ * sistema imaginari. Els noms bons són els de dalt.
+ *
+ * Les úniques classes de fora que toca són `.btn` (definida a `src/index.css`)
+ * i sempre per sota de la seva pròpia arrel `.guide__*`.
  */
 
-/* Encastat sobre la imatge de la càmera: fons opac i sense marges. */
-.viewport /* -------------------------------------------------------------- guia */
+/* -------------------------------------------------------------------- guia */
 
-.guide__head { margin-bottom: 10px; }
+.guide__head { margin-bottom: var(--sp-4); }
 
 .guide__subtitle {
-  margin: 2px 0 0;
-  font-size: 13px;
-  line-height: 1.5;
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
   color: var(--text-muted);
 }
 
-.guide__banner { margin-top: 12px; }
+.guide__banner { margin-top: var(--sp-4); }
 
 .guide__hint {
-  margin: 10px 0;
-  font-size: 12px;
-  line-height: 1.5;
+  margin: var(--sp-4) 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
   color: var(--text-muted);
 }
 
 .guide__toolbar {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 10px;
+  margin-bottom: var(--sp-4);
 }
 
-.guide__toolbar .btn { font-size: 13px; padding: 6px 12px; }
+/* Només s'ajusta la mida del text i el farciment horitzontal: l'alçada tàctil
+   de 44 px la posa `.btn` i no s'ha de tocar mai des d'aquí. */
+.guide__toolbar .btn {
+  font-size: var(--fs-caption);
+  padding: var(--sp-3) var(--sp-4);
+}
 
 .guide__sections {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-3);
 }
 
 .guide__section {
   background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
-  border-radius: 10px;
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-md);
   overflow: hidden;
 }
 
@@ -53,7 +67,7 @@
 .guide__summary {
   display: block;
   cursor: pointer;
-  padding: 12px 14px;
+  padding: var(--sp-4) var(--sp-5);
   list-style: none;
   user-select: none;
 }
@@ -64,13 +78,13 @@
 .guide__summaryhead {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--sp-3);
   flex-wrap: wrap;
 }
 
 .guide__title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semibold);
   flex: 1 1 auto;
 }
 
@@ -78,53 +92,55 @@
 .guide__summaryhead::after {
   content: '+';
   color: var(--text-muted);
-  font-size: 17px;
+  font-size: var(--fs-body-lg);
   line-height: 1;
   flex: 0 0 auto;
 }
 
 .guide__section[open] .guide__summaryhead::after { content: '−'; }
 
+/* Etiqueta en majúscules: al sistema això és una overline (mono, 11 px, +0.14em),
+   no una mida de lletra qualsevol amb un interlletrat inventat. */
 .guide__badge {
-  font-size: 11px;
-  letter-spacing: 0.04em;
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
   text-transform: uppercase;
   color: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  padding: 2px 8px;
+  border: var(--bw-hair) solid var(--accent);
+  border-radius: var(--r-pill);
+  padding: var(--sp-1) var(--sp-3);
   flex: 0 0 auto;
 }
 
 .guide__lead {
   display: block;
-  margin-top: 4px;
-  font-size: 13px;
-  line-height: 1.5;
+  margin-top: var(--sp-2);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
   color: var(--text-muted);
 }
 
 .guide__body {
-  padding: 0 14px 14px;
-  border-top: 1px solid var(--border-hairline);
+  padding: 0 var(--sp-5) var(--sp-5);
+  border-top: var(--bw-hair) solid var(--border-hairline);
 }
 
 .guide__p {
-  margin: 12px 0;
-  font-size: 14px;
-  line-height: 1.62;
+  margin: var(--sp-4) 0;
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-loose);
 }
 
 /* ------------------------------------------------------------ llistes */
 
 .guide__list {
-  margin: 12px 0;
-  padding-left: 20px;
-  font-size: 14px;
-  line-height: 1.6;
+  margin: var(--sp-4) 0;
+  padding-left: var(--sp-6);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-loose);
 }
 
-.guide__list li { margin-bottom: 7px; }
+.guide__list li { margin-bottom: var(--sp-3); }
 
 /* Les llistes amb to canvien el color del pic, no el del text: el text
    ha de continuar sent llegible i el color només marca la categoria. */
@@ -135,33 +151,33 @@
 
 /* --------------------------------------------------------- definicions */
 
-.guide__defs { margin: 12px 0; }
+.guide__defs { margin: var(--sp-4) 0; }
 
 .guide__defs > div {
-  padding: 9px 0;
-  border-bottom: 1px solid var(--border-hairline);
+  padding: var(--sp-3) 0;
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
 }
 
 .guide__defs > div:last-child { border-bottom: none; }
 
 .guide__defs dt {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-semibold);
   color: var(--accent);
 }
 
 .guide__defs dd {
-  margin: 4px 0 0;
-  font-size: 13px;
-  line-height: 1.6;
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-loose);
   color: var(--text-muted);
 }
 
 /* ------------------------------------------------------------- avisos */
 
 .guide__callout {
-  margin: 14px 0;
-  padding: 11px 13px;
+  margin: var(--sp-5) 0;
+  padding: var(--sp-4);
   /*
    * Sense franja lateral de color. El sistema de disseny la prohibeix
    * explícitament ("no coloured left-border accents"), i el motiu és bo: en una
@@ -169,81 +185,96 @@
    * primer que l'ull descarta, i acaba sent decoració que no comunica res. El
    * to el porten la icona i el fons tènue, com a `SafetyNotice`.
    */
-  border: 1px solid var(--border-hairline);
-  background: var(--surface-card);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-sm);
+  /* Un sol `background`. Abans n'hi havia dos —`var(--surface-card)` i un
+     `rgba()` a pèl que el tapava—, o sigui que el token era codi mort i el
+     color que es veia no era de la paleta. Ara el bloc puja un sol esglaó de
+     superfície (ink-700), que és el que fa el sistema per destacar dins d'una
+     targeta. Els tons el sobreescriuen amb el seu `--status-*-quiet`. */
+  background: var(--surface-card-hover);
 }
 
 .guide__callout strong {
   display: block;
-  font-size: 14px;
-  line-height: 1.35;
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-snug);
 }
 
 .guide__callout p {
-  margin: 5px 0 0;
-  font-size: 13px;
-  line-height: 1.6;
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-loose);
   color: var(--text-muted);
 }
 
-.guide__callout--info { border-color: color-mix(in oklab, var(--accent) 38%, transparent); }
+/*
+ * Els fons dels quatre tons són els `--status-*-quiet` del sistema (la mateixa
+ * tinta al 14% que fa servir tota l'app), no barreges a mà. Abans hi havia tres
+ * `rgba()` escrits a pèl —#5ddc8a, #ff9f43 i #ff5d5d— que NO eren ni
+ * `--status-clear` (#2FD3A3), ni `--status-partial` (#FFA51F), ni
+ * `--status-danger` (#FF5A45): tres verds i tarongs de fora de la paleta que
+ * arribaven al CSS compilat.
+ */
+.guide__callout--info {
+  border-color: color-mix(in oklab, var(--accent) 38%, transparent);
+  background: var(--accent-quiet);
+}
 .guide__callout--info strong { color: var(--accent); }
 
 .guide__callout--good {
   border-color: color-mix(in oklab, var(--status-clear) 38%, transparent);
-  background: rgba(93, 220, 138, 0.06);
+  background: var(--status-clear-quiet);
 }
 .guide__callout--good strong { color: var(--status-clear); }
 
 .guide__callout--warn {
   border-color: color-mix(in oklab, var(--status-partial) 38%, transparent);
-  background: rgba(255, 159, 67, 0.07);
+  background: var(--status-partial-quiet);
 }
 .guide__callout--warn strong { color: var(--status-partial); }
 
 .guide__callout--bad {
   border-color: color-mix(in oklab, var(--status-danger) 38%, transparent);
-  background: rgba(255, 93, 93, 0.08);
+  background: var(--status-danger-quiet);
 }
 .guide__callout--bad strong { color: var(--status-danger); }
 
 /* ------------------------------------------------------------- taules */
 
-.guide__tablewrap { margin: 14px 0; }
+.guide__tablewrap { margin: var(--sp-5) 0; }
 
 /* Scroll propi: la taula d'exposicions no ha de fer desbordar la pàgina. */
 .guide__tablescroll {
   overflow-x: auto;
-  border: 1px solid var(--border-hairline);
-  border-radius: 8px;
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-sm);
   -webkit-overflow-scrolling: touch;
 }
 
 .guide__table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
+/* Capçalera en majúscules = overline del sistema: mono, 11 px, +0.14em. */
 .guide__table th {
   text-align: left;
-  font-weight: 600;
-  color: var(--text-muted);
-  font-size: 12px;
-  letter-spacing: 0.03em;
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
   text-transform: uppercase;
-  padding: 9px 10px;
-  border-bottom: 1px solid var(--border-hairline);
-  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-muted);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
+  background: var(--surface-card-hover);
 }
 
 .guide__table td {
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border-hairline);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
 }
 
 .guide__table tbody tr:last-child td { border-bottom: none; }
@@ -251,44 +282,43 @@
 /* La columna del filtre és la que decideix si et cremes: en negreta perquè
    sigui el primer que es llegeix de cada fila. No se li dona color, perquè
    ni «Sí» ni «NO» són per si mateixos bons o dolents: depenen de la fase. */
-.guide__table td:nth-child(2) { font-weight: 700; }
+.guide__table td:nth-child(2) { font-weight: var(--fw-bold); }
 
 .guide__caption {
-  margin: 7px 2px 0;
-  font-size: 12px;
-  line-height: 1.5;
+  margin: var(--sp-3) var(--sp-1) 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
   color: var(--text-muted);
 }
 
 /* -------------------------------------------------------------- fonts */
 
 .guide__sources {
-  margin-top: 22px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border-hairline);
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-5);
+  border-top: var(--bw-hair) solid var(--border-hairline);
 }
 
 .guide__sources h3 {
   margin: 0;
-  font-size: 13px;
-  letter-spacing: 0.05em;
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
   text-transform: uppercase;
   color: var(--text-muted);
-  font-weight: 600;
 }
 
 .guide__sourcesnote {
-  margin: 6px 0 8px;
-  font-size: 12px;
-  line-height: 1.5;
+  margin: var(--sp-3) 0 var(--sp-3);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
   color: var(--text-muted);
 }
 
 .guide__sources ul {
   margin: 0;
-  padding-left: 18px;
-  font-size: 12px;
-  line-height: 1.7;
+  padding-left: var(--sp-6);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-loose);
 }
 
 .guide__sources a { color: var(--accent); }

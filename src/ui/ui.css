@@ -80,14 +80,35 @@
   width: 100%;
 }
 
-/* 36 px. No arriba als 44 de l'objectiu tàctil mínim, i el sistema ho accepta
-   perquè `sm` és per a barres denses i files; qui el fa servir sol dins d'un
-   HUD ha d'afegir-hi `.ui-tappable`. */
+/* 36 px DE DIBUIX, 44 px DE TOQUE.
+   La taula SIZES del sistema fixa `sm` a 36 px, però la regla de layout diu
+   «tap targets never below 44px». No es contradiuen si se separen les dues
+   mides, que és exactament el que ja fa `.ui-tappable`: el rectangle pintat es
+   queda a 36 px i el pseudoelement estén l'àrea sensible fins als 44 sense
+   moure ni un píxel del dibuix ni empènyer res de la fila.
+
+   Abans això depenia de recordar-se d'afegir `.ui-tappable` a mà a cada botó
+   petit, i `Button` no ho feia enlloc: tots els `size="sm"` de l'app —el tanca
+   del Toast, els del full d'ubicació, el de copiar coordenades— es quedaven a
+   36 px. Ara ho porta la variant. */
 .ui-btn--sm {
+  position: relative;
   min-height: calc(var(--sp-8) + var(--sp-2));
   padding: 0 var(--sp-4);
   gap: var(--sp-2);
   font: var(--text-body-sm);
+}
+
+.ui-btn--sm::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  width: 100%;
+  height: 100%;
 }
 
 .ui-btn--lg {
