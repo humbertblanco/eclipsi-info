@@ -380,7 +380,28 @@ export function EclipseMap({
     // `style.load` arriba tan bon punt l'estil és utilitzable; `load` espera a
     // més que hi hagi tessel·les carregades i, si la xarxa va justa, pot trigar
     // molt o no arribar mai. La franja no ha d'esperar les tessel·les.
-    map.on('style.load', () => applyPath(map, geojsonRef.current));
+    /*
+     * L'ESTIL POT HAVER CARREGAT ABANS QUE ARRIBEM AQUÍ, I A PRODUCCIÓ PASSA
+     * SEMPRE.
+     *
+     * Amb `style.load` tot sol, la franja no es dibuixava mai a la compilació
+     * de producció —ni fonts, ni capes: la consola deia «the layer 'band-fill'
+     * does not exist in the map's style»— mentre que en desenvolupament sí. La
+     * diferència és de temps i no de codi: l'estil és un objecte en memòria,
+     * no una URL, i amb el paquet ja analitzat MapLibre acaba de carregar-lo
+     * DINS del constructor de dalt. Quan s'arriba en aquesta línia, l'esdeveniment
+     * ja ha passat i no tornarà. En desenvolupament, la càrrega dels mòduls per
+     * separat endarreria prou l'estil perquè l'escoltador hi fos a temps, i per
+     * això el defecte només es veia al lloc publicat.
+     *
+     * Per això s'hi va per les dues bandes: l'escoltador per si encara ha
+     * d'arribar, i la crida directa per si ja ha passat. `applyPath` és
+     * idempotent a posta —comprova si la font hi és abans de crear res— i es
+     * pot cridar dues vegades sense fer cap mal.
+     */
+    const apply = (): void => applyPath(map, geojsonRef.current);
+    map.on('style.load', apply);
+    if (map.isStyleLoaded()) apply();
 
     /*
      * ELS ERRORS DEL MAPA ES DEIXEN VEURE.
