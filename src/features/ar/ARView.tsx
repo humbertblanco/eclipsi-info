@@ -75,6 +75,17 @@ import {
 import { PoseFusion, poseDeltaToRotation, type FusionTelemetry } from './poseFusion';
 import { loadMeasuredFov, saveMeasuredFov } from './focalStore';
 import { readPalette } from '../../styles/palette';
+/*
+ * TOT EL TEXT, DEL DICCIONARI; TOTA HORA, DE `screens/format`.
+ *
+ * Aquí tota la interfície era català clavat al JSX —crida a l'acció, permisos,
+ * modes, notes i diagnòstic—: qui triava castellà rebia la pantalla
+ * diferencial del producte en català. I l'instant simulat es formatava amb
+ * `Europe/Madrid` escrit a mà: a les Canàries sortia una hora per davant del
+ * rellotge de l'usuari i diferent de la taula d'efemèrides de la mateixa app.
+ */
+import { s, type StringKey } from '../../screens/strings';
+import { formatClock, formatDecimal, formatDuration, NO_DATA } from '../../screens/format';
 
 interface Props {
   location: GeoLocation;
@@ -133,11 +144,15 @@ const ANCHOR_EVERY_FRAMES = 6;
 const MIN_FOV_DEG = 25;
 const MAX_FOV_DEG = 140;
 
-const SOURCE_LABEL: Record<string, string> = {
-  'ios-compass': 'webkitCompassHeading (absolut)',
-  'absolute-alpha': 'deviceorientationabsolute (absolut)',
-  'relative-alpha': 'alpha relativa — no fiable sense calibrar',
-  none: '—',
+/*
+ * Cada font del rumb, cap a la seva clau del diccionari. Era un
+ * `Record<string, string>` amb el text ja escrit, i en un sol idioma. `none`
+ * no hi és: sense font es pinta el guió de «dada que no existeix», `NO_DATA`.
+ */
+const SOURCE_KEYS: Partial<Record<string, StringKey>> = {
+  'ios-compass': 'camera.diag.sourceIos',
+  'absolute-alpha': 'camera.diag.sourceAbsolute',
+  'relative-alpha': 'camera.diag.sourceRelative',
 };
 
 /**
@@ -819,6 +834,11 @@ export function ARView({
   const rawError = camera ? normalizeAngle(sunNow.azimuth - camera.azimuth) : null;
   const agreement = diagnostics.fusion.agreement;
   const shownFovDeg = diagnostics.measuredFovDeg ?? calibration.sensorFovDeg;
+  const sourceKey = SOURCE_KEYS[orientation.headingSource];
+  // La nota del soroll porta un terme en negreta al mig de la frase. El
+  // diccionari el marca amb `{term}` i aquí es reconstrueix el <strong>:
+  // vegeu el perquè al costat de `camera.diag.noiseNote`.
+  const [noiseBefore, noiseAfter] = s('camera.diag.noiseNote', locale).split('{term}');
 
   return (
     <div className="ar">
@@ -838,21 +858,18 @@ export function ARView({
         <div className="ar__invite">
           <button className="ar__open" onClick={start} type="button">
             <Icon name="camera" size={ICON_LG} aria-hidden />
-            <span>Apunta el mòbil al cel</span>
+            <span>{s('home.openCamera', locale)}</span>
           </button>
-          <p className="ar__invitenote">
-            Hi veuràs el recorregut del Sol superposat al teu paisatge, a l’hora
-            que triïs. La imatge no surt del telèfon.
-          </p>
+          <p className="ar__invitenote">{s('camera.inviteNote', locale)}</p>
         </div>
       )}
 
       {orientation.permission === 'denied' && (
-        <p className="warn">
-          Permís d'orientació denegat. A iOS s'ha de tornar a donar des de Safari.
-        </p>
+        <p className="warn">{s('camera.orientationDenied', locale)}</p>
       )}
-      {cameraError && <p className="warn">Càmera: {cameraError}</p>}
+      {cameraError && (
+        <p className="warn">{s('camera.openError', locale, { error: cameraError })}</p>
+      )}
 
       {cameraOn && (
         <div className="ar__modes">
@@ -860,13 +877,13 @@ export function ARView({
             className={mode === 'mixed' ? 'tab tab--on' : 'tab'}
             onClick={() => setMode('mixed')}
           >
-            Com es veurà
+            {s('camera.modeMixed', locale)}
           </button>
           <button
             className={mode === 'diagram' ? 'tab tab--on' : 'tab'}
             onClick={() => setMode('diagram')}
           >
-            Esquema
+            {s('camera.modeDiagram', locale)}
           </button>
         </div>
       )}
@@ -905,34 +922,48 @@ export function ARView({
             step={1 / PATH_SAMPLES}
             value={progress}
             onChange={(e) => setProgress(Number(e.target.value))}
-            aria-label="Instant de l'eclipsi"
+            aria-label={s('camera.scrub', locale)}
           />
+          {/*
+            L'HORA, AMB L'IDIOMA ACTIU I EN LA ZONA DEL DISPOSITIU. Hi havia un
+            `toLocaleTimeString('ca-ES', { timeZone: 'Europe/Madrid' })`: a les
+            Canàries l'instant simulat sortia una hora per davant del rellotge
+            de l'usuari. El regle de la simulació ja escriu la mateixa lectura
+            amb `formatClock` i `sim.readout*`; aquí, igual.
+          */}
           <div className="scrub__readout">
-            <strong>
-              {currentSample.time.toLocaleTimeString('ca-ES', {
-                timeZone: 'Europe/Madrid',
-                hour12: false,
-              })}
-            </strong>
-            <span>alt {currentSample.sun.altitudeApparent.toFixed(2)}°</span>
-            <span>obsc {formatObscurationPercent(currentSample.obscuration, isTotality)}</span>
+            <strong>{formatClock(currentSample.time, locale)}</strong>
             <span>
-              llum {(light.physicalFraction * 100).toFixed(3)}% · percebuda{' '}
-              {(light.perceived * 100).toFixed(0)}%
+              {s('sim.readoutAlt', locale, {
+                deg: `${formatDecimal(currentSample.sun.altitudeApparent, 2, locale)}°`,
+              })}
+            </span>
+            <span>
+              {s('sim.readoutObsc', locale, {
+                pct: formatObscurationPercent(currentSample.obscuration, isTotality),
+              })}
+            </span>
+            <span>
+              {s('camera.readoutLight', locale, {
+                phys: formatDecimal(light.physicalFraction * 100, 3, locale),
+                perc: formatDecimal(light.perceived * 100, 0, locale),
+              })}
             </span>
           </div>
 
           {light.perceived > 0.3 && currentSample.obscuration > 0.9 && (
             <p className="note">
-              Amb el {formatObscurationPercent(currentSample.obscuration, isTotality, 0)} del Sol tapat encara
-              sembla de dia. La caiguda de llum de veritat arriba en els últims segons
-              abans de la totalitat.
+              {s('camera.stillDaylight', locale, {
+                pct: formatObscurationPercent(currentSample.obscuration, isTotality, 0),
+              })}
             </p>
           )}
 
           {isTotality && bodies.length > 0 && (
             <p className="note">
-              Visibles ara mateix al cel: {bodies.map((b) => b.name).join(', ')}.
+              {s('camera.visibleBodies', locale, {
+                list: bodies.map((b) => b.name).join(', '),
+              })}
             </p>
           )}
         </>
@@ -946,34 +977,40 @@ export function ARView({
       */}
       <p className="note">
         <button className="linklike" onClick={() => onRequestLocation?.()}>
-          {location.lat.toFixed(4)}°, {location.lon.toFixed(4)}° ·{' '}
+          {formatDecimal(location.lat, 4, locale)}°, {formatDecimal(location.lon, 4, locale)}° ·{' '}
           {Math.round(location.elevation)} m
         </button>
-        {' — toca-hi per fer servir la teva posició'}
+        {' — '}
+        {s('camera.useMyPosition', locale)}
       </p>
 
+      {/*
+        El tipus d'eclipsi era `kind.toUpperCase()`: «ANNULAR» a pantalla, que
+        no és cap paraula en cap dels dos idiomes — és el nom intern del
+        catàleg. Les claus `kind.*` ja el diuen bé. I la durada era un
+        «{m}m {s}s» fet a mà que amb 119,6 s escrivia «1m 60s»;
+        `formatDuration` arrodoneix el total abans de repartir-lo.
+      */}
       <p className="note">
-        {eclipse.label[locale]} · {circumstances.kind.toUpperCase()}
+        {eclipse.label[locale]} · {s(`kind.${circumstances.kind}`, locale)}
         {circumstances.centralDurationSec > 0 &&
-          ` · ${Math.floor(circumstances.centralDurationSec / 60)}m ${Math.round(
-            circumstances.centralDurationSec % 60,
-          )}s`}
-        {!horizonProfile && ' · perfil del terreny no calculat'}
+          ` · ${formatDuration(circumstances.centralDurationSec)}`}
+        {!horizonProfile && ` · ${s('camera.terrainNotComputed', locale)}`}
       </p>
 
       <button className="btn" onClick={() => setShowDiagnostics((v) => !v)}>
-        {showDiagnostics ? 'Amagar diagnòstic' : 'Diagnòstic de sensors'}
+        {showDiagnostics ? s('camera.diagHide', locale) : s('camera.diagShow', locale)}
       </button>
 
       {showDiagnostics && (
         <>
           <dl className="readout">
             <div>
-              <dt>Font del rumb</dt>
-              <dd>{SOURCE_LABEL[orientation.headingSource]}</dd>
+              <dt>{s('camera.diag.headingSource', locale)}</dt>
+              <dd>{sourceKey ? s(sourceKey, locale) : NO_DATA}</dd>
             </div>
             <div>
-              <dt>Freqüència del sensor</dt>
+              <dt>{s('camera.diag.sampleRate', locale)}</dt>
               <dd>{orientation.sampleRate} Hz</dd>
             </div>
             <div>
@@ -984,77 +1021,94 @@ export function ARView({
                 estimador circular, perquè comparar-los amb estimadors diferents
                 no voldria dir res.
               */}
-              <dt>Soroll del rumb (brut → filtrat)</dt>
+              <dt>{s('camera.diag.jitter', locale)}</dt>
               <dd className={orientation.jitterFiltered > 0.5 ? 'bad' : 'good'}>
                 ±{orientation.jitter.toFixed(2)}° → ±{orientation.jitterFiltered.toFixed(2)}°
               </dd>
             </div>
             <div>
-              <dt>Velocitat angular</dt>
+              <dt>{s('camera.diag.angularSpeed', locale)}</dt>
               <dd>
-                {orientation.smoothing.angularSpeedDegPerSec.toFixed(1)}°/s · tall{' '}
-                {orientation.smoothing.cutoffHz.toFixed(1)} Hz
-                {orientation.smoothing.frozen ? ' · congelat' : ''}
+                {s('camera.diag.angularSpeedValue', locale, {
+                  speed: orientation.smoothing.angularSpeedDegPerSec.toFixed(1),
+                  cutoff: orientation.smoothing.cutoffHz.toFixed(1),
+                })}
+                {orientation.smoothing.frozen ? ` · ${s('camera.diag.frozen', locale)}` : ''}
               </dd>
             </div>
             <div>
-              <dt>Precisió declarada</dt>
+              <dt>{s('camera.diag.accuracy', locale)}</dt>
               <dd>
                 {orientation.compassAccuracy != null
                   ? `±${orientation.compassAccuracy.toFixed(0)}°`
-                  : 'no disponible'}
+                  : s('camera.diag.notAvailable', locale)}
               </dd>
             </div>
             <div>
-              <dt>Declinació magnètica</dt>
+              <dt>{s('camera.diag.declination', locale)}</dt>
               <dd>
-                {magneticDeclination >= 0 ? '+' : ''}
-                {magneticDeclination.toFixed(2)}° aplicada a l'azimut
+                {s('camera.diag.declinationValue', locale, {
+                  deg: `${magneticDeclination >= 0 ? '+' : ''}${magneticDeclination.toFixed(2)}`,
+                })}
               </dd>
             </div>
             <div>
-              <dt>Càmera apunta a</dt>
+              <dt>{s('camera.diag.pointing', locale)}</dt>
               <dd>
                 {camera
-                  ? `az ${camera.azimuth.toFixed(1)}° · alt ${camera.altitude.toFixed(1)}° · gir ${camera.roll.toFixed(0)}°`
-                  : '—'}
+                  ? s('camera.diag.pointingValue', locale, {
+                      az: camera.azimuth.toFixed(1),
+                      alt: camera.altitude.toFixed(1),
+                      roll: camera.roll.toFixed(0),
+                    })
+                  : NO_DATA}
               </dd>
             </div>
             <div>
-              <dt>Sol ara</dt>
+              <dt>{s('camera.diag.sunNow', locale)}</dt>
               <dd>
-                az {sunNow.azimuth.toFixed(2)}° · alt {sunNow.altitudeApparent.toFixed(2)}°
+                {s('camera.diag.azAlt', locale, {
+                  az: sunNow.azimuth.toFixed(2),
+                  alt: sunNow.altitudeApparent.toFixed(2),
+                })}
               </dd>
             </div>
             <div>
-              <dt>Error de brúixola en brut</dt>
+              <dt>{s('camera.diag.rawError', locale)}</dt>
               <dd className={rawError !== null && Math.abs(rawError) > 10 ? 'bad' : 'good'}>
-                {rawError !== null ? `${rawError > 0 ? '+' : ''}${rawError.toFixed(1)}°` : '—'}
+                {rawError !== null
+                  ? `${rawError > 0 ? '+' : ''}${rawError.toFixed(1)}°`
+                  : NO_DATA}
               </dd>
             </div>
             <div>
-              <dt>Correcció aplicada</dt>
+              <dt>{s('camera.diag.applied', locale)}</dt>
               <dd>
-                az {calibration.azimuthOffset >= 0 ? '+' : ''}
-                {calibration.azimuthOffset.toFixed(2)}°
+                {s('camera.diag.appliedValue', locale, {
+                  deg: `${calibration.azimuthOffset >= 0 ? '+' : ''}${calibration.azimuthOffset.toFixed(2)}`,
+                })}
               </dd>
             </div>
             <div>
-              <dt>Camp de visió a pantalla</dt>
+              <dt>{s('camera.diag.screenFov', locale)}</dt>
               <dd>
                 {fovReadout
                   ? `${fovReadout.horizontal.toFixed(1)}° × ${fovReadout.vertical.toFixed(1)}°`
-                  : '—'}
+                  : NO_DATA}
               </dd>
             </div>
             <div>
-              <dt>Ancoratge visual</dt>
+              <dt>{s('camera.diag.anchor', locale)}</dt>
               <dd className={diagnostics.confidence > 0.5 ? 'good' : 'bad'}>
                 {diagnostics.saturated
-                  ? 'gir massa ràpid — mana el sensor'
+                  ? s('camera.diag.anchorFast', locale)
                   : diagnostics.confidence > 0
-                    ? `${(diagnostics.confidence * 100).toFixed(0)}% · ${diagnostics.usedBlocks} blocs · residu ${diagnostics.residualPx.toFixed(2)} px`
-                    : 'sense textura'}
+                    ? s('camera.diag.anchorValue', locale, {
+                        pct: (diagnostics.confidence * 100).toFixed(0),
+                        blocks: diagnostics.usedBlocks,
+                        res: diagnostics.residualPx.toFixed(2),
+                      })
+                    : s('camera.diag.noTexture', locale)}
               </dd>
             </div>
             <div>
@@ -1066,23 +1120,31 @@ export function ARView({
                 endevinar-ho: positiva vol dir que la imatge i el sensor diuen el
                 mateix; negativa, que hi ha una inversió de signe en algun lloc.
               */}
-              <dt>Concordança imatge/sensor</dt>
+              <dt>{s('camera.diag.agreement', locale)}</dt>
               <dd className={agreement > 0.5 ? 'good' : agreement < -0.2 ? 'bad' : undefined}>
                 {agreement >= 0 ? '+' : ''}
                 {agreement.toFixed(2)}
+                {' · '}
                 {agreement > 0.5
-                  ? ' · les dues fonts coincideixen'
+                  ? s('camera.diag.agree', locale)
                   : agreement < -0.2
-                    ? ' · SIGNE INVERTIT'
-                    : ' · sense senyal per comparar'}
+                    ? s('camera.diag.inverted', locale)
+                    : s('camera.diag.noSignal', locale)}
               </dd>
             </div>
             <div>
-              <dt>Qui porta la postura</dt>
+              <dt>{s('camera.diag.pose', locale)}</dt>
               <dd>
-                {diagnostics.fusion.usingVisual ? 'la imatge' : 'només el sensor'} · deriva{' '}
-                {diagnostics.fusion.driftDeg.toFixed(2)}° · estirada{' '}
-                {diagnostics.fusion.pullTauSec.toFixed(2)} s
+                {s('camera.diag.poseValue', locale, {
+                  source: s(
+                    diagnostics.fusion.usingVisual
+                      ? 'camera.diag.poseVisual'
+                      : 'camera.diag.poseSensor',
+                    locale,
+                  ),
+                  drift: diagnostics.fusion.driftDeg.toFixed(2),
+                  tau: diagnostics.fusion.pullTauSec.toFixed(2),
+                })}
               </dd>
             </div>
             <div>
@@ -1092,38 +1154,51 @@ export function ARView({
                 meitat de la informació que sembla; si cau a zero amb la càmera
                 oberta, el flux s'ha aturat.
               */}
-              <dt>Fotogrames de càmera</dt>
+              <dt>{s('camera.diag.frames', locale)}</dt>
               <dd className={diagnostics.videoFps >= 20 ? 'good' : 'bad'}>
-                {diagnostics.videoFps} Hz{' '}
-                {diagnostics.exactFrameClock ? '(comptats)' : '(estimats)'}
+                {diagnostics.videoFps} Hz (
+                {s(
+                  diagnostics.exactFrameClock
+                    ? 'camera.diag.framesCounted'
+                    : 'camera.diag.framesEstimated',
+                  locale,
+                )}
+                )
               </dd>
             </div>
             <div>
-              <dt>Camp de visió mesurat</dt>
+              <dt>{s('camera.diag.measuredFov', locale)}</dt>
               <dd className={diagnostics.measuredFovDeg ? 'good' : undefined}>
                 {diagnostics.measuredFovDeg
-                  ? `${diagnostics.measuredFovDeg.toFixed(1)}° al costat llarg · desat`
-                  : `mesurant… (${diagnostics.focalWindows} de 6 finestres)`}
+                  ? s('camera.diag.measuredFovValue', locale, {
+                      deg: diagnostics.measuredFovDeg.toFixed(1),
+                    })
+                  : s('camera.diag.measuring', locale, { n: diagnostics.focalWindows })}
               </dd>
             </div>
             <div>
-              <dt>Objectiu</dt>
+              <dt>{s('camera.diag.lens', locale)}</dt>
               <dd>
                 {cameraInfo
                   ? `${cameraInfo.width}×${cameraInfo.height}${
-                      cameraInfo.looksUltraWide ? ' · ULTRA-ANGULAR' : ''
+                      cameraInfo.looksUltraWide
+                        ? ` · ${s('camera.diag.ultraWide', locale)}`
+                        : ''
                     }${
                       cameraInfo.zoomRange
-                        ? ` · zoom ${cameraInfo.zoomRange.min}-${cameraInfo.zoomRange.max}`
+                        ? ` · ${s('camera.diag.zoom', locale, {
+                            min: cameraInfo.zoomRange.min,
+                            max: cameraInfo.zoomRange.max,
+                          })}`
                         : ''
                     }`
-                  : '—'}
+                  : NO_DATA}
               </dd>
             </div>
           </dl>
 
           <label className="slider">
-            Camp de visió del sensor: {shownFovDeg.toFixed(1)}°
+            {s('camera.diag.sensorFov', locale, { deg: shownFovDeg.toFixed(1) })}
             <input
               type="range"
               min={40}
@@ -1141,17 +1216,11 @@ export function ARView({
             />
           </label>
 
+          <p className="note">{s('camera.diag.fovNote', locale)}</p>
           <p className="note">
-            El camp de visió del sensor no és el que veus a la pantalla: el vídeo es
-            mostra retallat per omplir el marc. La projecció treballa amb la distància
-            focal en píxels, que el retall no altera.
-          </p>
-          <p className="note">
-            El que decideix si això funciona és el <strong>soroll del rumb</strong>, no
-            l'error en brut: l'error el corregeix el calibratge, però el soroll no. Amb
-            l'ancoratge visual actiu, aquell soroll ja no arriba a la superposició
-            mentre la imatge tingui textura; quan no en té, torna a manar el sensor i es
-            torna a notar.
+            {noiseBefore}
+            <strong>{s('camera.diag.noiseTerm', locale)}</strong>
+            {noiseAfter}
           </p>
         </>
       )}

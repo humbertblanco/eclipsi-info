@@ -14,6 +14,15 @@ import { projectToScreen, type CameraPointing, type Calibration } from './orient
 import type { Viewport } from "./cameraGeometry";
 import { renderPhaseTrack } from './renderPhaseTrack';
 import { canvasFont, withAlpha, type Palette } from '../../styles/palette';
+/*
+ * L'HORA, PER `screens/format` I EN LA ZONA DEL DISPOSITIU. Aquí hi havia un
+ * `toLocaleTimeString` clavat a `Europe/Madrid`: a les Canàries les etiquetes
+ * C1–C4 sortien una hora per davant del rellotge de l'usuari i diferents de la
+ * taula d'efemèrides de la mateixa app — dues hores per al mateix contacte.
+ * Vegeu el comentari de `formatClock` sobre per què la zona és la del
+ * dispositiu.
+ */
+import { formatClockShort } from '../../screens/format';
 
 export interface OverlayOptions {
   viewport: Viewport;
@@ -48,14 +57,6 @@ const CONTACT_LABELS = {
   ca: { c1: 'C1', c2: 'C2 · totalitat', max: 'màxim', c3: 'C3', c4: 'C4' },
   es: { c1: 'C1', c2: 'C2 · totalidad', max: 'máximo', c3: 'C3', c4: 'C4' },
 } as const;
-
-const fmt = (d: Date, locale: 'ca' | 'es') =>
-  d.toLocaleTimeString(locale === 'ca' ? 'ca-ES' : 'es-ES', {
-    timeZone: 'Europe/Madrid',
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 
 export function renderOverlay(
   ctx: CanvasRenderingContext2D,
@@ -209,7 +210,7 @@ function drawContacts(
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    const caption = `${text} ${fmt(sample.time, locale)}`;
+    const caption = `${text} ${formatClockShort(sample.time, locale)}`;
     ctx.lineWidth = 3;
     ctx.strokeStyle = TEXT_OUTLINE;
     ctx.strokeText(caption, p.x, p.y - 12);
