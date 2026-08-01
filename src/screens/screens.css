@@ -1144,7 +1144,14 @@
   color: var(--text-secondary);
 }
 
-.sitefoot__author {
+/*
+ * L'`a.` no és decoració de selector: la regla d'enllaços del peu és
+ * `.sitefoot a`, que té més especificitat que una classe sola i li menjaria el
+ * color a la signatura. Amb `a.` empaten en especificitat i mana l'ordre, que
+ * és aquest.
+ */
+.sitefoot__author,
+.sitefoot a.sitefoot__author {
   color: var(--text-primary);
   font-weight: var(--fw-medium);
 }

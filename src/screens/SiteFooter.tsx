@@ -107,16 +107,19 @@ const REPO_URL = 'https://github.com/humbertblanco/eclipsi-info';
  * de proveïdors i enganxada a la versió, es llegeix com un peu de pàgina
  * legal; aquí és una signatura.
  *
- * SENSE ENLLAÇ. No n'hi ha cap que es pugui posar sense inventar-se'l: el
- * repositori ja té la seva línia més avall. El dia que hi hagi un lloc web,
- * s'hi afegeix `url` i el component ja el pintarà.
+ * ELS DOS ENLLACEN, i cadascun al lloc que li toca: la persona al seu perfil i
+ * el despatx al seu domini. `url` és opcional perquè el component ha de poder
+ * pintar un crèdit sense enllaç el dia que n'hi hagi un que no en tingui.
  */
 interface Author {
   name: string;
   url?: string;
 }
 
-const AUTHORS: Author[] = [{ name: 'Humbert Blanco' }, { name: 'Damos en el Blanco' }];
+const AUTHORS: Author[] = [
+  { name: 'Humbert Blanco', url: 'https://x.com/humbertblanco' },
+  { name: 'Damos en el Blanco', url: 'https://damosenelblanco.com' },
+];
 
 export function SiteFooter({ locale }: { locale: Locale }) {
   return (
