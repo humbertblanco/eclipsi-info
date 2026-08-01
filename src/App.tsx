@@ -327,7 +327,10 @@ function Shell() {
           evident.
         */}
         {tab === 'countdown' ? (
-          <TopBar logo logoSrc={LOGO_SRC} title={titles[tab]} right={headerActions} />
+          // A la portada el títol no es veu —hi ha el logotip—, o sigui que
+          // aquí no ha de ser l'etiqueta curta de la pestanya sinó la frase
+          // que descriu l'app: és l'`h1` del document.
+          <TopBar logo logoSrc={LOGO_SRC} title={s('home.h1', locale)} right={headerActions} />
         ) : (
           <BackTopBar
             title={titles[tab]}

@@ -91,6 +91,18 @@ const STRINGS = {
   'home.obscuration': { ca: 'Ocultació', es: 'Ocultación' },
   'home.sunAltitude': { ca: 'Altura del Sol', es: 'Altura del Sol' },
   'home.contacts': { ca: 'Contactes al teu punt', es: 'Contactos en tu punto' },
+  /*
+   * L'`h1` de la portada.
+   *
+   * No es veu: a la portada la capçalera ensenya el logotip i el títol va
+   * amagat visualment (vegeu `TopBar`). Però és el primer que llegeix un lector
+   * de pantalla i el que llegeix un cercador, i allà «Eclipsi» —que és
+   * l'etiqueta de la pestanya— no diu res. Aquí hi va la promesa sencera.
+   */
+  'home.h1': {
+    ca: 'Quants segons d’eclipsi veuràs des d’on seràs',
+    es: 'Cuántos segundos de eclipse verás desde donde estarás',
+  },
   'home.openCamera': { ca: 'Apunta el mòbil al cel', es: 'Apunta el móvil al cielo' },
   /*
    * L'ALTERNATIVA D'ESCRIPTORI.

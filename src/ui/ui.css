@@ -1277,7 +1277,12 @@
   min-width: 0;
 }
 
+/*
+ * És un `h1`. Els marges i el pes del navegador es reinicien aquí: el que mana
+ * és la fitxa tipogràfica, no que sigui una capçalera de nivell u.
+ */
 .ui-topbar__title {
+  margin: 0;
   font: var(--text-title-3);
   color: var(--text-primary);
   white-space: nowrap;

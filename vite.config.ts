@@ -31,6 +31,24 @@ const ONE_YEAR_S = 60 * 60 * 24 * 365
  */
 const BASE = process.env.ECLIPSI_BASE ?? '/eclipsi/'
 
+/**
+ * On viu l'app, amb origen i tot.
+ *
+ * Les etiquetes Open Graph i les dades estructurades NO admeten rutes
+ * relatives: WhatsApp, Telegram, Slack i X resolen `og:image` abans de tenir
+ * cap pàgina, i una ruta relativa allà no és res. O sigui que en algun lloc hi
+ * ha d'haver l'origen escrit, i val més que sigui aquí que escampat per
+ * l'`index.html`.
+ *
+ * ATENCIÓ AL DOMINI. Tota la marca diu «eclipsi.info» —el manifest, el peu, el
+ * títol— i aquest domini avui no resol. Mentre no es compri, els enllaços que
+ * es comparteixin i els codis QR que s'imprimeixin apuntaran aquí. El dia que
+ * es compri, això és l'única línia que cal canviar (o `ECLIPSI_SITE_URL`).
+ */
+const SITE_URL = (
+  process.env.ECLIPSI_SITE_URL ?? 'https://lacuinade.estic.online/eclipsi/'
+).replace(/\/?$/, '/')
+
 // https://vite.dev/config/
 /*
  * IDENTIFICADOR DE COMPILACIÓ.
@@ -62,6 +80,19 @@ export default defineConfig(({ command }) => ({
   plugins: [
     react(),
     basicSsl(),
+    /*
+     * `%SITE_URL%` a l'`index.html`.
+     *
+     * Vite ja substitueix `%BASE_URL%` sol, però només dona la ruta
+     * (`/eclipsi/`), i les metadades socials volen l'origen sencer. Es fa amb
+     * un connector de quatre línies en comptes d'escriure el domini a mà a vuit
+     * etiquetes: així no hi ha vuit llocs que puguin divergir el dia que es
+     * canviï de domini.
+     */
+    {
+      name: 'eclipsi-site-url',
+      transformIndexHtml: (html: string) => html.replaceAll('%SITE_URL%', SITE_URL),
+    },
     VitePWA({
       // 'prompt' i no 'autoUpdate' a propòsit. Una actualització automàtica
       // recarrega la pàgina quan el service worker nou pren el control. El 12
