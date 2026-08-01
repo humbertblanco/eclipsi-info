@@ -71,6 +71,20 @@ export function CountdownScreen({
   const target = contacts?.c2 ?? contacts?.max ?? null;
   const central = circumstances?.kind === 'total' || circumstances?.kind === 'annular';
 
+  /*
+   * SI EL DIBUIX POT ENSENYAR CORONA.
+   *
+   * Tres condicions, i cap és l'obscuració. Ha de ser un eclipsi TOTAL —d'un
+   * anular no se'n veu mai, hi queda anell de fotosfera—, i el relleu no se
+   * l'ha de menjar: amb veredicte mana el veredicte, i mentre no n'hi ha es fa
+   * servir la xifra teòrica, que és la mateixa cascada que fan les xifres del
+   * costat. Un 99,7 % de parcial pur no en veu, i era el cas que dibuixava
+   * corona.
+   */
+  const showsCorona =
+    circumstances?.kind === 'total' &&
+    (verdict ? verdict.centralVisibleSec > 0 : (circumstances.centralDurationSec ?? 0) > 0);
+
   const countdownLabel = central
     ? s(circumstances?.kind === 'annular' ? 'home.untilAnnularity' : 'home.untilTotality', locale)
     : s('home.untilMax', locale);
@@ -149,7 +163,7 @@ export function CountdownScreen({
         </section>
 
         <Card className="home__phase">
-          <PhaseDial obscuration={obscuration} size={96} />
+          <PhaseDial obscuration={obscuration} totality={showsCorona} size={96} />
           <div className="home__stats">
             <Stat
               label={
