@@ -266,10 +266,19 @@ export function EclipseMap({ eclipseId, onPickLocation, observer = null }: Props
         // L'estil es clona: MapLibre es reserva el dret de modificar l'objecte
         // que rep, i aquest és una constant compartida entre muntatges.
         style: structuredClone(BASEMAP_STYLE),
-        bounds: frameFor(geojsonRef.current, observerRef.current),
-        // Més aire que abans: amb la franja enquadrada de costat a costat, un
-        // marge de setze píxels la deixava tocant les vores de la pantalla.
-        fitBoundsOptions: { padding: 40 },
+        /*
+         * NO S'ENQUADRA A LA CONSTRUCCIÓ. MAI.
+         *
+         * `bounds` + `fitBoundsOptions` es resolen amb la caixa que hi hagi en
+         * aquell instant, i al mòbil aquella caixa sovint encara no existeix.
+         * Amb amplada zero i un marge de quaranta píxels, l'espai disponible
+         * surt negatiu i el centre i el zoom surten indefinits: el mapa neix
+         * trencat i no se'n recupera. Es neix amb un centre i un zoom
+         * qualssevol però VÀLIDS, i s'enquadra de debò quan la caixa existeix
+         * (vegeu l'observador de mida, unes línies més avall).
+         */
+        center: [-3.5, 40.0],
+        zoom: 5,
         // L'atribució per defecte es plega en un botó "i" en pantalles
         // estretes; aquí la volem sempre desplegada perquè és obligatòria.
         attributionControl: {
@@ -315,18 +324,27 @@ export function EclipseMap({ eclipseId, onPickLocation, observer = null }: Props
      * té una mida creïble s'ha de tornar a enquadrar. Després ja no, que seria
      * arrabassar-li el mapa a qui l'estigui movent.
      */
-    let framed = container.clientWidth > 100 && container.clientHeight > 100;
+    let framed = false;
+    const frameIfPossible = (): void => {
+      if (framed) return;
+      // Marge inclòs: enquadrar contra una caixa que amb prou feines hi cap
+      // dona el mateix problema que enquadrar contra una de buida.
+      if (container.clientWidth <= 120 || container.clientHeight <= 120) return;
+      framed = true;
+      map.fitBounds(frameFor(geojsonRef.current, observerRef.current), {
+        // Amb la franja enquadrada de costat a costat, setze píxels la
+        // deixaven tocant les vores.
+        padding: 40,
+        duration: 0,
+      });
+    };
+
+    frameIfPossible();
     let sizeWatcher: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       sizeWatcher = new ResizeObserver(() => {
         map.resize();
-        if (framed) return;
-        if (container.clientWidth <= 100 || container.clientHeight <= 100) return;
-        framed = true;
-        map.fitBounds(frameFor(geojsonRef.current, observerRef.current), {
-          padding: 40,
-          duration: 0,
-        });
+        frameIfPossible();
       });
       sizeWatcher.observe(container);
     }
