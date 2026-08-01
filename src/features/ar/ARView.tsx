@@ -44,6 +44,8 @@ import { getEclipse } from '../../core/eclipses/catalog';
 import { declination } from '../../core/geomag';
 import { horizonSampler, type HorizonProfile } from '../../core/horizon/profile';
 import { detectSkyline, fitSkyline, type SkylineFix } from './skyline';
+import { canRemoveFilter, FILTER_OFF_DELAY_SEC } from '../../core/timer';
+import { Icon, ICON_LG } from '../../ui';
 import { SafetyBanner } from '../guide/SafetyBanner';
 import { renderOverlay } from './renderOverlay';
 import { lightState, renderMixed, type SkyBody } from './renderMixed';
@@ -54,7 +56,6 @@ import {
   type Viewport,
 } from './cameraGeometry';
 import {
-  calibrateFromTap,
   normalizeAngle,
   DEFAULT_CALIBRATION,
   type CameraPointing,
@@ -192,7 +193,6 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [calibration, setCalibration] = useState<Calibration>(DEFAULT_CALIBRATION);
-  const [calibrated, setCalibrated] = useState(false);
   const [mode, setMode] = useState<Mode>('mixed');
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [progress, setProgress] = useState(0.5);
@@ -262,10 +262,61 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
   const currentSample =
     samples[Math.max(0, Math.min(samples.length - 1, Math.round(progress * (samples.length - 1))))];
 
+  /*
+   * SI L'INSTANT SIMULAT CAU DINS DE LA TOTALITAT.
+   *
+   * Serveix per pintar el cel i per decidir si es dibuixen planetes. NO
+   * serveix, i no ha de servir mai, per dir a ningú que es pot treure el
+   * filtre: `currentSample` surt de la BARRA que l'usuari arrossega, i
+   * arrossegar una barra no fa fosc.
+   */
   const isTotality =
     currentSample.separation <=
       Math.abs(currentSample.moon.angularRadius - currentSample.sun.angularRadius) &&
     currentSample.moon.angularRadius >= currentSample.sun.angularRadius;
+
+  /*
+   * SI ARA MATEIX, AL MÓN, ES POT MIRAR SENSE FILTRE.
+   *
+   * AQUÍ HI HAVIA `isTotality` I ERA GREU. El rètol es pintava DAMUNT DE LA
+   * IMATGE DE LA CÀMERA, en present i en imperatiu —«Ara sí: mira-ho sense
+   * filtre. Treu-te el filtre i mira la corona a ull nu»—, mentre l'usuari
+   * apunta el telèfon al Sol de debò. I el que el disparava era la posició
+   * d'una barra: dos dels cent seixanta-un passos del recorregut a Oviedo la
+   * satisfan, i el marcador de sota et diu on parar.
+   *
+   * Ara han de coincidir TRES coses: que la comporta de seguretat autoritzi
+   * (`canRemoveFilter`, que ja mira l'anular, la durada mínima, el terreny i
+   * la incertesa del caire), que el rellotge de PARET sigui dins de la
+   * finestra segura, i que la barra no s'estigui fent servir per mirar un
+   * altre instant. En simulació, mai.
+   */
+  const filterGate = useMemo(
+    () =>
+      canRemoveFilter({
+        kind: circumstances.kind,
+        contacts: {
+          c1: circumstances.contacts.c1?.time.getTime(),
+          c2: circumstances.contacts.c2?.time.getTime(),
+          max: circumstances.contacts.max.time.getTime(),
+          c3: circumstances.contacts.c3?.time.getTime(),
+          c4: circumstances.contacts.c4?.time.getTime(),
+        },
+        edgeUncertain: circumstances.edgeUncertain,
+      }),
+    [circumstances],
+  );
+
+  const nakedEyeNow = useMemo(() => {
+    if (!filterGate.allowed) return false;
+    const c2 = circumstances.contacts.c2?.time.getTime();
+    const c3 = circumstances.contacts.c3?.time.getTime();
+    if (c2 === undefined || c3 === undefined) return false;
+    const now = Date.now();
+    // Els mateixos marges que la veu: dotze segons després de C2 —perquè el C2
+    // calculat va sistemàticament avançat— i quinze abans de C3.
+    return now >= c2 + FILTER_OFF_DELAY_SEC * 1000 && now <= c3 - 15_000;
+  }, [filterGate.allowed, circumstances]);
 
   // Els planetes només es calculen quan de veritat es veuran: durant la resta
   // de l'eclipsi el cel és massa clar i seria informació falsa.
@@ -662,29 +713,6 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
     return () => clearInterval(id);
   }, []);
 
-  const handleTap = useCallback(
-    (event: React.MouseEvent<HTMLCanvasElement>) => {
-      const camera = drawnCameraRef.current ?? cameraRef.current;
-      const canvas = canvasRef.current;
-      const viewport = viewportRef.current;
-      if (!camera || !canvas || !viewport) return;
-      const rect = canvas.getBoundingClientRect();
-      setCalibration((prev) =>
-        calibrateFromTap(
-          event.clientX - rect.left,
-          event.clientY - rect.top,
-          sunNow.azimuth,
-          sunNow.altitudeApparent,
-          camera,
-          prev,
-          viewport,
-        ),
-      );
-      setCalibrated(true);
-    },
-    [cameraRef, sunNow.azimuth, sunNow.altitudeApparent],
-  );
-
   const camera = orientation.camera;
   const rawError = camera ? normalizeAngle(sunNow.azimuth - camera.azimuth) : null;
   const agreement = diagnostics.fusion.agreement;
@@ -692,10 +720,29 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
 
   return (
     <div className="ar">
+      {/*
+        L'ENTRADA A LA CÀMERA, GRAN I AL MIG.
+
+        Era un botó petit a dalt a l'esquerra, de la mida de qualsevol altre, i
+        la pantalla que obre és la raó de ser d'aquesta app: veure el Sol
+        eclipsat superposat al teu paisatge. Qui obre la pestanya del cel per
+        primer cop ha de saber què hi ha de fer sense pensar-hi.
+
+        A sota, el que hi guanyarà i el que li costarà. La càmera no s'obre mai
+        sola: és una decisió de l'usuari, i per prendre-la ha de saber què li
+        estem demanant.
+      */}
       {!cameraOn && (
-        <button className="btn btn--primary" onClick={start}>
-          Apunta el mòbil al cel
-        </button>
+        <div className="ar__invite">
+          <button className="ar__open" onClick={start} type="button">
+            <Icon name="camera" size={ICON_LG} aria-hidden />
+            <span>Apunta el mòbil al cel</span>
+          </button>
+          <p className="ar__invitenote">
+            Hi veuràs el recorregut del Sol superposat al teu paisatge, a l’hora
+            que triïs. La imatge no surt del telèfon.
+          </p>
+        </div>
       )}
 
       {orientation.permission === 'denied' && (
@@ -724,14 +771,25 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
 
       <div className="viewport" hidden={!cameraOn}>
         <video ref={videoRef} playsInline muted className="viewport__video" />
-        <canvas ref={canvasRef} className="viewport__overlay" onClick={handleTap} />
+        {/*
+          EL LLENÇ JA NO ES TOCA PER CALIBRAR.
 
-        {!calibrated && cameraOn && (
-          <div className="viewport__hint">Toca el Sol a la imatge per calibrar</div>
-        )}
+          Hi havia un «toca el Sol a la imatge per calibrar»: es demanava a
+          l'usuari que apuntés el dit a un Sol que, o bé encara no és on serà
+          —perquè la gràcia de l'app és ensenyar-t'ho amb dies d'antelació—, o
+          bé és tan enlluernador que mirar-lo per encertar-lo és exactament el
+          que aquesta app passa el dia dient que no facis. I un toc mal posat
+          desplaçava tota la superposició sense que res ho desmentís.
+
+          Ho fa sol l'ancoratge a la silueta del terreny (`skyline.ts`), que
+          aparella la muntanya que tens al davant amb la que el model del
+          terreny diu que hi ha. És més precís que un dit —mig grau contra els
+          quatre o cinc d'un toc—, es refà cada fotograma i no demana res.
+        */}
+        <canvas ref={canvasRef} className="viewport__overlay" />
 
         {cameraOn && (
-          <SafetyBanner eclipseKind={circumstances.kind} isInTotality={isTotality} />
+          <SafetyBanner eclipseKind={circumstances.kind} isInTotality={nakedEyeNow} />
         )}
       </div>
 

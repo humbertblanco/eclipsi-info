@@ -33,6 +33,9 @@ import { Icon } from '../../ui';
 import { computeLocalCircumstances } from '../../core/astro/contacts';
 import type { EclipseSample, GeoLocation } from '../../core/astro/types';
 import { getEclipse } from '../../core/eclipses/catalog';
+import type { Locale } from '../../i18n';
+import { s, type StringKey } from '../../screens/strings';
+import { formatClock, formatDecimal, formatDuration } from '../../screens/format';
 import {
   computeEclipsePath,
   eclipsePathToGeoJson,
@@ -42,6 +45,12 @@ import {
 
 interface Props {
   eclipseId: string;
+  /**
+   * Idioma actiu. Arriba per propietat i no d'un hook perquè aquest component
+   * el munta `MapScreen`, que ja el té: passar-lo avall és una línia i evita
+   * que el mapa depengui d'un context que als tests no sempre hi és.
+   */
+  locale: Locale;
   /**
    * Es crida amb el punt tocat. L'elevació arriba a zero: qui té l'estat de
    * l'observador és qui ha de resoldre-la contra el model del terreny, que és
@@ -221,11 +230,26 @@ function applyPath(map: MapLibreMap, geojson: EclipsePathGeoJson): void {
   (map.getSource(CENTER_SOURCE) as GeoJSONSource).setData(geojson.centerLine);
 }
 
-export function EclipseMap({ eclipseId, onPickLocation, observer = null }: Props) {
+/**
+ * Què ha fallat del mapa.
+ *
+ * ES GUARDA LA CAUSA, NO LA FRASE. El mapa es construeix dins d'un efecte que
+ * s'executa una sola vegada, així que una frase ja traduïda hi quedaria clavada
+ * a l'idioma que hi havia en aquell instant: canviar de llengua deixava l'avís
+ * en català per sempre. Amb la causa, el text el decideix el render.
+ */
+type MapFailure = { reason: 'webgl'; detail: string } | { reason: 'tiles' };
+
+export function EclipseMap({
+  eclipseId,
+  locale,
+  onPickLocation,
+  observer = null,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
-  const [mapError, setMapError] = useState<string | null>(null);
+  const [mapError, setMapError] = useState<MapFailure | null>(null);
   const [picked, setPicked] = useState<GeoLocation | null>(null);
 
   // El handler del clic es registra una sola vegada; el callback del pare pot
@@ -287,9 +311,7 @@ export function EclipseMap({ eclipseId, onPickLocation, observer = null }: Props
         },
       });
     } catch (err) {
-      setMapError(
-        `No s'ha pogut inicialitzar el mapa (cal WebGL): ${(err as Error).message}`,
-      );
+      setMapError({ reason: 'webgl', detail: (err as Error).message });
       return;
     }
 
@@ -372,7 +394,7 @@ export function EclipseMap({ eclipseId, onPickLocation, observer = null }: Props
     map.on('error', (event) => {
       const source = (event as { sourceId?: string }).sourceId;
       if (source !== undefined) return;
-      setMapError('No s’ha pogut carregar la cartografia. Comprova la connexió.');
+      setMapError({ reason: 'tiles' });
     });
 
     map.on('click', (event) => {
@@ -412,29 +434,36 @@ export function EclipseMap({ eclipseId, onPickLocation, observer = null }: Props
     applyPath(map, geojson);
   }, [geojson]);
 
-  const central = eclipse.kind === 'annular' ? 'anularitat' : 'totalitat';
+  const annular = eclipse.kind === 'annular';
+  const central = s(annular ? 'map.centralAnnular' : 'map.centralTotal', locale);
 
   return (
     <div className="map">
       <div className="map__canvas" ref={containerRef} />
 
-      {mapError !== null && <p className="warn">{mapError}</p>}
+      {mapError !== null && (
+        <p className="warn">
+          {mapError.reason === 'webgl'
+            ? s('map.webglFailed', locale, { error: mapError.detail })
+            : s('map.tilesFailed', locale)}
+        </p>
+      )}
 
       <div className="map__legend">
         <span className="map__legend-item">
           <span className="map__swatch" aria-hidden="true" />
-          Franja de {central}
+          {s(annular ? 'map.legendBandAnnular' : 'map.legendBandTotal', locale)}
         </span>
         <span className="map__legend-item">
           <span className="map__swatch map__swatch--line" aria-hidden="true" />
-          Línia central
+          {s('map.legend.center', locale)}
         </span>
       </div>
 
       <p className="map__credits">
-        Cartografia {'© '}
+        {s('map.creditsMap', locale)} {'© '}
         <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
-          col·laboradors d’OpenStreetMap
+          {s('map.creditsOsm', locale)}
         </a>
         {' · '}
         {ESPENAK_ATTRIBUTION}
@@ -443,16 +472,13 @@ export function EclipseMap({ eclipseId, onPickLocation, observer = null }: Props
       {circumstances === null ? (
         <p className="map__hint">
           <Icon name="crosshair" size={18} aria-hidden="true" />
-          <span>
-            Toca qualsevol punt del mapa i hi calcularem l’eclipsi: si hi ha{' '}
-            {central}, quanta estona dura i a quina hora. Dins de la franja
-            pintada la fase central és visible; fora, l’eclipsi és només parcial.
-          </span>
+          <span>{s('map.pickPrompt', locale, { central })}</span>
         </p>
       ) : (
         <CircumstancesPanel
           circumstances={circumstances}
           annular={circumstances.kind === 'annular'}
+          locale={locale}
         />
       )}
     </div>

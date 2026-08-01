@@ -17,6 +17,9 @@ import {
 } from '../core/astro/gradient';
 import type { GeoLocation } from '../core/astro/types';
 import type { EclipseContext } from './context';
+import { computeUncertainty } from '../core/astro/uncertainty';
+import { computeShadowMotion } from '../core/astro/shadow';
+import { EphemerisTable } from './EphemerisTable';
 import { s } from './strings';
 import {
   formatAge,
@@ -69,6 +72,7 @@ export function MapScreen({
   placeLabel,
   circumstances,
   verdict,
+  horizon,
   onPickLocation,
 }: MapScreenProps) {
   const [view, setView] = useState<View>('band');
@@ -94,6 +98,31 @@ export function MapScreen({
         : null,
     [view, eclipseId, location],
   );
+
+  /*
+   * TOT EL QUE JA SABEM DEL PUNT, I NO ENSENYÀVEM.
+   *
+   * Tocar el mapa recalculava la durada, l'obscuració i l'altura del Sol, i
+   * prou. Però del punt en sabem molt més i ja ho tenim calculat: a quina hora
+   * seran els cinc contactes, a quants quilòmetres queda el límit de la franja
+   * i cap a on, i per on arribarà l'ombra i a quina velocitat. És exactament el
+   * que necessita algú que està decidint on va, que és per a què serveix
+   * aquesta pantalla.
+   *
+   * Es demana només amb la vista de la franja oberta: la incertesa són unes
+   * quantes avaluacions de circumstàncies i no es paga per ensenyar núvols.
+   */
+  const detail = useMemo(() => {
+    if (view !== 'band' || circumstances === null) return null;
+    const uncertainty = computeUncertainty(eclipseId, circumstances, {
+      locateSeaLevelLimit: false,
+    });
+    const shadow =
+      circumstances.kind === 'total' || circumstances.kind === 'annular'
+        ? computeShadowMotion(eclipseId, circumstances)
+        : null;
+    return { limit: uncertainty.limit, shadow };
+  }, [view, eclipseId, circumstances]);
 
   const handlePick = (loc: GeoLocation) => onPickLocation(loc.lat, loc.lon);
 
@@ -187,7 +216,46 @@ export function MapScreen({
                 <p className="screen__note">{s('map.edgeNote', locale)}</p>
               )}
               {!central && <p className="screen__note">{s('map.noCentral', locale)}</p>}
-              <p className="screen__note">{s('map.compareNote', locale)}</p>
+
+              {/* Les hores dels cinc contactes, per a AQUEST punt. */}
+              <div className="mapscreen__block">
+                <span className="screen__overline">{s('map.contacts', locale)}</span>
+                <EphemerisTable circumstances={circumstances} horizon={horizon} locale={locale} />
+              </div>
+
+              {/* On queda el límit i cap a on s'hi va. */}
+              {detail?.limit && (
+                <div className="mapscreen__block">
+                  <Stat
+                    label={s('map.toLimit', locale, {
+                      side: s(`map.side.${detail.limit.side}` as 'map.side.north', locale),
+                    })}
+                    value={`${detail.limit.km.toFixed(1).replace('.', ',')} km`}
+                  />
+                  <p className="screen__note">
+                    {s('map.inwardHint', locale, {
+                      card: bearingToCardinal(detail.limit.inwardBearingDeg, locale),
+                    })}
+                  </p>
+                </div>
+              )}
+
+              {/* Per on arriba l'ombra: el moment que més impressiona i el que
+                  gairebé ningú no sap cap a on mirar. */}
+              {detail?.shadow && (
+                <div className="mapscreen__block mapscreen__block--pair">
+                  <Stat
+                    label={s('map.shadowFrom', locale)}
+                    value={bearingToCardinal(detail.shadow.arrivalBearing, locale)}
+                  />
+                  <Stat
+                    label={s('map.shadowSpeed', locale)}
+                    value={`${Math.round(detail.shadow.speedKmh).toLocaleString('ca-ES')} km/h`}
+                  />
+                </div>
+              )}
+
+              <p className="screen__note">{s('map.pickHint', locale)}</p>
             </>
           ) : view === 'clouds' ? (
             <VisibilityMeter

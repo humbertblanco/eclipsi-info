@@ -102,6 +102,26 @@ export function formatDuration(seconds: number): string {
   return s === 0 ? `${m} min` : `${m} min ${String(s).padStart(2, '0')} s`;
 }
 
+/**
+ * Xifra decimal amb COMA.
+ *
+ * Les dues llengües de l'app escriuen els decimals amb coma, així que el
+ * separador no és cap tria d'estil: és l'ortografia. Els decimals els decideix
+ * qui crida, perquè «24,3°» d'altura i «24,32°» no diuen el mateix i aquest
+ * fitxer no és qui per triar-ho.
+ *
+ * PER QUÈ NO `toFixed`: `toFixed` sempre escriu el punt anglosaxó. A part de
+ * quedar com una dada importada d'un altre lloc enmig d'una pantalla on tota la
+ * resta va amb coma, en castellà el punt ÉS el separador de milers: «1.250»
+ * tant pot llegir-se mil dos-cents cinquanta com u coma dos-cents cinquanta.
+ */
+export function formatDecimal(value: number, digits: number, locale: Locale): string {
+  return new Intl.NumberFormat(tag(locale), {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value);
+}
+
 /** Percentatge amb espai fi dur abans del signe, com mana la tipografia catalana. */
 export function formatPercent(fraction: number): string {
   return `${Math.round(fraction * 100)} %`;

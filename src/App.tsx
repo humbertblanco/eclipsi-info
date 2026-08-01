@@ -29,7 +29,7 @@
  * `screens.css`: aquí només es marca quina pantalla és quina.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { formatObscurationPercent } from './core/astro/obscuration';
 import {
   BackTopBar,
@@ -64,6 +64,7 @@ import { useObserver } from './state/useObserver';
 import { UpdatePrompt } from './offline/UpdatePrompt';
 import { LOCALES } from './i18n';
 import { SiteFooter } from './screens/SiteFooter';
+import { useCameraSupport } from './features/ar/useCameraSupport';
 import { LocaleProvider, useTranslation } from './i18n';
 import './screens/screens.css';
 
@@ -100,6 +101,7 @@ export default function App() {
 
 function Shell() {
   const { locale, setLocale, t } = useTranslation();
+  const camera = useCameraSupport();
   const observer = useObserver();
   const [tab, setTab] = useState<Tab>('countdown');
   const [eclipseId, setEclipseId] = useState(ECLIPSES[0].id);
@@ -178,10 +180,21 @@ function Shell() {
   // Al carril de l'escriptori hi cabria el nom llarg, però canviar de paraula
   // segons l'amplada faria que dues persones no anomenessin igual la mateixa
   // pestanya.
+  /*
+   * LA PESTANYA DEL CEL NOMÉS SURT ON POT FUNCIONAR.
+   *
+   * Demana una càmera que miri cap ENFORA i sensors d'orientació. En un
+   * ordinador de sobretaula la càmera mira l'usuari i no hi ha giroscopi: la
+   * funció no és pitjor, és una altra cosa que no serveix per a res, i qui la
+   * prova conclou que l'app està trencada. Vegeu `useCameraSupport`, que
+   * pregunta per capacitats i no pel «user agent».
+   */
   const tabs: readonly TabBarItem<Tab>[] = [
     { value: 'countdown', label: s('tab.countdown', locale), icon: 'timer' },
     { value: 'map', label: s('tab.map', locale), icon: 'map' },
-    { value: 'sky', label: s('tab.sky', locale), icon: 'camera' },
+    ...(camera.supported
+      ? [{ value: 'sky' as const, label: s('tab.sky', locale), icon: 'camera' as const }]
+      : []),
     { value: 'guide', label: s('tab.guide', locale), icon: 'book-open' },
   ];
 
@@ -191,6 +204,15 @@ function Shell() {
     sky: s('title.sky', locale),
     guide: s('title.guide', locale),
   };
+
+  /*
+   * Si la pestanya del cel desapareix mentre s'hi és —una sessió restaurada en
+   * un altre aparell, o el navegador que canvia de resposta— no s'hi pot quedar
+   * ningú mirant una pantalla que ja no és a la barra.
+   */
+  useEffect(() => {
+    if (!camera.unknown && !camera.supported && tab === 'sky') setTab('countdown');
+  }, [camera.unknown, camera.supported, tab]);
 
   const fixed = FIXED_TABS.includes(tab);
 

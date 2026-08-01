@@ -97,7 +97,14 @@
 /* ------------------------------------------------------ estat del filtre --- */
 
 /* El bloc més important de la pantalla. Ha de ser llegible d'un cop d'ull i no
-   pot compartir el llenguatge visual de cap altre element. */
+   pot compartir el llenguatge visual de cap altre element.
+
+   SENSE FRANJA LATERAL DE COLOR. El sistema prohibeix explícitament els accents
+   de vora esquerra («no coloured left-border accents»), i aquí el motiu es veu
+   especialment bé: l'estat el porten el fons tenyit i el títol tenyit, que
+   ocupen tot el bloc i es llegeixen de reüll. Una barra de dos píxels al marge
+   esquerre no afegeix informació —només repeteix la que ja hi és— i en una
+   interfície nocturna és el primer que l'ull descarta. */
 .countdown__filter {
   display: flex;
   flex-direction: column;
@@ -105,7 +112,6 @@
   padding: var(--sp-5) var(--sp-6);
   border-radius: var(--r-md);
   border: var(--bw-hair) solid var(--border-subtle);
-  border-left-width: var(--bw-thick);
 }
 
 .countdown__filterstate {
@@ -122,7 +128,6 @@
 /* Filtre posat en un moment tranquil: informatiu, sense alarma. */
 .countdown__filter--on {
   background: var(--status-info-quiet);
-  border-left-color: var(--status-info);
 }
 .countdown__filter--on .countdown__filterstate { color: var(--status-info); }
 
