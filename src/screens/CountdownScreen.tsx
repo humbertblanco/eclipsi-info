@@ -20,6 +20,7 @@ import type { EclipseSample } from '../core/astro/types';
 import type { EclipseContext } from './context';
 import { EphemerisTable } from './EphemerisTable';
 import { s } from './strings';
+import { verdictSummary } from './verdictSummary';
 import {
   formatAge,
   formatClockShort,
@@ -195,7 +196,7 @@ export function CountdownScreen({
         </Card>
 
         {!horizon && <p className="screen__note">{s('home.terrainPending', locale)}</p>}
-        {verdict && <p className="screen__note">{verdict.summary}</p>}
+        {verdict && <p className="screen__note">{verdictSummary(verdict, locale)}</p>}
 
         {/*
           Els cinc contactes. Al mòbil, la línia horitzontal; a l'escriptori, la

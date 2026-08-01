@@ -312,6 +312,58 @@ const STRINGS = {
     es: 'Sol a {alt} sobre el horizonte en el máximo. A esta altura el terreno hacia el oeste decide lo que verás — el perfil real de este punto todavía no está calculado.',
   },
 
+  /* --- veredicte del terreny ---
+   *
+   * La frase que resumeix quants segons sobreviuen al relleu. Era un camp
+   * `summary` que el motor (`core/visibility/verdict.ts`) redactava en català
+   * per construcció, i es pintava tal qual amb l'app en castellà. Les variants
+   * total/anular van en claus SEPARADES i no amb un forat `{central}` pel
+   * mateix motiu que `map.legendBandTotal`: davant de vocal l'article i la
+   * preposició s'apostrofen («l'anularitat», «d'anularitat») i una frase amb
+   * forat és exactament la manera de generar la falta.
+   */
+  'verdict.noEclipse': {
+    ca: 'Des d’aquest punt no hi ha eclipsi.',
+    es: 'Desde este punto no hay eclipse.',
+  },
+  'verdict.sunBlocked': {
+    ca: 'El Sol queda darrere el terreny durant tot l’eclipsi: des d’aquí no en veuràs res.',
+    es: 'El Sol queda detrás del terreno durante todo el eclipse: desde aquí no verás nada.',
+  },
+  'verdict.centralBlockedTotal': {
+    ca: 'El terreny tapa la totalitat sencera ({total}). Com a màxim veuràs un {pct} % del Sol cobert.',
+    es: 'El terreno tapa la totalidad entera ({total}). Como máximo verás un {pct} % del Sol cubierto.',
+  },
+  'verdict.centralBlockedAnnular': {
+    ca: 'El terreny tapa l’anularitat sencera ({total}). Com a màxim veuràs un {pct} % del Sol cobert.',
+    es: 'El terreno tapa la anularidad entera ({total}). Como máximo verás un {pct} % del Sol cubierto.',
+  },
+  'verdict.centralPartialTotal': {
+    ca: 'De {total} de totalitat només en veuràs {visible}: el relleu se’n menja {lost}.',
+    es: 'De {total} de totalidad solo verás {visible}: el relieve se come {lost}.',
+  },
+  'verdict.centralPartialAnnular': {
+    ca: 'De {total} d’anularitat només en veuràs {visible}: el relleu se’n menja {lost}.',
+    es: 'De {total} de anularidad solo verás {visible}: el relieve se come {lost}.',
+  },
+  'verdict.centralVisibleTotal': {
+    ca: '{visible} de totalitat sencers per damunt del terreny.',
+    es: '{visible} de totalidad enteros por encima del terreno.',
+  },
+  'verdict.centralVisibleAnnular': {
+    ca: '{visible} d’anularitat sencers per damunt del terreny.',
+    es: '{visible} de anularidad enteros por encima del terreno.',
+  },
+  'verdict.partialOnly': {
+    ca: 'Eclipsi parcial: fins a un {pct} % del Sol cobert per damunt del terreny.',
+    es: 'Eclipse parcial: hasta un {pct} % del Sol cubierto por encima del terreno.',
+  },
+  /* El signe de grau va DINS de la variable {deficit}, com a `sim.climb`. */
+  'verdict.climb': {
+    ca: 'Caldria guanyar {deficit} d’altura sobre l’horitzó (uns {climb} m amunt, amb l’obstacle a {km} km).',
+    es: 'Haría falta ganar {deficit} de altura sobre el horizonte (unos {climb} m de subida, con el obstáculo a {km} km).',
+  },
+
   /* --- cel / càmera --- */
   'camera.title': { ca: 'El cel des d’aquí', es: 'El cielo desde aquí' },
   'camera.intro': {

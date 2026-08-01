@@ -23,7 +23,6 @@
  * Cap dependència de DOM: aquest mòdul ha de poder córrer en un Worker o en Node.
  */
 
-import { obscurationPercentValue } from '../astro/obscuration';
 import { sampleAt } from '../astro/ephemeris';
 import { DEG } from '../astro/constants';
 import type { EclipseKind, EclipseSample, LocalCircumstances } from '../astro/types';
@@ -53,6 +52,14 @@ export interface VisibilityPoint {
   visible: boolean;
 }
 
+/**
+ * NOMÉS DADES, CAP FRASE. Aquí hi havia un camp `summary` que el motor
+ * redactava en català per construcció, i les pantalles el pintaven tal qual:
+ * qui tenia l'app en castellà llegia en català justament la conclusió del
+ * producte — quants segons sobreviuen al relleu. La redacció viu a
+ * `screens/verdictSummary.ts`, amb el diccionari i els formats de pantalla,
+ * com tota la resta de text de l'app.
+ */
 export interface VisibilityVerdict {
   status: VisibilityStatus;
   kind: EclipseKind;
@@ -128,9 +135,6 @@ export interface VisibilityVerdict {
 
   /** Marge sobre el terreny a cada mostra rebuda, per pintar-ho. */
   timeline: VisibilityPoint[];
-
-  /** Resum d'una frase, en català, llest per ensenyar. */
-  summary: string;
 }
 
 /**
@@ -240,7 +244,7 @@ const PARTIAL_STEP_MS = 15000;
 /** Finestra addicional per trobar la posta encara que caigui després de C4. */
 const SUNSET_MARGIN_MS = 90 * 60 * 1000;
 
-function emptyVerdict(kind: EclipseKind, summary: string): VisibilityVerdict {
+function emptyVerdict(kind: EclipseKind): VisibilityVerdict {
   return {
     status: 'no-eclipse',
     kind,
@@ -270,7 +274,6 @@ function emptyVerdict(kind: EclipseKind, summary: string): VisibilityVerdict {
     sunAltitudeAtMaxDeg: 0,
     horizonAltitudeAtMaxDeg: 0,
     timeline: [],
-    summary,
   };
 }
 
@@ -291,7 +294,7 @@ export function computeVisibility(
   const { contacts, kind, location, atmosphere } = circumstances;
 
   if (kind === 'none') {
-    return emptyVerdict(kind, 'Des d’aquest punt no hi ha eclipsi.');
+    return emptyVerdict(kind);
   }
 
   const at = (tMs: number) => sampleAt(new Date(tMs), location, atmosphere);
@@ -456,17 +459,6 @@ export function computeVisibility(
     sunAltitudeAtMaxDeg: contacts.max.sun.altitudeApparent,
     horizonAltitudeAtMaxDeg: horizonAltitudeAt(profile, contacts.max.sun.azimuth),
     timeline,
-    summary: buildSummary({
-      status,
-      kind,
-      centralVisibleSec,
-      centralTotalSec,
-      centralLostSec,
-      worstDeficitDeg,
-      climbToRecoverM,
-      blockingDistanceKm,
-      maxVisibleObscuration,
-    }),
   };
 }
 
@@ -499,56 +491,4 @@ function decideStatus(input: {
   // dins de l'error del propi model del terreny.
   if (input.centralVisibleSec < input.centralTotalSec - 1) return 'central-partial';
   return 'central-visible';
-}
-
-function formatSeconds(seconds: number): string {
-  const total = Math.round(seconds);
-  if (total < 60) return `${total} s`;
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return s === 0 ? `${m} min` : `${m} min ${s} s`;
-}
-
-function buildSummary(input: {
-  status: VisibilityStatus;
-  kind: EclipseKind;
-  centralVisibleSec: number;
-  centralTotalSec: number;
-  centralLostSec: number;
-  worstDeficitDeg: number;
-  climbToRecoverM: number | null;
-  blockingDistanceKm: number | null;
-  maxVisibleObscuration: number;
-}): string {
-  const central = input.kind === 'annular' ? 'anularitat' : 'totalitat';
-  const climb =
-    input.climbToRecoverM !== null && input.blockingDistanceKm !== null
-      ? ` Caldria guanyar ${input.worstDeficitDeg.toFixed(2)}° d’altura sobre l’horitzó` +
-        ` (uns ${Math.round(input.climbToRecoverM)} m amunt, amb l’obstacle a` +
-        ` ${input.blockingDistanceKm.toFixed(1)} km).`
-      : '';
-
-  switch (input.status) {
-    case 'no-eclipse':
-      return 'Des d’aquest punt no hi ha eclipsi.';
-    case 'sun-blocked':
-      return 'El Sol queda darrere el terreny durant tot l’eclipsi: des d’aquí no en veuràs res.' + climb;
-    case 'central-blocked':
-      return (
-        `El terreny tapa la ${central} sencera (${formatSeconds(input.centralTotalSec)}).` +
-        ` Com a màxim veuràs un ${obscurationPercentValue(input.maxVisibleObscuration, false)} % del Sol cobert.` +
-        climb
-      );
-    case 'central-partial':
-      return (
-        `De ${formatSeconds(input.centralTotalSec)} de ${central} només en veuràs` +
-        ` ${formatSeconds(input.centralVisibleSec)}: el relleu se’n menja` +
-        ` ${formatSeconds(input.centralLostSec)}.` +
-        climb
-      );
-    case 'central-visible':
-      return `${formatSeconds(input.centralVisibleSec)} de ${central} sencers per damunt del terreny.`;
-    case 'partial-only':
-      return `Eclipsi parcial: fins a un ${obscurationPercentValue(input.maxVisibleObscuration, false)} % del Sol cobert per damunt del terreny.`;
-  }
 }
