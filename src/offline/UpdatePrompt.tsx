@@ -7,23 +7,29 @@
  * sols. Vegeu `registerType: 'prompt'` a vite.config.ts.
  */
 
+import type { Locale } from '../i18n';
 import { applyUpdate, dismissUpdate } from './registerServiceWorker';
+import { os } from './strings';
 import { useServiceWorker } from './useServiceWorker';
 import './offline.css';
 
-export function UpdatePrompt() {
+export interface UpdatePromptProps {
+  locale: Locale;
+}
+
+export function UpdatePrompt({ locale }: UpdatePromptProps) {
   const { needRefresh } = useServiceWorker();
   if (!needRefresh) return null;
 
   return (
     <div className="off-update" role="status">
-      <p className="off-update__text">Hi ha una versió nova de l’app, ja baixada.</p>
+      <p className="off-update__text">{os('update.ready', locale)}</p>
       <div className="off-update__actions">
         <button className="off-btn off-btn--quiet" onClick={dismissUpdate}>
-          Ara no
+          {os('update.later', locale)}
         </button>
         <button className="off-btn off-btn--accent" onClick={() => void applyUpdate()}>
-          Actualitza
+          {os('update.apply', locale)}
         </button>
       </div>
     </div>
