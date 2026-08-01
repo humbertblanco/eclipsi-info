@@ -472,6 +472,15 @@ export function ringTiles(
   return tiles;
 }
 
+/**
+ * Fracció mínima de tessel·les que han d'arribar perquè el perfil valgui.
+ *
+ * Noranta-cinc per cent: deixa passar que en falli alguna al marge del disc
+ * —que són les més llunyanes i les que menys pesen— i atura de sec el cas de
+ * la cobertura dolenta. Vegeu el bloc de `computeHorizonProfile` que l'aplica.
+ */
+const MIN_TILE_COVERAGE = 0.95;
+
 /** Cedeix el fil perquè el Worker pugui atendre missatges (cancel·lacions). */
 function yieldToEventLoop(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -544,9 +553,25 @@ export async function computeHorizonProfile(
 
   abortIfNeeded(signal);
 
-  if (tiles.length > 0 && result.loaded === 0) {
+  /*
+   * EL LLINDAR ÉS UNA FRACCIÓ, NO UNA SOLA TESSEL·LA.
+   *
+   * Aquí només es parava quan no n'havia arribat CAP. Amb una de cent
+   * cinquanta, tots els raigs cauen al terra de l'horitzó marí, el perfil surt
+   * pla i optimista, i es publica com si estigués mesurat: a Sòria, el
+   * veredicte deia «102,1 s de 102,1 s» on el terreny de debò en deixa ZERO. I
+   * com que després es desa a la memòria persistent sense mirar la cobertura,
+   * l'endemà, amb wifi, l'app tornava el mateix perfil fals i deia «horitzó
+   * recuperat de la memòria».
+   *
+   * Un horitzó incomplet no és una versió menys bona de la resposta: és una
+   * resposta diferent i equivocada, i en aquesta app la resposta equivocada és
+   * «sí que el veuràs». Val més no tenir-ne.
+   */
+  if (tiles.length > 0 && result.loaded / tiles.length < MIN_TILE_COVERAGE) {
     throw new Error(
-      "No s'ha pogut baixar cap tessel·la del terreny. Comprova la connexió.",
+      `Només s'han pogut baixar ${result.loaded} de ${tiles.length} tessel·les del terreny.` +
+        ' Amb el relleu a mitges, el resultat no seria de fiar. Comprova la connexió.',
     );
   }
 

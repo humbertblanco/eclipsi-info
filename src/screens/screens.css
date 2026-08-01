@@ -994,3 +994,15 @@
   flex: none;
   margin-top: 2px;
 }
+
+/*
+ * El selector d'idioma de la capçalera.
+ *
+ * Més estret que el d'eclipsi: hi caben «Català» i «Castellà» i prou, i a la
+ * capçalera d'un mòbil de 390 px cada píxel que no es demana és un píxel que
+ * es queda el títol del lloc.
+ */
+.shell__locale {
+  min-width: 0;
+  max-width: 8.5rem;
+}

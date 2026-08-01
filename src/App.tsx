@@ -62,6 +62,7 @@ import { computeVisibility } from './core/visibility/verdict';
 import { ECLIPSES } from './core/eclipses/catalog';
 import { useObserver } from './state/useObserver';
 import { UpdatePrompt } from './offline/UpdatePrompt';
+import { LOCALES } from './i18n';
 import { LocaleProvider, useTranslation } from './i18n';
 import './screens/screens.css';
 
@@ -97,7 +98,7 @@ export default function App() {
 }
 
 function Shell() {
-  const { locale } = useTranslation();
+  const { locale, setLocale, t } = useTranslation();
   const observer = useObserver();
   const [tab, setTab] = useState<Tab>('countdown');
   const [eclipseId, setEclipseId] = useState(ECLIPSES[0].id);
@@ -207,6 +208,26 @@ function Shell() {
           value: e.id,
           label: shortDate(e.id),
         }))}
+      />
+      {/*
+        L'IDIOMA, QUE FINS ARA NO ES PODIA CANVIAR.
+
+        Les dues traduccions hi eren senceres, `setLocale` estava escrit i
+        provat, i `locale.switch` / `locale.ca` / `locale.es` esperaven al
+        diccionari des del primer dia. No els cridava ningú: l'app era catalana
+        i prou, i l'única manera d'arribar al castellà era editar
+        `localStorage` a mà. Per a una app que es fa servir a tot Espanya,
+        això no és un detall.
+
+        Va a la capçalera i no dins d'un menú d'ajustos perquè no n'hi ha, i
+        perquè és una tria que es fa un cop i es recorda.
+      */}
+      <Select
+        className="shell__locale"
+        aria-label={t('locale.switch')}
+        value={locale}
+        onChange={(next) => setLocale(next as typeof locale)}
+        options={LOCALES.map((code) => ({ value: code, label: t(`locale.${code}`) }))}
       />
       {/*
         ABANS AQUEST BOTÓ DISPARAVA EL GPS directament, i era l'únic camí cap a

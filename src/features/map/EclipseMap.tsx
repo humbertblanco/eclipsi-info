@@ -258,10 +258,29 @@ export function EclipseMap({ eclipseId, onPickLocation }: Props) {
      * Amb un observador de mida, cada canvi de caixa el reajusta i n'hi ha
      * prou amb un per treure'l del clot.
      */
+    /*
+     * I L'ENQUADRAMENT ES REFÀ, QUE ÉS LA MEITAT QUE FALTAVA.
+     *
+     * `resize()` ajusta el llenç però NO toca el centre ni el zoom: els va
+     * calcular `fitBounds` a la construcció, contra la caixa que hi havia
+     * llavors. Mesurat al navegador amb la pantalla del mapa acabada d'obrir:
+     * centre a 10,41° O / 36,78° N i zoom 4,55 —o sigui l'oceà al sud-oest de
+     * Portugal— quan l'enquadrament bo de la Península és 2,80° O / 39,66° N a
+     * zoom 5,68. La franja quedava fora de la vista i el mapa semblava trencat.
+     *
+     * Per això no n'hi ha prou d'observar la mida: el primer cop que la caixa
+     * té una mida creïble s'ha de tornar a enquadrar. Després ja no, que seria
+     * arrabassar-li el mapa a qui l'estigui movent.
+     */
+    let framed = container.clientWidth > 100 && container.clientHeight > 100;
     let sizeWatcher: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       sizeWatcher = new ResizeObserver(() => {
         map.resize();
+        if (framed) return;
+        if (container.clientWidth <= 100 || container.clientHeight <= 100) return;
+        framed = true;
+        map.fitBounds(IBERIA_BOUNDS, { padding: 16, duration: 0 });
       });
       sizeWatcher.observe(container);
     }
