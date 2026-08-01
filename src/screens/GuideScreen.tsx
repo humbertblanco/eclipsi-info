@@ -1,5 +1,4 @@
-import { useCallback, useState } from 'react';
-import { Button, Card, Checkbox, SafetyNotice } from '../ui';
+import { Button, Card, SafetyNotice } from '../ui';
 import { canRemoveFilter, FILTER_GATE_NOTE } from '../core/timer';
 import { GuideView } from '../features/guide/GuideView';
 import type { EclipseContext } from './context';
@@ -12,40 +11,10 @@ export interface GuideScreenProps extends EclipseContext {
   onOpenCountdown: () => void;
 }
 
-/** Les quatre coses de la llista. L'ordre és el de la conseqüència de no dur-les. */
-const ITEMS = ['glasses', 'tripod', 'battery', 'horizon'] as const;
-type Item = (typeof ITEMS)[number];
 
-const STORAGE_KEY = 'eclipsi.checklist';
 
 /** Mitja hora abans. És el marge que dona temps a plantar-se i no a arribar-hi. */
 const ALERT_LEAD_MS = 30 * 60 * 1000;
-
-/**
- * Llegeix la llista del dispositiu.
- *
- * Safari en mode privat llança en tocar `localStorage`, i una llista de
- * comprovació que fa petar l'app seria un acudit de mal gust el dia de
- * l'eclipsi. Si falla, es comença amb tot desmarcat i s'acaba aquí.
- */
-function readChecklist(): Record<Item, boolean> {
-  const empty = { glasses: false, tripod: false, battery: false, horizon: false };
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw === null) return empty;
-    const parsed: unknown = JSON.parse(raw);
-    if (typeof parsed !== 'object' || parsed === null) return empty;
-    const source = parsed as Partial<Record<Item, unknown>>;
-    return {
-      glasses: source.glasses === true,
-      tripod: source.tripod === true,
-      battery: source.battery === true,
-      horizon: source.horizon === true,
-    };
-  } catch {
-    return empty;
-  }
-}
 
 /**
  * Pantalla "Guia".
@@ -82,20 +51,6 @@ export function GuideScreen({
   verdict,
   onOpenCountdown,
 }: GuideScreenProps) {
-  const [checked, setChecked] = useState<Record<Item, boolean>>(readChecklist);
-
-  const toggle = useCallback((item: Item, next: boolean) => {
-    setChecked((prev) => {
-      const updated = { ...prev, [item]: next };
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      } catch {
-        // La llista durarà només aquesta sessió. No és motiu per no marcar-la.
-      }
-      return updated;
-    });
-  }, []);
-
   /*
    * QUI DECIDEIX SI ES POT MIRAR A ULL NU ÉS LA COMPORTA, I NOMÉS ELLA.
    *
@@ -151,21 +106,14 @@ export function GuideScreen({
         </SafetyNotice>
       )}
 
-      <Card>
-        <span className="screen__overline">{s('guide.checklist', locale)}</span>
-        <div className="guidescreen__list">
-          {ITEMS.map((item) => (
-            <Checkbox
-              key={item}
-              checked={checked[item]}
-              onChange={(next) => toggle(item, next)}
-              label={s(`guide.item.${item}` as 'guide.item.glasses', locale)}
-            />
-          ))}
-        </div>
-        <p className="screen__note">{s('guide.checklistNote', locale)}</p>
-      </Card>
+      {/*
+        AQUÍ HI HAVIA LA LLISTA DE «QUÈ EM CAL PORTAR».
 
+        Se n'ha anat perquè no era una guia: era una llista de quatre coses
+        òbvies amb caselles per marcar, i ocupava el primer terç de la pantalla
+        per damunt del contingut que sí que serveix. El que cal portar ja surt
+        explicat, i amb el perquè, dins de la guia mateixa.
+      */}
       <Card>
         <span className="screen__overline">{s('guide.alert', locale)}</span>
         <p className="screen__note">

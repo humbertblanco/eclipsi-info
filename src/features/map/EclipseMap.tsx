@@ -48,6 +48,14 @@ interface Props {
    * una operació de xarxa i no toca fer-la des d'aquí.
    */
   onPickLocation?: (loc: GeoLocation) => void;
+  /**
+   * On és l'usuari, si ja ho ha dit.
+   *
+   * Serveix per a l'enquadrament inicial: si el seu punt queda fora de la
+   * franja —que és el cas en què el mapa serveix de debò, perquè llavors ha de
+   * decidir si s'hi acosta— ha de sortir a la vista juntament amb la banda.
+   */
+  observer?: GeoLocation | null;
 }
 
 /** Atribució d'OSM, obligatòria per llicència. */
@@ -126,8 +134,39 @@ const COLOR_BAND = '#FFA51F';
 /** --corona-100 */
 const COLOR_CENTER = '#F5F0E4';
 
-/** Enquadrament inicial: Península, Balears i el llindar de l'Estret. */
+/** Marc de referència: Península, Balears i el llindar de l'Estret. */
 const IBERIA_BOUNDS = new LngLatBounds([-10.2, 34.8], [4.6, 44.2]);
+
+/**
+ * Enquadrament que ensenya LA FRANJA, no el país.
+ *
+ * PER QUÈ NO N'HI HA PROU AMB LA PENÍNSULA. La franja és una diagonal estreta
+ * que en creua un tros; enquadrant tot Espanya, la banda queda com un fil en un
+ * racó i el mapa no respon la pregunta que se li fa, que és «per on passa i
+ * quant en queda lluny». S'enquadra el tros de franja que cau dins del marc de
+ * referència, i si el punt de l'usuari en queda fora —que és el cas
+ * interessant, perquè llavors ha de decidir si s'hi acosta— també s'hi inclou.
+ *
+ * Si la franja no toca la finestra (l'eclipsi del 2027 passa molt al sud), es
+ * cau al marc de sempre en comptes d'enquadrar el no-res.
+ */
+function frameFor(
+  geojson: EclipsePathGeoJson,
+  observer: GeoLocation | null,
+): LngLatBounds {
+  const bounds = new LngLatBounds();
+  let any = false;
+
+  for (const [lon, lat] of geojson.band.geometry.coordinates[0] ?? []) {
+    if (lon < -10.2 || lon > 4.6 || lat < 34.8 || lat > 44.2) continue;
+    bounds.extend([lon, lat]);
+    any = true;
+  }
+
+  if (!any) return IBERIA_BOUNDS;
+  if (observer) bounds.extend([observer.lon, observer.lat]);
+  return bounds;
+}
 
 const emptyFeatureCollection = {
   type: 'FeatureCollection' as const,
@@ -182,7 +221,7 @@ function applyPath(map: MapLibreMap, geojson: EclipsePathGeoJson): void {
   (map.getSource(CENTER_SOURCE) as GeoJSONSource).setData(geojson.centerLine);
 }
 
-export function EclipseMap({ eclipseId, onPickLocation }: Props) {
+export function EclipseMap({ eclipseId, onPickLocation, observer = null }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
@@ -193,6 +232,8 @@ export function EclipseMap({ eclipseId, onPickLocation }: Props) {
   // canviar a cada render, així que hi arriba per referència.
   const onPickRef = useRef(onPickLocation);
   onPickRef.current = onPickLocation;
+  const observerRef = useRef(observer);
+  observerRef.current = observer;
 
   const eclipse = getEclipse(eclipseId);
 
@@ -225,8 +266,10 @@ export function EclipseMap({ eclipseId, onPickLocation }: Props) {
         // L'estil es clona: MapLibre es reserva el dret de modificar l'objecte
         // que rep, i aquest és una constant compartida entre muntatges.
         style: structuredClone(BASEMAP_STYLE),
-        bounds: IBERIA_BOUNDS,
-        fitBoundsOptions: { padding: 16 },
+        bounds: frameFor(geojsonRef.current, observerRef.current),
+        // Més aire que abans: amb la franja enquadrada de costat a costat, un
+        // marge de setze píxels la deixava tocant les vores de la pantalla.
+        fitBoundsOptions: { padding: 40 },
         // L'atribució per defecte es plega en un botó "i" en pantalles
         // estretes; aquí la volem sempre desplegada perquè és obligatòria.
         attributionControl: {
@@ -280,7 +323,10 @@ export function EclipseMap({ eclipseId, onPickLocation }: Props) {
         if (framed) return;
         if (container.clientWidth <= 100 || container.clientHeight <= 100) return;
         framed = true;
-        map.fitBounds(IBERIA_BOUNDS, { padding: 16, duration: 0 });
+        map.fitBounds(frameFor(geojsonRef.current, observerRef.current), {
+          padding: 40,
+          duration: 0,
+        });
       });
       sizeWatcher.observe(container);
     }

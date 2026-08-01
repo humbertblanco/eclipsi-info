@@ -32,7 +32,18 @@ const ONE_YEAR_S = 60 * 60 * 24 * 365
 const BASE = process.env.ECLIPSI_BASE ?? '/eclipsi/'
 
 // https://vite.dev/config/
+/*
+ * IDENTIFICADOR DE COMPILACIÓ.
+ *
+ * Va al peu de l'app. Amb un service worker pel mig, no saber quina versió
+ * corres no és una curiositat: és la diferència entre provar el que acabes de
+ * fer i provar el que hi havia abans. Es fa servir la data i hora de la
+ * compilació, que és el que de veritat distingeix dos desplegaments.
+ */
+const BUILD_ID = new Date().toISOString().slice(0, 16).replace('T', ' ')
+
 export default defineConfig(({ command }) => ({
+  define: { 'import.meta.env.VITE_BUILD_ID': JSON.stringify(BUILD_ID) },
   // En `vite dev` mantenim l'arrel: així el certificat autofirmat i les proves
   // al mòbil per IP local funcionen sense haver d'escriure el subdirectori.
   base: command === 'build' ? BASE : '/',

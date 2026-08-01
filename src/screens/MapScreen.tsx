@@ -101,7 +101,7 @@ export function MapScreen({
     <div className="screen screen--full screen--split screen--flush">
       <div className="screen__col screen__col--main">
         <div className="mapscreen__stage">
-          <EclipseMap eclipseId={eclipseId} onPickLocation={handlePick} />
+          <EclipseMap eclipseId={eclipseId} observer={location} onPickLocation={handlePick} />
 
           {/* Llegenda pròpia. La d'`EclipseMap` viu sota el llenç i aquí el
               llenç ocupa el marc sencer, així que quedaria fora de vista. */}

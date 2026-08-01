@@ -63,6 +63,7 @@ import { ECLIPSES } from './core/eclipses/catalog';
 import { useObserver } from './state/useObserver';
 import { UpdatePrompt } from './offline/UpdatePrompt';
 import { LOCALES } from './i18n';
+import { SiteFooter } from './screens/SiteFooter';
 import { LocaleProvider, useTranslation } from './i18n';
 import './screens/screens.css';
 
@@ -388,6 +389,15 @@ function Shell() {
             <GuideScreen {...context} onOpenCountdown={() => setTab('countdown')} />
           )}
         </ErrorBoundary>
+        {/*
+          EL PEU, DINS DEL `main` I NO A FORA.
+
+          A la pantalla de la càmera i a la del mapa el contingut ocupa tota
+          l'alçada i no s'hi desplaça: si el peu fos germà del `main`, allà
+          reduiria la imatge. Aquí baixa amb el contingut de les pantalles que
+          es desplacen i no existeix a les que no.
+        */}
+        {tab !== 'sky' && tab !== 'map' && <SiteFooter locale={locale} />}
       </main>
 
       {/*
