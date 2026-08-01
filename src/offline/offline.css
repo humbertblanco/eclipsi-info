@@ -236,16 +236,48 @@
 }
 
 /* --- avís d'actualització ------------------------------------------------- */
+/*
+ * L'AVÍS DE VERSIÓ NOVA ERA FÍSICAMENT INCLICABLE, I PER AIXÒ NINGÚ
+ * NO S'ACTUALITZAVA MAI.
+ *
+ * Es munta a l'arrel de l'estructura, abans de la capçalera i sense cap
+ * `z-index`. La capçalera és fixa i en té 20: l'avís quedava DIBUIXAT A SOTA,
+ * amb el text darrere del logotip i el botó «Actualitza» darrere dels
+ * selectors. Mesurat al navegador sobre producció: el botó ocupava y=13..57 i
+ * `document.elementFromPoint()` al seu centre retornava `.ui-topbar__actions`.
+ * Els clics no hi arribaven mai.
+ *
+ * O sigui que el service worker baixava la versió nova, es quedava esperant, i
+ * l'única manera d'activar-la era una pestanya privada. Tota arreglada que es
+ * publiqui —inclosa la de la franja del mapa— es quedava al servidor sense
+ * arribar a ningú. En una app que existeix per a un sol dia irrepetible, això
+ * no és un detall d'estil.
+ *
+ * Es posa per damunt de tot i enganxat a dalt: és una interrupció, i ha de
+ * poder-se llegir i tocar des de qualsevol pantalla, també des del mapa i de
+ * la càmera, que ocupen el marc sencer i no es desplacen. Respecta l'osca amb
+ * `env(safe-area-inset-top)`.
+ */
 .off-update {
+  position: sticky;
+  top: 0;
+  /* Per damunt de la capçalera (20) i de la barra de pestanyes. */
+  z-index: 60;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-4);
   flex-wrap: wrap;
   padding: var(--sp-4) var(--sp-5);
+  padding-top: calc(var(--sp-4) + env(safe-area-inset-top, 0px));
   border: var(--bw-hair) solid var(--status-info-quiet);
-  border-radius: var(--r-sm);
-  background: var(--status-info-quiet);
+  border-radius: 0;
+  border-inline: 0;
+  border-top: 0;
+  /* Opac: a sobre hi passa el contingut de les pantalles que es desplacen, i
+     amb el fons translúcid original el text es llegia damunt de les xifres. */
+  background: var(--bg-elevated);
+  box-shadow: var(--sh-2);
 }
 .off-update__text { margin: 0; font: var(--text-body-sm); color: var(--text-body); }
 .off-update__actions { display: flex; gap: var(--sp-3); }
