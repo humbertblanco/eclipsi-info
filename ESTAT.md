@@ -114,6 +114,18 @@ Ordenat per gravetat. Tot això surt de sis revisions independents del codi i
 
 ### Mitjà
 
+- **`verdict.summary` és català per construcció.** `buildSummary` a
+  `core/visibility/verdict.ts` escriu la frase en català i prou, i la pinten
+  tres pantalles: qui té l'app en castellà rep una frase catalana per pantalla.
+  Arreglar-ho vol un paràmetre d'idioma a través de `computeVisibility`.
+- **`formatDegrees` encara escriu el punt decimal** (`screens/format.ts`),
+  mentre la resta ja escriu la coma. A la pantalla del compte enrere es veuen
+  totes dues alhora.
+- **La pantalla de la guia té vuit elements ambre**, no un. Arreglar-ho vol
+  decidir el vocabulari de tons a `GuideView.tsx` i `content/guide.ts`, no
+  només tocar la fulla d'estils.
+- **Encara hi ha vores esquerres de color** a `features/weather/weather.css` i
+  `features/spots/spots.css`, els dos components que no es munten enlloc.
 - **El rellotge del dispositiu no es qüestiona mai.** `driftMs()` existeix i no
   el crida ningú. Amb el rellotge trenta segons endarrerit, els avisos de
   «posa't el filtre» sonen vint-i-cinc segons DESPRÉS de C3, amb el Sol ja
