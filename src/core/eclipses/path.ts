@@ -693,6 +693,61 @@ const toCoords = (points: PathPoint[]): [number, number][] =>
   points.map((p) => [p.lon, p.lat]);
 
 /**
+ * Latitud per damunt de la qual el polígon deixa de ser dibuixable.
+ *
+ * Web Mercator —la projecció de qualsevol mapa de tessel·les— talla a ±85,05°:
+ * la latitud 90 hi queda a distància infinita. Per sota de 80 hi ha marge de
+ * sobres i encara es veu tot el que a algú li pugui interessar.
+ */
+const DRAWABLE_LAT_LIMIT = 80;
+
+/** Salt de longitud a partir del qual dos punts seguits no són seguits. */
+const LON_JUMP_LIMIT = 90;
+
+/**
+ * Trosseja una línia en els trams que es poden dibuixar.
+ *
+ * PER QUÈ CAL, I NO ÉS UNA PRECAUCIÓ ABSTRACTA. La franja del 12 d'agost de
+ * 2026 comença a Sibèria, passa PEL POL i baixa cap a Islàndia i la Península:
+ * de 731 punts de l'anell, 188 són per damunt dels 80° de latitud i arriba als
+ * 89,1°. Un polígon així, en Mercator, no és una figura estirada: és una figura
+ * indefinida, i el trossejador de tessel·les del mapa no en dibuixava res. El
+ * resultat era el mapa amb la cartografia i sense franja — que és justament
+ * l'única cosa que aquell mapa ha d'ensenyar.
+ *
+ * També es talla quan la longitud fa un salt: passat el pol, dos punts seguits
+ * de la trajectòria poden ser a quinze graus l'un de l'altre, i unir-los amb
+ * una recta dibuixa una banda que no existeix.
+ */
+function drawableRuns(points: readonly [number, number][]): [number, number][][] {
+  const runs: [number, number][][] = [];
+  let run: [number, number][] = [];
+
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i];
+    const usable = Math.abs(point[1]) <= DRAWABLE_LAT_LIMIT;
+    const jumped =
+      run.length > 0 && Math.abs(point[0] - run[run.length - 1][0]) > LON_JUMP_LIMIT;
+
+    if (!usable || jumped) {
+      if (run.length > 1) runs.push(run);
+      run = usable ? [point] : [];
+      continue;
+    }
+    run.push(point);
+  }
+  if (run.length > 1) runs.push(run);
+  return runs;
+}
+
+/** El tram més llarg, que és el que travessa el mapa que es mira. */
+function longestRun(points: readonly [number, number][]): [number, number][] {
+  const runs = drawableRuns(points);
+  if (runs.length === 0) return [];
+  return runs.reduce((best, run) => (run.length > best.length ? run : best));
+}
+
+/**
  * Converteix la franja a GeoJSON. El polígon es tanca recorrent el límit nord
  * en el sentit del temps i el sud en sentit invers, que és exactament l'ordre
  * que descriu el contorn de la franja sense creuar-se.
@@ -704,7 +759,17 @@ export function eclipsePathToGeoJson(path: EclipsePath): EclipsePathGeoJson {
     attribution: ESPENAK_ATTRIBUTION,
   };
 
-  const ring = [...toCoords(path.northLimit), ...toCoords(path.southLimit).reverse()];
+  /*
+   * L'ANELL ES CONSTRUEIX AMB LA PART DIBUIXABLE, I NOMÉS AMB AQUESTA.
+   *
+   * Vegeu `drawableRuns`: la franja del 2026 passa pel pol, i un polígon que
+   * hi passa no és dibuixable en Mercator. Es pren de cada límit el tram més
+   * llarg que sí que ho és —el que travessa la part del món que aquest mapa
+   * ensenya— i amb els dos es tanca el contorn.
+   */
+  const north = longestRun(toCoords(path.northLimit));
+  const south = longestRun(toCoords(path.southLimit));
+  const ring = [...north, ...south.reverse()];
   // Un anell de GeoJSON ha de ser explícitament tancat.
   if (ring.length > 0) ring.push(ring[0]);
 
@@ -712,7 +777,7 @@ export function eclipsePathToGeoJson(path: EclipsePath): EclipsePathGeoJson {
     centerLine: {
       type: 'Feature',
       properties,
-      geometry: { type: 'LineString', coordinates: toCoords(path.center) },
+      geometry: { type: 'LineString', coordinates: longestRun(toCoords(path.center)) },
     },
     band: {
       type: 'Feature',
@@ -724,7 +789,12 @@ export function eclipsePathToGeoJson(path: EclipsePath): EclipsePathGeoJson {
       properties,
       geometry: {
         type: 'MultiLineString',
-        coordinates: [toCoords(path.northLimit), toCoords(path.southLimit)],
+        // Els límits també: una línia que passa pel pol es dibuixa igual de
+        // malament que un polígon que hi passa.
+        coordinates: [
+          ...drawableRuns(toCoords(path.northLimit)),
+          ...drawableRuns(toCoords(path.southLimit)),
+        ],
       },
     },
   };

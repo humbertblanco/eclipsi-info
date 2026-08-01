@@ -293,3 +293,63 @@ describe('exportació a GeoJSON', () => {
     }
   });
 });
+
+describe('la franja ha de ser DIBUIXABLE, no només correcta', () => {
+  /*
+   * EL BUG QUE VA DESTAPAR L'USUARI: «i no veus que el mapa no té la franja
+   * de l'eclipsi?». La cartografia hi sortia i la banda no.
+   *
+   * La causa: la trajectòria del 12-08-2026 comença a Sibèria i passa PEL POL
+   * abans de baixar cap a Islàndia i la Península. De 731 punts de l'anell,
+   * 188 eren per damunt dels 80° de latitud i arribava als 89,1°. Web Mercator
+   * —la projecció de qualsevol mapa de tessel·les— talla a ±85,05°, i la
+   * latitud 90 hi queda a distància infinita: aquell polígon no és una figura
+   * estirada, és una figura indefinida, i el trossejador de tessel·les no en
+   * dibuixava res.
+   *
+   * La geometria era CORRECTA i el mapa era buit. Per això aquest test no mira
+   * si els números són bons —d'això ja n'hi ha d'altres— sinó si es poden
+   * pintar.
+   */
+  const IDS = ['2026-08-12', '2027-08-02', '2028-01-26'];
+
+  for (const id of IDS) {
+    it(`${id}: cap punt de l’anell fora del que Mercator pot projectar`, () => {
+      const { band } = eclipsePathToGeoJson(computeEclipsePath(id));
+      const ring = band.geometry.coordinates[0];
+      expect(ring.length).toBeGreaterThan(50);
+      for (const [, lat] of ring) {
+        expect(Math.abs(lat)).toBeLessThanOrEqual(85);
+      }
+    });
+
+    it(`${id}: la franja segueix passant per on ha de passar`, () => {
+      // Retallar no pot menjar-se la part que importa. Els tres eclipsis del
+      // catàleg travessen la finestra ibèrica o la seva rodalia.
+      const { band, centerLine } = eclipsePathToGeoJson(computeEclipsePath(id));
+      const ring = band.geometry.coordinates[0];
+      const line = centerLine.geometry.coordinates;
+      expect(ring.length).toBeGreaterThan(line.length / 2);
+      expect(line.length).toBeGreaterThan(50);
+    });
+  }
+
+  it('2026: la franja conserva els punts de la Península', () => {
+    const { band } = eclipsePathToGeoJson(computeEclipsePath('2026-08-12'));
+    const iberian = band.geometry.coordinates[0].filter(
+      ([lon, lat]) => lon > -12 && lon < 5 && lat > 34 && lat < 45,
+    );
+    // Abans de retallar n'hi havia 109. Retallar el pol no en pot treure cap.
+    expect(iberian.length).toBeGreaterThanOrEqual(100);
+  });
+
+  it('les línies dels límits tampoc no salten pel pol', () => {
+    const { limits } = eclipsePathToGeoJson(computeEclipsePath('2026-08-12'));
+    for (const line of limits.geometry.coordinates) {
+      for (const [, lat] of line) expect(Math.abs(lat)).toBeLessThanOrEqual(85);
+      for (let i = 1; i < line.length; i++) {
+        expect(Math.abs(line[i][0] - line[i - 1][0])).toBeLessThan(90);
+      }
+    }
+  });
+});
