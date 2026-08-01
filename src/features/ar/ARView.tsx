@@ -141,6 +141,23 @@ const FOV_SAVE_STEP_DEG = 0.2;
 /** Cada quants fotogrames de càmera es torna a ancorar al terreny. */
 const ANCHOR_EVERY_FRAMES = 6;
 
+/**
+ * Quant pot viure un ancoratge sense refrescar-se, en mil·lisegons.
+ *
+ * Es refresca a uns 5 Hz; mig segon són dues mesures i mitja perdudes, que ja
+ * no és una pausa de càlcul sinó que han deixat d'arribar fotogrames.
+ */
+const ANCHOR_MAX_AGE_MS = 500;
+
+/**
+ * Quant es pot haver mogut el mòbil des que es va mesurar, en graus.
+ *
+ * Per damunt d'això, la postura absoluta que afirma ja no és on apuntes. Tres
+ * graus són prop de sis diàmetres solars: prou marge perquè el tremolor normal
+ * del pols no l'invalidi, i prou poc perquè una panoràmica sí.
+ */
+const ANCHOR_MAX_MOVE_DEG = 3;
+
 const MIN_FOV_DEG = 25;
 const MAX_FOV_DEG = 140;
 
@@ -285,6 +302,26 @@ export function ARView({
   const savedFovRef = useRef(Number.NaN);
   /** Últim ancoratge a la silueta del terreny. Vegeu `skyline.ts`. */
   const anchorRef = useRef<SkylineFix | null>(null);
+  /**
+   * Quan es va mesurar l'ancoratge, i cap a on apuntava el sensor llavors.
+   *
+   * PER QUÈ CAL. L'ancoratge és una postura ABSOLUTA: diu «la càmera apunta a
+   * l'azimut X». Es refresca cada sis fotogrames de càmera —uns 5 Hz—, però es
+   * tornava a afirmar a cada fotograma de PANTALLA, que en són dotze pel mig, i
+   * en dos casos allò deixa de ser cert:
+   *
+   *   · Escombrant. Entre dues mesures el mòbil s'ha mogut, i la postura vella
+   *     estira la fusió cap enrere. És la deriva que arrossega la superposició
+   *     darrere del paisatge en una panoràmica.
+   *   · Amb la càmera interrompuda —una trucada, canviar d'app, la pista
+   *     silenciada—, no arriben fotogrames nous, el bloc que refresca
+   *     l'ancoratge no s'executa i l'últim es queda aplicant-se indefinidament
+   *     contra un vídeo congelat.
+   *
+   * Una mesura absoluta té data de caducitat. Aquestes dues refs la hi posen.
+   */
+  const anchorAtMsRef = useRef(0);
+  const anchorSensorRef = useRef<{ az: number; alt: number } | null>(null);
   /** Compta fotogrames de càmera per no ancorar a cadascun. */
   const anchorTickRef = useRef(0);
   /**
@@ -555,6 +592,23 @@ export function ARView({
     const draw = () => {
       frame = requestAnimationFrame(draw);
 
+      /*
+       * NO ES DIBUIXA AMB LA PÀGINA AMAGADA.
+       *
+       * El bucle corria sempre, també amb la pestanya al darrere o la pantalla
+       * bloquejada. Els navegadors escanyen `requestAnimationFrame` en aquesta
+       * situació, però no sempre ni de seguida, i el que es dibuixa no el veu
+       * ningú: és bateria i temperatura regalades. El dia 12 d'agost, a ple
+       * sol i amb el mòbil a la mà durant una hora, això es nota.
+       *
+       * També evita el pitjor cas de tornar: acumular un `dt` de trenta segons
+       * i passar-lo als filtres com si fos un salt real de postura.
+       */
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        lastDrawMsRef.current = null;
+        return;
+      }
+
       const canvas = canvasRef.current;
       const camera = cameraRef.current;
       if (!canvas || !camera) return;
@@ -694,6 +748,10 @@ export function ARView({
               state.horizonProfile,
             );
             anchorRef.current = fix;
+            // Amb data i amb la postura del sensor d'aquell instant: sense
+            // aquestes dues, no hi ha manera de saber si encara val.
+            anchorAtMsRef.current = nowMs;
+            anchorSensorRef.current = { az: camera.azimuth, alt: camera.altitude };
           }
 
           diagnosticsRef.current = {
@@ -706,6 +764,42 @@ export function ARView({
         }
       }
 
+      /*
+       * L'ANCORATGE CADUCA. Dues maneres, i totes dues passen de debò:
+       *
+       *  · PER TEMPS. Si la càmera s'interromp —trucada, canvi d'app, pista
+       *    silenciada— deixen d'arribar fotogrames, el bloc que refresca
+       *    l'ancoratge no s'executa i l'últim es quedava aplicant-se per sempre
+       *    contra una imatge congelada. El llindar és generós respecte del
+       *    refresc normal (uns 5 Hz): mig segon són dues mesures i mitja
+       *    perdudes, que ja no és una pausa sinó una interrupció.
+       *  · PER MOVIMENT. Entre dues mesures el mòbil s'ha pogut moure, i una
+       *    postura absoluta vella afirma que apuntes on apuntaves. Aplicada
+       *    fotograma rere fotograma durant una panoràmica, estira la
+       *    superposició cap enrere: és l'arrossegament que es veu darrere del
+       *    paisatge. Passat el llindar val més quedar-se amb el sensor i el
+       *    seguiment visual, que sí que saben que t'has mogut, i esperar la
+       *    mesura següent, que arriba en dues-centes mil·lèsimes.
+       */
+      const freshAnchor = () => {
+        const fix = anchorRef.current;
+        if (fix === null) return null;
+        if (nowMs - anchorAtMsRef.current > ANCHOR_MAX_AGE_MS) return null;
+        const at = anchorSensorRef.current;
+        if (at !== null) {
+          const moved = Math.hypot(
+            normalizeAngle(camera.azimuth - at.az),
+            camera.altitude - at.alt,
+          );
+          if (moved > ANCHOR_MAX_MOVE_DEG) return null;
+        }
+        return {
+          azimuthDeg: fix.azimuthDeg,
+          altitudeDeg: fix.altitudeDeg,
+          confidence: fix.confidence,
+        };
+      };
+
       const fused = fusionRef.current.update({
         sensorAzimuthDeg: camera.azimuth,
         sensorAltitudeDeg: camera.altitude,
@@ -714,14 +808,7 @@ export function ARView({
         visual,
         sensorSpeedDegPerSec: smoothingRef.current.angularSpeedDegPerSec,
         dtSec,
-        anchor:
-          anchorRef.current === null
-            ? null
-            : {
-                azimuthDeg: anchorRef.current.azimuthDeg,
-                altitudeDeg: anchorRef.current.altitudeDeg,
-                confidence: anchorRef.current.confidence,
-              },
+        anchor: freshAnchor(),
       });
 
       const stable: CameraPointing = {
