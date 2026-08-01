@@ -256,11 +256,53 @@ export function poseDeltaToRotation(
  */
 const ANCHOR_TAU_SEC = 0.5;
 
+/**
+ * Constant de temps amb què s'aprèn el biaix de la brúixola, en segons.
+ *
+ * Molt més lenta que la de l'ancoratge (0,5 s) a posta: la correcció de postura
+ * ha de ser ràpida perquè l'usuari no vegi la superposició fora de lloc, però
+ * el BIAIX és una propietat del magnetòmetre en aquell lloc, canvia a escala de
+ * minuts, i aprendre'l de pressa el faria ballar amb cada aparellament mediocre.
+ */
+const BIAS_TAU_SEC = 4;
+
+/**
+ * Fins on es dona per bo un biaix de brúixola, en graus.
+ *
+ * Un magnetòmetre de mòbil vora un cotxe, un trípode o una barana se'n va
+ * fàcilment 10 o 20 graus. Per damunt de quaranta ja no és biaix: és que
+ * l'aparellament amb el terreny s'ha equivocat de carena, i val més quedar-se
+ * amb la brúixola dolenta que amb una correcció inventada.
+ */
+const MAX_BIAS_DEG = 40;
+
 export class PoseFusion {
   private azimuth: number | null = null;
   private altitude = 0;
   /** Postura del sensor l'últim cop que es va avançar la postura fusionada. */
   private sensorAtLastStep: { az: number; alt: number } | null = null;
+  /*
+   * BIAIX DEL SENSOR: quant va desviada la brúixola respecte de la veritat.
+   *
+   * PER QUE CALIA. L'estirada d'aqui sota portava la postura cap al sensor CRU,
+   * i l'ancoratge al terreny la portava cap a la veritat. Com que l'estirada es
+   * mes forta (tau 0,35 s quiet) que l'ancoratge (tau 0,5 s), guanyava
+   * l'estirada i el sistema es quedava en un punt d'equilibri entremig.
+   *
+   * Mesurat abans d'aquest canvi, amb la bruixola 10 graus fora, el terreny
+   * sempre a la vista i confianca 1: despres de vint segons quiet la postura es
+   * quedava a 5,74 graus de la veritat —deu diametres solars i mig— i no s'hi
+   * acostava mes. ESTAT.md diu que l'ancoratge recupera un error de bruixola de
+   * 10 graus fins a menys de 0,5: al banc si, pero a la vista no hi arribava
+   * mai, perque la mesura absoluta es corregia i tot seguit es desfeia.
+   *
+   * Amb el biaix, l'ancoratge ja no ha de guanyar una batalla a cada fotograma:
+   * ensenya a la fusio cap a on menteix la bruixola, i l'estirada passa a
+   * portar cap al sensor CORREGIT. Les dues forces deixen d'estirar en
+   * direccions contraries.
+   */
+  private biasAz = 0;
+  private biasAlt = 0;
   /**
    * Cert mentre la imatge porta la postura.
    *
@@ -286,6 +328,8 @@ export class PoseFusion {
   reset(): void {
     this.azimuth = null;
     this.sensorAtLastStep = null;
+    this.biasAz = 0;
+    this.biasAlt = 0;
     this.visualActive = false;
     this.visualMisses = 0;
     this.sinceFrameSec = 0;
@@ -386,9 +430,18 @@ export class PoseFusion {
       };
     }
 
-    // Deriva actual respecte al sensor, que és qui no deriva mai.
-    const driftAz = normalizeDelta(input.sensorAzimuthDeg - this.azimuth);
-    const driftAlt = input.sensorAltitudeDeg - this.altitude;
+    /*
+     * Deriva respecte del sensor CORREGIT, que es qui no deriva mai.
+     *
+     * El sensor no deriva, pero pot estar desplacat: una bruixola vora metall
+     * es queda deu graus fora tota l'estona. Estirar cap al valor cru era
+     * estirar cap a un error constant, i desfeia l'ancoratge al terreny a cada
+     * fotograma. El biaix s'apren mes avall, quan hi ha ancoratge.
+     */
+    const sensorAz = input.sensorAzimuthDeg - this.biasAz;
+    const sensorAlt = input.sensorAltitudeDeg - this.biasAlt;
+    const driftAz = normalizeDelta(sensorAz - this.azimuth);
+    const driftAlt = sensorAlt - this.altitude;
     const driftDeg = Math.hypot(driftAz * cosAltFactor(this.altitude), driftAlt);
 
     // Força de l'estirada: fort quiet, fluix movent-se, i fort altre cop si la
@@ -434,6 +487,20 @@ export class PoseFusion {
       const pull = Math.min(1, (dt / ANCHOR_TAU_SEC) * anchor.confidence);
       this.azimuth += pull * normalizeDelta(anchor.azimuthDeg - this.azimuth);
       this.altitude += pull * (anchor.altitudeDeg - this.altitude);
+
+      /*
+       * I DE PASSADA S'APREN CAP A ON MENTEIX LA BRUIXOLA.
+       *
+       * L'ancoratge diu on apuntes de debo; el sensor diu on es pensa que
+       * apuntes. La diferencia es el biaix, i sense recordar-lo cada correccio
+       * s'havia de tornar a guanyar al fotograma seguent. S'apren a poc a poc
+       * perque es una propietat del lloc, no una mesura instantania.
+       */
+      const biasPull = Math.min(1, (dt / BIAS_TAU_SEC) * anchor.confidence);
+      const errAz = normalizeDelta(input.sensorAzimuthDeg - this.biasAz - anchor.azimuthDeg);
+      const errAlt = input.sensorAltitudeDeg - this.biasAlt - anchor.altitudeDeg;
+      this.biasAz = clampBias(normalizeDelta(this.biasAz + biasPull * errAz));
+      this.biasAlt = clampBias(this.biasAlt + biasPull * errAlt);
       // El sensor és la referència de la qual es mesuren els increments: si no
       // s'hi mou també, l'estirada següent la desfaria comptant com a deriva
       // el que acabem de corregir a posta.
@@ -462,6 +529,11 @@ export class PoseFusion {
 
 function cosAltFactor(altitudeDeg: number): number {
   return Math.max(0.2, Math.cos(altitudeDeg * DEG));
+}
+
+/** El biaix es dona per bo fins a MAX_BIAS_DEG; mes enlla no es biaix. */
+function clampBias(deg: number): number {
+  return Math.max(-MAX_BIAS_DEG, Math.min(MAX_BIAS_DEG, deg));
 }
 
 function clamp01(value: number): number {

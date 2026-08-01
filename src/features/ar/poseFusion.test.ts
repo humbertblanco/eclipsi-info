@@ -238,3 +238,77 @@ describe('qui porta la postura', () => {
     expect(bad.telemetry.agreement).toBeLessThan(-0.95);
   });
 });
+
+/*
+ * LA PROMESA DE L'APP: LA MUNTANYA GUANYA A LA BRÚIXOLA.
+ *
+ * ESTAT.md diu que l'ancoratge al terreny «recupera un error de brúixola de 10°
+ * fins a menys de 0,5°». Al banc de `skyline.ts` això era cert, però a la vista
+ * no hi arribava mai: l'estirada cap al sensor (τ 0,35 s quiet) és més forta
+ * que l'ancoratge (τ 0,5 s), i el sistema es quedava en un punt d'equilibri
+ * entremig. Mesurat: 5,74° de residu permanent amb confiança 1 —deu diàmetres
+ * solars i mig— amb el terreny sempre a la vista i vint segons de marge.
+ *
+ * La correcció absoluta s'aplicava i es desfeia al fotograma següent, perquè la
+ * fusió no recordava que la brúixola menteix. Ara n'aprèn el biaix.
+ *
+ * Aquest test és el que impedeix tornar-hi: si algú treu el biaix o el fa
+ * aprendre massa lent, el residu torna a pujar i això es posa vermell.
+ */
+describe('la brúixola desviada i el terreny', () => {
+  const VERITAT_AZ = 100;
+  const SENSOR_AZ = 110; // deu graus fora, el cas de vora un cotxe o un trípode
+  const ALT = 5;
+
+  function convergeix(confidence: number, segons = 20): number {
+    const fusion = new PoseFusion();
+    let out = { azimuthDeg: 0, altitudeDeg: 0 };
+    const dt = 1 / 60;
+    for (let i = 0; i < segons * 60; i++) {
+      out = fusion.update({
+        sensorAzimuthDeg: SENSOR_AZ,
+        sensorAltitudeDeg: ALT,
+        imageRollDeg: 0,
+        newFrame: i % 2 === 0,
+        visual: null,
+        sensorSpeedDegPerSec: 0,
+        dtSec: dt,
+        anchor: { azimuthDeg: VERITAT_AZ, altitudeDeg: ALT, confidence },
+      });
+    }
+    return Math.abs(out.azimuthDeg - VERITAT_AZ);
+  }
+
+  it('amb el terreny a la vista, el residu baixa de mig grau', () => {
+    // Mig grau és el número d'ESTAT.md, i és menys d'un diàmetre solar.
+    expect(convergeix(1)).toBeLessThan(0.5);
+    expect(convergeix(0.8)).toBeLessThan(0.5);
+  });
+
+  it('amb un ancoratge mediocre encara guanya, però amb menys marge', () => {
+    // Confiança 0,5 és un aparellament just: ha de corregir igualment, però no
+    // se li pot exigir la mateixa precisió.
+    expect(convergeix(0.5)).toBeLessThan(1.5);
+  });
+
+  it('sense terreny a la vista, la brúixola mana i l’error es queda', () => {
+    // El contrast que dona sentit al de dalt: sense ancoratge no hi ha res que
+    // pugui saber que la brúixola menteix, i la superposició ha d'anar on el
+    // sensor diu. Si això fallés, voldria dir que ens estem inventant un nord.
+    const fusion = new PoseFusion();
+    let out = { azimuthDeg: 0, altitudeDeg: 0 };
+    for (let i = 0; i < 20 * 60; i++) {
+      out = fusion.update({
+        sensorAzimuthDeg: SENSOR_AZ,
+        sensorAltitudeDeg: ALT,
+        imageRollDeg: 0,
+        newFrame: i % 2 === 0,
+        visual: null,
+        sensorSpeedDegPerSec: 0,
+        dtSec: 1 / 60,
+        anchor: null,
+      });
+    }
+    expect(Math.abs(out.azimuthDeg - SENSOR_AZ)).toBeLessThan(0.5);
+  });
+});
