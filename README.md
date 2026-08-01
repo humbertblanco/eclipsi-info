@@ -1,12 +1,20 @@
 # eclipsi.info
 
-Simulador dels eclipsis solars que es veuran des d'Espanya el **12 d'agost de
-2026** (total), el **2 d'agost de 2027** (parcial) i el **26 de gener de 2028**
-(anular).
+**Des del punt exacte on seràs: quants segons d'eclipsi veuràs de debò, a quina
+hora, cap a on has de mirar, i si hi ha una muntanya al mig.**
 
-No és un compte enrere. La pregunta que respon és una altra: **des del punt
-exacte on seràs, quants segons en veuràs de debò, a quina hora, cap a on has de
-mirar, i si hi ha alguna muntanya al mig.**
+Simulador dels tres eclipsis solars que es veuran des d'Espanya aquesta dècada.
+No és un compte enrere: la pregunta que respon és una altra.
+
+→ **[Prova'l](https://lacuinade.estic.online/eclipsi/)**
+
+| Data | Què és | Des d'Espanya |
+|---|---|---|
+| **12 d'agost de 2026** | Total | La franja creua de Galícia i Astúries fins a les Balears. El Sol, entre 12° i 1° sobre l'horitzó: gairebé a la posta |
+| **2 d'agost de 2027** | Total al nord d'Àfrica | Parcial, i molt profund al sud |
+| **26 de gener de 2028** | Anular | L'anell passa per la península |
+
+El del 2026 és la primera totalitat a l'Europa continental des del 1999.
 
 ## Què el fa diferent
 
@@ -33,17 +41,16 @@ mirar, i si hi ha alguna muntanya al mig.**
 
 ## Estat
 
-En desenvolupament. Es pot provar a
-[lacuinade.estic.online/eclipsi](https://lacuinade.estic.online/eclipsi/).
-
-[**ESTAT.md**](ESTAT.md) explica on som: com es desplega, què s'ha comprovat,
-què queda obert i quines decisions no s'han de desfer per accident.
+En desenvolupament, i ja es pot fer servir. El que queda obert, el que s'ha
+mesurat i el que **no s'ha de tornar a trencar** són a **[ESTAT.md](ESTAT.md)**,
+que és el document de traspàs real del projecte.
 
 ## Com córrer-ho
 
 ```bash
 npm install
-npm run dev        # servidor de desenvolupament
+npm run dev        # servidor de desenvolupament, amb HTTPS: sense context
+                   # segur, iOS no dona ni càmera ni sensors d'orientació
 npm run build      # compilació de producció
 npm test           # bateria de proves
 npm run lint
@@ -51,10 +58,10 @@ npm run lint
 
 ## Com està fet
 
-React 19 + TypeScript + Vite, sense servidor: tot el càlcul es fa al
-dispositiu. `src/core` és el motor i no depèn del DOM —es pot córrer a Node i és
-on viu el gruix de les proves—; `src/features` són les vistes; `src/ui` és el
-sistema de disseny.
+React 19 + TypeScript + Vite, **sense servidor**: tot el càlcul es fa al
+dispositiu i la ubicació no en surt. `src/core` és el motor i no depèn del
+DOM —es pot córrer a Node i és on viu el gruix de les proves—; `src/features`
+són les vistes; `src/ui` és el sistema de disseny.
 
 | Carpeta | Què hi ha |
 |---|---|
@@ -66,10 +73,10 @@ sistema de disseny.
 | `src/core/spots` | Cercador de llocs millors a prop teu |
 | `src/features/ar` | Càmera, fusió de sensors i ancoratge al terreny |
 
-Els comentaris del codi expliquen **per què** cada cosa és com és, sovint amb la
-mesura que ho va decidir. És a posta: en un projecte on un error de quatre
-segons desplaça una franja d'ombra cinquanta-cinc quilòmetres, saber d'on surt
-una constant importa més que saber què fa.
+**El codi i els comentaris són en català.** Els comentaris expliquen **per què**
+cada cosa és com és, sovint amb la mesura que ho va decidir. És a posta: en un
+projecte on un error de quatre segons desplaça una franja d'ombra cinquanta-cinc
+quilòmetres, saber d'on surt una constant importa més que saber què fa.
 
 ## Fonts
 
@@ -77,9 +84,16 @@ Efemèrides amb [astronomy-engine](https://github.com/cosinekitty/astronomy).
 Elements besselians i trajectòries de Fred Espenak (NASA/GSFC). Dades
 d'observació de l'IGN. Model del terreny d'[AWS Terrain
 Tiles](https://registry.opendata.aws/terrain-tiles/). Cartografia i topònims
-d'OpenStreetMap (noms via Photon, komoot). Meteorologia d'Open-Meteo. Seguretat
-ocular segons l'IGN, l'AAS i la norma ISO 12312-2.
+d'OpenStreetMap (noms via Photon, komoot; tessel·les de CARTO). Meteorologia
+d'Open-Meteo. Seguretat ocular segons l'IGN, l'AAS i la norma ISO 12312-2.
+
+## Qui l'ha fet
+
+[Humbert Blanco](https://x.com/humbertblanco) i
+[Damos en el Blanco](https://damosenelblanco.com).
 
 ## Llicència
 
-Encara sense decidir.
+Encara sense decidir. Mentre no ho estigui, el codi es publica per poder-lo
+llegir i comprovar —que en una app que diu si et pots treure una protecció
+ocular no és un detall menor—, no per reutilitzar-lo.
