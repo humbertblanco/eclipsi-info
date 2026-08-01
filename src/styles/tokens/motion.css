@@ -11,7 +11,12 @@
 --t-press:transform var(--dur-instant) var(--ease-standard);
 --t-color:background-color var(--dur-fast) var(--ease-standard),color var(--dur-fast) var(--ease-standard),border-color var(--dur-fast) var(--ease-standard);
 }
+/* `prefers-reduced-motion` col·lapsa TOTES les durades, `--dur-instant`
+   inclosa: és la que mou `--t-press`, o sigui l'escalat de premuda de cada botó
+   de l'app. Deixar-la fora volia dir que qui demana menys moviment continuava
+   rebent l'única animació que es dispara a cada toc. */
 @media (prefers-reduced-motion:reduce){:root{
+--dur-instant:1ms;
 --dur-fast:1ms;
 --dur-base:1ms;
 --dur-slow:1ms;

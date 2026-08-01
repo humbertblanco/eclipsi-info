@@ -15,14 +15,21 @@
  *     fixar. Sense això no es pot ser honest, perquè l'etiqueta i les xifres
  *     podrien anar desaparellades.
  *   · L'últim lloc es recupera en obrir l'app, però marcat amb `restored` per
- *     poder dir que ve d'una altra estona i no del gest d'ara.
+ *     poder dir que ve d'una altra estona i no del gest d'ara. I si l'altitud
+ *     que en torna no ve del model del terreny, es torna a demanar: desada una
+ *     vegada, una altitud suposada no la revisava mai ningú.
  *
  * L'ALTITUD MAI DEL GPS. L'error vertical d'un GPS de mòbil és de ±10 a ±30 m,
  * i trenta metres desplacen l'horitzó visible prou com per canviar el veredicte
  * de si una muntanya et tapa el Sol. La posició HORITZONTAL del GPS sí que és
  * bona (±5 m) i amb ella el model del terreny dona l'altitud molt millor que el
  * propi GPS. La del GPS es guarda igualment a `gpsElevationM`, però només per
- * poder avisar quan les dues discrepen molt (vegeu `elevationDisagrees`).
+ * poder avisar quan les dues discrepen molt — i ni tan sols això es pot fer a
+ * la babalà, perquè no es compten des de la mateixa superfície (vegeu
+ * `elevationDisagrees` a `location.ts`).
+ *
+ * L'ORDRE DE LES DUES PASSADES —primer la posició, després l'altitud— viu a
+ * `observerFlow.ts`, sense React, que és l'únic lloc on es pot provar.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -33,8 +40,18 @@ import {
   isSamePlace,
   type ElevationSource,
   type FixedLocation,
-  type LocationOrigin,
 } from './location';
+import {
+  fixAndResolve,
+  fixFromPick,
+  fixFromPosition,
+  fixFromStored,
+  toRecent,
+  type FixFlow,
+  type FixPhase,
+  type PlacePick,
+  type ResolvedElevation,
+} from './observerFlow';
 import {
   MAX_RECENTS,
   readAsked,
@@ -49,6 +66,7 @@ import {
 } from './recentPlaces';
 
 export type { ElevationSource } from './location';
+export type { PlacePick } from './observerFlow';
 
 /**
  * Per què ha fallat la ubicació.
@@ -68,15 +86,6 @@ export type LocationErrorCode =
 
 /** Estat del permís de geolocalització, quan el navegador el sap dir. */
 export type PermissionState = 'granted' | 'denied' | 'prompt' | 'unknown';
-
-/** Un lloc que es demana fixar. L'altitud la resol aquest hook, no qui el crida. */
-export interface PlacePick {
-  lat: number;
-  lon: number;
-  origin: LocationOrigin;
-  /** Nom, si qui el tria ja el sap (per exemple un resultat de la cerca). */
-  label?: string | null;
-}
 
 export interface ObserverApi {
   /** El punt actiu amb tot el seu context. `null` mentre no n'hi ha cap. */
@@ -136,28 +145,15 @@ function errorCode(err: GeolocationPositionError): LocationErrorCode {
  * ho diu perquè la interfície ho pugui matisar.
  */
 async function resolveElevation(
-  lat: number,
-  lon: number,
+  location: GeoLocation,
   gpsElevationM: number | null,
-): Promise<{ elevation: number; source: ElevationSource }> {
+): Promise<ResolvedElevation> {
   try {
-    return { elevation: await elevationAt(lon, lat), source: 'dem' };
+    return { elevation: await elevationAt(location.lon, location.lat), source: 'dem' };
   } catch {
     if (gpsElevationM !== null) return { elevation: gpsElevationM, source: 'gps' };
     return { elevation: 0, source: 'assumed' };
   }
-}
-
-function toRecent(fix: FixedLocation): RecentPlace {
-  return {
-    lat: fix.location.lat,
-    lon: fix.location.lon,
-    elevation: fix.location.elevation,
-    elevationSource: fix.elevationSource,
-    label: fix.label,
-    origin: fix.origin,
-    atMs: fix.atMs,
-  };
 }
 
 export function useObserver(): ObserverApi {
@@ -198,15 +194,55 @@ export function useObserver(): ObserverApi {
   const recentsRef = useRef<readonly RecentPlace[]>([]);
   recentsRef.current = recents;
 
-  const commit = useCallback((fix: FixedLocation, remember: boolean) => {
-    setState({ fix, error: null, loading: false });
-    if (!remember) return;
-    const entry = toRecent(fix);
-    const next = mergeRecent(recentsRef.current, entry);
-    writeLastPlace(entry);
-    writeRecents(next);
+  /**
+   * Posa la llista a la referència I a l'estat, en aquest ordre.
+   *
+   * La referència no pot esperar el proper dibuix. Entre `setRecents` i el
+   * render que l'aplica hi caben coses: en arrencar, el retorn de la tessel·la
+   * del terreny arriba just després de carregar l'historial, i si llegís la
+   * referència vella escriuria al disc la llista buida de fa un moment. O sigui
+   * que l'historial sencer desapareixeria per haver anat a buscar una altitud.
+   */
+  const applyRecents = useCallback((next: readonly RecentPlace[]) => {
+    recentsRef.current = next;
     setRecents(next);
   }, []);
+
+  const commit = useCallback(
+    (fix: FixedLocation, remember: boolean) => {
+      // La referència, abans que l'estat i pel mateix motiu: la segona passada
+      // (la de l'altitud) llegeix `fixRef` per no perdre el nom que hagi pogut
+      // arribar mentrestant, i no pot dependre de quan React torni a dibuixar.
+      fixRef.current = fix;
+      setState({ fix, error: null, loading: false });
+      if (!remember) return;
+      const entry = toRecent(fix);
+      const next = mergeRecent(recentsRef.current, entry);
+      writeLastPlace(entry);
+      writeRecents(next);
+      applyRecents(next);
+    },
+    [applyRecents],
+  );
+
+  /**
+   * Munta el context d'una petició: on va el resultat, qui resol l'altitud i
+   * com se sap que la petició ja no interessa.
+   *
+   * `remember` va per passades perquè no totes dues volen el mateix. En
+   * restaurar l'últim lloc, la primera passada NO s'ha de tornar a desar —ve
+   * justament d'allà— però l'altitud que s'aconsegueix després SÍ, o cada
+   * arrencada tornaria a demanar la mateixa tessel·la per sempre.
+   */
+  const flowFor = useCallback(
+    (mine: number, remember: Record<FixPhase, boolean>): FixFlow => ({
+      commit: (fix, phase) => commit(fix, remember[phase]),
+      resolve: resolveElevation,
+      stale: () => ticket.current !== mine,
+      current: () => fixRef.current,
+    }),
+    [commit],
+  );
 
   /**
    * Fixa el lloc triat.
@@ -224,40 +260,21 @@ export function useObserver(): ObserverApi {
    * resoldre, i quan la tessel·la arriba s'hi afegeix. Les xifres que es veuen
    * mentrestant són les d'ON HAS TRIAT, que és el que l'usuari espera; l'error
    * que hi introdueix no tenir encara l'altitud és petit i està marcat com a
-   * tal amb `elevationSource: 'pending'`.
+   * tal amb `elevationSource: 'pending'`. L'ordre exacte és a `observerFlow.ts`,
+   * que és on es pot provar sense navegador.
    */
   const setPlace = useCallback(
     async (pick: PlacePick) => {
       const mine = ++ticket.current;
+      // El punt d'exemple no és un lloc de l'usuari i no ha d'embrutar
+      // l'historial ni tornar sol la propera vegada.
       const remember = pick.origin !== 'default';
-
-      // 1. El punt, ja. Sense esperar res.
-      commit(
-        {
-          location: { lat: pick.lat, lon: pick.lon, elevation: 0 },
-          origin: pick.origin,
-          label: pick.label ?? null,
-          accuracyM: null,
-          elevationSource: 'pending',
-          gpsElevationM: null,
-          atMs: Date.now(),
-          restored: false,
-        },
-        // El punt d'exemple no és un lloc de l'usuari i no ha d'embrutar
-        // l'historial ni tornar sol la propera vegada.
-        remember,
+      await fixAndResolve(
+        fixFromPick(pick, Date.now()),
+        flowFor(mine, { placed: remember, elevation: remember }),
       );
-
-      // 2. L'altitud, quan es pugui. Si falla, el punt es queda igualment i el
-      //    veredicte d'horitzó dirà que l'altitud no està verificada.
-      const { elevation, source } = await resolveElevation(pick.lat, pick.lon, null);
-      if (ticket.current !== mine) return;
-
-      const current = fixRef.current;
-      if (current === null) return;
-      commit({ ...current, location: { ...current.location, elevation }, elevationSource: source }, remember);
     },
-    [commit],
+    [flowFor],
   );
 
   const setManual = useCallback(
@@ -275,6 +292,18 @@ export function useObserver(): ObserverApi {
     [setPlace],
   );
 
+  /**
+   * «On soc ara».
+   *
+   * LA POSICIÓ DEL GPS ES DONA PER BONA EN EL MOMENT QUE ARRIBA, igual que a
+   * `setPlace` i pel mateix motiu. Abans aquí s'esperava la tessel·la del
+   * terreny abans de fixar res, i el cas que ho va destapar és el pitjor
+   * possible: el dia de l'eclipsi, amb cobertura dolenta, el GPS respon als
+   * 12 s i la tessel·la triga 8 s més. Durant vint segons sencers la barra deia
+   * «Cercant el senyal…» i `fix` era `null` —cap hora, cap compte enrere— quan
+   * la posició ja se sabia des del segon dotze. L'altitud arriba després i, si
+   * no arriba, el punt es queda igualment amb la font dient què li falta.
+   */
   const locate = useCallback(() => {
     if (!('geolocation' in navigator)) {
       setState((s) => ({ ...s, error: 'unsupported', loading: false }));
@@ -284,28 +313,24 @@ export function useObserver(): ObserverApi {
     setState((s) => ({ ...s, loading: true, error: null }));
 
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude, accuracy, altitude } = pos.coords;
-        const gpsElevationM = altitude ?? null;
-        const { elevation, source } = await resolveElevation(
-          latitude,
-          longitude,
-          gpsElevationM,
-        );
-        if (ticket.current !== mine) return;
+      (pos) => {
+        // El permís s'apunta encara que la resposta arribi tard i s'acabi
+        // descartant: que l'usuari hagi dit que sí segueix essent cert.
         setPermission('granted');
-        commit(
-          {
-            location: { lat: latitude, lon: longitude, elevation },
-            origin: 'gps',
-            label: null,
-            accuracyM: accuracy,
-            elevationSource: source,
-            gpsElevationM,
-            atMs: Date.now(),
-            restored: false,
-          },
-          true,
+        const { latitude, longitude, accuracy, altitude } = pos.coords;
+        void fixAndResolve(
+          fixFromPosition(
+            {
+              lat: latitude,
+              lon: longitude,
+              accuracyM: accuracy,
+              // L'altitud del GPS no calcula res: només serveix per poder
+              // avisar quan discrepa molt del model (vegeu `elevationDisagrees`).
+              gpsElevationM: altitude ?? null,
+            },
+            Date.now(),
+          ),
+          flowFor(mine, { placed: true, elevation: true }),
         );
       },
       (err) => {
@@ -319,7 +344,7 @@ export function useObserver(): ObserverApi {
       // ja hi ha una posició fresca, que al camp val bateria de debò.
       { enableHighAccuracy: true, timeout: 15_000, maximumAge: 60_000 },
     );
-  }, [commit]);
+  }, [flowFor]);
 
   /**
    * Posa el nom al punt actiu.
@@ -332,40 +357,57 @@ export function useObserver(): ObserverApi {
    * un nom equivocat a l'historial és pitjor que cap nom — perquè s'hi torna
    * confiant en ell.
    */
-  const setLabel = useCallback((label: string | null) => {
-    const current = fixRef.current;
-    if (current === null || current.label === label) return;
+  const setLabel = useCallback(
+    (label: string | null) => {
+      const current = fixRef.current;
+      if (current === null || current.label === label) return;
 
-    const fix: FixedLocation = { ...current, label };
-    writeLastPlace(toRecent(fix));
-    setState((s) => (s.fix === null ? s : { ...s, fix: { ...s.fix, label } }));
+      const fix: FixedLocation = { ...current, label };
+      fixRef.current = fix;
+      setState((s) => (s.fix === null ? s : { ...s, fix: { ...s.fix, label } }));
 
-    // A l'historial s'etiqueta l'entrada que és EL MATEIX LLOC que el punt
-    // actiu, no la primera. Si el punt actiu és el d'exemple (que no entra a
-    // l'historial) o si l'usuari ja s'ha mogut mentre el nom viatjava per la
-    // xarxa, etiquetar «la primera» posaria el nom d'un lloc damunt d'un altre.
-    // Un nom equivocat a l'historial és pitjor que cap nom: s'hi torna confiant
-    // en ell.
-    let touched = false;
-    const next = recentsRef.current.map((item) => {
-      const same = isSamePlace(
-        { lat: item.lat, lon: item.lon, elevation: item.elevation },
-        current.location,
-      );
-      if (!same) return item;
-      touched = true;
-      return { ...item, label };
-    });
-    if (!touched) return;
-    writeRecents(next);
-    setRecents(next);
-  }, []);
+      // EL PUNT D'EXEMPLE NO ES DESA, TAMPOC AQUÍ. Posar-li el nom és una crida
+      // de xarxa com qualsevol altra i abans arribava i escrivia l'últim lloc
+      // sense mirar res, saltant-se la regla de `setPlace`. N'hi havia prou amb
+      // obrir l'app un cop, deixar que resolgués el nom del punt d'Astúries, i
+      // a partir d'aquell moment l'app arrencava sempre allà: xifres perfectes
+      // d'un lloc on l'usuari no ha estat mai, i sense el cartell que ho digués,
+      // perquè en tornar del disc `origin` ja no era `default`.
+      if (current.origin === 'default') return;
 
-  const forget = useCallback((target: GeoLocation) => {
-    const next = removeRecent(recentsRef.current, target);
-    writeRecents(next);
-    setRecents(next);
-  }, []);
+      writeLastPlace(toRecent(fix));
+
+      // A l'historial s'etiqueta l'entrada que és EL MATEIX LLOC que el punt
+      // actiu, no la primera. Si el punt actiu és el d'exemple (que no entra a
+      // l'historial) o si l'usuari ja s'ha mogut mentre el nom viatjava per la
+      // xarxa, etiquetar «la primera» posaria el nom d'un lloc damunt d'un altre.
+      // Un nom equivocat a l'historial és pitjor que cap nom: s'hi torna confiant
+      // en ell.
+      let touched = false;
+      const next = recentsRef.current.map((item) => {
+        const same = isSamePlace(
+          { lat: item.lat, lon: item.lon, elevation: item.elevation },
+          current.location,
+        );
+        if (!same) return item;
+        touched = true;
+        return { ...item, label };
+      });
+      if (!touched) return;
+      writeRecents(next);
+      applyRecents(next);
+    },
+    [applyRecents],
+  );
+
+  const forget = useCallback(
+    (target: GeoLocation) => {
+      const next = removeRecent(recentsRef.current, target);
+      writeRecents(next);
+      applyRecents(next);
+    },
+    [applyRecents],
+  );
 
   const dismissIntro = useCallback(() => {
     writeAsked();
@@ -379,30 +421,29 @@ export function useObserver(): ObserverApi {
     if (bootstrapped.current) return;
     bootstrapped.current = true;
 
-    setRecents(readRecents().slice(0, MAX_RECENTS));
+    applyRecents(readRecents().slice(0, MAX_RECENTS));
     setNeedsIntro(!readAsked());
 
     // L'últim lloc torna, però marcat: ve d'una altra estona i les condicions
     // (i els plans de l'usuari) poden haver canviat des de llavors.
+    //
+    // I SI L'ALTITUD DESADA NO VE DEL MODEL, ES TORNA A DEMANAR. Una altitud
+    // `assumed` o `gps` desada vol dir que aquell dia no hi va haver tessel·la;
+    // restaurar-la tal qual la fa eterna, i el zero d'un punt que és a 1.520 m
+    // se'n va a les hores dels contactes i al veredicte d'horitzó sense que res
+    // ho torni a mirar mai. Ara, si hi ha xarxa, l'arrencada la repara i la desa
+    // arreglada perquè la propera vegada ja no calgui.
     const last = readLastPlace();
     if (last !== null) {
-      setState({
-        fix: {
-          location: { lat: last.lat, lon: last.lon, elevation: last.elevation },
-          origin: last.origin,
-          label: last.label,
-          accuracyM: null,
-          // La font que es va desar, i no una de suposada. Les entrades
-          // antigues no la porten: llavors no se sap i es diu que no se sap,
-          // que és millor que afirmar que ve del model sense saber-ho.
-          elevationSource: last.elevationSource ?? 'assumed',
-          gpsElevationM: null,
-          atMs: last.atMs,
-          restored: true,
-        },
-        error: null,
-        loading: false,
-      });
+      const restored = fixFromStored(last);
+      void fixAndResolve(
+        restored,
+        // La primera passada no es torna a desar: acaba de sortir del disc.
+        flowFor(++ticket.current, {
+          placed: false,
+          elevation: restored.origin !== 'default',
+        }),
+      );
     }
 
     // Estat del permís, quan el navegador el sap dir. Serveix per no oferir
@@ -420,7 +461,10 @@ export function useObserver(): ObserverApi {
           /* Safari antic no en sap. Ens quedem amb 'unknown'. */
         });
     }
-  }, []);
+    // Totes dues són estables (`useCallback` sense dependències canviants); hi
+    // són perquè la llista sigui certa, no perquè l'efecte s'hagi de repetir:
+    // d'això ja se n'encarrega `bootstrapped`.
+  }, [applyRecents, flowFor]);
 
   return {
     fix: state.fix,

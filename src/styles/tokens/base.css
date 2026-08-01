@@ -7,7 +7,12 @@ h2{font:var(--text-title-1)}
 h3{font:var(--text-title-2)}
 h4{font:var(--text-title-3)}
 p{margin:0 0 var(--sp-5)}
-a{color:var(--text-link);text-decoration:none;border-bottom:1px solid rgba(255,165,31,.35);transition:var(--t-color)}
+/* El subratllat del vincle deriva de l'accent en comptes de repetir-ne l'rgba a
+   mà: `rgba(255,165,31,.35)` era --sun-500 escrit a pèl, i si l'ambre es mou el
+   subratllat es queda enrere. No es fa servir --accent-quiet (14%) perquè a
+   aquesta opacitat la línia pràcticament desapareix sobre --ink-950 i el vincle
+   es queda sense la seva única marca a banda del color. */
+a{color:var(--text-link);text-decoration:none;border-bottom:var(--bw-hair) solid color-mix(in srgb,var(--accent) 35%,transparent);transition:var(--t-color)}
 a:hover{color:var(--text-link-hover);border-bottom-color:var(--text-link-hover)}
 :focus-visible{outline:none;box-shadow:var(--ring-focus)}
 ::selection{background:var(--accent-quiet);color:var(--text-primary)}

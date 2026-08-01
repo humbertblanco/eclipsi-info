@@ -10,14 +10,20 @@
  * 2. QUE UNA ENTRADA CORRUPTA NO S'ENDUGUI L'APP. El contingut de
  *    `localStorage` és de l'usuari i sobreviu a les versions. Una `lat` que és
  *    text acabaria com un `NaN` dins del càlcul d'efemèrides i sortiria a la
- *    pantalla en forma d'hora invàlida, molt lluny d'on es va originar.
+ *    pantalla en forma d'hora invàlida, molt lluny d'on es va originar. I un
+ *    `origin` que no existeix és pitjor encara: la barra de la ubicació el fa
+ *    servir per anar a buscar un text, no el troba, peta, i com que la barra
+ *    viu fora de l'`ErrorBoundary` se'n duu l'app sencera — a cada arrencada,
+ *    perquè el valor es torna a llegir del disc.
  */
 
 import { describe, expect, it } from 'vitest';
 import {
   MAX_RECENTS,
   mergeRecent,
+  parseLastPlace,
   parseRecents,
+  persistedElevationSource,
   removeRecent,
   type RecentPlace,
 } from './recentPlaces';
@@ -131,5 +137,127 @@ describe('llegir el que hi ha desat', () => {
       Array.from({ length: 40 }, (_, i) => place(40 + i * 0.1, 0)),
     );
     expect(parseRecents(raw)).toHaveLength(MAX_RECENTS);
+  });
+});
+
+describe('valors d’enumeració que no existeixen', () => {
+  /*
+   * Aquests no són casos teòrics. Hi arriba qualsevol versió antiga de l'app
+   * amb un valor que després es va treure, qualsevol prova a mig fer, i
+   * qualsevol persona que obri les eines del navegador. Fins ara passaven la
+   * validació —«és text, doncs endavant»— i el que petava era la pantalla.
+   */
+
+  it('un origen inventat es descarta', () => {
+    const raw = JSON.stringify([
+      { lat: 41, lon: 2, elevation: 0, label: null, origin: 'HACK', atMs: 1 },
+    ]);
+    expect(parseRecents(raw)).toEqual([]);
+  });
+
+  it('una font d’altitud inventada es descarta', () => {
+    const raw = JSON.stringify([
+      {
+        lat: 41,
+        lon: 2,
+        elevation: 0,
+        label: null,
+        origin: 'map',
+        elevationSource: 'moon',
+        atMs: 1,
+      },
+    ]);
+    expect(parseRecents(raw)).toEqual([]);
+  });
+
+  it('els cinc orígens de debò passen', () => {
+    const raw = JSON.stringify(
+      (['gps', 'map', 'search', 'recent', 'default'] as const).map((origin, i) =>
+        place(40 + i, 0, { origin }),
+      ),
+    );
+    expect(parseRecents(raw)).toHaveLength(5);
+  });
+
+  it('les quatre fonts d’altitud de debò passen', () => {
+    const raw = JSON.stringify(
+      (['dem', 'gps', 'assumed', 'pending'] as const).map((elevationSource, i) =>
+        place(40 + i, 0, { elevationSource }),
+      ),
+    );
+    expect(parseRecents(raw)).toHaveLength(4);
+  });
+
+  it('una entrada antiga sense font d’altitud segueix valent', () => {
+    // Que el camp no hi sigui és legítim: vol dir «no se sap». El que no pot
+    // ser és que hi sigui amb un valor que no sabem interpretar.
+    const raw = JSON.stringify([place(41, 2)]);
+    expect(parseRecents(raw)).toHaveLength(1);
+  });
+});
+
+describe('l’últim lloc', () => {
+  /*
+   * Aquest és l'únic valor que es pinta sense que l'usuari toqui res, o sigui
+   * que si no s'entén, l'app peta abans d'ensenyar res i torna a petar a la
+   * propera arrencada. La validació ha de ser la mateixa que la de l'historial.
+   */
+
+  it('res desat no és cap lloc', () => {
+    expect(parseLastPlace(null)).toBeNull();
+  });
+
+  it('un text que no és JSON no peta', () => {
+    expect(parseLastPlace('{no')).toBeNull();
+  });
+
+  it('un origen inventat no arriba mai a la barra', () => {
+    const raw = JSON.stringify({
+      lat: 41,
+      lon: 2,
+      elevation: 0,
+      label: null,
+      origin: 'HACK',
+      atMs: 1,
+    });
+    expect(parseLastPlace(raw)).toBeNull();
+  });
+
+  it('una font d’altitud inventada tampoc', () => {
+    const raw = JSON.stringify({
+      lat: 41,
+      lon: 2,
+      elevation: 0,
+      label: null,
+      origin: 'gps',
+      elevationSource: 'moon',
+      atMs: 1,
+    });
+    expect(parseLastPlace(raw)).toBeNull();
+  });
+
+  it('un lloc bo torna sencer', () => {
+    const raw = JSON.stringify(place(42.5, 0.75, { elevationSource: 'dem', label: 'Refugi' }));
+    expect(parseLastPlace(raw)).toMatchObject({
+      lat: 42.5,
+      lon: 0.75,
+      label: 'Refugi',
+      elevationSource: 'dem',
+    });
+  });
+});
+
+describe('la font de l’altitud que es desa', () => {
+  it('«pendent» no es desa mai', () => {
+    // Vol dir «hi ha una tessel·la de camí», i cap petició sobreviu a tancar
+    // l'app: el que en queda és un zero, i un zero desat com si fos bo posa un
+    // punt de 1.520 m al nivell del mar a totes les hores dels contactes.
+    expect(persistedElevationSource('pending')).toBe('assumed');
+  });
+
+  it('la resta es desen tal com són', () => {
+    expect(persistedElevationSource('dem')).toBe('dem');
+    expect(persistedElevationSource('gps')).toBe('gps');
+    expect(persistedElevationSource('assumed')).toBe('assumed');
   });
 });

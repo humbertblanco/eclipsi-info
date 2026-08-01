@@ -21,4 +21,11 @@
 --tap-min:44px;
 --header-app:56px;
 --tabbar-app:64px;
+/* Alçades fixes dels dos llenços de la pantalla del cel. Són constants de
+   composició, com --header-app: no surten de l'escala de 4 perquè les fixa
+   la proporció del dibuix (l'arc del Sol i la seva trajectòria), no el ritme
+   vertical. Viuen aquí i no a `src/index.css` perquè aquell fitxer no pot
+   contenir cap mida escrita a pèl. */
+--h-canvas-sky:260px;
+--h-canvas-traj:230px;
 }

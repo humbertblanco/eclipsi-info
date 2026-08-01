@@ -2,8 +2,16 @@
 :root{
 /* Nocturn — the sky */
 --ink-950:#05060B;--ink-900:#0A0C14;--ink-800:#121623;--ink-700:#1B2133;--ink-600:#2A3247;
-/* Umbra — neutrals in shadow */
---slate-500:#4E5870;--slate-400:#6E7A94;--slate-300:#9AA5BC;--mist-200:#C9D1E2;--mist-100:#E7EBF3;
+/* Umbra — neutrals in shadow.
+   --slate-350 is a half-step, added for one reason: --slate-400 on
+   --surface-card (#121623) measures 4.18:1, and --text-muted drives 11–14px
+   text (captions, overlines, table headers, hints), which needs 4.5:1 to pass
+   AA. --slate-350 measures 5.13:1 there and 4.55:1 on --surface-card-hover,
+   the lightest surface muted text ever sits on, while staying well below
+   --text-secondary (--slate-300, 7.28:1) so the two tiers stay distinct.
+   --slate-400 itself is NOT moved: it is also --status-cloudy, a data colour
+   whose hue belongs to the visibility palette, not to the text ramp. */
+--slate-500:#4E5870;--slate-400:#6E7A94;--slate-350:#7D89A2;--slate-300:#9AA5BC;--mist-200:#C9D1E2;--mist-100:#E7EBF3;
 /* Corona — the light */
 --corona-100:#F5F0E4;--corona-050:#FBF8F1;--white:#FFFFFF;
 /* Sun — primary accent, the photosphere */
@@ -28,7 +36,7 @@
 --text-primary:var(--corona-050);
 --text-body:var(--mist-200);
 --text-secondary:var(--slate-300);
---text-muted:var(--slate-400);
+--text-muted:var(--slate-350);
 --text-inverse:var(--ink-950);
 --text-accent:var(--sun-400);
 --text-link:var(--sun-400);

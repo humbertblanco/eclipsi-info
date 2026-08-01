@@ -96,8 +96,24 @@ export function useCloudOutlook(params: UseCloudOutlookParams): UseCloudOutlookR
     };
   }, [location, targetTimeMs, sunAzimuthDeg, sunAltitudeDeg]);
 
+  /**
+   * La clau de l'efecte. L'ALTITUD NO HI ÉS, a diferència de la resta.
+   *
+   * Cada tria de lloc fixa el punt dues vegades: primer amb l'altitud a zero
+   * mentre es baixa la tessel·la del terreny i després amb la de debò (vegeu
+   * `state/observerFlow.ts`). Amb l'altitud a la clau, això eren dues consultes
+   * seguides a una API gratuïta amb quota diària, i la primera s'abortava a
+   * mitges: el panell parpellejava de «carregant» a «carregant» sense que la
+   * posició s'hagués mogut ni un metre.
+   *
+   * Es pot treure perquè no la mira ningú riu avall: el punt que va a Open-Meteo
+   * és només `{ lat, lon }` i la clau de la memòria cau del nucli tampoc no la
+   * porta. El mateix lloc amb 0 m o amb 1.520 m torna exactament la mateixa
+   * predicció. L'altitud segueix viatjant dins de `location` perquè la resposta
+   * la retorna enganxada, però no ha de disparar cap consulta.
+   */
   const key = query
-    ? `${query.lat},${query.lon},${query.elevation},${query.hour},${query.az},${query.alt}`
+    ? `${query.lat},${query.lon},${query.hour},${query.az},${query.alt}`
     : null;
 
   useEffect(() => {

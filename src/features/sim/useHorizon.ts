@@ -113,22 +113,40 @@ export function useHorizon(
   // render del component que ens crida i dispararia l'efecte sense parar.
   const lat = location === null ? null : roundCoordinate(location.lat);
   const lon = location === null ? null : roundCoordinate(location.lon);
-  // Arrodonida al metre: ja no és l'origen del perfil (h0 surt del model), però
-  // sí que serveix per detectar que l'altitud que ens passen no hi quadra, i no
-  // volem que un decimal que balla rellanci l'efecte.
-  const elevation = location === null ? null : Math.round(location.elevation);
+
+  /**
+   * L'ALTITUD VA PER REFERÈNCIA I NO PER DEPENDÈNCIA. És el que costa 10-20 MB.
+   *
+   * Cada tria de lloc fixa el punt DUES vegades: primer amb l'altitud a zero i
+   * la font a `pending`, i uns segons més tard amb la del model del terreny
+   * (vegeu `state/observerFlow.ts`). Amb l'altitud a les dependències, la segona
+   * fixació rellançava l'efecte: matava el Worker a mig baixar tessel·les i el
+   * tornava a engegar des de la primera. O sigui que cada lloc que es tria
+   * baixava el paquet sencer dues vegades, i la segona just quan l'usuari ja
+   * estava mirant la barra de progrés avançar.
+   *
+   * Es pot treure perquè NO POT CANVIAR EL PERFIL: `computeHorizonProfile` treu
+   * h0 del model del terreny al punt de l'observador precisament perquè les dues
+   * cotes surtin de la mateixa font, i l'altitud que li passem només va a parar
+   * a tres camps de diagnòstic (`requestedElevation`, `elevationMismatchM`,
+   * `elevationSuspect`) que no pinta ningú. És el mateix motiu pel qual tampoc
+   * no forma part de la clau de la memòria cau (`horizonCacheKey`): si hi fos,
+   * un perfil ja calculat no es tornaria a trobar mai per un metre de diferència.
+   */
+  const elevationRef = useRef(0);
+  elevationRef.current = location === null ? 0 : Math.round(location.elevation);
 
   // Identificador de petició, per ignorar respostes d'un Worker que ja no ens
   // interessa (l'usuari s'ha mogut mentre calculàvem).
   const requestId = useRef(0);
 
   useEffect(() => {
-    if (!enabled || lat === null || lon === null || elevation === null) {
+    if (!enabled || lat === null || lon === null) {
       setState(IDLE);
       return;
     }
 
-    const snapped: GeoLocation = { lat, lon, elevation };
+    const snapped: GeoLocation = { lat, lon, elevation: elevationRef.current };
     const signature = ringSignature(
       maxRangeKm === undefined ? DEFAULT_RINGS : clipRings(maxRangeKm),
       azimuthStepDeg,
@@ -276,16 +294,7 @@ export function useHorizon(
         worker = null;
       }
     };
-  }, [
-    enabled,
-    lat,
-    lon,
-    elevation,
-    azimuthStepDeg,
-    maxRangeKm,
-    heightAboveGroundM,
-    nonce,
-  ]);
+  }, [enabled, lat, lon, azimuthStepDeg, maxRangeKm, heightAboveGroundM, nonce]);
 
   return { ...state, reload };
 }

@@ -501,9 +501,14 @@
   display: grid;
 }
 
+/* 44 px, no 40. Aquest és el commutador de mode de la càmera i del mapa: es fa
+   servir dret, a fora, amb una sola mà i sovint amb guants o amb el mòbil
+   sostingut cap amunt. `--sp-9` (40 px) quedava per sota del mínim tàctil del
+   sistema i no hi ha cap raó de densitat que ho justifiqui: el segmentat viu
+   sol a la seva fila. */
 .ui-seg__opt {
   min-width: 0;
-  min-height: var(--sp-9);
+  min-height: var(--tap-min);
   padding: 0 var(--sp-5);
   border: none;
   border-radius: var(--r-pill);
@@ -616,12 +621,20 @@
 
 /* El control natiu, redibuixat. Es manté `input[type=range]` i no es reinventa
    amb divs perquè el teclat, el lector de pantalla i l'arrossegament amb el dit
-   ja hi funcionen; refer-ho a mà vol dir perdre les tres coses. */
+   ja hi funcionen; refer-ho a mà vol dir perdre les tres coses.
+
+   L'ALÇADA ÉS L'ÀREA TÀCTIL, no el gruix de la via. La via fa `--sp-2` (4 px) i
+   el botó `--sp-6` (20 px); el que decideix on pots posar el dit és l'alçada de
+   l'`input`. A `--sp-7` (24 px) la banda sensible d'aquest control —que és el
+   scrub principal del simulador, el que s'arrossega amb el polze mentre es mira
+   el cel— es quedava a 24 px, molt per sota dels 44 del sistema. La via i el
+   botó no es mouen: tots dos van centrats dins la caixa i només creix el que no
+   es veu. */
 .ui-range__input {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: var(--sp-7);
+  height: var(--tap-min);
   background: transparent;
   cursor: pointer;
 }
@@ -706,14 +719,20 @@
 }
 
 /* La marca vertical sobre la via. Sense ella, les etiquetes C1/C2/C4 suren
-   sota el control i no assenyalen cap punt concret del recorregut. */
+   sota el control i no assenyalen cap punt concret del recorregut.
+
+   L'alçada es DEDUEIX de la geometria en comptes de posar-hi un número: cal
+   travessar el buit del flex (`--sp-3`) més la meitat buida de la caixa de
+   l'`input`, que ara fa `--tap-min` d'alt amb una via de `--sp-2`. Escrita
+   així, la marca continua tocant la via si demà canvia el mínim tàctil o el
+   gruix de la via. */
 .ui-range__tick::before {
   content: '';
   position: absolute;
   left: 50%;
   bottom: 100%;
   width: var(--bw-hair);
-  height: var(--sp-3);
+  height: calc(var(--sp-3) + (var(--tap-min) - var(--sp-2)) / 2);
   background: var(--border-strong);
 }
 

@@ -192,11 +192,11 @@ body {
 }
 
 .canvas--sky {
-  height: 260px;
+  height: var(--h-canvas-sky);
 }
 
 .canvas--traj {
-  height: 230px;
+  height: var(--h-canvas-traj);
   margin-top: var(--sp-5);
 }
 
@@ -242,7 +242,9 @@ body {
 
 .contacts__label {
   color: var(--text-muted);
-  width: 72px;
+  /* Amplada de la columna de noms de contacte (C1…C4), composta amb l'escala
+     perquè no hi hagi cap número solt: 64 + 8. */
+  width: calc(var(--sp-11) + var(--sp-3));
   font-family: var(--font-body);
 }
 
@@ -382,7 +384,7 @@ body {
 }
 
 .horizonload__bar {
-  height: 4px;
+  height: var(--sp-2);
   background: var(--bg-inset);
   border: var(--bw-hair) solid var(--border-hairline);
   border-radius: var(--r-pill);
@@ -418,7 +420,7 @@ body {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-underline-offset: var(--sp-1);
   cursor: pointer;
 }
 
