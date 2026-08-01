@@ -485,7 +485,7 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
       stopCamera();
       setCameraError(err instanceof Error ? err.message : String(err));
     }
-  }, [orientation, onRequestLocation, stopCamera]);
+  }, [orientation, stopCamera]);
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
