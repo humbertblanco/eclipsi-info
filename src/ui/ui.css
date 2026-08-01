@@ -1199,7 +1199,11 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--sp-4);
-  margin: var(--sp-5) var(--gutter-app);
+  /* El forat pot aparèixer dins d'una superfície a sang (la vista de RA el
+     posa dins d'un marc que arriba de vora a vora): en apaïsat, el marge ha de
+     saltar l'osca o el missatge comença sota l'illa dinàmica. */
+  margin: var(--sp-5) max(var(--gutter-app), env(safe-area-inset-right))
+    var(--sp-5) max(var(--gutter-app), env(safe-area-inset-left));
   padding: var(--sp-6);
   border: var(--bw-hair) dashed var(--border-subtle);
   border-radius: var(--r-lg);
@@ -1266,7 +1270,13 @@
   align-items: center;
   gap: var(--sp-4);
   height: 100%;
-  padding: 0 var(--gutter-app);
+  /* La barra viu sempre enganxada a les vores de la pantalla i amb
+     `viewport-fit=cover` en apaïsat l'osca li cau a sobre: la fletxa d'enrere
+     quedava sota l'illa dinàmica. `max()` i no suma, perquè l'inset lateral ja
+     porta l'aire inclòs i sumar-hi el gutter deixava el primer botó a 79 px de
+     la vora; amb inset zero torna a ser el gutter de sempre. */
+  padding: 0 max(var(--gutter-app), env(safe-area-inset-right)) 0
+    max(var(--gutter-app), env(safe-area-inset-left));
 }
 
 .ui-topbar__text {
