@@ -94,6 +94,13 @@ export function CountdownScreen({
    */
   const showsCorona =
     circumstances?.kind === 'total' &&
+    // I AL CAIRE DE LA FRANJA, TAMPOC. Amb `edgeUncertain` el motor declara
+    // que no pot decidir si des d'aquí hi haurà fase central —la banda de dos
+    // o tres quilòmetres on el nostre error de posició és més gran que el
+    // marge—, i la comporta de seguretat hi respon que no. Que la imatge
+    // prometi una corona que la comporta nega és la contradicció que aquesta
+    // pantalla existeix per no tenir.
+    !circumstances.edgeUncertain &&
     (verdict ? verdict.centralVisibleSec > 0 : (circumstances.centralDurationSec ?? 0) > 0);
 
   const countdownLabel = central

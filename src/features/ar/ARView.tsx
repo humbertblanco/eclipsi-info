@@ -82,7 +82,28 @@ interface Props {
   locale: 'ca' | 'es';
   /** Perfil d'horitzó del terreny, quan ja s'ha calculat. */
   horizon: HorizonProfile | null;
-  /** Demana la ubicació. S'invoca des del mateix gest que obre la càmera. */
+  /**
+   * Si des d'aquest punt la fase central es veu DE DEBÒ, un cop descomptat el
+   * terreny. Ve de `computeVisibility(...).centralVisibleSec > 0`.
+   *
+   * PER QUÈ ÉS UNA PROP I NO ES DEDUEIX AQUÍ. `canRemoveFilter` mira el
+   * terreny, però només si algú l'hi passa: per omissió val `true`, perquè un
+   * `false` silenciaria els avisos a tothom que encara no tingui el perfil
+   * calculat. Aquesta vista no el passava, i el resultat era que en un punt on
+   * el veredicte diu 0 s perquè una carena tapa la totalitat sencera, la veu
+   * del compte enrere callava —`CountdownView` sí que l'hi passa— i el rètol
+   * de la càmera, damunt de la imatge i en imperatiu, seguia dient «ara pots
+   * mirar sense filtre».
+   *
+   * `undefined` vol dir «encara no se sap», que és el que toca mentre el
+   * terreny es baixa: allà mana el valor per omissió.
+   */
+  centralPhaseVisible?: boolean;
+  /**
+   * Demana la ubicació. S'invoca des del botó de coordenades de dins de la
+   * vista, no des del gest d'obrir la càmera: quan aquesta vista es munta, el
+   * lloc ja se sap (`SkyScreen` no la munta sense).
+   */
   onRequestLocation?: () => void;
 }
 
@@ -172,7 +193,14 @@ const INITIAL_DIAGNOSTICS: TrackingDiagnostics = {
   measuredFovDeg: null,
 };
 
-export function ARView({ location, eclipseId, locale, horizon, onRequestLocation }: Props) {
+export function ARView({
+  location,
+  eclipseId,
+  locale,
+  horizon,
+  centralPhaseVisible,
+  onRequestLocation,
+}: Props) {
   // La declinació magnètica converteix el nord de la brúixola en el geogràfic.
   // Sense ella l'error és de −3,51° a Tenerife i +2,07° a Barcelona: sistemàtic,
   // i de sis i quatre diàmetres solars respectivament.
@@ -321,8 +349,10 @@ export function ARView({ location, eclipseId, locale, horizon, onRequestLocation
         c4: circumstances.contacts.c4?.time.getTime(),
       },
       edgeUncertain: circumstances.edgeUncertain,
+      // El terreny. Sense això, `canRemoveFilter` el dona per lliure.
+      centralPhaseVisible,
     }),
-    [circumstances],
+    [circumstances, centralPhaseVisible],
   );
 
 

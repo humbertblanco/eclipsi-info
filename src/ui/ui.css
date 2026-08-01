@@ -1335,6 +1335,17 @@
   gap: var(--sp-3);
   flex: 0 1 auto;
   min-width: 0;
+  /*
+   * I ES QUEDEN A LA DRETA.
+   *
+   * Amb el text a `flex: 1` les accions ja hi quedaven per la pressió del
+   * germà. En treure-li el creixement per protegir el logotip, aquella
+   * pressió va desaparèixer i a la portada d'escriptori les accions se'n van
+   * anar a enganxar-se a la marca, amb mil píxels buits a la dreta. `auto`
+   * torna a clavar-les a la vora sense recuperar l'encongiment del text: quan
+   * hi ha títol i no logotip, el text segueix a `flex: 1` i això és un no-op.
+   */
+  margin-inline-start: auto;
 }
 
 /* La marca no es negocia: si res no hi cap, que cedeixi la resta. */

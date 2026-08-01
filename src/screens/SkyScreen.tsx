@@ -178,6 +178,15 @@ export function SkyScreen({
             eclipseId={eclipseId}
             locale={locale}
             horizon={horizon}
+            /*
+              EL TERRENY, CAP A LA COMPORTA DE LA CÀMERA.
+              Aquesta pantalla té el veredicte a la mà i no l'hi passava: en un
+              punt on una carena tapa la totalitat sencera, la veu del compte
+              enrere callava i el rètol de la càmera seguia autoritzant a
+              mirar. `undefined` mentre no hi ha veredicte, que és «encara no
+              se sap» i no «no es veu».
+            */
+            centralPhaseVisible={verdict ? verdict.centralVisibleSec > 0 : undefined}
             onRequestLocation={onRequestLocation}
           />
         </ErrorBoundary>

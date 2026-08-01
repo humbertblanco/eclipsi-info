@@ -100,10 +100,14 @@ describe('quan es pot mirar sense filtre des de la vista de càmera', () => {
    * dia— es quedava amb «ara pots mirar sense filtre» encès a C3, a C4 i una
    * hora després.
    *
-   * Aquest test no mira una finestra: mira que la resposta DEPENGUI del temps i
-   * que el tancament sigui únic. Si algú torna a congelar el rellotge (memo
-   * sense el temps, valor calculat una vegada, ref que no es refresca), la
-   * seqüència es queda plana i això es posa vermell.
+   * QUÈ VIGILA AIXÒ I QUÈ NO, que la primera versió d'aquest comentari ho deia
+   * malament: vigila la FORMA de la finestra de la funció pura —que hi hagi
+   * exactament una encesa i una apagada, i que la durada oberta sigui la
+   * totalitat menys els dos marges—. NO pot detectar que algú torni a congelar
+   * el rellotge a la vista, perquè la congelació era a `ARView` i aquí el temps
+   * entra com a paràmetre. Mentre no hi hagi proves de components (vegeu
+   * ESTAT.md: `vitest.config.ts` només inclou `*.test.ts` amb entorn `node`),
+   * aquell mode de fallada no el cobreix cap prova.
    */
   it('recorregut sencer: s’encén una vegada i s’apaga sola', () => {
     const answers: boolean[] = [];
@@ -128,6 +132,42 @@ describe('quan es pot mirar sense filtre des de la vista de càmera', () => {
     const centralSec = (c3 - c2) / 1000;
     expect(openSec).toBeGreaterThan(0);
     expect(openSec).toBeLessThan(centralSec - FILTER_OFF_DELAY_SEC);
+  });
+
+  /*
+   * EL TERRENY HA D'ENTRAR A LA COMPORTA DE LA CÀMERA, I NO HI ENTRAVA.
+   *
+   * `canRemoveFilter` mira el terreny només si algú l'hi passa: per omissió
+   * val `true`, perquè un `false` silenciaria els avisos a tothom que encara
+   * no tingui el perfil calculat. `ARView` construïa l'entrada sense el camp,
+   * i el resultat era que en un punt on el veredicte diu 0 s perquè una carena
+   * tapa la totalitat sencera, la veu del compte enrere callava —`CountdownView`
+   * sí que l'hi passa— i el rètol de la càmera, damunt de la imatge i en
+   * imperatiu, seguia dient «ara pots mirar sense filtre».
+   *
+   * És el mateix patró que ESTAT.md §3.1 documenta per tercera vegada: la capa
+   * que té la dada no la passa avall.
+   */
+  it('si el terreny tapa la totalitat, no —encara que l’hora hi caigui', () => {
+    const migTotalitat = (c2 + c3) / 2;
+    const entrada = {
+      kind: OVIEDO.kind,
+      contacts: {
+        c1: OVIEDO.contacts.c1?.time.getTime(),
+        c2,
+        max: OVIEDO.contacts.max.time.getTime(),
+        c3,
+        c4: OVIEDO.contacts.c4?.time.getTime(),
+      },
+      edgeUncertain: OVIEDO.edgeUncertain,
+    };
+
+    // Horitzó lliure (o encara sense saber-ho): al mig de la totalitat, sí.
+    expect(nakedEyeAllowedAt(entrada, migTotalitat)).toBe(true);
+    expect(nakedEyeAllowedAt({ ...entrada, centralPhaseVisible: true }, migTotalitat)).toBe(true);
+
+    // Amb el relleu menjant-se la fase central, mai.
+    expect(nakedEyeAllowedAt({ ...entrada, centralPhaseVisible: false }, migTotalitat)).toBe(false);
   });
 
   it('en un eclipsi ANULAR, mai, ni al mig de l’anell', () => {

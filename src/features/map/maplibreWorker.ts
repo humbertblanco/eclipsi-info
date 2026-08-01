@@ -19,7 +19,7 @@
  *
  *   · Vite en desenvolupament el serveix des de `/node_modules/.vite/deps/`,
  *     on hi ha `maplibre-gl.js` i prou. El worker demanat: 404.
- *   · Rollup en producció el fon dins d'`assets/index-<hash>.js` i hi deixa el
+ *   · Rolldown en producció el fon dins d'`assets/index-<hash>.js` i hi deixa el
  *     nom cru. El worker demanat, `assets/maplibre-gl-worker.mjs`: 404.
  *
  * El worker peta en arrencar i no respon mai. Les tessel·les RÀSTER no el
