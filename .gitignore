@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 dist-check/
 design-reference/
+
+# Worktrees dels agents i estat local de Claude Code. No és del projecte.
+.claude/
