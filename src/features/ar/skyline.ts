@@ -201,20 +201,33 @@ export function predictSkylineY(
   calibration: Calibration,
   viewport: Viewport,
   horizonProfile: (azimuthDeg: number) => number,
+  startY?: number,
 ): number {
-  let y = viewport.height / 2;
-  for (let i = 0; i < 3; i++) {
+  /*
+   * LA LLAVOR I LA CONVERGÈNCIA IMPORTEN. Abans es partia sempre del centre de
+   * pantalla amb tres voltes i CAP comprovació: si no convergia, l'últim
+   * iterat es retornava en silenci — i deixava de convergir justament amb la
+   * càmera inclinada, quan l'horitzó és lluny del centre. Aquell valor a
+   * mitges entrava a l'ajust com a residu I com a base del jacobià, i l'error
+   * resultant era vertical per construcció. Ara es parteix del millor punt
+   * que el cridador tingui (la silueta detectada, o la predicció anterior),
+   * es fan fins a sis voltes, i si tot i així no convergeix es diu NaN: una
+   * columna sense resposta val més que una columna amb la resposta a mitges.
+   */
+  let y = startY ?? viewport.height / 2;
+  for (let i = 0; i < 6; i++) {
     const ray = unprojectFromScreen(screenX, y, camera, calibration, viewport);
     const terrainAlt = horizonProfile(ray.azimuth);
     const projected = projectToScreen(ray.azimuth, terrainAlt, camera, calibration, viewport);
     if (!projected.visible) return Number.NaN;
     if (Math.abs(projected.y - y) < 0.25) {
-      y = projected.y;
-      break;
+      return projected.y >= -viewport.height && projected.y <= 2 * viewport.height
+        ? projected.y
+        : Number.NaN;
     }
     y = projected.y;
   }
-  return y >= -viewport.height && y <= 2 * viewport.height ? y : Number.NaN;
+  return Number.NaN;
 }
 
 /** El que torna l'ancoratge. Tot en graus. */
@@ -232,6 +245,14 @@ export interface SkylineFix {
   used: number;
   /** De 0 a 1. Vegeu `confidenceFrom`. */
   confidence: number;
+  /**
+   * Cert quan la silueta era plana i només s'ha pogut determinar l'ALTURA.
+   * L'azimut retornat és el d'entrada, sense corregir, i `deltaAzimuthDeg` és
+   * zero: qui consumeixi el fix no n'ha d'estirar l'azimut ni, sobretot,
+   * aprendre'n cap biaix de brúixola — un dAz de zero no vol dir «la brúixola
+   * no menteix», vol dir «no ho puc saber».
+   */
+  altitudeOnly: boolean;
 }
 
 /** Correcció màxima que s'accepta d'un sol ajust, en graus. */
@@ -239,6 +260,16 @@ const MAX_CORRECTION_DEG = 25;
 
 /** Columnes mínimes per fiar-se'n. Menys és una taca, no una carena. */
 const MIN_COLUMNS = 8;
+
+/**
+ * Abast horitzontal mínim de la silueta, com a fracció de l'amplada.
+ *
+ * Vuit columnes juntes en un racó no són una carena: són un arbre, una
+ * teulada o un fanal — exactament les coses que el model de terreny nu no té
+ * i que per tant només poden ensenyar errors. Una carena de debò travessa el
+ * quadre.
+ */
+const MIN_SPAN_FRACTION = 0.35;
 
 /**
  * Quanta confiança mereix un ajust.
@@ -278,10 +309,20 @@ export function fitSkyline(
 ): SkylineFix | null {
   if (hits.length < MIN_COLUMNS) return null;
 
+  // Una silueta arraconada no és una carena. Vegeu `MIN_SPAN_FRACTION`.
+  let minX = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  for (const hit of hits) {
+    if (hit.x < minX) minX = hit.x;
+    if (hit.x > maxX) maxX = hit.x;
+  }
+  if (maxX - minX < MIN_SPAN_FRACTION * viewport.width) return null;
+
   let az = camera.azimuth;
   let alt = camera.altitude;
   let keep = hits.slice();
   let rmsPx = 0;
+  let altitudeOnly = false;
   const h = 0.05; // pas del jacobià, en graus
 
   for (let pass = 0; pass < 2; pass++) {
@@ -300,10 +341,21 @@ export function fitSkyline(
       let sumSq = 0;
 
       for (const hit of keep) {
-        const y0 = predictSkylineY(hit.x, pose, calibration, viewport, horizonProfile);
+        // La predicció es llavora amb la silueta DETECTADA, i el jacobià amb
+        // la predicció que acaba de sortir: és on la solució és, no el centre
+        // de pantalla. Amb la càmera inclinada, la diferència entre les dues
+        // llavors era columnes que no convergien — i abans ni ho deien.
+        const y0 = predictSkylineY(hit.x, pose, calibration, viewport, horizonProfile, hit.y);
         if (!Number.isFinite(y0)) continue;
-        const yAz = predictSkylineY(hit.x, posePlusAz, calibration, viewport, horizonProfile);
-        const yAlt = predictSkylineY(hit.x, posePlusAlt, calibration, viewport, horizonProfile);
+        const yAz = predictSkylineY(hit.x, posePlusAz, calibration, viewport, horizonProfile, y0);
+        const yAlt = predictSkylineY(
+          hit.x,
+          posePlusAlt,
+          calibration,
+          viewport,
+          horizonProfile,
+          y0,
+        );
         if (!Number.isFinite(yAz) || !Number.isFinite(yAlt)) continue;
 
         const jAz = (yAz - y0) / h;
@@ -324,11 +376,25 @@ export function fitSkyline(
       rmsPx = Math.sqrt(sumSq / used);
 
       const det = a11 * a22 - a12 * a12;
-      // Mal condicionat: passa quan totes les columnes tenen la mateixa
-      // sensibilitat als dos eixos, o sigui quan la silueta és una línia
-      // horitzontal perfecta. Llavors l'azimut no es pot determinar i val més
-      // no dir res que dir-ho malament.
-      if (!Number.isFinite(det) || Math.abs(det) < 1e-9) return null;
+      if (!Number.isFinite(det)) return null;
+
+      /*
+       * Mal condicionat: totes les columnes tenen la mateixa sensibilitat als
+       * dos eixos — la silueta és una línia horitzontal. Girar en azimut no
+       * canvia la imatge i l'azimut NO es pot determinar; l'ALTURA sí, i és
+       * exactament la meitat que encara val la pena: mar, plana, un altiplà.
+       * Abans es llençava tot; ara es resol el sistema d'una incògnita i el
+       * fix surt marcat `altitudeOnly` perquè ningú no n'estiri l'azimut.
+       */
+      if (a11 < 1e-4 * a22 || Math.abs(det) < 1e-6 * a11 * a22) {
+        if (!(a22 > 0)) return null;
+        altitudeOnly = true;
+        const dAlt = b2 / a22;
+        if (!Number.isFinite(dAlt)) return null;
+        alt = alt + dAlt;
+        if (Math.abs(dAlt) < 0.01) break;
+        continue;
+      }
 
       const dAz = (b1 * a22 - b2 * a12) / det;
       const dAlt = (a11 * b2 - a12 * b1) / det;
@@ -345,12 +411,16 @@ export function fitSkyline(
       const pose = { ...camera, azimuth: az, altitude: alt };
       const limit = Math.max(3, 2 * rmsPx);
       keep = hits.filter((hit) => {
-        const y = predictSkylineY(hit.x, pose, calibration, viewport, horizonProfile);
+        const y = predictSkylineY(hit.x, pose, calibration, viewport, horizonProfile, hit.y);
         return Number.isFinite(y) && Math.abs(hit.y - y) <= limit;
       });
       if (keep.length < MIN_COLUMNS) return null;
     }
   }
+
+  // Si en qualsevol volta l'azimut ha estat indeterminable, la correcció
+  // parcial que pogués portar no és de fiar: es descarta sencera.
+  if (altitudeOnly) az = camera.azimuth;
 
   const deltaAz = normalizeAngle(az - camera.azimuth);
   const deltaAlt = alt - camera.altitude;
@@ -370,5 +440,6 @@ export function fitSkyline(
     rmsPx,
     used: keep.length,
     confidence: confidenceFrom(keep.length, rmsPx, meanContrast),
+    altitudeOnly,
   };
 }

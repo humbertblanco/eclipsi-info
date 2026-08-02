@@ -138,8 +138,32 @@ const FOCAL_MIN_CONFIDENCE = 0.5;
 /** Quant s'ha de moure el camp mesurat perquè valgui la pena desar-lo. */
 const FOV_SAVE_STEP_DEG = 0.2;
 
-/** Cada quants fotogrames de càmera es torna a ancorar al terreny. */
-const ANCHOR_EVERY_FRAMES = 6;
+/**
+ * Cada quants fotogrames de càmera es torna a ancorar al terreny.
+ *
+ * Tres fotogrames són uns 10 Hz. Es va apujar de 6 (5 Hz) perquè el gating de
+ * moviment mata l'ancoratge quan el mòbil s'ha desplaçat més de 3° des de la
+ * mesura: a 5 Hz, qualsevol gest per sobre de 15°/s el deixava sense àncora
+ * TOT el gest; a 10 Hz la finestra morta es redueix a la meitat. El cost és
+ * un ajust de Gauss-Newton més per cada tres fotogrames — desenes de
+ * projeccions — i el diagnòstic de ms/fotograma vigila que surti a compte.
+ */
+const ANCHOR_EVERY_FRAMES = 3;
+
+/**
+ * Correcció d'ALTURA màxima que un fix pot afirmar sense quedar descartat, en
+ * graus.
+ *
+ * L'asimetria amb `MAX_CORRECTION_DEG` (25°, dins de l'ajust) és la mateixa
+ * física que separa els dos biaixos: en azimut, 25° d'error de brúixola són
+ * possibles i corregir-los és la feina de l'ancoratge; en altura, el sensor
+ * és l'acceleròmetre i NO POT anar més d'un parell de graus errat. Un fix que
+ * digui «apuntes 8° més avall del que dius» no ha trobat la carena: ha trobat
+ * una teulada, una línia d'arbres o un banc de núvols — coses que el model de
+ * terreny nu no té. És la porta que fa que la ciutat no pugui desplaçar
+ * l'overlay en vertical.
+ */
+const MAX_PLAUSIBLE_ALT_DEG = 3;
 
 /**
  * Quant pot viure un ancoratge sense refrescar-se, en mil·lisegons.
@@ -775,13 +799,16 @@ export function ARView({
             anchorTickRef.current % ANCHOR_EVERY_FRAMES === 0
           ) {
             const hits = detectSkyline(trackerRef.current.lastGray, geometry, viewport);
-            const fix = fitSkyline(
+            let fix = fitSkyline(
               hits,
               camera,
               state.calibration,
               viewport,
               state.horizonProfile,
             );
+            // La porta de plausibilitat: l'acceleròmetre no pot anar tres
+            // graus errat d'altura; una silueta que ho afirmi és falsa.
+            if (fix && Math.abs(fix.deltaAltitudeDeg) > MAX_PLAUSIBLE_ALT_DEG) fix = null;
             anchorRef.current = fix;
             // Amb data, amb la postura del sensor d'aquell instant i amb la
             // velocitat a què anava: sense les dues primeres no hi ha manera
@@ -853,6 +880,7 @@ export function ARView({
           azimuthDeg: fix.azimuthDeg,
           altitudeDeg: fix.altitudeDeg,
           confidence: fix.confidence,
+          altitudeOnly: fix.altitudeOnly,
         };
       };
 
@@ -875,6 +903,7 @@ export function ARView({
           errAzDeg: normalizeAngle(at.az - fix.azimuthDeg),
           errAltDeg: at.alt - fix.altitudeDeg,
           confidence: fix.confidence,
+          altitudeOnly: fix.altitudeOnly,
         };
       };
 

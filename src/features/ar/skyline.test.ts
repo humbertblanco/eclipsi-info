@@ -180,16 +180,71 @@ describe('ajust de la postura contra el terreny', () => {
     expect(Math.abs(got!.alt - 8)).toBeLessThan(0.2);
   });
 
-  it('amb un horitzó pla es nega a decidir l’azimut', () => {
-    // I ÉS EL QUE HA DE FER: sobre una línia horitzontal perfecta, girar en
-    // azimut no canvia la imatge. Qualsevol resposta seria inventada.
+  it('amb un horitzó pla dona l’altura i calla l’azimut', () => {
+    // Sobre una línia horitzontal perfecta, girar en azimut no canvia la
+    // imatge: qualsevol azimut seria inventat. Però l'ALTURA hi és sencera —
+    // mar, plana, altiplà — i abans es llençava amb tot. Ara el fix surt
+    // marcat altitudeOnly: azimut intacte, altura recuperada.
     const gray = renderGray(pointing(250, 8), flatTerrain);
     const hits = detectSkyline(gray, GEOMETRY, VIEWPORT);
-    const fix = fitSkyline(hits, pointing(260, 8), CALIBRATION, VIEWPORT, flatTerrain);
-    if (fix !== null) {
-      // Si respon, com a mínim no pot haver-se inventat que ha corregit
-      // l'azimut: la informació no hi és.
-      expect(Math.abs(fix.deltaAzimuthDeg)).toBeLessThan(1);
+    const fix = fitSkyline(hits, pointing(260, 6), CALIBRATION, VIEWPORT, flatTerrain);
+    expect(fix).not.toBeNull();
+    expect(fix!.altitudeOnly).toBe(true);
+    expect(fix!.deltaAzimuthDeg).toBe(0);
+    expect(fix!.azimuthDeg).toBe(260);
+    expect(Math.abs(fix!.altitudeDeg - 8)).toBeLessThan(0.3);
+  });
+
+  it('una silueta arraconada no és una carena', () => {
+    // Vuit columnes juntes en un racó — un arbre, una teulada — no poden fer
+    // d'ancoratge: són justament el que el model de terreny nu no té.
+    const gray = renderGray(pointing(250, 8), terrain);
+    const hits = detectSkyline(gray, GEOMETRY, VIEWPORT).filter(
+      (hit) => hit.x < VIEWPORT.width * 0.2,
+    );
+    expect(hits.length).toBeGreaterThanOrEqual(8);
+    expect(fitSkyline(hits, pointing(250, 8), CALIBRATION, VIEWPORT, terrain)).toBeNull();
+  });
+
+  it('recupera l’altura amb la càmera ben inclinada i girada', () => {
+    // El cas que abans fallava en silenci: amb l'horitzó lluny del centre de
+    // pantalla, la predicció iterada des del centre no convergia i el valor a
+    // mitges entrava a l'ajust com si res. Amb la llavor a la silueta
+    // detectada i la comprovació de convergència, ha de clavar-ho igualment.
+    const truth: CameraPointing = { azimuth: 250, altitude: 18, roll: 20, screenAngle: 0 };
+    const gray = renderGray(truth, terrain);
+    const hits = detectSkyline(gray, GEOMETRY, VIEWPORT);
+    const guess: CameraPointing = { azimuth: 253, altitude: 21, roll: 20, screenAngle: 0 };
+    const fix = fitSkyline(hits, guess, CALIBRATION, VIEWPORT, terrain);
+    expect(fix).not.toBeNull();
+    expect(Math.abs(angDiff(fix!.azimuthDeg, 250))).toBeLessThan(0.8);
+    expect(Math.abs(fix!.altitudeDeg - 18)).toBeLessThan(0.5);
+  });
+
+  it('la predicció no depèn de la llavor quan convergeix, i si no convergeix ho diu', () => {
+    // El contracte de predictSkylineY: o convergeix — i llavors la resposta
+    // és la mateixa des de qualsevol llavor raonable — o retorna NaN. El que
+    // no pot fer mai més és retornar un valor a mitges sense avisar.
+    const camera = pointing(250, 8);
+    for (const x of [40, 130, 250, 350]) {
+      const fromCenter = predictSkylineY(x, camera, CALIBRATION, VIEWPORT, terrain);
+      const fromTop = predictSkylineY(x, camera, CALIBRATION, VIEWPORT, terrain, 40);
+      const fromBottom = predictSkylineY(
+        x,
+        camera,
+        CALIBRATION,
+        VIEWPORT,
+        terrain,
+        VIEWPORT.height - 40,
+      );
+      if (
+        Number.isFinite(fromCenter) &&
+        Number.isFinite(fromTop) &&
+        Number.isFinite(fromBottom)
+      ) {
+        expect(Math.abs(fromTop - fromCenter)).toBeLessThan(0.5);
+        expect(Math.abs(fromBottom - fromCenter)).toBeLessThan(0.5);
+      }
     }
   });
 
