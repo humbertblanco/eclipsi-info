@@ -709,6 +709,20 @@ export class VideoFrameClock {
     while (this.stamps.length > 0 && now - this.stamps[0] > 1000) this.stamps.shift();
   }
 
+  /**
+   * Si hi ha un fotograma nou esperant, SENSE consumir-lo.
+   *
+   * El bucle de dibuix ho necessita per decidir si val la pena dibuixar abans
+   * de fer cap altra feina: `consume()` te efecte secundari i nomes es pot
+   * cridar un cop per fotograma.
+   */
+  get pendingFrame(): boolean {
+    if (this.usesCallback) return this.pending;
+    const video = this.video;
+    if (!video) return false;
+    return video.currentTime !== this.lastTime;
+  }
+
   /** Cert un sol cop per cada fotograma nou. */
   consume(): boolean {
     if (this.usesCallback) {
