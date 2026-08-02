@@ -23,6 +23,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cameraPointingFromQuaternion, type CameraPointing } from './orientation';
 import { quaternionFromEulerZXY } from './quaternion';
+import { IosYawOffset } from './iosHeading';
 import {
   AngleWindow,
   OrientationSmoother,
@@ -139,6 +140,8 @@ export function useDeviceOrientation(
   const declinationRef = useRef(declinationDeg);
   declinationRef.current = declinationDeg;
   const smoothingRef = useRef<SmoothingTelemetry>(smootherRef.current.getTelemetry());
+  /** Offset entre l'alpha relativa i el nord, només iOS. Vegeu `iosHeading`. */
+  const iosOffsetRef = useRef(new IosYawOffset());
 
   // I només això arriba a React, quatre vegades per segon.
   const [ui, setUi] = useState<{
@@ -169,13 +172,43 @@ export function useDeviceOrientation(
     let source: HeadingSource;
 
     if (typeof e.webkitCompassHeading === 'number' && !Number.isNaN(e.webkitCompassHeading)) {
-      // iOS: `alpha` és relativa i inservible per a RA, però
-      // `webkitCompassHeading` sí que és absoluta. La convertim a l'alpha
-      // equivalent perquè la resta del càlcul sigui idèntica als dos sistemes.
-      alpha = 360 - e.webkitCompassHeading;
+      /*
+       * iOS: `alpha` és relativa i el compass és absolut, però substituir
+       * l'una per l'altre per esdeveniment (el que es feia abans) només és
+       * exacte amb el telèfon PLA: inclinant-lo cap al cel, el heading es
+       * desplaça en funció del pitch i l'azimut lliscava mentre l'usuari
+       * inclinava. Ara el quaternió es construeix amb l'alpha relativa —
+       * contínua i amb el pitch net — més un OFFSET cap al nord que s'aprèn
+       * del compass només en postures on el compass és de fiar. Vegeu
+       * `iosHeading.ts`.
+       */
       source = 'ios-compass';
       if (typeof e.webkitCompassAccuracy === 'number') {
         accuracyRef.current = e.webkitCompassAccuracy >= 0 ? e.webkitCompassAccuracy : null;
+      }
+      if (e.alpha !== null) {
+        // Altura de la càmera des d'AQUEST esdeveniment (no depèn d'alpha):
+        // la postura del gate ha de ser la d'ara, no la de fa una lectura.
+        const DEG = Math.PI / 180;
+        const cosB = Math.cos(e.beta * DEG);
+        const cosG = Math.cos(e.gamma * DEG);
+        const altitudeDeg =
+          Math.asin(Math.max(-1, Math.min(1, -cosB * cosG))) * (180 / Math.PI);
+        const nowIos = typeof performance !== 'undefined' ? performance.now() : Date.now();
+        const dtIos =
+          lastEventMs.current === null ? 0 : (nowIos - lastEventMs.current) / 1000;
+        const offset = iosOffsetRef.current.update(
+          e.webkitCompassHeading,
+          e.alpha,
+          altitudeDeg,
+          dtIos,
+        );
+        // Mentre no hi ha offset après (app oberta apuntant amunt), es recorre
+        // a la substitució de sempre, que en aquella postura no és pitjor del
+        // que era.
+        alpha = offset === null ? 360 - e.webkitCompassHeading : e.alpha + offset;
+      } else {
+        alpha = 360 - e.webkitCompassHeading;
       }
     } else if (e.absolute && e.alpha !== null) {
       alpha = e.alpha;
