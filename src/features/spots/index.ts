@@ -35,6 +35,7 @@ export {
   durationText,
   formatBytes,
   formatClock,
+  coordsForCopy,
   formatCoords,
   formatCount,
   formatDegrees,

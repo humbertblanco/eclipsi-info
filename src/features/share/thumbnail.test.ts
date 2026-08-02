@@ -249,7 +249,7 @@ describe('text de la targeta', () => {
       locale: 'ca',
     });
     expect(named.title).toBe('Sant Julià de Vilatorta');
-    expect(named.coords).toContain('41.7600°');
+    expect(named.coords).toContain('41,7600°');
 
     const anonymous = cardText({
       eclipseId: ECLIPSE,
@@ -261,7 +261,7 @@ describe('text de la targeta', () => {
       locale: 'ca',
     });
     // Sense nom, les coordenades pugen al títol i no es repeteixen a sota.
-    expect(anonymous.title).toContain('41.7600°');
+    expect(anonymous.title).toContain('41,7600°');
     expect(anonymous.coords).toBeNull();
   });
 

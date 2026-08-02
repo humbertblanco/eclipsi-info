@@ -36,6 +36,7 @@ const INTL: Record<Locale, string> = { ca: 'ca-ES', es: 'es-ES' };
 
 const enterFmt: Partial<Record<Locale, Intl.NumberFormat>> = {};
 const decimalFmt: Partial<Record<Locale, Intl.NumberFormat>> = {};
+const coordsFmt: Partial<Record<Locale, Intl.NumberFormat>> = {};
 
 /** Enters amb separador de milers. Es memoritza: `Intl` no és barat. */
 function enter(locale: Locale): Intl.NumberFormat {
@@ -49,6 +50,15 @@ function decimal(locale: Locale): Intl.NumberFormat {
   return (decimalFmt[locale] ??= new Intl.NumberFormat(INTL[locale], {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
+  }));
+}
+
+/** Cinc decimals exactes i sense separador de milers: una coordenada no és una quantitat. */
+function coordsDecimal(locale: Locale): Intl.NumberFormat {
+  return (coordsFmt[locale] ??= new Intl.NumberFormat(INTL[locale], {
+    minimumFractionDigits: 5,
+    maximumFractionDigits: 5,
+    useGrouping: false,
   }));
 }
 
@@ -118,13 +128,31 @@ export function formatMetres(metres: number, locale: Locale = 'ca'): string {
 }
 
 /**
- * Coordenades amb cinc decimals.
+ * Coordenades amb cinc decimals, PER LLEGIR.
  *
  * Cinc decimals és un metre. És la precisió amb què el cercador treballa i la
  * que s'ha d'ensenyar: retallar-ne un mouria el punt onze metres, que en una
  * carena és la diferència entre veure-ho i no veure-ho.
+ *
+ * Escrivia el punt anglosaxó al mig d'una targeta on tot el altre va amb coma
+ * — la mateixa falta que aquest fitxer retreu a `toFixed` quatre comentaris
+ * més avall. La coma decimal va enganxada a la xifra i la parella se separa
+ * amb coma i espai, que és com escriuen les coordenades la Viquipèdia i tota
+ * la cartografia en català. PER COPIAR no serveix: vegeu `coordsForCopy`.
  */
-export function formatCoords(lat: number, lon: number): string {
+export function formatCoords(lat: number, lon: number, locale: Locale = 'ca'): string {
+  return `${coordsDecimal(locale).format(lat)}, ${coordsDecimal(locale).format(lon)}`;
+}
+
+/**
+ * Coordenades amb cinc decimals, PER ENGANXAR en una altra aplicació.
+ *
+ * El botó de copiar existeix per portar el punt a l'app de mapes amb què
+ * l'usuari conduirà fins allà, i els cercadors de mapes entenen el punt
+ * decimal universalment i la coma segons el dia. Aquí el punt no és una
+ * falta tipogràfica: és el format d'intercanvi.
+ */
+export function coordsForCopy(lat: number, lon: number): string {
   return `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
 }
 

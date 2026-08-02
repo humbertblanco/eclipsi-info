@@ -154,11 +154,21 @@ export function formatDegrees(deg: number, locale: Locale = 'ca'): string {
 /**
  * Coordenades amb el punt cardinal, com es diuen en veu alta.
  * Quatre decimals són uns 11 m: la precisió que de veritat té el GPS d'un mòbil.
+ *
+ * AQUESTA ERA L'ÚLTIMA XIFRA DE L'APP AMB EL PUNT ANGLOSAXÓ. El comentari de
+ * `formatDegrees`, aquí sobre, posava «40,3581°, 0,4067°» com a exemple de la
+ * targeta bona — i era mentida: aquesta funció escrivia «40.3581° N». Amb el
+ * grau i el punt cardinal enganxats a cada número, la coma decimal no es pot
+ * confondre amb la coma que separa la parella. L'idioma ve amb valor per
+ * defecte pel mateix motiu que a `formatDegrees`: cap de les dues llengües
+ * canvia el resultat, i qui el tingui a mà que el passi.
  */
-export function formatCoords(lat: number, lon: number): string {
+export function formatCoords(lat: number, lon: number, locale: Locale = 'ca'): string {
   const ns = lat >= 0 ? 'N' : 'S';
   const ew = lon >= 0 ? 'E' : 'O';
-  return `${Math.abs(lat).toFixed(4)}° ${ns}, ${Math.abs(lon).toFixed(4)}° ${ew}`;
+  const la = formatDecimal(Math.abs(lat), 4, locale);
+  const lo = formatDecimal(Math.abs(lon), 4, locale);
+  return `${la}° ${ns}, ${lo}° ${ew}`;
 }
 
 /**

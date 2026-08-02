@@ -26,6 +26,7 @@ import {
   bearingPhrase,
   durationText,
   formatClock,
+  coordsForCopy,
   formatCoords,
   formatDegrees,
   formatDistance,
@@ -103,7 +104,7 @@ function CopyCoords({ lat, lon, locale }: { lat: number; lon: number; locale: Lo
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
-    const text = formatCoords(lat, lon);
+    const text = coordsForCopy(lat, lon);
     const clipboard = navigator.clipboard;
     if (!clipboard) return;
     void clipboard.writeText(text).then(() => {

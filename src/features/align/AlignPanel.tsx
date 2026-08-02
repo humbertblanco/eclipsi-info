@@ -38,7 +38,7 @@ import {
   type AlignmentMoment,
   type AlignmentTarget,
 } from '../../core/spots/alignment';
-import { formatCoords, mapUrl } from '../spots/format';
+import { coordsForCopy, formatCoords, mapUrl } from '../spots/format';
 import { parseCoords } from '../location/coords';
 import { usePlaceSearch } from '../location/usePlaceSearch';
 import type { Locale } from '../../i18n';
@@ -410,7 +410,7 @@ function CopyCoords({ lat, lon, locale }: { lat: number; lon: number; locale: Lo
   const copy = () => {
     const clipboard = navigator.clipboard;
     if (!clipboard) return;
-    void clipboard.writeText(formatCoords(lat, lon)).then(() => {
+    void clipboard.writeText(coordsForCopy(lat, lon)).then(() => {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     });

@@ -15,7 +15,9 @@ import { parseCoords } from './coords';
 describe('el format que ensenya la mateixa app', () => {
   it('es torna a entendre', () => {
     const text = formatCoords(41.3851, 2.1734);
-    expect(text).toBe('41.3851° N, 2.1734° E');
+    // Amb coma: des que formatCoords parla l'idioma de l'app, el camí d'anada
+    // i tornada passa pel cas «decimals amb coma» que el parser ja documenta.
+    expect(text).toBe('41,3851° N, 2,1734° E');
     expect(parseCoords(text)).toEqual({ lat: 41.3851, lon: 2.1734 });
   });
 

@@ -16,6 +16,7 @@ import {
   formatBytes,
   formatPercent,
   formatClock,
+  coordsForCopy,
   formatCoords,
   formatCount,
   formatDegrees,
@@ -149,10 +150,15 @@ describe('distàncies', () => {
 });
 
 describe('coordenades i mapa', () => {
-  it('cinc decimals, que és un metre', () => {
-    // Retallar-ne un mouria el punt onze metres. En una carena, onze metres és
-    // la diferència entre veure-ho i no veure-ho.
-    expect(formatCoords(41.766498, -2.479004)).toBe('41.76650, -2.47900');
+  it('cinc decimals amb coma, que és un metre dit en l’idioma de l’app', () => {
+    // Retallar-ne un decimal mouria el punt onze metres. En una carena, onze
+    // metres és la diferència entre veure-ho i no veure-ho.
+    expect(formatCoords(41.766498, -2.479004)).toBe('41,76650, -2,47900');
+    expect(formatCoords(41.766498, -2.479004, 'es')).toBe('41,76650, -2,47900');
+  });
+
+  it('per copiar, el punt decimal: és el format que entén qualsevol app de mapes', () => {
+    expect(coordsForCopy(41.766498, -2.479004)).toBe('41.76650, -2.47900');
   });
 
   it('l’enllaç del mapa porta el punt marcat', () => {
