@@ -274,6 +274,13 @@ describe('la brúixola desviada i el terreny', () => {
         sensorSpeedDegPerSec: 0,
         dtSec: dt,
         anchor: { azimuthDeg: VERITAT_AZ, altitudeDeg: ALT, confidence },
+        // El mateix parell que envia ARView: l'error del fix mesurat a la
+        // captura, del qual s'aprèn el biaix.
+        anchorBias: {
+          errAzDeg: SENSOR_AZ - VERITAT_AZ,
+          errAltDeg: 0,
+          confidence,
+        },
       });
     }
     return Math.abs(out.azimuthDeg - VERITAT_AZ);
@@ -310,5 +317,169 @@ describe('la brúixola desviada i el terreny', () => {
       });
     }
     expect(Math.abs(out.azimuthDeg - SENSOR_AZ)).toBeLessThan(0.5);
+  });
+});
+
+/*
+ * LA FÍSICA ASIMÈTRICA DEL BIAIX.
+ *
+ * El biaix d'azimut corregeix el magnetòmetre, que vora metall menteix desenes
+ * de graus i menteix igual quan el terreny surt del quadre: s'aprèn fins a
+ * ±40° i NO caduca mai. El d'altura corregeix... res: l'acceleròmetre va fi a
+ * dècimes de grau, i el que l'ancoratge mesura en aquell eix és sobretot
+ * l'error de la SEVA referència (arbres i teulades que el model de terreny nu
+ * no té). Per això es capa a ±1,5° i caduca quan l'ancoratge desapareix.
+ *
+ * Abans d'aquest canvi, una silueta falsa podia ensenyar fins a 40° de biaix
+ * d'altura que es restaven de l'acceleròmetre PER SEMPRE — i es feia visible
+ * justament en inclinar el mòbil amunt, quan l'àncora ja no hi era per
+ * dissimular-ho. És el «queda tort i no es recupera» que es veia al camp.
+ */
+describe('la física asimètrica del biaix', () => {
+  const dt = 1 / 60;
+  const AZ = 100;
+  const ALT_VERITAT = 5; // l'acceleròmetre és la veritat en aquest eix
+
+  function stepStill(
+    fusion: PoseFusion,
+    i: number,
+    anchor: { azimuthDeg: number; altitudeDeg: number; confidence: number } | null,
+    anchorBias: { errAzDeg: number; errAltDeg: number; confidence: number } | null,
+  ) {
+    return fusion.update({
+      sensorAzimuthDeg: AZ,
+      sensorAltitudeDeg: ALT_VERITAT,
+      imageRollDeg: 0,
+      newFrame: i % 2 === 0,
+      visual: null,
+      sensorSpeedDegPerSec: 0,
+      dtSec: dt,
+      anchor,
+      anchorBias,
+    });
+  }
+
+  it('el biaix d’altura no queda enverinat per una silueta falsa', () => {
+    const fusion = new PoseFusion();
+    // Una teulada que el model no té: el fix diu que apuntes 2° més avall del
+    // que dius. 20 segons d'aprendre'n.
+    const fix = { azimuthDeg: AZ, altitudeDeg: ALT_VERITAT - 2, confidence: 0.8 };
+    const bias = { errAzDeg: 0, errAltDeg: 2, confidence: 0.8 };
+    for (let i = 0; i < 20 * 60; i++) stepStill(fusion, i, fix, bias);
+
+    // El sostre: mai més d'un grau i mig, ni amb el fix davant.
+    expect(Math.abs(fusion.telemetry.biasAltDeg)).toBeLessThanOrEqual(1.5);
+
+    // El terreny surt del quadre (s'apunta al cel): el fix i el seu error
+    // desapareixen, i l'acceleròmetre ha de recuperar l'autoritat.
+    let out = { azimuthDeg: 0, altitudeDeg: 0 };
+    for (let i = 0; i < 20 * 60; i++) out = stepStill(fusion, i, null, null);
+    expect(Math.abs(out.altitudeDeg - ALT_VERITAT)).toBeLessThan(0.5);
+
+    for (let i = 0; i < 20 * 60; i++) out = stepStill(fusion, i, null, null);
+    expect(Math.abs(out.altitudeDeg - ALT_VERITAT)).toBeLessThan(0.15);
+    expect(Math.abs(fusion.telemetry.biasAltDeg)).toBeLessThan(0.15);
+  });
+
+  it('el biaix d’altura es limita a un grau i mig encara que el fix digui deu', () => {
+    const fusion = new PoseFusion();
+    const fix = { azimuthDeg: AZ, altitudeDeg: ALT_VERITAT - 10, confidence: 1 };
+    const bias = { errAzDeg: 0, errAltDeg: 10, confidence: 1 };
+    for (let i = 0; i < 30 * 60; i++) stepStill(fusion, i, fix, bias);
+    expect(Math.abs(fusion.telemetry.biasAltDeg)).toBeLessThanOrEqual(1.5);
+
+    // I en desaparèixer el fix, la postura torna a l'acceleròmetre.
+    let out = { azimuthDeg: 0, altitudeDeg: 0 };
+    for (let i = 0; i < 30 * 60; i++) out = stepStill(fusion, i, null, null);
+    expect(Math.abs(out.altitudeDeg - ALT_VERITAT)).toBeLessThan(0.2);
+  });
+
+  it('el biaix d’azimut NO caduca: la brúixola menteix igual sense terreny', () => {
+    // El comportament pel qual es va crear el biaix (la muntanya guanya a la
+    // brúixola) ha de sobreviure a perdre el terreny de vista.
+    const fusion = new PoseFusion();
+    const fix = { azimuthDeg: AZ - 10, altitudeDeg: ALT_VERITAT, confidence: 1 };
+    const bias = { errAzDeg: 10, errAltDeg: 0, confidence: 1 };
+    for (let i = 0; i < 20 * 60; i++) stepStill(fusion, i, fix, bias);
+    expect(fusion.telemetry.biasAzDeg).toBeGreaterThan(8);
+
+    let out = { azimuthDeg: 0, altitudeDeg: 0 };
+    for (let i = 0; i < 30 * 60; i++) out = stepStill(fusion, i, null, null);
+    // Mig minut apuntant al cel: el nord après no s'ha d'haver esvaït.
+    expect(Math.abs(out.azimuthDeg - (AZ - 10))).toBeLessThan(1);
+    expect(fusion.telemetry.biasAzDeg).toBeGreaterThan(8);
+  });
+
+  it('el biaix segueix aprenent durant el gest, quan l’àncora de postura ja no val', () => {
+    // El mòbil escombra a 30°/s: `anchor` (postura) és null perquè el gating
+    // de moviment el mata, però `anchorBias` (error a la captura) continua.
+    const fusion = new PoseFusion();
+    const bias = { errAzDeg: 10, errAltDeg: 0, confidence: 1 };
+    let az = 100;
+    fusion.update({
+      sensorAzimuthDeg: az,
+      sensorAltitudeDeg: 5,
+      imageRollDeg: 0,
+      newFrame: true,
+      visual: null,
+      sensorSpeedDegPerSec: 30,
+      dtSec: dt,
+      anchor: null,
+      anchorBias: null,
+    });
+    for (let i = 0; i < 10 * 60; i++) {
+      az += 30 * dt * (i % 400 < 200 ? 1 : -1); // vaivé de ±30°/s
+      fusion.update({
+        sensorAzimuthDeg: az,
+        sensorAltitudeDeg: 5,
+        imageRollDeg: 0,
+        newFrame: i % 2 === 0,
+        visual: null,
+        sensorSpeedDegPerSec: 30,
+        dtSec: dt,
+        anchor: null,
+        anchorBias: bias,
+      });
+    }
+    expect(fusion.telemetry.biasAzDeg).toBeGreaterThan(7);
+  });
+
+  it('un ancoratge només d’altura no toca l’azimut ni el seu biaix', () => {
+    const fusion = new PoseFusion();
+    // Primer s'aprèn un biaix d'azimut legítim amb un fix complet.
+    const fullFix = { azimuthDeg: AZ - 10, altitudeDeg: ALT_VERITAT, confidence: 1 };
+    const fullBias = { errAzDeg: 10, errAltDeg: 0, confidence: 1 };
+    for (let i = 0; i < 20 * 60; i++) stepStill(fusion, i, fullFix, fullBias);
+    const learned = fusion.telemetry.biasAzDeg;
+    expect(learned).toBeGreaterThan(8);
+
+    // Després arriba un horitzó pla: fix amb altitudeOnly. El seu dAz=0 diria
+    // «la brúixola no menteix» — i és mentida, és que no ho pot saber.
+    const flatFix = {
+      azimuthDeg: AZ,
+      altitudeDeg: ALT_VERITAT - 1,
+      confidence: 1,
+      altitudeOnly: true,
+    };
+    const flatBias = { errAzDeg: 0, errAltDeg: 1, confidence: 1, altitudeOnly: true };
+    let out = { azimuthDeg: 0, altitudeDeg: 0 };
+    for (let i = 0; i < 20 * 60; i++) {
+      out = fusion.update({
+        sensorAzimuthDeg: AZ,
+        sensorAltitudeDeg: ALT_VERITAT,
+        imageRollDeg: 0,
+        newFrame: i % 2 === 0,
+        visual: null,
+        sensorSpeedDegPerSec: 0,
+        dtSec: dt,
+        anchor: flatFix,
+        anchorBias: flatBias,
+      });
+    }
+    // El biaix d'azimut après ha de quedar INTACTE, i la postura d'azimut al
+    // lloc corregit; l'altura sí que segueix el fix pla.
+    expect(fusion.telemetry.biasAzDeg).toBeCloseTo(learned, 1);
+    expect(Math.abs(out.azimuthDeg - (AZ - 10))).toBeLessThan(1);
+    expect(out.altitudeDeg).toBeLessThan(ALT_VERITAT - 0.4);
   });
 });

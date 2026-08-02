@@ -397,7 +397,7 @@ function runSequence(options: {
   const anchorCfg = options.anchor;
   let lastFix: { azimuthDeg: number; altitudeDeg: number; confidence: number } | null = null;
   let lastFixAtStep = -1;
-  let lastFixSensor: { az: number; alt: number } | null = null;
+  let lastFixSensor: { az: number; alt: number; speedDegPerSec: number } | null = null;
 
   const readout = options.readoutFraction ?? 0;
 
@@ -460,9 +460,15 @@ function runSequence(options: {
         confidence: anchorCfg.confidence ?? 1,
       };
       lastFixAtStep = i;
-      lastFixSensor = { az: smoothed.azimuth, alt: smoothed.altitude };
+      lastFixSensor = {
+        az: smoothed.azimuth,
+        alt: smoothed.altitude,
+        speedDegPerSec: smoother.getTelemetry().angularSpeedDegPerSec,
+      };
     }
     let anchorInput: { azimuthDeg: number; altitudeDeg: number; confidence: number } | null =
+      null;
+    let anchorBiasInput: { errAzDeg: number; errAltDeg: number; confidence: number } | null =
       null;
     if (lastFix && lastFixSensor) {
       const ageSec = (i - lastFixAtStep) * dt;
@@ -472,6 +478,15 @@ function runSequence(options: {
         smoothed.altitude - lastFixSensor.alt,
       );
       if (ageSec <= 0.5 && moved <= 3) anchorInput = lastFix;
+      // L'error a la captura sobreviu al moviment; només caduca per edat i
+      // per velocitat a la captura, com a ARView.
+      if (ageSec <= 0.5 && lastFixSensor.speedDegPerSec <= 25) {
+        anchorBiasInput = {
+          errAzDeg: normalizeDelta(lastFixSensor.az - lastFix.azimuthDeg),
+          errAltDeg: lastFixSensor.alt - lastFix.altitudeDeg,
+          confidence: lastFix.confidence,
+        };
+      }
     }
 
     const fused = fusion.update({
@@ -483,6 +498,7 @@ function runSequence(options: {
       sensorSpeedDegPerSec: smoother.getTelemetry().angularSpeedDegPerSec,
       dtSec: dt,
       anchor: anchorInput,
+      anchorBias: anchorBiasInput,
     });
 
     // LA REFERÈNCIA ÉS LA POSTURA DEL FOTOGRAMA QUE S'ESTÀ VEIENT, no la de

@@ -158,6 +158,19 @@ const ANCHOR_MAX_AGE_MS = 500;
  */
 const ANCHOR_MAX_MOVE_DEG = 3;
 
+/**
+ * Velocitat màxima del sensor A LA CAPTURA perquè el fix ensenyi biaix, en °/s.
+ *
+ * La postura absoluta caduca amb el moviment, però l'ERROR entre el fix i el
+ * sensor del mateix instant no: és el biaix del lloc, i s'aprofita també en
+ * ple gest. Amb un límit: un fix mesurat mentre el mòbil vola porta
+ * desenfocament de moviment i el desfasament entre el fotograma i la lectura
+ * del sensor (40-80 ms de canonada de càmera), que a 25°/s ja són un parell de
+ * graus falsos. Millor aprendre només dels instants raonablement quiets, que a
+ * 5 Hz n'hi ha de sobres.
+ */
+const ANCHOR_BIAS_MAX_SPEED_DEG_PER_SEC = 25;
+
 const MIN_FOV_DEG = 25;
 const MAX_FOV_DEG = 140;
 
@@ -220,6 +233,8 @@ const INITIAL_DIAGNOSTICS: TrackingDiagnostics = {
     pullTauSec: 0,
     lastVisualStepDeg: 0,
     lastSensorStepDeg: 0,
+    biasAzDeg: 0,
+    biasAltDeg: 0,
   },
   focalWindows: 0,
   measuredFovDeg: null,
@@ -321,7 +336,9 @@ export function ARView({
    * Una mesura absoluta té data de caducitat. Aquestes dues refs la hi posen.
    */
   const anchorAtMsRef = useRef(0);
-  const anchorSensorRef = useRef<{ az: number; alt: number } | null>(null);
+  const anchorSensorRef = useRef<{ az: number; alt: number; speedDegPerSec: number } | null>(
+    null,
+  );
   /** Compta fotogrames de càmera per no ancorar a cadascun. */
   const anchorTickRef = useRef(0);
   /**
@@ -748,10 +765,16 @@ export function ARView({
               state.horizonProfile,
             );
             anchorRef.current = fix;
-            // Amb data i amb la postura del sensor d'aquell instant: sense
-            // aquestes dues, no hi ha manera de saber si encara val.
+            // Amb data, amb la postura del sensor d'aquell instant i amb la
+            // velocitat a què anava: sense les dues primeres no hi ha manera
+            // de saber si el fix encara val com a POSTURA; sense la tercera,
+            // de saber si val com a mesura de BIAIX.
             anchorAtMsRef.current = nowMs;
-            anchorSensorRef.current = { az: camera.azimuth, alt: camera.altitude };
+            anchorSensorRef.current = {
+              az: camera.azimuth,
+              alt: camera.altitude,
+              speedDegPerSec: smoothingRef.current.angularSpeedDegPerSec,
+            };
           }
 
           diagnosticsRef.current = {
@@ -787,8 +810,13 @@ export function ARView({
         if (nowMs - anchorAtMsRef.current > ANCHOR_MAX_AGE_MS) return null;
         const at = anchorSensorRef.current;
         if (at !== null) {
+          // El terme d'azimut s'escala per cos(alt), com a tot arreu de la
+          // fusió: a 60° d'altura, un grau d'azimut és mig grau de cel, i
+          // sense el factor l'ancoratge s'invalidava el doble de fàcil just
+          // apuntant amunt — que és quan més costa recuperar-lo.
+          const cosAlt = Math.max(0.2, Math.cos(camera.altitude * (Math.PI / 180)));
           const moved = Math.hypot(
-            normalizeAngle(camera.azimuth - at.az),
+            normalizeAngle(camera.azimuth - at.az) * cosAlt,
             camera.altitude - at.alt,
           );
           if (moved > ANCHOR_MAX_MOVE_DEG) return null;
@@ -796,6 +824,28 @@ export function ARView({
         return {
           azimuthDeg: fix.azimuthDeg,
           altitudeDeg: fix.altitudeDeg,
+          confidence: fix.confidence,
+        };
+      };
+
+      /*
+       * L'ERROR DEL FIX, PER APRENDRE'N EL BIAIX, sobreviu al moviment.
+       *
+       * `freshAnchor` mor als 3° perquè afirma ON ETS. La diferència entre el
+       * fix i el sensor DEL MATEIX INSTANT — totes dues coses guardades a la
+       * captura — afirma quant menteix el sensor, i això no canvia per moure's.
+       * És el que fa que inclinar el mòbil no deixi el biaix orfe a mig gest.
+       */
+      const anchorBiasInput = () => {
+        const fix = anchorRef.current;
+        if (fix === null) return null;
+        if (nowMs - anchorAtMsRef.current > ANCHOR_MAX_AGE_MS) return null;
+        const at = anchorSensorRef.current;
+        if (at === null) return null;
+        if (at.speedDegPerSec > ANCHOR_BIAS_MAX_SPEED_DEG_PER_SEC) return null;
+        return {
+          errAzDeg: normalizeAngle(at.az - fix.azimuthDeg),
+          errAltDeg: at.alt - fix.altitudeDeg,
           confidence: fix.confidence,
         };
       };
@@ -809,6 +859,7 @@ export function ARView({
         sensorSpeedDegPerSec: smoothingRef.current.angularSpeedDegPerSec,
         dtSec,
         anchor: freshAnchor(),
+        anchorBias: anchorBiasInput(),
       });
 
       const stable: CameraPointing = {

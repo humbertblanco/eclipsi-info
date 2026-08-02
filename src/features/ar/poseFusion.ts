@@ -135,7 +135,35 @@ export interface FusionInput {
    * l'aparellament s'equivoca —una carena confosa amb una altra— val més que
    * es noti poc i que el fotograma següent el desmenteixi.
    */
-  anchor?: { azimuthDeg: number; altitudeDeg: number; confidence: number } | null;
+  anchor?: {
+    azimuthDeg: number;
+    altitudeDeg: number;
+    confidence: number;
+    /**
+     * Cert quan el fix ve d'un horitzó pla: l'altura és bona però l'azimut no
+     * s'ha pogut determinar. Llavors només s'estira l'altura, i el biaix
+     * d'azimut NI S'APRÈN NI ES TOCA — amb un dAz inventat de zero, l'error
+     * d'azimut semblaria nul i un biaix de brúixola ben après es desfaria en
+     * silenci.
+     */
+    altitudeOnly?: boolean;
+  } | null;
+  /**
+   * Error de l'ancoratge mesurat A LA CAPTURA: `sensorAtCaptura − fix`.
+   *
+   * És d'una naturalesa diferent que `anchor`: allò diu ON ETS i només val
+   * mentre el mòbil no s'ha mogut de la postura on es va mesurar; això diu
+   * QUANT MENTEIX EL SENSOR, que és una propietat del lloc i no de la postura.
+   * Per això pot seguir ensenyant el biaix mentre el mòbil gira — just quan
+   * `anchor` s'ha d'invalidar. Sense aquesta separació, el biaix només
+   * s'aprenia amb el telèfon quiet, i el gest d'inclinar-lo el deixava orfe.
+   */
+  anchorBias?: {
+    errAzDeg: number;
+    errAltDeg: number;
+    confidence: number;
+    altitudeOnly?: boolean;
+  } | null;
 }
 
 export interface FusedPose {
@@ -164,6 +192,10 @@ export interface FusionTelemetry {
   lastVisualStepDeg: number;
   /** Gir de l'últim increment del sensor, en graus. */
   lastSensorStepDeg: number;
+  /** Biaix de brúixola après, en graus. Diagnòstic de camp. */
+  biasAzDeg: number;
+  /** Biaix d'altura après, en graus. Si s'acosta al sostre d'1,5°, sospita. */
+  biasAltDeg: number;
 }
 
 const INITIAL_TELEMETRY: FusionTelemetry = {
@@ -173,6 +205,8 @@ const INITIAL_TELEMETRY: FusionTelemetry = {
   pullTauSec: PULL_TAU_STILL_SEC,
   lastVisualStepDeg: 0,
   lastSensorStepDeg: 0,
+  biasAzDeg: 0,
+  biasAltDeg: 0,
 };
 
 /** Diferència d'angles normalitzada a (−180, 180]. */
@@ -275,6 +309,34 @@ const BIAS_TAU_SEC = 4;
  * amb la brúixola dolenta que amb una correcció inventada.
  */
 const MAX_BIAS_DEG = 40;
+
+/**
+ * Sostre del biaix d'ALTURA, molt més estret que el d'azimut. En graus.
+ *
+ * L'asimetria és física, no de gust. En azimut, el sensor és un magnetòmetre
+ * que vora metall menteix 10 o 20 graus: el biaix gros és versemblant i val la
+ * pena recordar-lo. En altura, el sensor és l'acceleròmetre llegint la
+ * gravetat, que va fi a dècimes de grau: un "biaix" d'altura gran no pot ser
+ * del sensor. És l'error de REFERÈNCIA de l'ancoratge — arbres i teulades que
+ * el model de terreny nu no té, una focal una mica falsa, un núvol pres per
+ * carena — i restar-lo del canal bo és injectar l'error d'una font dolenta a
+ * la única font que no s'equivoca. Grau i mig cobreix el que és legítim
+ * (alçada d'ulls, refracció, dàtum del model) i no deixa passar res més.
+ */
+const MAX_BIAS_ALT_DEG = 1.5;
+
+/**
+ * Constant de temps amb què el biaix d'altura CADUCA sense ancoratge, en segons.
+ *
+ * El biaix d'azimut no caduca mai: la brúixola segueix mentint igual quan el
+ * terreny surt del quadre, i oblidar-ho seria tornar a l'error que es va
+ * corregir. El d'altura sí, i pel mateix argument físic del sostre: el que
+ * codifica és sobretot l'error de la referència del terreny, i quan aquesta
+ * referència desapareix — apuntant al cel, que és el que l'app demana — qui té
+ * raó és l'acceleròmetre. Dotze segons: prou lent per no oscil·lar entre dos
+ * fixos a 5 Hz, prou ràpid perquè mitja passada de núvols no deixi empremta.
+ */
+const BIAS_ALT_DECAY_TAU_SEC = 12;
 
 export class PoseFusion {
   private azimuth: number | null = null;
@@ -485,22 +547,12 @@ export class PoseFusion {
     const anchor = input.anchor ?? null;
     if (anchor !== null && anchor.confidence > 0) {
       const pull = Math.min(1, (dt / ANCHOR_TAU_SEC) * anchor.confidence);
-      this.azimuth += pull * normalizeDelta(anchor.azimuthDeg - this.azimuth);
+      // Un fix d'horitzó pla sap l'altura però s'ha inventat l'azimut (dAz=0):
+      // d'aquell azimut no se n'estira res.
+      if (!anchor.altitudeOnly) {
+        this.azimuth += pull * normalizeDelta(anchor.azimuthDeg - this.azimuth);
+      }
       this.altitude += pull * (anchor.altitudeDeg - this.altitude);
-
-      /*
-       * I DE PASSADA S'APREN CAP A ON MENTEIX LA BRUIXOLA.
-       *
-       * L'ancoratge diu on apuntes de debo; el sensor diu on es pensa que
-       * apuntes. La diferencia es el biaix, i sense recordar-lo cada correccio
-       * s'havia de tornar a guanyar al fotograma seguent. S'apren a poc a poc
-       * perque es una propietat del lloc, no una mesura instantania.
-       */
-      const biasPull = Math.min(1, (dt / BIAS_TAU_SEC) * anchor.confidence);
-      const errAz = normalizeDelta(input.sensorAzimuthDeg - this.biasAz - anchor.azimuthDeg);
-      const errAlt = input.sensorAltitudeDeg - this.biasAlt - anchor.altitudeDeg;
-      this.biasAz = clampBias(normalizeDelta(this.biasAz + biasPull * errAz));
-      this.biasAlt = clampBias(this.biasAlt + biasPull * errAlt);
       // El sensor és la referència de la qual es mesuren els increments: si no
       // s'hi mou també, l'estirada següent la desfaria comptant com a deriva
       // el que acabem de corregir a posta.
@@ -508,6 +560,42 @@ export class PoseFusion {
         az: input.sensorAzimuthDeg,
         alt: input.sensorAltitudeDeg,
       };
+    }
+
+    /*
+     * EL BIAIX S'APRÈN A PART DE LA POSTURA, i d'una mesura feta A LA CAPTURA.
+     *
+     * L'ancoratge diu on apuntes de debò; el sensor diu on es pensa que
+     * apuntes. La diferència és el biaix, i sense recordar-lo cada correcció
+     * s'havia de tornar a guanyar al fotograma següent. S'aprèn a poc a poc
+     * perquè és una propietat del lloc, no una mesura instantània.
+     *
+     * PER QUÈ NO DINS DEL BLOC DE DALT. La postura absoluta caduca quan el
+     * mòbil es mou — per això `anchor` desapareix als 3° — però l'ERROR entre
+     * el fix i el sensor d'aquell mateix instant no caduca: és independent de
+     * cap on s'apunti ara. Aprendre'l només amb el mòbil quiet volia dir que
+     * el gest d'inclinar-lo — el gest de l'app — deixava el biaix orfe i la
+     * tornada del gest queia sobre un sensor sense corregir.
+     */
+    const bias = input.anchorBias ?? null;
+    if (bias !== null && bias.confidence > 0) {
+      const biasPull = Math.min(1, (dt / BIAS_TAU_SEC) * bias.confidence);
+      if (!bias.altitudeOnly) {
+        this.biasAz = clampBias(
+          normalizeDelta(this.biasAz + biasPull * normalizeDelta(bias.errAzDeg - this.biasAz)),
+          MAX_BIAS_DEG,
+        );
+      }
+      this.biasAlt = clampBias(
+        this.biasAlt + biasPull * (bias.errAltDeg - this.biasAlt),
+        MAX_BIAS_ALT_DEG,
+      );
+    } else {
+      // Sense mesura de terreny recent, el biaix d'ALTURA caduca: el que
+      // codificava era sobretot l'error de la referència, no del sensor, i
+      // sense referència qui mana és l'acceleròmetre. El d'azimut es queda:
+      // la brúixola menteix igual encara que no es vegi cap carena.
+      this.biasAlt *= Math.exp(-dt / BIAS_ALT_DECAY_TAU_SEC);
     }
 
     this.altitude = Math.max(-90, Math.min(90, this.altitude));
@@ -521,6 +609,8 @@ export class PoseFusion {
       pullTauSec: tau,
       lastVisualStepDeg: visualStepDeg,
       lastSensorStepDeg: Math.hypot(sensorDAz * cosAltFactor(this.altitude), sensorDAlt),
+      biasAzDeg: this.biasAz,
+      biasAltDeg: this.biasAlt,
     };
 
     return { azimuthDeg: this.azimuth, altitudeDeg: this.altitude };
@@ -531,9 +621,9 @@ function cosAltFactor(altitudeDeg: number): number {
   return Math.max(0.2, Math.cos(altitudeDeg * DEG));
 }
 
-/** El biaix es dona per bo fins a MAX_BIAS_DEG; mes enlla no es biaix. */
-function clampBias(deg: number): number {
-  return Math.max(-MAX_BIAS_DEG, Math.min(MAX_BIAS_DEG, deg));
+/** El biaix es dona per bo fins al sostre del seu eix; mes enlla no es biaix. */
+function clampBias(deg: number, maxDeg: number): number {
+  return Math.max(-maxDeg, Math.min(maxDeg, deg));
 }
 
 function clamp01(value: number): number {
