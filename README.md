@@ -8,6 +8,11 @@ No és un compte enrere: la pregunta que respon és una altra.
 
 → **[Prova'l](https://lacuinade.estic.online/eclipsi/)**
 
+![La franja de totalitat del 12 d'agost de 2026 creuant el nord d'Espanya, amb
+la línia central, els límits nord i sud, i la fitxa del punt tocat: durada,
+ocultació, altura del Sol, hores dels contactes i distància al teu
+punt](docs/mapa-franja.jpg)
+
 | Data | Què és | Des d'Espanya |
 |---|---|---|
 | **12 d'agost de 2026** | Total | La franja creua de Galícia i Astúries fins a les Balears. El Sol, entre 12° i 1° sobre l'horitzó: gairebé a la posta |
