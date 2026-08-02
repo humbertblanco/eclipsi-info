@@ -170,13 +170,16 @@ describe('valors d’enumeració que no existeixen', () => {
     expect(parseRecents(raw)).toEqual([]);
   });
 
-  it('els cinc orígens de debò passen', () => {
+  it('els sis orígens de debò passen', () => {
+    // `'link'` (el punt que ha arribat per un enllaç compartit) hi és des que es
+    // pot dir «ens trobem aquí» amb l'app. Es desa com qualsevol altre lloc
+    // triat, o sigui que torna del disc i ha de passar per aquí.
     const raw = JSON.stringify(
-      (['gps', 'map', 'search', 'recent', 'default'] as const).map((origin, i) =>
+      (['gps', 'map', 'search', 'recent', 'link', 'default'] as const).map((origin, i) =>
         place(40 + i, 0, { origin }),
       ),
     );
-    expect(parseRecents(raw)).toHaveLength(5);
+    expect(parseRecents(raw)).toHaveLength(6);
   });
 
   it('les quatre fonts d’altitud de debò passen', () => {

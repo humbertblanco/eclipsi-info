@@ -27,6 +27,18 @@ export type LocationOrigin =
   /** L'usuari l'ha repescat de l'historial. */
   | 'recent'
   /**
+   * Ha arribat per l'URL: algú li ha enviat un enllaç dient «ens trobem aquí».
+   *
+   * ÉS UN ORIGEN PROPI I NO UN `'map'` O UN `'search'` DISFRESSAT perquè és
+   * l'únic que NO l'ha triat qui té l'app a la mà. Tots els altres són gestos
+   * seus i pot respondre «i això d'on surt?» tot sol; aquest, no. Si la barra
+   * digués «Punt del mapa» per a un punt que li ha enviat un altre, l'usuari
+   * buscaria a la seva memòria un gest que no ha fet mai — i, pitjor, no tindria
+   * cap manera de saber que les xifres que mira són del lloc que ha proposat
+   * una altra persona i no del seu.
+   */
+  | 'link'
+  /**
    * Cap de les anteriors: el punt d'exemple amb què arrenca l'app.
    *
    * Aquest valor obliga la interfície a dir-ho. Abans l'app arrencava sobre la
@@ -72,6 +84,7 @@ const KNOWN_ORIGINS: Record<LocationOrigin, true> = {
   map: true,
   search: true,
   recent: true,
+  link: true,
   default: true,
 };
 

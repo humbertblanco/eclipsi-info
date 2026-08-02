@@ -113,6 +113,47 @@ export function fixFromStored(last: RecentPlace): FixedLocation {
   };
 }
 
+/**
+ * Un punt que ha arribat per l'URL.
+ *
+ * ES DECLARA AQUÍ I NO S'IMPORTA DE `features/share` A POSTA. `src/features`
+ * depèn de `src/state` (`features/location/origin.ts` importa `LocationOrigin`
+ * d'aquí mateix) i la fletxa no ha d'anar en tots dos sentits: aquest fitxer és
+ * el guió de fixar un punt i ha de poder-se llegir i provar sense arrossegar-hi
+ * mig mòdul de vistes. La forma és la de `SharedPoint`, que hi encaixa sense
+ * conversions perquè en té els mateixos camps i algun més.
+ */
+export interface LinkedPoint {
+  lat: number;
+  lon: number;
+  /** Nom que viatjava amb l'enllaç, si en portava. */
+  label: string | null;
+}
+
+/**
+ * El punt tal com queda quan arriba per un enllaç.
+ *
+ * `restored` ÉS FALS, i la diferència amb `fixFromStored` no és cosmètica. Un
+ * punt restaurat ve d'una sessió anterior i la nota de la barra diu «això ve de
+ * l'última vegada que vas obrir l'app», que és un avís de possible obsolescència.
+ * Un punt d'un enllaç acaba d'arribar, ara mateix, i no té res de vell: el que
+ * cal dir-ne és una altra cosa —que no l'ha triat qui té l'app a la mà—, i això
+ * ja ho diu `origin: 'link'`. Marcar-lo com a restaurat mostraria l'avís
+ * equivocat i amagaria l'únic que importa.
+ */
+export function fixFromLink(point: LinkedPoint, atMs: number): FixedLocation {
+  return {
+    location: { lat: point.lat, lon: point.lon, elevation: 0 },
+    origin: 'link',
+    label: point.label,
+    accuracyM: null,
+    elevationSource: 'pending',
+    gpsElevationM: null,
+    atMs,
+    restored: false,
+  };
+}
+
 /** El mateix punt amb l'altitud que acaba d'arribar. */
 export function withResolvedElevation(
   fix: FixedLocation,
@@ -195,4 +236,107 @@ export async function fixAndResolve(first: FixedLocation, flow: FixFlow): Promis
   const current = flow.current();
   if (current === null) return;
   flow.commit(withResolvedElevation(current, resolved), 'elevation');
+}
+
+/* --- l'arrencada ---------------------------------------------------------- */
+
+/** El que hi ha per començar. Tot llegit ja, res per llegir aquí dins. */
+export interface BootInputs {
+  /** El punt de l'URL, si n'hi havia cap de vàlid. */
+  link: LinkedPoint | null;
+  /** L'últim lloc desat al disc. */
+  stored: RecentPlace | null;
+  /** Cert si ja s'ha explicat alguna vegada per què cal la ubicació. */
+  asked: boolean;
+  /**
+   * Ara mateix, en ms d'època. El punt de l'enllaç es fixa ARA i no quan es va
+   * escriure l'enllaç: `atMs` és quan aquest dispositiu ha començat a mirar
+   * aquell lloc, i és el que ordena l'historial.
+   *
+   * ES PASSA I NO ES LLEGEIX AQUÍ DINS perquè aquesta funció ha de ser pura:
+   * amb un `Date.now()` a dins, la prova de l'ordre de l'historial dependria de
+   * l'hora a què es corre.
+   */
+  nowMs: number;
+}
+
+/** D'on ha sortit el punt amb què arrenca l'app. */
+export type BootSource = 'link' | 'stored' | 'none';
+
+/** Què s'ha de fer en arrencar. */
+export interface BootPlan {
+  source: BootSource;
+  /** El punt amb què comença l'app, o `null` si no n'hi ha cap. */
+  fix: FixedLocation | null;
+  /** Si cada passada s'ha de desar al disc. */
+  remember: Record<FixPhase, boolean>;
+  /** Si s'ha d'ensenyar l'explicació de per què cal la ubicació. */
+  needsIntro: boolean;
+}
+
+/**
+ * Decideix amb què arrenca l'app: l'enllaç, el disc, o res.
+ *
+ * PER QUÈ ÉS UNA FUNCIÓ PURA I NO QUATRE `if` DINS DE L'EFECTE D'ARRENCADA. És
+ * la decisió amb més conseqüències de tota l'app —tria el punt sobre el qual es
+ * calcula TOT i decideix quina és la primera pantalla que veu algú— i alhora és
+ * la que passa una sola vegada, dins d'un `useEffect` amb una guarda de
+ * `bootstrapped`, en un hook que els tests d'aquest projecte (entorn Node, sense
+ * DOM) no poden muntar. Escrita aquí, es prova; escrita allà, no la prova ningú
+ * i es descobreix el dia que algú comparteix un enllaç.
+ *
+ * LES TRES REGLES:
+ *
+ * 1. L'ENLLAÇ MANA SOBRE EL DISC, sempre. És l'única prioritat que té sentit:
+ *    obrir un enllaç és un gest deliberat i d'ARA, i el punt desat és el d'una
+ *    altra estona. Al revés, l'app faria una cosa absurda —algú t'envia «ens
+ *    trobem al coll de Nargó», hi entres, i l'app t'ensenya les xifres del teu
+ *    poble— i seria absurda justament per a qui ja fa servir l'app, que és qui
+ *    té alguna cosa desada.
+ * 2. AMB UN ENLLAÇ NO HI HA PANTALLA D'INTRODUCCIÓ. Aquella pantalla existeix
+ *    per explicar per què cal la ubicació ABANS de demanar-la al navegador; amb
+ *    un punt ja sobre la taula no hi ha res a demanar, i sortiria tapant el
+ *    lloc que la persona acaba d'obrir. Seria l'app posant-se al davant del
+ *    missatge que algú li ha enviat.
+ * 3. EL PUNT DE L'ENLLAÇ ES DESA i el del disc no. El del disc ja ve d'allà i
+ *    tornar-l'hi a escriure només serveix per moure'l de lloc a l'historial;
+ *    el de l'enllaç és nou i ha d'entrar a l'historial com qualsevol altre lloc
+ *    triat, perquè si tanques l'app i la tornes a obrir sense l'enllaç, el lloc
+ *    on has quedat amb algú no es pot haver evaporat.
+ *
+ * L'EXCEPCIÓ DE L'ALTITUD DEL PUNT D'EXEMPLE es manté tal com era: el punt
+ * d'exemple no és de l'usuari, no embruta l'historial i tampoc no s'hi desa
+ * l'altitud que se n'aconsegueixi.
+ */
+export function planBoot(inputs: BootInputs): BootPlan {
+  const { link, stored, asked, nowMs } = inputs;
+
+  if (link !== null) {
+    return {
+      source: 'link',
+      fix: fixFromLink(link, nowMs),
+      remember: { placed: true, elevation: true },
+      needsIntro: false,
+    };
+  }
+
+  if (stored !== null) {
+    const restored = fixFromStored(stored);
+    return {
+      source: 'stored',
+      fix: restored,
+      // La primera passada no es torna a desar: acaba de sortir del disc. La de
+      // l'altitud sí, o cada arrencada tornaria a demanar la mateixa tessel·la
+      // per sempre.
+      remember: { placed: false, elevation: restored.origin !== 'default' },
+      needsIntro: !asked,
+    };
+  }
+
+  return {
+    source: 'none',
+    fix: null,
+    remember: { placed: false, elevation: false },
+    needsIntro: !asked,
+  };
 }

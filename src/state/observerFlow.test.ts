@@ -20,10 +20,12 @@ import { describe, expect, it } from 'vitest';
 import type { FixedLocation } from './location';
 import {
   fixAndResolve,
+  fixFromLink,
   fixFromPick,
   fixFromPosition,
   fixFromStored,
   needsElevation,
+  planBoot,
   toRecent,
   withResolvedElevation,
   type FixFlow,
@@ -261,6 +263,133 @@ describe('tornar a obrir l’app', () => {
     expect(needsElevation('pending')).toBe(true);
     expect(needsElevation('assumed')).toBe(true);
     expect(needsElevation('dem')).toBe(false);
+  });
+});
+
+describe('un punt que arriba per un enllaç', () => {
+  const NARGO = { lat: 42.17563, lon: 1.32004, label: 'Coll de Nargó' };
+
+  it('es fixa a l’instant, com qualsevol altre, i amb l’altitud per resoldre', () => {
+    const fix = fixFromLink(NARGO, 9_000);
+    expect(fix.location).toEqual({ lat: 42.17563, lon: 1.32004, elevation: 0 });
+    expect(fix.elevationSource).toBe('pending');
+    expect(fix.atMs).toBe(9_000);
+  });
+
+  it('diu d’on ve, i «d’un enllaç» no és cap dels altres orígens', () => {
+    // És l'únic punt que NO l'ha triat qui té l'app a la mà. Si la barra digués
+    // «Punt del mapa», l'usuari buscaria a la seva memòria un gest que no ha fet
+    // mai, i no tindria cap manera de saber que les xifres que mira són del lloc
+    // que ha proposat una altra persona.
+    expect(fixFromLink(NARGO, 0).origin).toBe('link');
+  });
+
+  it('NO es marca com a recuperat', () => {
+    // La diferència no és cosmètica: `restored` fa sortir la nota «això ve de
+    // l'última vegada que vas obrir l'app», que és un avís d'obsolescència. Un
+    // punt d'un enllaç acaba d'arribar i no té res de vell; el que se n'ha de
+    // dir és una altra cosa, i ja ho diu l'origen.
+    expect(fixFromLink(NARGO, 0).restored).toBe(false);
+  });
+
+  it('el nom que portava l’enllaç s’aprofita', () => {
+    // Qui l'obre dalt d'un port de muntanya no té xarxa per resoldre el topònim.
+    expect(fixFromLink(NARGO, 0).label).toBe('Coll de Nargó');
+    expect(fixFromLink({ lat: 42, lon: 1, label: null }, 0).label).toBeNull();
+  });
+});
+
+describe('amb què arrenca l’app', () => {
+  const LINK = { lat: 42.17563, lon: 1.32004, label: 'Coll de Nargó' };
+  const STORED: RecentPlace = {
+    lat: 41.3851,
+    lon: 2.1734,
+    elevation: 12,
+    elevationSource: 'dem',
+    label: 'Barcelona',
+    origin: 'search',
+    atMs: 1_000,
+  };
+
+  it('l’enllaç guanya el que hi hagi desat', () => {
+    /*
+      ÉS LA REGLA QUE JUSTIFICA TOTA LA FUNCIÓ. Algú t'envia «ens trobem al coll
+      de Nargó», hi entres, i el que has de veure és el coll de Nargó. Al revés
+      —el disc guanyant l'enllaç— l'app faria una cosa absurda justament amb qui
+      ja la fa servir, que és l'únic que té alguna cosa desada: obriria l'enllaç
+      i li ensenyaria les xifres del seu poble.
+    */
+    const plan = planBoot({ link: LINK, stored: STORED, asked: true, nowMs: 7_000 });
+    expect(plan.source).toBe('link');
+    expect(plan.fix?.location.lat).toBe(42.17563);
+    expect(plan.fix?.origin).toBe('link');
+  });
+
+  it('i no ensenya la pantalla d’introducció, encara que no s’hagi ensenyat mai', () => {
+    // Aquella pantalla existeix per explicar per què cal la ubicació ABANS de
+    // demanar-la al navegador. Amb un punt ja sobre la taula no hi ha res a
+    // demanar, i sortiria tapant el lloc que la persona acaba d'obrir: seria
+    // l'app posant-se al davant del missatge que algú li ha enviat.
+    expect(planBoot({ link: LINK, stored: null, asked: false, nowMs: 0 }).needsIntro).toBe(
+      false,
+    );
+  });
+
+  it('el punt de l’enllaç SÍ que es desa', () => {
+    // Si tanques l'app i la tornes a obrir sense l'enllaç, el lloc on has quedat
+    // amb algú no es pot haver evaporat. És un lloc triat com qualsevol altre.
+    const plan = planBoot({ link: LINK, stored: null, asked: true, nowMs: 7_000 });
+    expect(plan.remember).toEqual({ placed: true, elevation: true });
+  });
+
+  it('i es data ARA, no quan es va escriure l’enllaç', () => {
+    // `atMs` ordena l'historial i vol dir «quan aquest dispositiu ha començat a
+    // mirar aquest lloc». Un enllaç de fa tres setmanes obert avui és un lloc
+    // que es mira avui.
+    expect(planBoot({ link: LINK, stored: STORED, asked: true, nowMs: 7_000 }).fix?.atMs).toBe(
+      7_000,
+    );
+  });
+
+  it('sense enllaç, torna l’últim lloc del disc i marcat', () => {
+    const plan = planBoot({ link: null, stored: STORED, asked: true, nowMs: 7_000 });
+    expect(plan.source).toBe('stored');
+    expect(plan.fix?.restored).toBe(true);
+    expect(plan.fix?.location.lat).toBe(41.3851);
+    // La primera passada no es torna a desar: acaba de sortir del disc.
+    expect(plan.remember.placed).toBe(false);
+  });
+
+  it('l’altitud del que torna del disc sí que es desa, i la del punt d’exemple no', () => {
+    // Sense això, cada arrencada tornaria a demanar la mateixa tessel·la per
+    // sempre. I el punt d'exemple no és de l'usuari: no embruta l'historial.
+    expect(
+      planBoot({ link: null, stored: STORED, asked: true, nowMs: 0 }).remember.elevation,
+    ).toBe(true);
+    expect(
+      planBoot({
+        link: null,
+        stored: { ...STORED, origin: 'default' },
+        asked: true,
+        nowMs: 0,
+      }).remember.elevation,
+    ).toBe(false);
+  });
+
+  it('sense res de res, cap punt i la primera pregunta', () => {
+    const plan = planBoot({ link: null, stored: null, asked: false, nowMs: 0 });
+    expect(plan.source).toBe('none');
+    expect(plan.fix).toBeNull();
+    expect(plan.needsIntro).toBe(true);
+  });
+
+  it('a qui ja se li ha preguntat no se li torna a preguntar', () => {
+    expect(planBoot({ link: null, stored: null, asked: true, nowMs: 0 }).needsIntro).toBe(
+      false,
+    );
+    expect(
+      planBoot({ link: null, stored: STORED, asked: true, nowMs: 0 }).needsIntro,
+    ).toBe(false);
   });
 });
 

@@ -45,10 +45,11 @@ import {
   fixAndResolve,
   fixFromPick,
   fixFromPosition,
-  fixFromStored,
+  planBoot,
   toRecent,
   type FixFlow,
   type FixPhase,
+  type LinkedPoint,
   type PlacePick,
   type ResolvedElevation,
 } from './observerFlow';
@@ -66,7 +67,7 @@ import {
 } from './recentPlaces';
 
 export type { ElevationSource } from './location';
-export type { PlacePick } from './observerFlow';
+export type { LinkedPoint, PlacePick } from './observerFlow';
 
 /**
  * Per què ha fallat la ubicació.
@@ -156,7 +157,28 @@ async function resolveElevation(
   }
 }
 
-export function useObserver(): ObserverApi {
+/** Què li pot dir qui munta el hook. Tot opcional: sense res, l'app arrenca igual. */
+export interface ObserverOptions {
+  /**
+   * El punt que portava l'URL, ja llegit i validat.
+   *
+   * ARRIBA JA ANALITZAT I NO ES LLEGEIX AQUÍ DINS. Qui munta el hook (`App`) ja
+   * ha hagut d'obrir l'URL per saber quin eclipsi s'hi demanava, i és qui
+   * l'escriu quan el punt canvia. Llegir-lo dues vegades, en dos llocs, obre la
+   * porta a la única cosa que no pot passar amb un enllaç: que la part de
+   * l'adreça que decideix el LLOC i la que decideix l'ECLIPSI es llegeixin de
+   * maneres diferents i acabin desaparellades.
+   *
+   * NOMÉS ES MIRA A L'ARRENCADA. Canviar-lo després no fa res: un cop l'app té
+   * un punt, qui mana és l'usuari, i l'URL passa a ser el reflex del que ell fa,
+   * no la font.
+   */
+  shared?: LinkedPoint | null;
+}
+
+export function useObserver(options?: ObserverOptions): ObserverApi {
+  const shared = options?.shared ?? null;
+
   const [state, setState] = useState<State>({
     fix: null,
     error: null,
@@ -421,29 +443,40 @@ export function useObserver(): ObserverApi {
     if (bootstrapped.current) return;
     bootstrapped.current = true;
 
+    // L'HISTORIAL, ABANS DE FIXAR RES. Si el punt de l'enllaç es desés amb la
+    // llista encara buida a `recentsRef`, `mergeRecent` en fabricaria una de
+    // nova amb una sola entrada i l'historial sencer desapareixeria del disc per
+    // haver obert un enllaç.
     applyRecents(readRecents().slice(0, MAX_RECENTS));
-    setNeedsIntro(!readAsked());
 
-    // L'últim lloc torna, però marcat: ve d'una altra estona i les condicions
-    // (i els plans de l'usuari) poden haver canviat des de llavors.
-    //
-    // I SI L'ALTITUD DESADA NO VE DEL MODEL, ES TORNA A DEMANAR. Una altitud
-    // `assumed` o `gps` desada vol dir que aquell dia no hi va haver tessel·la;
-    // restaurar-la tal qual la fa eterna, i el zero d'un punt que és a 1.520 m
-    // se'n va a les hores dels contactes i al veredicte d'horitzó sense que res
-    // ho torni a mirar mai. Ara, si hi ha xarxa, l'arrencada la repara i la desa
-    // arreglada perquè la propera vegada ja no calgui.
-    const last = readLastPlace();
-    if (last !== null) {
-      const restored = fixFromStored(last);
-      void fixAndResolve(
-        restored,
-        // La primera passada no es torna a desar: acaba de sortir del disc.
-        flowFor(++ticket.current, {
-          placed: false,
-          elevation: restored.origin !== 'default',
-        }),
-      );
+    /*
+      QUI MANA EN ARRENCAR. L'enllaç guanya el disc, i el disc guanya el buit.
+      Les tres branques i el perquè de cadascuna són a `planBoot`
+      (`observerFlow.ts`), que és pura i es prova; aquí només se n'aplica el
+      resultat.
+
+      EL QUE ES DECIDEIX AQUÍ NO ÉS NOMÉS EL PUNT: també si surt la pantalla
+      d'introducció. Amb un punt vingut d'un enllaç no ha de sortir mai —seria
+      l'app posant-se al davant del missatge que algú acaba de rebre—, i això no
+      és cap cas especial afegit a fora sinó una conseqüència del pla.
+
+      L'ÚLTIM LLOC DEL DISC, QUAN GUANYA, TORNA MARCAT: ve d'una altra estona i
+      les condicions (i els plans de l'usuari) poden haver canviat. I si
+      l'altitud desada no ve del model del terreny, es torna a demanar: una
+      altitud `assumed` o `gps` vol dir que aquell dia no hi va haver tessel·la,
+      i restaurar-la tal qual la fa eterna. El zero d'un punt que és a 1.520 m
+      se n'aniria a les hores dels contactes i al veredicte d'horitzó sense que
+      res ho tornés a mirar mai.
+    */
+    const plan = planBoot({
+      link: shared,
+      stored: readLastPlace(),
+      asked: readAsked(),
+      nowMs: Date.now(),
+    });
+    setNeedsIntro(plan.needsIntro);
+    if (plan.fix !== null) {
+      void fixAndResolve(plan.fix, flowFor(++ticket.current, plan.remember));
     }
 
     // Estat del permís, quan el navegador el sap dir. Serveix per no oferir
@@ -461,10 +494,13 @@ export function useObserver(): ObserverApi {
           /* Safari antic no en sap. Ens quedem amb 'unknown'. */
         });
     }
-    // Totes dues són estables (`useCallback` sense dependències canviants); hi
-    // són perquè la llista sigui certa, no perquè l'efecte s'hagi de repetir:
-    // d'això ja se n'encarrega `bootstrapped`.
-  }, [applyRecents, flowFor]);
+    // Les dues primeres són estables (`useCallback` sense dependències
+    // canviants) i `shared` es llegeix un sol cop; hi són perquè la llista sigui
+    // certa, no perquè l'efecte s'hagi de repetir: d'això ja se n'encarrega
+    // `bootstrapped`. Si algun dia `shared` canviés de valor a mitja sessió,
+    // aquesta guarda és justament el que impedeix que un enllaç vell torni a
+    // moure l'usuari de lloc.
+  }, [applyRecents, flowFor, shared]);
 
   return {
     fix: state.fix,

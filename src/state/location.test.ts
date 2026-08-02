@@ -177,9 +177,19 @@ describe('valors que arriben del disc', () => {
    */
 
   it('els orígens de debò es reconeixen', () => {
-    for (const origin of ['gps', 'map', 'search', 'recent', 'default']) {
+    for (const origin of ['gps', 'map', 'search', 'recent', 'link', 'default']) {
       expect(isLocationOrigin(origin)).toBe(true);
     }
+  });
+
+  it('un punt vingut d’un enllaç es pot desar i tornar a llegir', () => {
+    // `'link'` no és un origen de només anada. El punt que arriba per l'URL es
+    // desa com qualsevol altre lloc triat —si no, tancar l'app perdria el lloc
+    // on has quedat amb algú—, i això vol dir que torna del disc a la propera
+    // arrencada i ha de passar la validació. Si algú afegís l'origen al tipus i
+    // se n'oblidés aquí, la barra de la ubicació el descartaria i el punt es
+    // perdria en silenci a cada reobertura.
+    expect(isLocationOrigin('link')).toBe(true);
   });
 
   it('qualsevol altra cosa no', () => {
