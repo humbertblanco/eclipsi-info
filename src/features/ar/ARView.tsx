@@ -73,7 +73,12 @@ import {
   type VisualRotation,
 } from './visualTracker';
 import { PoseFusion, poseDeltaToRotation, type FusionTelemetry } from './poseFusion';
-import { loadMeasuredFov, saveMeasuredFov } from './focalStore';
+import {
+  loadMeasuredFov,
+  saveMeasuredFov,
+  MIN_FOV_DEG,
+  MAX_FOV_DEG,
+} from './focalStore';
 import { readPalette } from '../../styles/palette';
 /*
  * TOT EL TEXT, DEL DICCIONARI; TOTA HORA, DE `screens/format`.
@@ -195,8 +200,10 @@ const ANCHOR_MAX_MOVE_DEG = 3;
  */
 const ANCHOR_BIAS_MAX_SPEED_DEG_PER_SEC = 25;
 
-const MIN_FOV_DEG = 25;
-const MAX_FOV_DEG = 140;
+// Els límits del camp de visió viuen a `focalStore`: UN sol rang per a la
+// mesura, la persistència i el control lliscant. N'hi havia dos (25-140 aquí,
+// 40-130 al control) i un valor desat de la franja no coberta es podia
+// carregar però no corregir a mà.
 
 /*
  * Cada font del rumb, cap a la seva clau del diccionari. Era un
@@ -241,6 +248,19 @@ interface TrackingDiagnostics {
   fusion: FusionTelemetry;
   focalWindows: number;
   measuredFovDeg: number | null;
+  /** Cert quan el braç de palanca vertical del seguidor està col·lapsat. */
+  pitchDegraded: boolean;
+  /** L'últim fix de terreny, amb l'edat: el que la fusió està rebent. */
+  terrainAnchor: {
+    ageMs: number;
+    confidence: number;
+    used: number;
+    altitudeOnly: boolean;
+  } | null;
+  /** Cost del cos del bucle de dibuix, mitjana mòbil, en mil·lisegons. */
+  drawMs: number;
+  /** Guany de focal de l'eix d'inclinació: l'empremta de l'obturador rodant. */
+  pitchGain: number | null;
 }
 
 const INITIAL_DIAGNOSTICS: TrackingDiagnostics = {
@@ -250,6 +270,10 @@ const INITIAL_DIAGNOSTICS: TrackingDiagnostics = {
   residualPx: 0,
   videoFps: 0,
   exactFrameClock: false,
+  pitchDegraded: false,
+  terrainAnchor: null,
+  drawMs: 0,
+  pitchGain: null,
   fusion: {
     agreement: 0,
     usingVisual: false,
@@ -331,6 +355,8 @@ export function ARView({
   /** Postura del sensor l'últim cop que va arribar un fotograma de càmera. */
   const sensorAtFrameRef = useRef<{ az: number; alt: number; imageRoll: number } | null>(null);
   const lastDrawMsRef = useRef<number | null>(null);
+  /** Mitjana mòbil del cost del cos de dibuix, en ms. És l'àrbitre del 10 Hz. */
+  const drawMsRef = useRef(0);
   /** Camp de visió mesurat, en graus sobre el costat llarg del sensor. */
   const measuredFovRef = useRef<number | null>(null);
   /**
@@ -664,6 +690,9 @@ export function ARView({
       const dtSec =
         lastDrawMsRef.current === null ? 1 / 60 : (nowMs - lastDrawMsRef.current) / 1000;
       lastDrawMsRef.current = nowMs;
+      // El cost del cos es mesura des d'aquí fins després de pintar: és la
+      // xifra que decideix si l'àncora a 10 Hz surt a compte en aquest mòbil.
+      const bodyStartMs = performance.now();
 
       const dpr = window.devicePixelRatio || 1;
       const w = canvas.clientWidth;
@@ -828,6 +857,7 @@ export function ARView({
             usedBlocks: visual?.usedBlocks ?? 0,
             saturated: visual?.saturated ?? false,
             residualPx: visual?.residualPx ?? 0,
+            pitchDegraded: visual?.pitchDegraded ?? false,
           };
         }
 
@@ -948,6 +978,10 @@ export function ARView({
           palette: PALETTE,
         });
       }
+
+      // Mitjana mòbil exponencial (α=0,1): estable per llegir-la al panell i
+      // prou viva per veure una pujada de cost quan passa.
+      drawMsRef.current = drawMsRef.current * 0.9 + (performance.now() - bodyStartMs) * 0.1;
     };
 
     frame = requestAnimationFrame(draw);
@@ -1002,16 +1036,20 @@ export function ARView({
            * 1 i s'hi queda. Costa uns cinquanta graus de panoràmica per volta,
            * que és el que fa qualsevol que busqui el Sol amb el mòbil.
            */
+          // Les finestres es capturen ABANS del reinici: són l'historial que
+          // acompanya el valor al disc, i el reinici les posa a zero.
+          const windows = focalRef.current.count;
           focalRef.current.reset();
           // I només s'escriu al disc quan de veritat canvia: això corria dues
           // vegades per segon tota la sessió.
           if (Math.abs(fov - savedFovRef.current) > FOV_SAVE_STEP_DEG) {
             savedFovRef.current = fov;
-            saveMeasuredFov(video.videoWidth, video.videoHeight, fov);
+            saveMeasuredFov(video.videoWidth, video.videoHeight, fov, windows);
           }
         }
       }
 
+      const fix = anchorRef.current;
       diagnosticsRef.current = {
         ...diagnosticsRef.current,
         videoFps: frameClockRef.current.fps,
@@ -1019,6 +1057,17 @@ export function ARView({
         fusion: fusionRef.current.telemetry,
         focalWindows: focalRef.current.count,
         measuredFovDeg: measuredFov,
+        terrainAnchor:
+          fix === null
+            ? null
+            : {
+                ageMs: Math.max(0, performance.now() - anchorAtMsRef.current),
+                confidence: fix.confidence,
+                used: fix.used,
+                altitudeOnly: fix.altitudeOnly,
+              },
+        drawMs: drawMsRef.current,
+        pitchGain: focalRef.current.gainForAxis(1),
       };
       setDiagnostics(diagnosticsRef.current);
     }, DIAGNOSTICS_MS);
@@ -1277,14 +1326,6 @@ export function ARView({
               </dd>
             </div>
             <div>
-              <dt>{s('camera.diag.applied', locale)}</dt>
-              <dd>
-                {s('camera.diag.appliedValue', locale, {
-                  deg: `${calibration.azimuthOffset >= 0 ? '+' : ''}${calibration.azimuthOffset.toFixed(2)}`,
-                })}
-              </dd>
-            </div>
-            <div>
               <dt>{s('camera.diag.screenFov', locale)}</dt>
               <dd>
                 {fovReadout
@@ -1344,6 +1385,80 @@ export function ARView({
             </div>
             <div>
               {/*
+                El biaix que la fusió ha après del terreny. L'azimut pot ser
+                gran (la brúixola s'ho mereix); l'altura enganxada al sostre
+                d'1,5° vol dir que l'ancoratge veu una silueta que el model no
+                té — arbres, teulades — i n'està absorbint l'error.
+              */}
+              <dt>{s('camera.diag.bias', locale)}</dt>
+              <dd
+                className={
+                  Math.abs(diagnostics.fusion.biasAltDeg) > 1.2 ? 'bad' : undefined
+                }
+              >
+                {s('camera.diag.azAlt', locale, {
+                  az: diagnostics.fusion.biasAzDeg.toFixed(1),
+                  alt: diagnostics.fusion.biasAltDeg.toFixed(2),
+                })}
+              </dd>
+            </div>
+            <div>
+              <dt>{s('camera.diag.terrain', locale)}</dt>
+              <dd
+                className={
+                  diagnostics.terrainAnchor && diagnostics.terrainAnchor.ageMs < 500
+                    ? 'good'
+                    : undefined
+                }
+              >
+                {diagnostics.terrainAnchor
+                  ? `${s('camera.diag.terrainValue', locale, {
+                      pct: (diagnostics.terrainAnchor.confidence * 100).toFixed(0),
+                      cols: diagnostics.terrainAnchor.used,
+                      age: Math.round(diagnostics.terrainAnchor.ageMs),
+                    })}${
+                      diagnostics.terrainAnchor.altitudeOnly
+                        ? ` · ${s('camera.diag.terrainAltOnly', locale)}`
+                        : ''
+                    }`
+                  : s('camera.diag.terrainNone', locale)}
+              </dd>
+            </div>
+            <div>
+              {/*
+                La quietud en xifres: el límit de correcció vigent. A 0,3°/s
+                amb el mòbil quiet, la superposició no es pot moure de manera
+                visible per molt que el sensor balli.
+              */}
+              <dt>{s('camera.diag.slew', locale)}</dt>
+              <dd>
+                {diagnostics.fusion.slewDegPerSec.toFixed(1)}°/s
+                {diagnostics.fusion.slewClamped
+                  ? ` · ${s('camera.diag.slewClamped', locale)}`
+                  : ''}
+                {diagnostics.pitchDegraded
+                  ? ` · ${s('camera.diag.pitchDegraded', locale)}`
+                  : ''}
+              </dd>
+            </div>
+            <div>
+              {/*
+                Cost del cos de dibuix i, si n'hi ha, el guany de focal de
+                l'eix d'inclinació: si difereix clarament del d'azimut, allò
+                és l'empremta de l'obturador rodant del sensor, mesurada.
+              */}
+              <dt>{s('camera.diag.frameCost', locale)}</dt>
+              <dd className={diagnostics.drawMs > 8 ? 'bad' : 'good'}>
+                {diagnostics.drawMs.toFixed(1)} ms
+                {diagnostics.pitchGain !== null
+                  ? ` · ${s('camera.diag.pitchGain', locale, {
+                      gain: diagnostics.pitchGain.toFixed(3),
+                    })}`
+                  : ''}
+              </dd>
+            </div>
+            <div>
+              {/*
                 Fotogrames de càmera NOUS per segon. Si això va molt per sota de
                 la freqüència de dibuix, l'ancoratge visual treballa amb la
                 meitat de la informació que sembla; si cau a zero amb la càmera
@@ -1396,8 +1511,8 @@ export function ARView({
             {s('camera.diag.sensorFov', locale, { deg: shownFovDeg.toFixed(1) })}
             <input
               type="range"
-              min={40}
-              max={130}
+              min={MIN_FOV_DEG}
+              max={MAX_FOV_DEG}
               step={0.5}
               value={shownFovDeg}
               onChange={(e) => {

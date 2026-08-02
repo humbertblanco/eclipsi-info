@@ -508,8 +508,6 @@ const STRINGS = {
     ca: 'Error de brúixola en brut',
     es: 'Error de brújula en bruto',
   },
-  'camera.diag.applied': { ca: 'Correcció aplicada', es: 'Corrección aplicada' },
-  'camera.diag.appliedValue': { ca: 'az {deg}°', es: 'az {deg}°' },
   'camera.diag.screenFov': {
     ca: 'Camp de visió a pantalla',
     es: 'Campo de visión en pantalla',
@@ -541,6 +539,25 @@ const STRINGS = {
   'camera.diag.poseValue': {
     ca: '{source} · deriva {drift}° · estirada {tau} s',
     es: '{source} · deriva {drift}° · tirón {tau} s',
+  },
+  'camera.diag.bias': { ca: 'Biaix après del terreny', es: 'Sesgo aprendido del terreno' },
+  'camera.diag.terrain': { ca: 'Àncora de terreny', es: 'Ancla de terreno' },
+  'camera.diag.terrainValue': {
+    ca: '{pct}% · {cols} columnes · fa {age} ms',
+    es: '{pct}% · {cols} columnas · hace {age} ms',
+  },
+  'camera.diag.terrainAltOnly': { ca: 'només altura', es: 'solo altura' },
+  'camera.diag.terrainNone': { ca: 'cap a la vista', es: 'ninguna a la vista' },
+  'camera.diag.slew': { ca: 'Límit de correcció', es: 'Límite de corrección' },
+  'camera.diag.slewClamped': { ca: 'retallant', es: 'recortando' },
+  'camera.diag.pitchDegraded': {
+    ca: 'braç vertical coix — l’altura la porta el sensor',
+    es: 'brazo vertical cojo — la altura la lleva el sensor',
+  },
+  'camera.diag.frameCost': { ca: 'Cost del dibuix', es: 'Coste del dibujo' },
+  'camera.diag.pitchGain': {
+    ca: 'guany pitch {gain} (obturador rodant)',
+    es: 'ganancia pitch {gain} (obturador rodante)',
   },
   'camera.diag.poseVisual': { ca: 'la imatge', es: 'la imagen' },
   'camera.diag.poseSensor': { ca: 'només el sensor', es: 'solo el sensor' },

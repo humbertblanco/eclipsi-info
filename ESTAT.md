@@ -187,19 +187,57 @@ Perquè no es desfacin per accident.
 És el que l'usuari considera la funció diferencial. Tres capes que se sumen:
 
 1. **Sensors** (`useDeviceOrientation` → `smoothing`): quaternions i filtre d'un
-   euro amb terra de soroll. Sol, tremola 0,20° amb una brúixola normal.
+   euro amb terra de soroll. Sol, tremola 0,20° amb una brúixola normal. A iOS,
+   el quaternió es construeix amb l'alpha RELATIVA més un offset de guinyada
+   après del compass (`iosHeading`), pesat per la postura i congelat apuntant
+   amunt: el compass ja no entra disfressat d'alpha, que era el que feia lliscar
+   l'azimut en inclinar.
 2. **Seguiment visual** (`visualTracker`): compara fotogrames. És RELATIU i
-   necessita textura — apuntant a cel serè no en troba i retorna `null`.
+   necessita textura — apuntant a cel serè no en troba i retorna `null`. Graella
+   de 3×5 (el costat llarg, el vertical en mà, té cinc files: el cel es menja
+   les de dalt), pista de roll del sensor, comptador de fotogrames fosos,
+   igualació d'exposició, i `pitchDegraded` quan el braç de palanca vertical
+   col·lapsa — llavors la fusió fa recular NOMÉS l'altura cap al sensor.
 3. **Ancoratge al terreny** (`skyline`): detecta la silueta de la muntanya i
    l'aparella amb la que el model del terreny diu que hi ha d'haver. És
    ABSOLUT: no deriva, i corregeix la brúixola de passada. Mesurat al banc,
-   recupera un error de brúixola de 10° fins a menys de 0,5°.
+   recupera un error de brúixola de 10° fins a menys de 0,5°. Endurit: la
+   predicció per columna es llavora i comprova convergència (NaN si no), la
+   silueta ha de cobrir el 35% de l'amplada, un horitzó pla dona un fix
+   `altitudeOnly` (altura sí, azimut no — i no toca el biaix d'azimut), un fix
+   que afirmi més de 3° d'error d'altura es descarta (l'acceleròmetre no pot
+   anar tan errat: allò és una teulada), i corre a ~10 Hz.
 
-La tercera és la que fa que es quedi quiet, i és la que cap altra app pot fer
-perquè cap altra té el perfil d'horitzó del punt de l'usuari.
+La FUSIÓ (`poseFusion`) té dues regles amb física pròpia:
 
-**El que encara falta a la càmera**: no gestiona que l'app passi a segon pla ni
-que el sistema li prengui la càmera (una trucada, canviar d'app: es queda una
-fotografia congelada amb la superposició lliscant-hi per sobre); el bucle de
-dibuix corre encara que la càmera no estigui oberta; i es dibuixen 60 fotogrames
-per segon quan la càmera només en dona 30.
+- **El biaix és asimètric.** El d'azimut corregeix el magnetòmetre: fins a
+  ±40°, no caduca mai, i s'aprèn de l'error del fix MESURAT A LA CAPTURA
+  (`anchorBias`), que és independent de la postura i per això segueix
+  aprenent a mig gest. El d'altura corregeix una referència, no el sensor
+  (l'acceleròmetre va fi a dècimes): es capa a ±1,5° i caduca (τ 12 s) quan
+  no hi ha terreny a la vista. Abans un skyline fals podia ensenyar 40° de
+  biaix vertical per sempre — el «queda tort i no es recupera» del camp.
+- **Quiet vol dir quiet.** Les correccions (estirada + àncora, com a suma) es
+  retallen a 0,3°/s amb el mòbil parat: per sota del que l'ull distingeix
+  d'estar clavat. El límit s'obre amb la velocitat, la seva cua (1,5 s) i
+  l'excés de desalineació (>1° — l'arrencada amb la brúixola fora va igual de
+  ràpida que sempre). El sostre dur de 8° queda fora del retall. I la
+  discrepància imatge−sensor es limita a 1,5° per fotograma: cap
+  correspondència falsa no es pot injectar sencera.
+
+La tercera capa és la que fa que es quedi quiet, i és la que cap altra app pot
+fer perquè cap altra té el perfil d'horitzó del punt de l'usuari. El banc
+sintètic ara també sap fer obturador rodant (`renderFrameRS`), rampes
+d'exposició i ancoratge dins de `runSequence`: el gest d'inclinar amb àncora
+queda a ~1° pic a pic durant el gest i recollit a <0,3° als dos segons.
+
+**El que encara falta a la càmera**: no gestiona que el sistema li prengui la
+càmera (una trucada, canviar d'app: es queda una fotografia congelada amb la
+superposició lliscant-hi per sobre — el bucle sí que s'atura amb la pàgina
+amagada); el bucle de dibuix corre encara que la càmera no estigui oberta; es
+dibuixen 60 fotogrames per segon quan la càmera només en dona 30 (el cost del
+cos surt ara al panell de diagnòstic, `ms de dibuix`); i l'offset d'iOS
+congelat apuntant amunt deixa la deriva del giroscopi sense correcció si no hi
+ha NI terreny a la vista NI estones per sota de 35° — acceptable per als
+eclipsis del 2026/2028, que passen arran d'horitzó, però mesurable al camp
+amb el panell (`heading` vs pitch) si mai cal el pes mínim residual.

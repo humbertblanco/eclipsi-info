@@ -47,9 +47,24 @@ const PREFIX = 'eclipsi.ar.fov.v2.';
 /** Prefix anterior, que es purga en llegir. Vegeu la nota de sobre. */
 const LEGACY_PREFIX = 'eclipsi.ar.fov.';
 
-/** Límits del que pot ser una càmera de mòbil, sobre el costat llarg. */
-const MIN_FOV_DEG = 25;
-const MAX_FOV_DEG = 140;
+/**
+ * Límits del que pot ser una càmera de mòbil, sobre el costat llarg.
+ *
+ * S'exporten perquè hi hagi UN sol rang a tota l'app: el control lliscant del
+ * panell en tenia un altre (40-130) i un valor desat de 25 a 39,9° es podia
+ * carregar i dibuixar però no reproduir ni corregir a mà.
+ */
+export const MIN_FOV_DEG = 25;
+export const MAX_FOV_DEG = 140;
+
+/** El que es desa amb el valor: quantes finestres el sostenen, i de quan és. */
+export interface MeasuredFovMeta {
+  fovDeg: number;
+  /** Finestres de calibratge tancades quan es va desar. 0 = desat antic. */
+  windows: number;
+  /** Època Unix en mil·lisegons, o null si el valor és del format antic. */
+  savedAtMs: number | null;
+}
 
 function key(width: number, height: number): string {
   // Es normalitza per costat llarg i curt: el mateix objectiu pot lliurar el
@@ -85,26 +100,64 @@ function purgeLegacy(): void {
 
 /** Camp de visió desat per a aquesta resolució, o null. */
 export function loadMeasuredFov(width: number, height: number): number | null {
+  return loadMeasuredFovMeta(width, height)?.fovDeg ?? null;
+}
+
+/**
+ * El valor desat AMB el seu historial: quantes finestres el sostenien i quan
+ * es va escriure. Un valor acabat de mesurar amb el mínim de sis finestres no
+ * mereix la mateixa autoritat que un de llarg i convergit, i fins ara no hi
+ * havia manera de distingir-los — la clau v2 va jubilar els enverinats, però
+ * no va deixar cap marca per no repetir la investigació el proper cop.
+ *
+ * Es llegeix tant el format nou (JSON `{f, n, t}`) com l'antic (número pelat);
+ * l'antic surt amb `windows: 0` i `savedAtMs: null`, que és exactament el que
+ * se'n sap.
+ */
+export function loadMeasuredFovMeta(width: number, height: number): MeasuredFovMeta | null {
   if (width <= 0 || height <= 0) return null;
   purgeLegacy();
   try {
     const raw = localStorage.getItem(key(width, height));
     if (raw === null) return null;
-    const value = Number(raw);
-    if (!Number.isFinite(value) || value < MIN_FOV_DEG || value > MAX_FOV_DEG) return null;
-    return value;
+
+    let fov: number;
+    let windows = 0;
+    let savedAtMs: number | null = null;
+    if (raw.startsWith('{')) {
+      const parsed: unknown = JSON.parse(raw);
+      if (typeof parsed !== 'object' || parsed === null) return null;
+      const record = parsed as { f?: unknown; n?: unknown; t?: unknown };
+      if (typeof record.f !== 'number') return null;
+      fov = record.f;
+      if (typeof record.n === 'number' && record.n >= 0) windows = Math.floor(record.n);
+      if (typeof record.t === 'number' && record.t > 0) savedAtMs = record.t;
+    } else {
+      fov = Number(raw);
+    }
+
+    if (!Number.isFinite(fov) || fov < MIN_FOV_DEG || fov > MAX_FOV_DEG) return null;
+    return { fovDeg: fov, windows, savedAtMs };
   } catch {
-    // Safari en navegació privada llança en llegir. No és fatal: es torna a
-    // mesurar i prou.
+    // Safari en navegació privada llança en llegir, o el JSON és brossa. No és
+    // fatal: es torna a mesurar i prou.
     return null;
   }
 }
 
-export function saveMeasuredFov(width: number, height: number, fovDeg: number): void {
+export function saveMeasuredFov(
+  width: number,
+  height: number,
+  fovDeg: number,
+  windows = 0,
+): void {
   if (width <= 0 || height <= 0) return;
   if (!Number.isFinite(fovDeg) || fovDeg < MIN_FOV_DEG || fovDeg > MAX_FOV_DEG) return;
   try {
-    localStorage.setItem(key(width, height), fovDeg.toFixed(2));
+    localStorage.setItem(
+      key(width, height),
+      JSON.stringify({ f: Number(fovDeg.toFixed(2)), n: Math.max(0, windows), t: Date.now() }),
+    );
   } catch {
     // Quota exhaurida o emmagatzematge bloquejat: es perd el calibratge entre
     // sessions, però la sessió actual segueix igual de bé.

@@ -135,10 +135,13 @@ export interface RaycastOptions {
    * d'estar enfilat a alguna cosa que el model no coneix — un mirador, un
    * terrat, el sostre d'un cotxe, una torre.
    *
-   * Per defecte 0, no 1,6: el veredicte que en surt és lleugerament
-   * PESSIMISTA (el terreny et tapa una mica abans del que et taparà de
-   * veritat), i val més equivocar-se cap al costat que fa que l'usuari busqui
-   * un lloc millor.
+   * El valor per defecte segueix sent 0 — el biaix pessimista de sèrie — però
+   * l'app hi passa 1,6 m (App.tsx): els ulls d'una persona dreta. Es va
+   * defensar el 0 amb l'argument que un veredicte pessimista fa buscar llocs
+   * millors, i a escala de veredicte encara és cert; el que el va decantar és
+   * l'ancoratge de la càmera, que compara la silueta del model amb la de la
+   * imatge al detall i es menjava aquell metre i mig com a biaix vertical
+   * sistemàtic del terreny proper.
    */
   eyeHeightM?: number;
   /**

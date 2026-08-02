@@ -141,7 +141,13 @@ function Shell() {
   // El perfil d'horitzó es calcula un sol cop per ubicació i el comparteixen
   // totes les pantalles: són uns 150 tessel·les de terreny i 2,6 milions de
   // mostres, no és cosa de fer-ho dues vegades.
-  const horizon = useHorizon(observer.location);
+  // 1,6 m: ulls d'una persona dreta. El model de terreny posa l'observador
+  // arran de terra, i aquell metre i mig llarg és un desplaçament vertical
+  // sistemàtic de l'horitzó a prop — petit al veredicte (dècimes de grau a un
+  // quilòmetre), però l'ancoratge de la càmera compara siluetes al detall i
+  // se'l menjava com a biaix. Canviar-ho invalida la memòria cau de perfils
+  // una vegada (l'altura entra a la signatura) i es recalculen sols.
+  const horizon = useHorizon(observer.location, { heightAboveGroundM: 1.6 });
 
   const circumstances = useMemo(
     () =>

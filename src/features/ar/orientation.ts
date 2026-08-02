@@ -337,33 +337,15 @@ export function unprojectFromScreen(
   };
 }
 
-/**
- * Resol el calibratge a partir d'un toc de l'usuari sobre el Sol.
- *
- * Invertim la projecció: sabem on ha tocat l'usuari a la pantalla i sabem on
- * és el Sol de veritat, així que en deduïm quant s'equivoca la brúixola.
+/*
+ * Aquí hi havia `calibrateFromTap`, la resolució del calibratge per toc sobre
+ * el Sol. La interfície que el cridava es va treure (vegeu la nota d'ARView
+ * sobre el calibratge per toc) i la funció va quedar exportada sense cap
+ * cridador durant mesos — codi mort que semblava una funcionalitat. La seva
+ * feina la fa l'ancoratge al terreny, que no demana res a ningú. Els offsets
+ * de `Calibration` es queden: són el punt d'entrada de qualsevol correcció
+ * futura i la projecció ja els aplica.
  */
-export function calibrateFromTap(
-  tapX: number,
-  tapY: number,
-  trueAz: number,
-  trueAlt: number,
-  camera: CameraPointing,
-  calibration: Calibration,
-  viewport: Viewport,
-): Calibration {
-  const believed = unprojectFromScreen(tapX, tapY, camera, calibration, viewport);
-
-  // Els offsets ja estaven aplicats dins la reconstrucció del raig, així que el
-  // que en surt és la correcció TOTAL, no un increment sobre l'anterior.
-  return {
-    ...calibration,
-    azimuthOffset: normalizeAngle(
-      calibration.azimuthOffset + normalizeAngle(trueAz - believed.azimuth),
-    ),
-    altitudeOffset: calibration.altitudeOffset + (trueAlt - believed.altitude),
-  };
-}
 
 /** Separació angular entre dues direccions del cel, en graus. */
 export function angularSeparationDeg(
