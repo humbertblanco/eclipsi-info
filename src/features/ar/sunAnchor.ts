@@ -602,7 +602,7 @@ export class SunRefiner {
     video: HTMLVideoElement,
     coarseScreen: { x: number; y: number },
     viewport: Viewport,
-  ): { x: number; y: number } | null {
+  ): { x: number; y: number; peak: number } | null {
     const vw = video.videoWidth;
     const vh = video.videoHeight;
     if (vw <= 0 || vh <= 0) return null;
@@ -672,6 +672,21 @@ export class SunRefiner {
     return {
       x: viewport.width / 2 + (refinedVideoX - vw / 2) * cover,
       y: viewport.height / 2 + (refinedVideoY - vh / 2) * cover,
+      peak,
     };
   }
+}
+
+/**
+ * Si el refinament és de fiar: el pic del retall a resolució plena ha de ser
+ * COM A MÍNIM comparable al del pas coarse.
+ *
+ * El submostreig fa mitjanes: el pic a resolució plena només pot ser igual o
+ * més alt que el mateix punt vist a la graella reduïda. Si el retall en surt
+ * amb un pic clarament MÉS BAIX, és que ha anat a parar a una altra cosa —
+ * una vora de núvol, un reflex — i val més quedar-se amb el centroide coarse
+ * que refinar cap a un lloc equivocat.
+ */
+export function acceptRefinedPeak(coarsePeak: number, refinedPeak: number): boolean {
+  return refinedPeak >= 0.8 * coarsePeak;
 }

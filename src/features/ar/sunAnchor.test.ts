@@ -17,6 +17,7 @@ import {
   crescentCentroidOffsetDeg,
   expectedBrightBody,
   mergeAnchors,
+  acceptRefinedPeak,
 } from './sunAnchor';
 import {
   projectToScreen,
@@ -462,5 +463,13 @@ describe('la tria del cos i la fusió d’àncores', () => {
     expect(merged).not.toBeNull();
     expect(merged!.azimuthDeg).toBe(250);
     expect(merged!.confidence).toBeCloseTo(0.8 * 0.6, 6);
+  });
+
+  it('el refinament que surt més fosc que el coarse es rebutja', () => {
+    // El submostreig fa mitjanes: a resolució plena el pic només pot pujar.
+    // Si baixa, el retall ha anat a parar a una altra cosa.
+    expect(acceptRefinedPeak(200, 210)).toBe(true);
+    expect(acceptRefinedPeak(200, 165)).toBe(true); // 0,825·coarse: dins del marge
+    expect(acceptRefinedPeak(200, 150)).toBe(false); // 0,75·coarse: una vora de núvol
   });
 });

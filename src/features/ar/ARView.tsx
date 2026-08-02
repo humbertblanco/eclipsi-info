@@ -50,6 +50,7 @@ import {
   fitSunFix,
   expectedBrightBody,
   mergeAnchors,
+  acceptRefinedPeak,
   SunRefiner,
 } from './sunAnchor';
 import { nakedEyeAllowedAt, type FilterGateInput } from '../../core/timer';
@@ -267,6 +268,34 @@ const PREDICT_AHEAD_MS = 30;
 
 /** Per sota d'aquesta velocitat no es prediu, i s'hi entra amb rampa. */
 const PREDICT_MIN_SPEED_DPS = 3;
+
+/**
+ * Frescor màxima d'un fix de TERRENY perquè entri a la fusió d'àncores, en ms.
+ *
+ * El Sol es mesura a cada fotograma; la silueta, al tick (~10 Hz). Fusionar
+ * un fix de Sol acabat de fer amb una postura de terreny de fa 200 ms mentre
+ * el mòbil gira arrossegaria el resultat cap enrere: el terreny només vota
+ * mentre és recent.
+ */
+const TERRAIN_FIX_MAX_AGE_MS = 250;
+
+/**
+ * Per sobre d'aquesta velocitat no es busca el Sol, en °/s.
+ *
+ * A 45°/s el desenfocament de moviment escampa el bloom i el centroide balla;
+ * i tant se val: a aquesta velocitat el gating de moviment descartaria el fix
+ * igualment. Estalviar-se la cerca és gratis.
+ */
+const SUN_TRACK_MAX_SPEED_DPS = 45;
+
+/**
+ * Fotogrames seguits sense fix de Sol abans de donar el lock per perdut.
+ *
+ * Un miss aïllat (un tremolor del llindar, un fotograma fosc) no ha de fer
+ * caure el pols de confirmació i tornar-lo a disparar: vuit fotogrames són
+ * ~250 ms, que és una pèrdua de debò i no un badall.
+ */
+const SUN_LOCK_MISS_TOLERANCE = 8;
 
 // Els límits del camp de visió viuen a `focalStore`: UN sol rang per a la
 // mesura, la persistència i el control lliscant. N'hi havia dos (25-140 aquí,
@@ -527,6 +556,11 @@ export function ARView({
   const sunRefinerRef = useRef<SunRefiner | null>(null);
   /** Quan l'àncora de Sol va passar a manar, per al pols de confirmació. */
   const sunLockRef = useRef<number | null>(null);
+  /** Misses seguits del lock, per no fer caure el pols per un badall. */
+  const sunMissesRef = useRef(0);
+  /** L'últim fix de terreny amb la seva data: el terreny va al tick (10 Hz). */
+  const terrainFixRef = useRef<SkylineFix | null>(null);
+  const terrainFixAtMsRef = useRef(0);
   /**
    * Última postura amb què s'ha DIBUIXAT, que és la fusionada i no la del
    * sensor.
@@ -1010,122 +1044,142 @@ export function ARView({
            * que ha de corregir es compta en dècimes de grau per segon. Cada
            * sisè fotograma de càmera són uns 5 Hz.
            */
+          /*
+           * ELS DOS FARS, CADASCUN AL SEU RITME.
+           *
+           * La silueta del terreny costa un Gauss-Newton i va al tick
+           * (~10 Hz). El Sol és barat de dalt a baix — components connexes
+           * d'un llindar altíssim més un retall — i es mesura A CADA
+           * FOTOGRAMA DE CÀMERA: l'àncora mai té més de 33 ms i el gating de
+           * moviment no la mata fins a ~30-40°/s de gest (la latència de
+           * canonada hi compta). És el que fa que, un cop pillat, no el
+           * deixi anar: ni deriva durant el gest ni re-assentament en parar.
+           * Amb totes les portes senceres cada cop — la cerca completa És
+           * l'adquisició i el seguiment alhora, sense màquina d'estats que
+           * pugui quedar-se seguint una vora de núvol.
+           */
           anchorTickRef.current++;
-          if (trackerRef.current && anchorTickRef.current % ANCHOR_EVERY_FRAMES === 0) {
-            // ── El far del terreny: la silueta contra el model ──────────────
-            let terrainFix: SkylineFix | null = null;
-            if (state.horizonProfile) {
-              const hits = detectSkyline(trackerRef.current.lastGray, geometry, viewport);
-              terrainFix = fitSkyline(
-                hits,
-                sensorAtCapture,
-                state.calibration,
+          if (
+            state.horizonProfile &&
+            anchorTickRef.current % ANCHOR_EVERY_FRAMES === 0
+          ) {
+            const hits = detectSkyline(trackerRef.current.lastGray, geometry, viewport);
+            let tFix = fitSkyline(
+              hits,
+              sensorAtCapture,
+              state.calibration,
+              viewport,
+              state.horizonProfile,
+            );
+            // La porta de plausibilitat: l'acceleròmetre no pot anar tres
+            // graus errat d'altura; una silueta que ho afirmi és falsa.
+            if (tFix && Math.abs(tFix.deltaAltitudeDeg) > MAX_PLAUSIBLE_ALT_DEG) {
+              tFix = null;
+            }
+            terrainFixRef.current = tFix;
+            terrainFixAtMsRef.current = nowMs;
+          }
+
+          // ── El Sol (o la Lluna), cada fotograma ──────────────────────────
+          let sunFix: SkylineFix | null = null;
+          const trackSpeed = smoothingRef.current.angularSpeedDegPerSec;
+          const body =
+            trackSpeed <= SUN_TRACK_MAX_SPEED_DPS
+              ? expectedBrightBody(state.liveSample)
+              : null;
+          if (body !== null) {
+            const predicted = projectToScreen(
+              body.body.azimuth,
+              body.body.altitudeApparent,
+              sensorAtCapture,
+              state.calibration,
+              viewport,
+            );
+            let blob = detectSunBlob(
+              trackerRef.current.lastGray,
+              geometry,
+              viewport,
+              predicted.visible ? { x: predicted.x, y: predicted.y } : null,
+            );
+            if (blob !== null) {
+              if (!sunRefinerRef.current) sunRefinerRef.current = new SunRefiner();
+              const refined = sunRefinerRef.current.refine(
+                video,
+                { x: blob.screenX, y: blob.screenY },
                 viewport,
-                state.horizonProfile,
               );
-              // La porta de plausibilitat: l'acceleròmetre no pot anar tres
-              // graus errat d'altura; una silueta que ho afirmi és falsa.
-              if (terrainFix && Math.abs(terrainFix.deltaAltitudeDeg) > MAX_PLAUSIBLE_ALT_DEG) {
-                terrainFix = null;
+              // El refinament només s'accepta si el seu pic és comparable al
+              // coarse: si surt més fosc, el retall ha anat a una altra cosa.
+              if (refined !== null && acceptRefinedPeak(blob.peak, refined.peak)) {
+                blob = { ...blob, screenX: refined.x, screenY: refined.y };
               }
             }
-
-            /*
-             * ── El far del Sol (o la Lluna, de nit): la taca contra les
-             * efemèrides DE L'INSTANT REAL ──────────────────────────────────
-             *
-             * A diferència de la silueta, aquest far no necessita ni model de
-             * terreny (mar, plana, perfil encara baixant-se) ni carena a la
-             * vista: necessita el cos al quadre — que és el que l'usuari fa.
-             * La cerca es guia amb la posició PREDITA per la projecció; el
-             * candidat coarse es refina a resolució plena de vídeo.
-             */
-            let sunFix: SkylineFix | null = null;
-            const body = expectedBrightBody(state.liveSample);
-            if (body !== null) {
-              const predicted = projectToScreen(
-                body.body.azimuth,
-                body.body.altitudeApparent,
-                sensorAtCapture,
-                state.calibration,
-                viewport,
-              );
-              let blob = detectSunBlob(
-                trackerRef.current.lastGray,
-                geometry,
-                viewport,
-                predicted.visible ? { x: predicted.x, y: predicted.y } : null,
-              );
-              if (blob !== null) {
-                if (!sunRefinerRef.current) sunRefinerRef.current = new SunRefiner();
-                const refined = sunRefinerRef.current.refine(
-                  video,
-                  { x: blob.screenX, y: blob.screenY },
-                  viewport,
-                );
-                if (refined !== null) blob = { ...blob, screenX: refined.x, screenY: refined.y };
-              }
-              sunFix =
-                body.kind === 'sun'
-                  ? sunFixFrom(
+            sunFix =
+              body.kind === 'sun'
+                ? sunFixFrom(
+                    blob,
+                    sensorAtCapture,
+                    state.calibration,
+                    viewport,
+                    state.liveSample,
+                    state.horizonProfile,
+                  )
+                : blob !== null
+                  ? fitSunFix(
                       blob,
+                      body.body,
                       sensorAtCapture,
                       state.calibration,
                       viewport,
-                      state.liveSample,
+                      { dAzDeg: 0, dAltDeg: 0 },
+                      1,
                       state.horizonProfile,
                     )
-                  : blob !== null
-                    ? fitSunFix(
-                        blob,
-                        body.body,
-                        sensorAtCapture,
-                        state.calibration,
-                        viewport,
-                        { dAzDeg: 0, dAltDeg: 0 },
-                        1,
-                        state.horizonProfile,
-                      )
-                    : null;
-            }
+                  : null;
+          }
+          sunFixRef.current = sunFix;
 
-            // ── La fusió dels fars: als eclipsis d'aquesta app el Sol va
-            // arran d'horitzó i el cas normal és tenir tots dos al quadre.
-            const fix = mergeAnchors(sunFix, terrainFix);
+          // ── La fusió dels fars i les estampes ────────────────────────────
+          const terrainFresh =
+            terrainFixRef.current !== null &&
+            nowMs - terrainFixAtMsRef.current <= TERRAIN_FIX_MAX_AGE_MS
+              ? terrainFixRef.current
+              : null;
+          const fix = mergeAnchors(sunFix, terrainFresh);
+          if (fix !== null) {
+            // Un fotograma sense fix NO esborra l'àncora: la frescor la
+            // gestiona ANCHOR_MAX_AGE_MS, i un miss aïllat no és una pèrdua.
             anchorRef.current = fix;
-            sunFixRef.current = sunFix;
-            anchorSourceRef.current =
-              fix === null
-                ? null
-                : sunFix !== null && terrainFix !== null
-                  ? 'both'
-                  : sunFix !== null
-                    ? body?.kind === 'moon'
-                      ? 'moon'
-                      : 'sun'
-                    : 'terrain';
-            // El pols de confirmació: només a l'ADQUISICIÓ (transició de no
-            // fixat a fixat amb confiança), no a cada refresc.
-            const sunLeads =
-              sunFix !== null &&
-              sunFix.confidence > 0.6 &&
-              anchorSourceRef.current !== 'terrain' &&
-              anchorSourceRef.current !== null;
-            if (sunLeads) {
-              if (sunLockRef.current === null) sunLockRef.current = nowMs;
-            } else {
-              sunLockRef.current = null;
-            }
-            // Amb data, amb la postura del sensor d'aquell instant i amb la
-            // velocitat a què anava: sense les dues primeres no hi ha manera
-            // de saber si el fix encara val com a POSTURA; sense la tercera,
-            // de saber si val com a mesura de BIAIX.
             anchorAtMsRef.current = nowMs;
             anchorSensorRef.current = {
               az: sensorAtCapture.azimuth,
               alt: sensorAtCapture.altitude,
-              speedDegPerSec: smoothingRef.current.angularSpeedDegPerSec,
+              speedDegPerSec: trackSpeed,
             };
+            anchorSourceRef.current =
+              sunFix !== null && terrainFresh !== null
+                ? 'both'
+                : sunFix !== null
+                  ? body?.kind === 'moon'
+                    ? 'moon'
+                    : 'sun'
+                  : 'terrain';
+          } else if (nowMs - anchorAtMsRef.current > ANCHOR_MAX_AGE_MS) {
+            anchorSourceRef.current = null;
+          }
+
+          // El pols de confirmació: a l'ADQUISICIÓ, amb tolerància de misses
+          // perquè un badall d'un fotograma no el faci caure i redisparar.
+          const sunGood = sunFix !== null && sunFix.confidence > 0.6;
+          if (sunGood) {
+            sunMissesRef.current = 0;
+            if (sunLockRef.current === null) sunLockRef.current = nowMs;
+          } else if (sunLockRef.current !== null) {
+            sunMissesRef.current++;
+            if (sunMissesRef.current > SUN_LOCK_MISS_TOLERANCE) {
+              sunLockRef.current = null;
+              sunMissesRef.current = 0;
+            }
           }
 
           diagnosticsRef.current = {
