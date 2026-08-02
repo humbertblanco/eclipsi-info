@@ -48,8 +48,8 @@
  *     inclinació, que abans es barrejaven i es llegien com un desplaçament fals.
  *
  * COST. Tot es fa sobre una còpia reduïda en escala de grisos (uns 14.000
- * píxels), amb nou blocs i una cerca de ±7 píxels centrada en la predicció del
- * sensor. Són unes desenes de milers d'operacions per fotograma de vídeo:
+ * píxels), amb fins a divuit blocs triats on hi ha textura i una cerca de ±7
+ * píxels centrada en la predicció del sensor. Són unes desenes de milers d'operacions per fotograma de vídeo:
  * negligible al costat de dibuixar l'overlay.
  *
  * El nucli d'aquest fitxer (`FrameTracker`, `fitRotation`) no toca el DOM, i
@@ -93,6 +93,21 @@ const PITCH_SPREAD_MIN_FRACTION = 0.22;
  * arreu i el que en surt és soroll pur.
  */
 const MIN_VARIANCE = 25;
+
+/**
+ * Paràmetres de la tria ADAPTATIVA de blocs. Vegeu `FrameTracker.rebuildSlots`.
+ *
+ * La retícula de candidats és de 5×7 —cinc al costat curt, set al llarg, com
+ * les fraccions de la graella fixa—; d'aquests candidats se'n trien fins a
+ * `ADAPTIVE_TARGET` amb una distància mútua mínima entre centres, i la tria
+ * es refà cada `ADAPTIVE_REBUILD_FRAMES` fotogrames mesurats, perquè l'escena
+ * que passa pel quadre al cap d'un segon ja no és la mateixa.
+ */
+const ADAPTIVE_SHORT_AXIS_COUNT = 5;
+const ADAPTIVE_LONG_AXIS_COUNT = 7;
+const ADAPTIVE_TARGET = 18;
+const ADAPTIVE_MIN_DIST_GRID_PX = 16;
+const ADAPTIVE_REBUILD_FRAMES = 30;
 
 /** Mida objectiu del costat curt de la graella reduïda. */
 const GRID_SHORT_SIDE = 88;
@@ -239,7 +254,13 @@ export function geometryFor(
   };
 }
 
-/** Posicions dels quinze blocs dins la graella, i els seus centres a pantalla. */
+/**
+ * Posicions dels quinze blocs FIXOS dins la graella, i els seus centres a
+ * pantalla. Des de la tria adaptativa (`FrameTracker.rebuildSlots`) aquesta
+ * graella és el punt de partida i el pla B: és el que es fa servir quan encara
+ * no hi ha fotograma de referència on mirar la textura, o quan no n'hi ha
+ * enlloc.
+ */
 function blockSlots(geometry: TrackerGeometry): BlockSlot[] {
   const slots: BlockSlot[] = [];
   const cx = geometry.gridWidth / 2;
@@ -470,6 +491,12 @@ export class FrameTracker {
   private height = 0;
   private slots: BlockSlot[] = [];
   private slotsKey = '';
+  /**
+   * Fotogrames mesurats que queden abans de refer la tria adaptativa de blocs.
+   * A zero (arrencada, `reset()`, canvi de geometria) es refà al primer
+   * fotograma que tingui referència on mirar.
+   */
+  private framesUntilRebuild = 0;
 
   /**
    * Mesura el gir entre el fotograma anterior i aquest.
@@ -491,8 +518,12 @@ export class FrameTracker {
 
     const key = `${w}x${h}:${geometry.scaleX.toFixed(4)}:${geometry.scaleY.toFixed(4)}`;
     if (key !== this.slotsKey) {
+      // La geometria ha canviat: els blocs vells no valen ni un fotograma
+      // més. Es posa la graella fixa ara mateix i es força la re-tria
+      // adaptativa per al primer fotograma que tingui referència.
       this.slots = blockSlots(geometry);
       this.slotsKey = key;
+      this.framesUntilRebuild = 0;
     }
 
     const n = w * h;
@@ -509,6 +540,16 @@ export class FrameTracker {
     }
 
     const prev = this.previous;
+
+    // La tria adaptativa es fa SOBRE LA REFERÈNCIA i ABANS que res la
+    // sobreescrigui: la variància s'ha de mirar al mateix fotograma contra el
+    // qual es buscarà ara mateix — mirar-la al nou i comparar contra el vell
+    // seria seleccionar per a una escena que ja no és la que es compara.
+    if (this.framesUntilRebuild <= 0) {
+      this.rebuildSlots(prev, geometry);
+      this.framesUntilRebuild = ADAPTIVE_REBUILD_FRAMES;
+    }
+    this.framesUntilRebuild--;
 
     /*
      * IGUALACIÓ D'EXPOSICIÓ. L'exposició automàtica dispara una rampa de guany
@@ -590,19 +631,21 @@ export class FrameTracker {
     // sobre cel obert no ha de baixar la confiança de tota la mesura.
     const coverage = Math.min(1, fit.used / 6);
 
-    // Condicionament del pitch: files diferents i abast vertical dels
-    // supervivents. Vegeu `PITCH_SPREAD_MIN_FRACTION`.
-    const rows = new Set<number>();
+    // Condicionament del pitch: l'ABAST vertical dels supervivents, i prou.
+    // Abans també es comptaven files diferents, però amb la tria adaptativa
+    // aquell recompte no diu res — hi ha gairebé tants `oy` diferents com
+    // blocs, estiguin escampats o apilonats en un dit d'escena. L'única
+    // pregunta física és quant braç de palanca vertical hi ha, i la resposta
+    // és `PITCH_SPREAD_MIN_FRACTION`, que no canvia: per sota d'aquell abast,
+    // un biaix vertical global entra 1:1 sense que cap residu el delati.
     let vMin = Infinity;
     let vMax = -Infinity;
     for (const m of fit.measures) {
-      rows.add(m.slot.oy);
       if (m.slot.v < vMin) vMin = m.slot.v;
       if (m.slot.v > vMax) vMax = m.slot.v;
     }
     const vSpreadPx = vMax - vMin;
-    const pitchDegraded =
-      rows.size < 2 || vSpreadPx < PITCH_SPREAD_MIN_FRACTION * h * geometry.scaleY;
+    const pitchDegraded = vSpreadPx < PITCH_SPREAD_MIN_FRACTION * h * geometry.scaleY;
 
     return {
       pitchRad: fit.rotation.pitchRad,
@@ -616,10 +659,139 @@ export class FrameTracker {
     };
   }
 
+  /**
+   * Tria adaptativa dels blocs: on hi ha textura, no on toca per quadrícula.
+   *
+   * PER QUÈ. La graella fixa de 3×5 posa els blocs en quinze llocs pactats
+   * d'avantmà, i el paisatge no ha signat el pacte: apuntant amunt, els blocs
+   * de dalt cauen sobre cel llis i moren al gate de variància un fotograma
+   * rere l'altre; en un carrer amb una façana a un costat i cel a la resta,
+   * el seguidor passava gana amb el quadre ple de detall, només perquè el
+   * detall no queia on la quadrícula esperava. Aquí es reparteix una retícula
+   * de candidats de 5×7, cadascun es puntua amb la variància del seu pedaç
+   * — la mateixa aritmètica que el gate de `matchBlock`, sobre el fotograma
+   * de REFERÈNCIA — i només competeixen els que tenen res a dir.
+   *
+   * PER QUÈ EL MÉS LLUNYÀ PRIMER. Divuit blocs apilonats en un racó
+   * determinen el gir pitjor que vuit d'escampats: el braç de palanca del
+   * pitch i del roll és la DISPERSIÓ dels punts, no el seu nombre. La tria
+   * voraç del més llunyà — es comença pel candidat de més variància i
+   * s'afegeix sempre el que queda més lluny dels ja triats, amb la variància
+   * com a desempat — maximitza aquesta dispersió amb el que l'escena ofereix,
+   * i la distància mútua mínima evita pagar dues vegades pel mateix tros
+   * d'escena.
+   *
+   * I QUAN LA TEXTURA ÉS UNA FRANJA PRIMA, ES DIU LA VERITAT. Seria temptador
+   * tornar a la graella fixa si els candidats vius cauen tots en una banda
+   * estreta, però seria canviar blocs vius per blocs morts: allà on la
+   * graella fixa posaria els seus, no hi ha res a mesurar. Es trien els vius,
+   * el yaw i el roll en surten bons, i si el braç vertical no dona per al
+   * pitch, ho diu `pitchDegraded` — que existeix exactament per això — en
+   * comptes de dissimular-ho amb blocs que no mesuren res. Només quan ni tres
+   * candidats arriben a la variància mínima (arrencada amb el quadre fosc,
+   * una paret llisa de punta a punta) es manté la graella fixa: no hi ha res
+   * per triar, i el gate de cada bloc ja farà la seva feina com sempre.
+   */
+  private rebuildSlots(prev: Float32Array, geometry: TrackerGeometry): void {
+    const { gridWidth: w, gridHeight: h } = geometry;
+    const cx = w / 2;
+    const cy = h / 2;
+
+    // Retícula de candidats: 5 al costat curt i 7 al llarg, orientada com les
+    // fraccions de la graella fixa. Els orígens es retenen amb el mateix
+    // invariant que sempre: la finestra de cerca SENCERA ha de cabre dins la
+    // imatge, o el bloc mesuraria amb biaix cap al costat que no s'escapça.
+    const nx = w >= h ? ADAPTIVE_LONG_AXIS_COUNT : ADAPTIVE_SHORT_AXIS_COUNT;
+    const ny = h >= w ? ADAPTIVE_LONG_AXIS_COUNT : ADAPTIVE_SHORT_AXIS_COUNT;
+
+    const candidates: Array<{ ox: number; oy: number; variance: number }> = [];
+    const seen = new Set<number>();
+    for (let iy = 0; iy < ny; iy++) {
+      for (let ix = 0; ix < nx; ix++) {
+        const ox = clampInt(
+          Math.round(((ix + 1) / (nx + 1)) * w - BLOCK / 2),
+          SEARCH,
+          w - BLOCK - SEARCH,
+        );
+        const oy = clampInt(
+          Math.round(((iy + 1) / (ny + 1)) * h - BLOCK / 2),
+          SEARCH,
+          h - BLOCK - SEARCH,
+        );
+        // El clamp pot fer coincidir dos candidats de vora: un mateix pedaç
+        // no ha de competir dues vegades.
+        const dedup = oy * w + ox;
+        if (seen.has(dedup)) continue;
+        seen.add(dedup);
+
+        let mean = 0;
+        for (let y = 0; y < BLOCK; y++) {
+          const row = (oy + y) * w + ox;
+          for (let x = 0; x < BLOCK; x++) mean += prev[row + x];
+        }
+        mean /= BLOCK * BLOCK;
+
+        let variance = 0;
+        for (let y = 0; y < BLOCK; y++) {
+          const row = (oy + y) * w + ox;
+          for (let x = 0; x < BLOCK; x++) {
+            const d = prev[row + x] - mean;
+            variance += d * d;
+          }
+        }
+        variance /= BLOCK * BLOCK;
+        if (variance >= MIN_VARIANCE) candidates.push({ ox, oy, variance });
+      }
+    }
+
+    // Amb menys de tres candidats vius no hi ha tria possible: és l'arrencada
+    // o una escena sense textura, i s'hi ha de comportar com sempre.
+    if (candidates.length < 3) {
+      this.slots = blockSlots(geometry);
+      return;
+    }
+
+    // Ordre DETERMINISTA: variància descendent, posició com a desempat. La
+    // tria ha de ser reproduïble fotograma a fotograma; si no, els recomptes
+    // de blocs ballarien sense que hagués canviat res de l'escena.
+    candidates.sort((a, b) => b.variance - a.variance || a.oy - b.oy || a.ox - b.ox);
+
+    const selected = [candidates[0]];
+    const remaining = candidates.slice(1);
+    while (selected.length < ADAPTIVE_TARGET && remaining.length > 0) {
+      let bestIndex = -1;
+      let bestDist = -1;
+      for (let i = 0; i < remaining.length; i++) {
+        const c = remaining[i];
+        let minDist = Infinity;
+        for (const s of selected) {
+          const d = Math.hypot(c.ox - s.ox, c.oy - s.oy);
+          if (d < minDist) minDist = d;
+        }
+        // El `>` estricte fa que a igual distància guanyi el que ve abans a
+        // la llista — el de més variància, que és el desempat que volem.
+        if (minDist > bestDist) {
+          bestDist = minDist;
+          bestIndex = i;
+        }
+      }
+      if (bestIndex < 0 || bestDist < ADAPTIVE_MIN_DIST_GRID_PX) break;
+      selected.push(remaining.splice(bestIndex, 1)[0]);
+    }
+
+    this.slots = selected.map((c) => ({
+      ox: c.ox,
+      oy: c.oy,
+      u: (c.ox + BLOCK / 2 - cx) * geometry.scaleX,
+      v: (c.oy + BLOCK / 2 - cy) * geometry.scaleY,
+    }));
+  }
+
   reset(): void {
     this.previous = null;
     this.previousMean = 0;
     this.slotsKey = '';
+    this.framesUntilRebuild = 0;
   }
 }
 

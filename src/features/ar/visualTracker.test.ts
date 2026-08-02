@@ -221,21 +221,25 @@ describe('el seguidor mesura el gir que se li ha aplicat', () => {
     expect(r.yawRad * RAD).toBeCloseTo(1, 1);
     expect(Math.abs(r.pitchRad * RAD)).toBeLessThan(0.06);
     expect(r.confidence).toBeGreaterThan(0.8);
-    // La graella de 3×5: amb tota l'escena texturada hi treballen els quinze
+    // Amb tota l'escena texturada, la tria adaptativa desplega els divuit
     // blocs i el braç de palanca vertical és sa.
     expect(r.usedBlocks).toBeGreaterThanOrEqual(12);
     expect(r.pitchDegraded).toBe(false);
   });
 
   it('el cel es menja les files de dalt i el pitch ho diu en veu alta', () => {
-    // Panorama amb cel llis per sobre de l'horitzó: apuntant a 10° amunt,
-    // només les dues files de baix del fotograma toquen terreny. El pitch
-    // queda mal condicionat — és el desplaçament vertical comú de dues files
-    // veïnes — i la mesura ho ha de DIR, no sortir amb la cara d'una de bona.
-    // (Amb el tall més amunt, tres files sobreviuen i la graella de cinc se'n
-    // surt sola: és exactament el marge que les cinc files compren.)
+    // Panorama amb cel llis per sobre de −6°: apuntant a 10° amunt, la
+    // textura queda reduïda a una llenca al peu del fotograma. Ni la graella
+    // fixa ni la tria adaptativa — que hi posa tots els blocs que vol, però
+    // tots DINS la mateixa llenca — no hi troben braç de palanca vertical:
+    // el pitch queda mal condicionat i la mesura ho ha de DIR, no sortir amb
+    // la cara d'una de bona. (Amb el tall a 0°, l'abast dels blocs adaptatius
+    // fregava el llindar del 22%; i un pedaç que CAVALCA la vora de la
+    // textura ja passa el gate de variància amb dues files vives, o sigui
+    // que el tall ha de deixar l'última fila morta de candidats ben lluny de
+    // la vora. A −6° el cas és inequívoc sota totes dues graelles.)
     const skyless = (azDeg: number, altDeg: number) =>
-      altDeg > 0 ? 128 : panorama(azDeg, altDeg);
+      altDeg > -6 ? 128 : panorama(azDeg, altDeg);
 
     const tracker = new FrameTracker();
     tracker.measure(renderFrame(skyless, geometry, pose(270, 10)), geometry, null);
@@ -244,6 +248,43 @@ describe('el seguidor mesura el gir que se li ha aplicat', () => {
     expect(r!.pitchDegraded).toBe(true);
     // El yaw no en té culpa: segueix sortint bé amb les files que queden.
     expect(r!.yawRad * RAD).toBeCloseTo(0.8, 1);
+  });
+
+  it('la selecció adaptativa rescata el braç vertical que la graella fixa perdia', () => {
+    // Terreny fins a +5° i cel llis a partir d'allà: apuntant a 10°, gairebé
+    // mig fotograma — el de baix — és texturat. La graella fixa hi tenia
+    // només dues files veïnes vives (el 17,5% d'abast, per sota del llindar
+    // del 22%) i declarava el pitch degradat en una escena que tenia braç de
+    // sobres; la tria adaptativa posa els blocs DINS de la banda viva,
+    // l'abast passa el llindar i una inclinació d'1° es mesura bé.
+    const grounded = (azDeg: number, altDeg: number) =>
+      altDeg > 5 ? 128 : panorama(azDeg, altDeg);
+
+    const tracker = new FrameTracker();
+    tracker.measure(renderFrame(grounded, geometry, pose(270, 10)), geometry, null);
+    const r = tracker.measure(renderFrame(grounded, geometry, pose(270, 11)), geometry, null);
+    expect(r).not.toBeNull();
+    expect(r!.pitchDegraded).toBe(false);
+    expect(r!.pitchRad * RAD).toBeGreaterThan(0.85);
+    expect(r!.pitchRad * RAD).toBeLessThan(1.15);
+  });
+
+  it('amb la textura arraconada, la graella fixa moria i l’adaptativa mesura', () => {
+    // Tota la textura en un racó — una façana a baix a l'esquerra, cel llis
+    // a la resta: només un quart del fotograma té res a dir. Dels quinze
+    // llocs fixos gairebé cap no hi queia i el seguidor es moria de gana amb
+    // el quadre ple de detall; la tria adaptativa concentra els blocs on és
+    // la textura i el gir es mesura.
+    const cornered = (azDeg: number, altDeg: number) =>
+      azDeg < 270 && altDeg < 10 ? panorama(azDeg, altDeg) : 128;
+
+    const tracker = new FrameTracker();
+    tracker.measure(renderFrame(cornered, geometry, pose(270, 10)), geometry, null);
+    const r = tracker.measure(renderFrame(cornered, geometry, pose(270.8, 10)), geometry, null);
+    expect(r).not.toBeNull();
+    expect(r!.usedBlocks).toBeGreaterThanOrEqual(5);
+    expect(r!.yawRad * RAD).toBeGreaterThan(0.8 * 0.8);
+    expect(r!.yawRad * RAD).toBeLessThan(0.8 * 1.2);
   });
 
   it('una rampa d’exposició no desplaça la mesura', () => {
