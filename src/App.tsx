@@ -61,6 +61,7 @@ import {
 import { computeLocalCircumstances } from './core/astro/contacts';
 import { computeVisibility } from './core/visibility/verdict';
 import { ECLIPSES } from './core/eclipses/catalog';
+import { buildShareLink, parseShareLink, type SharedPoint } from './features/share';
 import { useObserver } from './state/useObserver';
 import { UpdatePrompt } from './offline/UpdatePrompt';
 import { ConnectionBadge } from './offline/ConnectionBadge';
@@ -120,6 +121,32 @@ function shortYear(id: string): string {
   return id.split('-')[0];
 }
 
+/**
+ * El punt que portava l'adreça, llegit UN SOL COP en muntar l'aplicació.
+ *
+ * PER QUÈ UNA SOLA LECTURA I NO UNA PER CONSUMIDOR. De l'enllaç en surten dues
+ * coses que han d'anar juntes —el LLOC i l'ECLIPSI— i les fa servir gent
+ * diferent: el lloc se l'endú `useObserver` i l'eclipsi es queda aquí, a l'estat
+ * de l'estructura. Llegint l'URL dues vegades no passaria res avui, però el dia
+ * que la lectura canviï en un dels dos llocs i no a l'altre, l'app quedaria
+ * ensenyant l'eclipsi d'un enllaç al punt d'un altre — que és exactament la mena
+ * de desaparellament que tot `state/location.ts` existeix per evitar.
+ *
+ * ES LLEGEIX EN UN INICIALITZADOR MANDRÓS (`useState(fn)`) I NO A L'ARREL DEL
+ * MÒDUL: a l'arrel s'executaria en importar el fitxer, i llavors qualsevol prova
+ * o eina que carregui `App` fora d'un navegador hi petaria per no tenir
+ * `window`. Aquí només corre quan hi ha una aplicació muntant-se de debò.
+ *
+ * I NOMÉS A LA PRIMERA PINTADA. Un cop l'app funciona, qui mana és l'usuari:
+ * l'URL passa a ser el reflex del que ell tria (vegeu l'efecte que l'escriu més
+ * avall), no la font. Tornar-lo a llegir el faria manar dues vegades i el punt
+ * de l'enllaç ressuscitaria damunt de la tria de l'usuari.
+ */
+function readSharedPoint(): SharedPoint | null {
+  if (typeof window === 'undefined') return null;
+  return parseShareLink(window.location.search);
+}
+
 export default function App() {
   return (
     <LocaleProvider>
@@ -133,7 +160,8 @@ function Shell() {
   const narrowHeader = useMediaQuery(NARROW_HEADER);
   const camera = useCameraSupport();
   const { online } = useOnlineStatus();
-  const observer = useObserver();
+  const [shared] = useState(readSharedPoint);
+  const observer = useObserver({ shared });
   const [tab, setTab] = useState<Tab>('countdown');
   /*
    * MODE IMMERSIU: la pantalla del cel amb la càmera oberta demana la
@@ -144,7 +172,10 @@ function Shell() {
    * càmera via onState/onImmersiveChange, no a cap record.
    */
   const [skyImmersive, setSkyImmersive] = useState(false);
-  const [eclipseId, setEclipseId] = useState(ECLIPSES[0].id);
+  // L'eclipsi de l'enllaç, si en portava un de reconeixible. `parseShareLink` ja
+  // n'ha descartat els que no són del catàleg: aquí no pot arribar un id que
+  // faci llançar `getEclipse` i s'endugui la pantalla sencera.
+  const [eclipseId, setEclipseId] = useState(shared?.eclipseId ?? ECLIPSES[0].id);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   // El perfil d'horitzó es calcula un sol cop per ubicació i el comparteixen
@@ -259,6 +290,57 @@ function Shell() {
   useEffect(() => {
     if (!camera.unknown && !camera.supported && tab === 'sky') setTab('countdown');
   }, [camera.unknown, camera.supported, tab]);
+
+  /*
+    L'ADREÇA SEGUEIX EL PUNT.
+
+    PER QUÈ. Sense això, compartir seria una funció a part amb un botó propi, i
+    una funció a part és una funció que no es fa servir: el gest que la gent fa
+    de debò per enviar el que està mirant és copiar l'adreça de la barra del
+    navegador. Que l'adreça digui sempre on ets vol dir que aquell gest ja
+    funciona sense haver-lo d'aprendre — i de passada, recarregar la pàgina,
+    afegir-la a favorits o desar-la a la pantalla d'inici conserven el lloc.
+
+    `replaceState` I MAI `pushState`. Moure el punt no és navegar: si cada tria
+    apilés una entrada a l'historial, tocar deu punts del mapa per comparar-los
+    deixaria el botó d'enrere amb deu passes enrere que no porten enlloc, i
+    l'usuari que el prem per sortir de l'app es quedaria dins fent marxa enrere
+    pels seus propis clics. Amb `replaceState`, «enrere» segueix volent dir el
+    que l'usuari espera: la pàgina d'on venia.
+
+    LA RUTA SURT DE `location.pathname` I NO DE `BASE_URL`. L'app viu en un
+    subdirectori (`/eclipsi/`) i una ruta absoluta escrita a mà el perdria; però
+    compondre-la amb `import.meta.env.BASE_URL` tampoc no és exacte, perquè el
+    servidor pot estar servint `/eclipsi/index.html` i llavors la ruta de
+    `BASE_URL` no és la que hi ha a la barra. `pathname` ja porta el subdirectori
+    per definició, sigui quin sigui. El fragment (`#`) es conserva pel mateix
+    motiu: no és nostre i no tenim cap dret a esborrar-lo.
+
+    NOMÉS S'ESCRIU SI CANVIA. Sense la comparació, cada dibuix tornaria a cridar
+    `replaceState` amb el mateix text; no és car, però Safari limita les crides a
+    l'API d'historial i acaba llançant, i seria una excepció per no fer res.
+  */
+  useEffect(() => {
+    if (observer.location === null) return;
+
+    const search = buildShareLink({
+      lat: observer.location.lat,
+      lon: observer.location.lon,
+      eclipseId,
+      // El nom viatja amb l'enllaç perquè qui l'obri dalt d'un port de muntanya
+      // no té xarxa per resoldre el topònim, i sense ell la barra li diria unes
+      // coordenades on hauria de dir el nom del lloc on heu quedat.
+      label: observer.fix?.label ?? null,
+    });
+    if (search === window.location.search) return;
+
+    window.history.replaceState(
+      // L'estat que hi hagi es conserva: no és nostre.
+      window.history.state,
+      '',
+      `${window.location.pathname}${search}${window.location.hash}`,
+    );
+  }, [observer.location, observer.fix?.label, eclipseId]);
 
   const fixed = FIXED_TABS.includes(tab);
 
@@ -556,6 +638,13 @@ function Shell() {
       {sheetOpen && (
         <LocationSheet
           locale={locale}
+          /*
+            L'ECLIPSI TRIAT ARRIBA A LA FULLA per les miniatures de l'historial:
+            dibuixen el camí del Sol d'aquell dia sobre l'horitzó de cada punt, i
+            sense això sempre dibuixarien el del 2026 encara que la capçalera
+            digués 2028. Dues dates a la vista alhora fan dubtar de les dues.
+          */
+          eclipseId={eclipseId}
           observer={observer}
           comparison={comparison}
           onClose={() => setSheetOpen(false)}

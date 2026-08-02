@@ -18,6 +18,7 @@ import {
 import { ARView } from '../features/ar/ARView';
 import { useWakeLock } from '../features/countdown/useWakeLock';
 import { getEclipse } from '../core/eclipses/catalog';
+import { shareFileOrDownload } from '../features/share';
 import { sampleAt } from '../core/astro/ephemeris';
 import { horizonAltitudeAt } from '../core/horizon/profile';
 import { bearingToCardinal } from '../core/astro/gradient';
@@ -151,25 +152,12 @@ export function SkyScreen({
     const blob = await fn(caption);
     if (!blob) return;
 
-    const file = new File([blob], 'eclipsi.jpg', { type: 'image/jpeg' });
-    const nav = navigator as Navigator & {
-      canShare?: (data: { files: File[] }) => boolean;
-    };
-    if (typeof nav.share === 'function' && nav.canShare?.({ files: [file] })) {
-      try {
-        await nav.share({ files: [file], title: caption });
-        return;
-      } catch (error) {
-        if ((error as DOMException)?.name === 'AbortError') return;
-        // El share natiu ha fallat de debò: es cau a la descàrrega.
-      }
-    }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'eclipsi.jpg';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    // L'escala de compartir viu a features/share i és la mateixa per a la
+    // targeta del punt i per a aquesta captura: una sola llista, mai dues.
+    await shareFileOrDownload(
+      new File([blob], 'eclipsi.jpg', { type: 'image/jpeg' }),
+      caption,
+    );
   };
 
   const contacts = circumstances?.contacts ?? null;
