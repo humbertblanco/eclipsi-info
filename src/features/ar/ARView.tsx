@@ -691,6 +691,7 @@ export function ARView({
   // ---- Bucle de dibuix. Es crea UNA vegada i no es torna a crear mai. ----
   const cameraRef = orientation.cameraRef;
   const smoothingRef = orientation.smoothingRef;
+  const poseHistoryRef = orientation.poseHistoryRef;
 
   useEffect(() => {
     let frame = 0;
@@ -785,22 +786,41 @@ export function ARView({
           viewport.focalPx,
         );
 
+        /*
+         * LA POSTURA DE QUAN EL FOTOGRAMA ES VA CAPTURAR. La canonada de
+         * càmera triga 40-80 ms: el fotograma que arriba ara ensenya el cel
+         * de fa un moment, i a 30°/s la diferència són fins a dos graus i
+         * mig. Totes les comparacions imatge-contra-sensor d'aquest bloc —
+         * la pista, els parells de focal, els errors dels ancoratges — es
+         * fan contra la postura de la CAPTURA, treta de la memòria de
+         * postures. Sense memòria (primeres lectures), la d'ara.
+         */
+        const capturePose = poseHistoryRef.current?.at(frameClockRef.current.frameCaptureMs);
+        const sensorAtCapture: CameraPointing = capturePose
+          ? {
+              azimuth: capturePose.azimuth,
+              altitude: capturePose.altitude,
+              roll: capturePose.roll,
+              screenAngle: capturePose.screenAngle,
+            }
+          : camera;
+
         if (geometry) {
           // Predicció del gir a partir del sensor: centra la finestra de cerca,
           // i amb això el límit del que es pot mesurar deixa de ser el radi de
           // cerca (uns 100°/s) i passa a ser el desenfocament de moviment. És el
           // seguiment assistit per inercials de qualsevol sistema de RA seriós.
           const previous = sensorAtFrameRef.current;
-          const imageRoll = camera.roll + camera.screenAngle;
+          const imageRoll = sensorAtCapture.roll + sensorAtCapture.screenAngle;
           let hint: RotationHint | null = null;
           let sensorStep: { pitchRad: number; yawRad: number } | null = null;
 
           if (previous) {
             sensorStep = poseDeltaToRotation(
-              normalizeAngle(camera.azimuth - previous.az),
-              camera.altitude - previous.alt,
+              normalizeAngle(sensorAtCapture.azimuth - previous.az),
+              sensorAtCapture.altitude - previous.alt,
               imageRoll,
-              camera.altitude,
+              sensorAtCapture.altitude,
             );
             // El roll també es prediu: el gir de canell acompanya el gest
             // d'inclinar, i sense la seva pista desplaça primer els blocs de
@@ -866,7 +886,7 @@ export function ARView({
               const hits = detectSkyline(trackerRef.current.lastGray, geometry, viewport);
               terrainFix = fitSkyline(
                 hits,
-                camera,
+                sensorAtCapture,
                 state.calibration,
                 viewport,
                 state.horizonProfile,
@@ -894,7 +914,7 @@ export function ARView({
               const predicted = projectToScreen(
                 body.body.azimuth,
                 body.body.altitudeApparent,
-                camera,
+                sensorAtCapture,
                 state.calibration,
                 viewport,
               );
@@ -917,7 +937,7 @@ export function ARView({
                 body.kind === 'sun'
                   ? sunFixFrom(
                       blob,
-                      camera,
+                      sensorAtCapture,
                       state.calibration,
                       viewport,
                       state.liveSample,
@@ -927,7 +947,7 @@ export function ARView({
                     ? fitSunFix(
                         blob,
                         body.body,
-                        camera,
+                        sensorAtCapture,
                         state.calibration,
                         viewport,
                         { dAzDeg: 0, dAltDeg: 0 },
@@ -958,8 +978,8 @@ export function ARView({
             // de saber si val com a mesura de BIAIX.
             anchorAtMsRef.current = nowMs;
             anchorSensorRef.current = {
-              az: camera.azimuth,
-              alt: camera.altitude,
+              az: sensorAtCapture.azimuth,
+              alt: sensorAtCapture.altitude,
               speedDegPerSec: smoothingRef.current.angularSpeedDegPerSec,
             };
           }
@@ -978,10 +998,12 @@ export function ARView({
         // també si la geometria ha sortit nul·la un instant: si no, la pista
         // següent abastaria dos intervals i aniria el doble de lluny del
         // compte — i contaminaria l'estimador de focal amb un parell fals.
+        // I amb la postura de CAPTURA, la mateixa vara de mesurar que la
+        // pista: barrejar captura i ara faria l'increment coix de latència.
         sensorAtFrameRef.current = {
-          az: camera.azimuth,
-          alt: camera.altitude,
-          imageRoll: camera.roll + camera.screenAngle,
+          az: sensorAtCapture.azimuth,
+          alt: sensorAtCapture.altitude,
+          imageRoll: sensorAtCapture.roll + sensorAtCapture.screenAngle,
         };
       }
 

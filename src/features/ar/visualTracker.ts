@@ -800,9 +800,22 @@ function refineSubpixel(
  * es compara `currentTime`, que en un flux en directe avança amb els
  * fotogrames.
  */
+/**
+ * Latència estimada de la canonada de càmera quan el navegador no diu
+ * l'instant de captura, en mil·lisegons.
+ *
+ * Chrome dona `metadata.captureTime` per a fluxos locals i llavors no cal
+ * estimar res; Safari no el dona i s'usa aquesta xifra, al mig del rang
+ * 40-80 ms que es mesura als mòbils. Equivocar-se de ±30 ms val ±1° a 30°/s:
+ * molt millor que els 50-80 que hi havia abans de comptar-ho.
+ */
+const CAMERA_PIPELINE_LATENCY_MS = 50;
+
 export class VideoFrameClock {
   private video: HTMLVideoElement | null = null;
   private handle: number | null = null;
+  /** Instant de CAPTURA (no de lliurament) de l'últim fotograma. */
+  private lastCaptureMs = 0;
   /**
    * COMPTADOR, no bandera. Si el bucle de dibuix va just i entremig arriben
    * DOS fotogrames de càmera, una bandera els fondria en un i la mesura
@@ -830,8 +843,13 @@ export class VideoFrameClock {
   private schedule(): void {
     const video = this.video;
     if (!video || typeof video.requestVideoFrameCallback !== 'function') return;
-    this.handle = video.requestVideoFrameCallback(() => {
+    this.handle = video.requestVideoFrameCallback((now, metadata) => {
       this.pendingCount++;
+      // L'instant de CAPTURA: exacte on el navegador el dona (Chrome,
+      // fluxos locals), estimat restant la latència de canonada on no.
+      const captureTime = (metadata as { captureTime?: number } | undefined)?.captureTime;
+      this.lastCaptureMs =
+        typeof captureTime === 'number' ? captureTime : now - CAMERA_PIPELINE_LATENCY_MS;
       this.mark();
       this.schedule();
     });
@@ -872,8 +890,20 @@ export class VideoFrameClock {
     if (!video) return 0;
     if (video.currentTime === this.lastTime) return 0;
     this.lastTime = video.currentTime;
+    this.lastCaptureMs =
+      (typeof performance !== 'undefined' ? performance.now() : Date.now()) -
+      CAMERA_PIPELINE_LATENCY_MS;
     this.mark();
     return 1;
+  }
+
+  /**
+   * Quan es va CAPTURAR l'últim fotograma consumit, en temps de
+   * `performance.now()`. És l'instant contra el qual s'ha de mirar la
+   * memòria de postures del sensor.
+   */
+  get frameCaptureMs(): number {
+    return this.lastCaptureMs;
   }
 
   /** Fotogrames de vídeo per segon que arriben de veritat. */

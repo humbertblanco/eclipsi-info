@@ -30,6 +30,7 @@ import {
   DEFAULT_SMOOTHING,
   type SmoothingTelemetry,
 } from './smoothing';
+import { PoseHistory } from './poseHistory';
 import { trueAzimuth } from '../../core/geomag';
 
 export type PermissionState = 'unknown' | 'need-gesture' | 'granted' | 'denied' | 'unsupported';
@@ -91,6 +92,12 @@ export interface OrientationReading {
    * de React la faria arribar fins a un quart de segon tard, que és mig gest.
    */
   smoothingRef: React.RefObject<SmoothingTelemetry>;
+  /**
+   * Memòria curta de postures amb marca de temps, per comparar cada fotograma
+   * de càmera amb la postura DE QUAN ES VA CAPTURAR i no la d'ara. Vegeu
+   * `poseHistory.ts`.
+   */
+  poseHistoryRef: React.RefObject<PoseHistory>;
   raw: { alpha: number | null; beta: number | null; gamma: number | null };
 }
 
@@ -142,6 +149,8 @@ export function useDeviceOrientation(
   const smoothingRef = useRef<SmoothingTelemetry>(smootherRef.current.getTelemetry());
   /** Offset entre l'alpha relativa i el nord, només iOS. Vegeu `iosHeading`. */
   const iosOffsetRef = useRef(new IosYawOffset());
+  /** Postures amb marca de temps, per aparellar-hi els fotogrames de càmera. */
+  const poseHistoryRef = useRef(new PoseHistory());
 
   // I només això arriba a React, quatre vegades per segon.
   const [ui, setUi] = useState<{
@@ -254,6 +263,13 @@ export function useDeviceOrientation(
       ...smoothed,
       azimuth: trueAzimuth(smoothed.azimuth, declination),
     };
+    poseHistoryRef.current.push({
+      tMs: now,
+      azimuth: cameraRef.current.azimuth,
+      altitude: cameraRef.current.altitude,
+      roll: cameraRef.current.roll,
+      screenAngle: cameraRef.current.screenAngle,
+    });
 
     smoothingRef.current = smootherRef.current.getTelemetry();
     rawAnglesRef.current = { alpha: e.alpha, beta: e.beta, gamma: e.gamma };
@@ -329,6 +345,7 @@ export function useDeviceOrientation(
       sampleRate: ui.sampleRate,
       smoothing: ui.smoothing,
       smoothingRef,
+      poseHistoryRef,
       raw: ui.raw,
       request,
     }),
