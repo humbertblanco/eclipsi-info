@@ -138,3 +138,33 @@ export function watchLensChange(
 
   return () => clearInterval(id);
 }
+
+/**
+ * Vigilància de la VIDA de la pista: el sistema pren la càmera sense avisar.
+ *
+ * Una trucada entrant, obrir la càmera nativa o una estona en segon pla fan
+ * que el sistema retiri el flux, i el navegador no llença cap error: la pista
+ * emet 'ended' (presa definitiva) o 'mute' (pausa temporal) i el vídeo es
+ * queda CONGELAT al darrer fotograma. Per al rastrejador visual això és verí:
+ * un fotograma que no canvia mai sembla una quietud perfecta amb confiança
+ * plena, i la superposició s'hi clava mentre el telèfon es mou de debò.
+ *
+ * Aquí només s'escolta i es neteja; què fer-ne ho decideix la vista. Nota:
+ * aturar la pista des de dins ('track.stop()') NO dispara 'ended' — l'event
+ * és només per a les preses externes, que és exactament el que volem sentir.
+ */
+export function watchTrackLoss(
+  stream: MediaStream,
+  handlers: { onEnded: () => void; onMute: () => void; onUnmute: () => void },
+): () => void {
+  const track = stream.getVideoTracks()[0];
+  if (!track) return () => {};
+  track.addEventListener('ended', handlers.onEnded);
+  track.addEventListener('mute', handlers.onMute);
+  track.addEventListener('unmute', handlers.onUnmute);
+  return () => {
+    track.removeEventListener('ended', handlers.onEnded);
+    track.removeEventListener('mute', handlers.onMute);
+    track.removeEventListener('unmute', handlers.onUnmute);
+  };
+}

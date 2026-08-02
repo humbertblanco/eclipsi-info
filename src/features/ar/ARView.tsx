@@ -75,7 +75,7 @@ import {
   type Calibration,
 } from './orientation';
 import { useDeviceOrientation } from './useDeviceOrientation';
-import { openRearCamera, watchLensChange, type CameraOpenResult } from './camera';
+import { openRearCamera, watchLensChange, watchTrackLoss, type CameraOpenResult } from './camera';
 import {
   VisualTracker,
   VideoFrameClock,
@@ -462,6 +462,16 @@ export function ARView({
 
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  /*
+   * La càmera es pot PERDRE sense cap error: el sistema la pren (trucada
+   * entrant, app nativa, estona en segon pla) i la pista mor o queda muda amb
+   * el vídeo congelat. Dos estats perquè demanen coses diferents: perduda →
+   * tornar a la invitació dient el motiu, amb la represa al botó de sempre;
+   * en pausa → un rètol damunt del marc i el rastrejador protegit del
+   * fotograma congelat (vegeu watchTrackLoss a camera.ts).
+   */
+  const [cameraLost, setCameraLost] = useState(false);
+  const [cameraPaused, setCameraPaused] = useState(false);
   const [calibration, setCalibration] = useState<Calibration>(DEFAULT_CALIBRATION);
   const [modeState, setModeState] = useState<Mode>('mixed');
   // Qui mana el mode: la prop si hi és (pantalla amfitriona), l'estat si no.
@@ -538,6 +548,7 @@ export function ARView({
   const focalRef = useRef(new FocalEstimator());
   const fusionRef = useRef(new PoseFusion());
   const lensWatchRef = useRef<(() => void) | null>(null);
+  const trackLossRef = useRef<(() => void) | null>(null);
   const viewportRef = useRef<Viewport | null>(null);
   const diagnosticsRef = useRef<TrackingDiagnostics>(INITIAL_DIAGNOSTICS);
   /** Postura del sensor l'últim cop que va arribar un fotograma de càmera. */
@@ -792,11 +803,14 @@ export function ARView({
     streamRef.current = null;
     lensWatchRef.current?.();
     lensWatchRef.current = null;
+    trackLossRef.current?.();
+    trackLossRef.current = null;
     frameClockRef.current.detach();
     if (videoRef.current) videoRef.current.srcObject = null;
     // I la interfície se n'ha d'assabentar: sense això la pantalla es queda
     // dient que la càmera és oberta damunt d'un vídeo que ja no arriba.
     setCameraOn(false);
+    setCameraPaused(false);
   }, []);
 
   const start = useCallback(async () => {
@@ -818,6 +832,10 @@ export function ARView({
      * (vegeu `onRequestLocation` més avall), per a qui vulgui moure el punt.
      */
     await orientation.request();
+
+    // Un reintent net: l'error i la pèrdua anteriors ja no descriuen res.
+    setCameraError(null);
+    setCameraLost(false);
 
     try {
       const opened = await openRearCamera();
@@ -863,6 +881,27 @@ export function ARView({
           prev ? { ...prev, width: info.width, height: info.height } : prev,
         );
         if (known !== null) setCalibration((c) => ({ ...c, sensorFovDeg: known }));
+      });
+
+      trackLossRef.current = watchTrackLoss(opened.stream, {
+        onEnded: () => {
+          // Presa definitiva. S'apaga tot pel camí únic i es torna a la
+          // invitació amb el motiu escrit: la represa és el botó de sempre.
+          stopCamera();
+          setCameraLost(true);
+        },
+        onMute: () => {
+          // Pausa temporal: el marc és un fotograma congelat. El rastrejador
+          // no ho pot prendre per quietud perfecta — fora referència.
+          trackerRef.current?.reset();
+          setCameraPaused(true);
+        },
+        onUnmute: () => {
+          // El món ha continuat mentre el marc dormia: la referència vella
+          // apuntaria a un paisatge que ja no és el del vídeo.
+          trackerRef.current?.reset();
+          setCameraPaused(false);
+        },
       });
     } catch (err) {
       // Si l'obertura ha arribat a donar flux i ha petat després —el `play()`
@@ -1504,6 +1543,7 @@ export function ARView({
       */}
       {!cameraOn && (
         <div className="ar__invite">
+          {cameraLost && <p className="warn">{s('camera.lost', locale)}</p>}
           <button className="ar__open" onClick={start} type="button">
             <Icon name="camera" size={ICON_LG} aria-hidden />
             <span>{s('home.openCamera', locale)}</span>
@@ -1558,6 +1598,13 @@ export function ARView({
         {cameraOn && (
           <SafetyBanner eclipseKind={circumstances.kind} isInTotality={nakedEyeNow} />
         )}
+
+        {/*
+          La pista silenciada pel sistema: es diu, perquè si no el marc
+          congelat llegeix com una app penjada. Sense to d'alarma — no s'ha
+          trencat res — i visible també en immersiu, que és on passa.
+        */}
+        {cameraPaused && <p className="ar__paused">{s('camera.paused', locale)}</p>}
 
         {/*
           LA SORTIDA VIU AMB LA CÀMERA. En mode immersiu la pantalla

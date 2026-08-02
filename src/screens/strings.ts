@@ -447,6 +447,11 @@ const STRINGS = {
     es: 'Permiso de orientación denegado. En iOS hay que volver a concederlo desde Safari.',
   },
   'camera.openError': { ca: 'Càmera: {error}', es: 'Cámara: {error}' },
+  'camera.lost': {
+    ca: 'El sistema ha tallat la càmera —una trucada, una altra app—. Torna-la a obrir amb un toc.',
+    es: 'El sistema cortó la cámara —una llamada, otra app—. Vuelve a abrirla con un toque.',
+  },
+  'camera.paused': { ca: 'Càmera en pausa pel sistema', es: 'Cámara en pausa por el sistema' },
   'camera.modeMixed': { ca: 'Com es veurà', es: 'Cómo se verá' },
   'camera.modeDiagram': { ca: 'Esquema', es: 'Esquema' },
   'camera.scrub': { ca: 'Instant de l’eclipsi', es: 'Instante del eclipse' },
