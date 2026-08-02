@@ -20,6 +20,7 @@ export const ORIGIN_KEY: Record<LocationOrigin, LocationStringKey> = {
   map: 'origin.map',
   search: 'origin.search',
   recent: 'origin.recent',
+  link: 'origin.link',
   default: 'origin.default',
 };
 

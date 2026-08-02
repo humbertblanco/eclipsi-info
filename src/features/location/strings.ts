@@ -30,6 +30,11 @@ const STRINGS = {
   'origin.map': { ca: 'Punt del mapa', es: 'Punto del mapa' },
   'origin.search': { ca: 'Cercat pel nom', es: 'Buscado por nombre' },
   'origin.recent': { ca: 'De l’historial', es: 'Del historial' },
+  /* L'únic origen que NO és un gest de qui té l'app a la mà: el punt l'ha triat
+     algú altre i ha arribat per un enllaç. Dir-ho és el mateix compromís que la
+     resta d'aquest bloc, però aquí és més necessari que enlloc, perquè és
+     l'únic cas en què l'usuari no pot reconstruir d'on surt el punt tot sol. */
+  'origin.link': { ca: 'D’un enllaç', es: 'De un enlace' },
   'origin.default': { ca: 'Punt d’exemple', es: 'Punto de ejemplo' },
 
   /* --- l'avís que les xifres no són teves ------------------------------- */

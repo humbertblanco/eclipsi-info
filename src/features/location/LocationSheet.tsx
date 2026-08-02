@@ -24,6 +24,8 @@
 import { useState, type FormEvent } from 'react';
 import { Button, Dialog, IconButton, Input } from '../../ui';
 import type { Locale } from '../../i18n';
+import { ECLIPSES } from '../../core/eclipses/catalog';
+import { PlaceThumbnail } from './PlaceThumbnail';
 import { formatCoords } from '../../screens/format';
 import type { ObserverApi } from '../../state/useObserver';
 import type { RecentPlace } from '../../state/recentPlaces';
@@ -44,6 +46,15 @@ export interface LocationSheetProps {
   onClose: () => void;
   /** Porta l'usuari al mapa. Si no es dona, la fulla només ho explica. */
   onGoToMap?: () => void;
+  /**
+   * Quin eclipsi dibuixen les miniatures de l'historial.
+   *
+   * `App` JA EL PASSA (segueix el selector de la capçalera); és opcional
+   * perquè la fulla també es pugui muntar sola — proves, futurs amfitrions —
+   * i llavors el valor per defecte és el primer del catàleg, que és el que
+   * mira gairebé tothom que obre l'app.
+   */
+  eclipseId?: string;
 }
 
 export function LocationSheet({
@@ -52,6 +63,7 @@ export function LocationSheet({
   comparison,
   onClose,
   onGoToMap,
+  eclipseId = ECLIPSES[0].id,
 }: LocationSheetProps) {
   // Els resultats s'ordenen prenent com a referència el punt actiu. Hi ha tres
   // Cervera i cinc Villanueva a la península: sense biaix, la primera de la
@@ -208,17 +220,36 @@ export function LocationSheet({
                     key={`${place.lat},${place.lon}`}
                     className={here ? 'loc-list__item loc-list__item--on' : 'loc-list__item'}
                   >
+                    {/*
+                      LA MINIATURA VA DINS DEL BOTÓ, no al costat. Fora, seria
+                      una imatge que es veu però no es pot prémer, i el dit hi
+                      va justament perquè és el que distingeix una fila de
+                      l'altra. Dins, la superfície de toc creix en comptes
+                      d'encongir-se, i els 44 px d'alçada mínima segueixen
+                      sortint de `--tap-min` i no de la mida de la imatge.
+                    */}
                     <button
                       type="button"
-                      className="loc-list__main"
+                      className="loc-list__main loc-list__main--thumb"
                       onClick={() => pick(place.lat, place.lon, 'recent', place.label)}
                     >
-                      <span className="loc-list__name">
-                        {place.label ?? formatCoords(place.lat, place.lon)}
-                      </span>
-                      <span className="loc-list__meta">
-                        {ls(ORIGIN_KEY[place.origin], locale)}
-                        {place.label !== null && ` · ${formatCoords(place.lat, place.lon)}`}
+                      <PlaceThumbnail
+                        place={{
+                          lat: place.lat,
+                          lon: place.lon,
+                          elevation: place.elevation,
+                        }}
+                        eclipseId={eclipseId}
+                        locale={locale}
+                      />
+                      <span className="loc-list__text">
+                        <span className="loc-list__name">
+                          {place.label ?? formatCoords(place.lat, place.lon)}
+                        </span>
+                        <span className="loc-list__meta">
+                          {ls(ORIGIN_KEY[place.origin], locale)}
+                          {place.label !== null && ` · ${formatCoords(place.lat, place.lon)}`}
+                        </span>
                       </span>
                     </button>
 

@@ -233,6 +233,61 @@
   white-space: nowrap;
 }
 
+/* --- Miniatura de l'horitzó ---------------------------------------------
+ *
+ * QUÈ HI HA DIBUIXAT: la silueta del terreny d'aquell punt amb el camí del Sol
+ * a sobre. És el que distingeix dues files que, en text, són dues coordenades
+ * gairebé iguals.
+ *
+ * PER QUÈ NO FA CRÉIXER LA FILA. `.loc-list__main` té `min-height: var(--tap-min)`
+ * (44 px) i `--sp-3` (8 px) de coixí a dalt i a baix: queden 28 px d'alçada
+ * lliure, que és exactament el que fa la miniatura. Amb un píxel més, la fila
+ * creixeria i el compte de vuit entrades per fulla que documenta
+ * `state/recentPlaces.ts` deixaria de sortir. Si algun dia es vol més gran,
+ * s'ha de moure primer `MAX_RECENTS`, no aquest valor.
+ *
+ * ES DEIXA DE PRÉMER? No: és dins del botó i no captura cap esdeveniment. El
+ * `pointer-events: none` hi és per si algun navegador decideix arrossegar la
+ * imatge en comptes de prémer la fila.
+ */
+.loc-list__main--thumb {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.loc-list__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  flex: 1;
+}
+
+.loc-thumb {
+  flex: none;
+  display: block;
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-sm);
+  background: var(--bg-inset);
+  pointer-events: none;
+}
+
+/*
+ * SENSE TERRENY CALCULAT, LA IMATGE NO S'AFIRMA.
+ *
+ * El dibuix ja hi surt en traç discontinu (`renderTrajectory` amb
+ * `terrain: 'assumed'`), i aquí s'hi afegeix la vora esmorteïda: la fila no ha
+ * de suggerir que aquell punt s'ha mesurat quan el que s'hi veu és un horitzó
+ * pla de reserva. No s'aplica cap `opacity` al conjunt perquè el camí del Sol
+ * SÍ que és una dada de debò —les efemèrides no depenen del relleu— i apagar-lo
+ * diria el contrari.
+ */
+.loc-thumb--assumed {
+  border-style: dashed;
+  border-color: var(--border-hairline);
+}
+
 /* --- Comparació ---------------------------------------------------------- */
 
 .loc-cmp {
