@@ -17,6 +17,7 @@ import {
 } from '../ui';
 import { ARView } from '../features/ar/ARView';
 import { useWakeLock } from '../features/countdown/useWakeLock';
+import { getEclipse } from '../core/eclipses/catalog';
 import { sampleAt } from '../core/astro/ephemeris';
 import { horizonAltitudeAt } from '../core/horizon/profile';
 import { bearingToCardinal } from '../core/astro/gradient';
@@ -130,6 +131,46 @@ export function SkyScreen({
     onImmersiveRef.current?.(arState.cameraOn && !tools);
   }, [arState.cameraOn, tools]);
   useEffect(() => () => onImmersiveRef.current?.(false), []);
+
+  /** La funció de captura que ARView publica mentre la càmera és oberta. */
+  const arCaptureRef = useRef<((caption: string) => Promise<Blob | null>) | null>(null);
+
+  /*
+   * CAPTURA I COMPARTIR. El peu el posem aquí, que és qui sap el lloc; el
+   * compartir natiu va primer i la descàrrega és el recanvi. La cancel·lació
+   * de l'usuari (AbortError) no és cap error: simplement ha canviat d'idea.
+   * NOTA iOS: el recanvi de descàrrega obre la imatge a la pestanya — es
+   * desa amb una premuda llarga; no s'hi lluita.
+   */
+  const captureView = async () => {
+    const fn = arCaptureRef.current;
+    if (!fn || location === null || circumstances === null) return;
+    const caption = `${getEclipse(eclipseId).label[locale]} · ${
+      placeLabel ?? `${location.lat.toFixed(3)}°, ${location.lon.toFixed(3)}°`
+    } · ${formatClock(new Date(instantMs), locale)}`;
+    const blob = await fn(caption);
+    if (!blob) return;
+
+    const file = new File([blob], 'eclipsi.jpg', { type: 'image/jpeg' });
+    const nav = navigator as Navigator & {
+      canShare?: (data: { files: File[] }) => boolean;
+    };
+    if (typeof nav.share === 'function' && nav.canShare?.({ files: [file] })) {
+      try {
+        await nav.share({ files: [file], title: caption });
+        return;
+      } catch (error) {
+        if ((error as DOMException)?.name === 'AbortError') return;
+        // El share natiu ha fallat de debò: es cau a la descàrrega.
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'eclipsi.jpg';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  };
 
   const contacts = circumstances?.contacts ?? null;
 
@@ -250,6 +291,7 @@ export function SkyScreen({
             }}
             mode={tools ? undefined : view}
             onState={setArState}
+            captureRef={arCaptureRef}
             /*
               EL TERRENY, CAP A LA COMPORTA DE LA CÀMERA.
               Aquesta pantalla té el veredicte a la mà i no l'hi passava: en un
@@ -368,6 +410,14 @@ export function SkyScreen({
                     : ''}
                 </span>
               </span>
+              {arState.cameraOn && (
+                <IconButton
+                  icon="camera"
+                  className="ui-iconbtn--over"
+                  label={s('camera.capture', locale)}
+                  onClick={() => void captureView()}
+                />
+              )}
               <IconButton
                 icon="map"
                 className="ui-iconbtn--over"
@@ -412,6 +462,11 @@ export function SkyScreen({
           <Button variant="ghost" size="sm" icon="eye" onClick={() => setTools(false)}>
             {s('camera.toolsHide', locale)}
           </Button>
+          {arState.cameraOn && (
+            <Button variant="ghost" size="sm" icon="camera" onClick={() => void captureView()}>
+              {s('camera.capture', locale)}
+            </Button>
+          )}
         </div>
       )}
     </div>

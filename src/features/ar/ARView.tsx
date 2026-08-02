@@ -53,6 +53,7 @@ import {
   acceptRefinedPeak,
   SunRefiner,
 } from './sunAnchor';
+import { composeCapture, canvasToJpegBlob } from './capture';
 import { nakedEyeAllowedAt, type FilterGateInput } from '../../core/timer';
 import { useNow } from '../../state/useNow';
 import { Icon, IconButton, ICON_LG } from '../../ui';
@@ -158,6 +159,13 @@ interface Props {
     /** Qui posa l'àncora absoluta ara mateix, per a la insígnia del HUD. */
     anchorSource: 'sun' | 'moon' | 'terrain' | 'both' | null;
   }) => void;
+  /**
+   * Punt d'entrada de la CAPTURA: la vista compon vídeo (amb el fosc de
+   * l'eclipsi), superposició i peu, i torna el JPEG. El vídeo i el llenç
+   * viuen aquí dins; el peu (eclipsi · lloc · hora) el posa qui crida,
+   * que és qui sap el lloc. Null mentre la càmera no està oberta.
+   */
+  captureRef?: { current: ((caption: string) => Promise<Blob | null>) | null };
 }
 
 type Mode = 'mixed' | 'diagram';
@@ -417,6 +425,7 @@ export function ARView({
   onTimeChange,
   mode: modeProp,
   onState,
+  captureRef,
 }: Props) {
   // La declinació magnètica converteix el nord de la brúixola en el geogràfic.
   // Sense ella l'error és de −3,51° a Tenerife i +2,07° a Barcelona: sistemàtic,
@@ -497,6 +506,30 @@ export function ARView({
       }),
     [],
   );
+
+  // La captura es publica com a funció viva: qui la crida posa el peu.
+  useEffect(() => {
+    if (!captureRef) return;
+    captureRef.current = async (caption: string) => {
+      const video = videoRef.current;
+      const overlay = canvasRef.current;
+      const viewport = viewportRef.current;
+      if (!video || !overlay || !viewport || !cameraOn) return null;
+      const light = lightState(renderRef.current.currentSample);
+      const composed = composeCapture(
+        video,
+        overlay,
+        viewport,
+        light.cssFilter,
+        light.perceived,
+        caption,
+      );
+      return composed ? canvasToJpegBlob(composed) : null;
+    };
+    return () => {
+      captureRef.current = null;
+    };
+  }, [captureRef, cameraOn]);
 
   // ---- Ancoratge visual. Tot en refs: s'actualitza a cada fotograma i no ha
   // de provocar cap render de React.

@@ -566,6 +566,7 @@ const STRINGS = {
   'camera.lockMoon': { ca: 'Lluna fixada', es: 'Luna fijada' },
   'camera.lockTerrain': { ca: 'Terreny fixat', es: 'Terreno fijado' },
   'camera.lockBoth': { ca: 'Sol + terreny', es: 'Sol + terreno' },
+  'camera.capture': { ca: 'Captura i comparteix la vista', es: 'Captura y comparte la vista' },
   'camera.diag.slew': { ca: 'Límit de correcció', es: 'Límite de corrección' },
   'camera.diag.slewClamped': { ca: 'retallant', es: 'recortando' },
   'camera.diag.pitchDegraded': {
