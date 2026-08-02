@@ -135,6 +135,15 @@ function Shell() {
   const { online } = useOnlineStatus();
   const observer = useObserver();
   const [tab, setTab] = useState<Tab>('countdown');
+  /*
+   * MODE IMMERSIU: la pantalla del cel amb la càmera oberta demana la
+   * pantalla sencera i el marc s'aparta — capçalera, barra d'ubicació i
+   * pestanyes fora. La sortida és el botó de tancar de la càmera, i
+   * qualsevol camí que la tanqui (error, permís, crash de la vista, canviar
+   * de pestanya) ho restaura: el booleà viu lligat a l'estat REAL de la
+   * càmera via onState/onImmersiveChange, no a cap record.
+   */
+  const [skyImmersive, setSkyImmersive] = useState(false);
   const [eclipseId, setEclipseId] = useState(ECLIPSES[0].id);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -315,7 +324,15 @@ function Shell() {
   );
 
   return (
-    <div className={fixed ? 'shell shell--fixed' : 'shell'}>
+    <div
+      className={
+        tab === 'sky' && skyImmersive
+          ? 'shell shell--fixed shell--immersive'
+          : fixed
+            ? 'shell shell--fixed'
+            : 'shell'
+      }
+    >
       {/*
         L'AVÍS DE VERSIÓ NOVA, A L'ARREL.
 
@@ -491,7 +508,11 @@ function Shell() {
             // Ja no dispara el GPS a seques: obre la fulla, que és on hi ha
             // les quatre maneres de dir on seràs. El dia de l'eclipsi el GPS és
             // el primer botó de la fulla i el gest segueix essent curt.
-            <SkyScreen {...context} onRequestLocation={() => setSheetOpen(true)} />
+            <SkyScreen
+              {...context}
+              onRequestLocation={() => setSheetOpen(true)}
+              onImmersiveChange={setSkyImmersive}
+            />
           )}
           {tab === 'guide' && (
             <GuideScreen {...context} onOpenCountdown={() => setTab('countdown')} />

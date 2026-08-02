@@ -48,6 +48,31 @@
   background: var(--bg-page);
 }
 
+/*
+ * MODE IMMERSIU: la càmera oberta a la pestanya del cel. Les barres no
+ * s'amaguen una a una: es posen a ZERO AMB UNITAT (0px, mai 0 — dins d'un
+ * calc() un zero sense unitat invalida la declaració sencera) i tot el que
+ * en deriva — main, columnes fixes, el carril d'escriptori — segueix sol,
+ * que és el contracte del bloc de dalt. El display:none treu de l'arbre el
+ * que ja no ocupa lloc; la transició d'entrada la posa l'opacitat del marc
+ * de la càmera, no aquestes barres (transicionar un display no existeix).
+ */
+.shell--immersive {
+  --bar-top: 0px;
+  --bar-bottom: 0px;
+  --bar-dateline: 0px;
+  --rail-w: 0px;
+}
+
+.shell--immersive .shell__header,
+.shell--immersive .shell__nav,
+.shell--immersive .shell__dateline,
+.shell--immersive .loc,
+.shell--immersive .off-connection,
+.shell--immersive .shell__status {
+  display: none;
+}
+
 /* --- Barres fixes -------------------------------------------------------- */
 
 .shell__header,
@@ -1068,6 +1093,34 @@
  * que aquí sura damunt del cel i no se'l pot menjar. Vegeu el comentari de
  * `SkyScreen.tsx` per què no és un `SafetyNotice`.
  */
+/*
+ * La píndola del lloc, dins del HUD: en immersiu la barra d'ubicació del marc
+ * no hi és, i cap xifra no s'ha de poder llegir sense el seu lloc a la vista.
+ * Vidre com tot el que sura damunt de la imatge.
+ */
+.skyscreen__place {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  align-self: flex-start;
+  max-width: 100%;
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  border: var(--bw-hair) solid var(--border-default);
+  border-radius: var(--r-pill);
+  color: var(--text-secondary);
+  font: var(--text-label);
+  cursor: pointer;
+}
+
+.skyscreen__place span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .skyscreen__safety {
   display: flex;
   align-items: flex-start;

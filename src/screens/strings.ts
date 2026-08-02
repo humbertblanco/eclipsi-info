@@ -556,6 +556,7 @@ const STRINGS = {
   'camera.diag.sunAnchorNone': { ca: 'no detectat', es: 'no detectado' },
   'camera.diag.anchorLeads': { ca: 'mana', es: 'manda' },
   'camera.close': { ca: 'Tanca la càmera', es: 'Cierra la cámara' },
+  'camera.compassJitter': { ca: 'brúixola ±{deg}°', es: 'brújula ±{deg}°' },
   'camera.diag.slew': { ca: 'Límit de correcció', es: 'Límite de corrección' },
   'camera.diag.slewClamped': { ca: 'retallant', es: 'recortando' },
   'camera.diag.pitchDegraded': {

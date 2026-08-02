@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   formatObscurationPercent,
   obscurationPercentValue,
@@ -16,6 +16,7 @@ import {
   type Tone,
 } from '../ui';
 import { ARView } from '../features/ar/ARView';
+import { useWakeLock } from '../features/countdown/useWakeLock';
 import { sampleAt } from '../core/astro/ephemeris';
 import { horizonAltitudeAt } from '../core/horizon/profile';
 import { bearingToCardinal } from '../core/astro/gradient';
@@ -27,6 +28,14 @@ import './screens.css';
 export interface SkyScreenProps extends EclipseContext {
   /** Demana la ubicació. Va al mateix gest que obre la càmera. */
   onRequestLocation: () => void;
+  /**
+   * Avisa el marc de l'aplicació que aquesta pantalla vol la pantalla
+   * SENCERA: càmera oberta i sense el mode eines. El marc amaga capçalera,
+   * barra d'ubicació i pestanyes; la sortida és el botó de tancar de la
+   * càmera, i qualsevol camí que tanqui la càmera (error, permís, crash de
+   * la vista) ho restaura tot sol.
+   */
+  onImmersiveChange?: (immersive: boolean) => void;
 }
 
 /** El mode del HUD: el cel d'ara mateix o el recorregut que es pot recórrer. */
@@ -49,32 +58,53 @@ type Mode = 'live' | 'sim';
  * «Sol darrere obstacle» és, per tant, una mesura del relleu de debò del punt
  * on ets, no una franja vermella dibuixada a la imatge.
  *
- * LÍMIT CONEGUT — LA SUPERPOSICIÓ NO SEGUEIX EL CONTROL LLISCANT. `ARView` té
- * el seu propi estat d'instant simulat i no accepta que li'l posin des de fora,
- * i aquesta tasca no pot tocar `src/features/ar/`. O sigui que ara mateix el
- * control lliscant mou les LECTURES (hora, azimut, altura, obscuració, marge
- * sobre el terreny) però no el disc dibuixat sobre la imatge. Les props que
- * caldrien a `ARView` per lligar-ho estan documentades a `AR_PROPS_NEEDED`, a
- * baix de tot d'aquest fitxer.
- *
- * MENTRESTANT, els controls propis d'`ARView` (calibratge, esquema, diagnòstic
- * de sensors) queden fora del marc, que és el que demana el sistema —«un sol
- * HUD prim»—, i es recuperen amb el botó d'obertura de diafragma del HUD. No
- * s'amaguen amb `display:none`: només queden fora de la retallada, i tornar-los
- * a ensenyar no remunta res ni tanca la càmera.
+ * UN SOL RELLOTGE, PER FI. `ARView` accepta `timeMs`/`onTimeChange`/`mode`/
+ * `chrome`/`onState` (l'antic backlog AR_PROPS_NEEDED, saldat): el control
+ * lliscant del HUD mou el DISC DIBUIXAT, no només les lectures, i en mode
+ * «directe» el disc és on el cel el té ara — que fa l'àncora de Sol
+ * verificable a ull nu. Amb `chrome='none'` la vista només posa el marc de la
+ * càmera i aquesta pantalla posa la resta; el mode eines (diafragma) recupera
+ * el document sencer d'ARView amb el seu diagnòstic.
  */
 export function SkyScreen({
   eclipseId,
   locale,
   location,
+  placeLabel,
   circumstances,
   verdict,
   horizon,
   onRequestLocation,
+  onImmersiveChange,
 }: SkyScreenProps) {
   const [mode, setMode] = useState<Mode>('sim');
   const [offsetSec, setOffsetSec] = useState(0);
   const [tools, setTools] = useState(false);
+  /** El que ARView reporta: si la càmera és oberta, calibratge, soroll. */
+  const [arState, setArState] = useState({
+    cameraOn: false,
+    calibrated: false,
+    headingJitterDeg: 0,
+  });
+  /** La vista de contingut (imatge mesclada o esquema), governada des del HUD. */
+  const [view, setView] = useState<'mixed' | 'diagram'>('mixed');
+
+  // Amb la càmera oberta, la pantalla no s'ha d'apagar sola: el dia de
+  // l'eclipsi el mòbil està aguantat en alt, no tocat.
+  useWakeLock(arState.cameraOn);
+
+  /*
+   * L'IMMERSIU ES DECLARA, NO ES DEDUEIX: càmera oberta i sense eines. El
+   * callback viu en una ref pel cleanup del desmuntatge, que és el que
+   * garanteix que canviar de pestanya (aquesta pantalla mor) restaura les
+   * barres encara que ningú més ho digui.
+   */
+  const onImmersiveRef = useRef(onImmersiveChange);
+  onImmersiveRef.current = onImmersiveChange;
+  useEffect(() => {
+    onImmersiveRef.current?.(arState.cameraOn && !tools);
+  }, [arState.cameraOn, tools]);
+  useEffect(() => () => onImmersiveRef.current?.(false), []);
 
   const contacts = circumstances?.contacts ?? null;
 
@@ -178,6 +208,23 @@ export function SkyScreen({
             eclipseId={eclipseId}
             locale={locale}
             horizon={horizon}
+            chrome={tools ? 'full' : 'none'}
+            timeMs={instantMs}
+            onTimeChange={(ms) => {
+              // Un gest al regle intern d'ARView (mode eines) torna al HUD:
+              // es passa a simulació i s'apunta l'instant. Un sol rellotge.
+              setMode('sim');
+              if (track) {
+                setOffsetSec(
+                  Math.max(
+                    0,
+                    Math.min(track.spanSec, Math.round((ms - track.startMs) / 1000)),
+                  ),
+                );
+              }
+            }}
+            mode={tools ? undefined : view}
+            onState={setArState}
             /*
               EL TERRENY, CAP A LA COMPORTA DE LA CÀMERA.
               Aquesta pantalla té el veredicte a la mà i no l'hi passava: en un
@@ -238,6 +285,22 @@ export function SkyScreen({
               />
             )}
 
+            {/*
+              LA PÍNDOLA DEL LLOC. En immersiu la barra d'ubicació del marc no
+              hi és, i la doctrina és que cap xifra no es pot llegir sense
+              tenir a la vista de quin lloc és: el lloc viu aquí, en vidre, i
+              tocar-lo obre el mateix full de sempre.
+            */}
+            {arState.cameraOn && (
+              <button className="skyscreen__place" onClick={onRequestLocation} type="button">
+                <Icon name="map-pin" size={ICON_SM} aria-hidden />
+                <span>
+                  {placeLabel ??
+                    `${location.lat.toFixed(3)}°, ${location.lon.toFixed(3)}°`}
+                </span>
+              </button>
+            )}
+
             <div className="skyscreen__status">
               <span className="skyscreen__statustext">
                 <span className="skyscreen__what">
@@ -250,8 +313,19 @@ export function SkyScreen({
                     alt: sample ? sample.sun.altitudeApparent.toFixed(1) : NO_DATA,
                     terrain: terrainDeg === null ? NO_DATA : formatDegrees(terrainDeg),
                   })}
+                  {arState.cameraOn
+                    ? ` · ${s('camera.compassJitter', locale, {
+                        deg: arState.headingJitterDeg.toFixed(1),
+                      })}`
+                    : ''}
                 </span>
               </span>
+              <IconButton
+                icon="map"
+                className="ui-iconbtn--over"
+                label={s(view === 'mixed' ? 'camera.modeDiagram' : 'camera.modeMixed', locale)}
+                onClick={() => setView((v) => (v === 'mixed' ? 'diagram' : 'mixed'))}
+              />
               <IconButton
                 icon="aperture"
                 // Vidre i no la caixa neutra del sistema: aquest botó sura
@@ -381,28 +455,8 @@ function CompassStrip({
 }
 
 /*
- * ---------------------------------------------------------------------------
- * PROPS QUE CALDRIEN A `ARView` PERQUÈ AQUESTA PANTALLA FOS SENCERA.
- *
- * Es documenten aquí, i no s'implementen, perquè `src/features/ar/` és d'una
- * altra tasca. Cap d'aquestes és cosmètica: sense elles la pantalla té dos
- * rellotges (el del HUD i el d'`ARView`) i dos jocs de controls.
- *
- *   1. `timeMs?: number` — instant a dibuixar. Ara `ARView` el porta dins amb
- *      `progress` (0..1). Amb això, el control lliscant del HUD mouria el disc
- *      per la imatge, que és tota la gràcia de la pantalla.
- *   2. `onTimeChange?: (ms: number) => void` — perquè el calibratge o un gest
- *      dins de la imatge puguin tornar l'instant al HUD.
- *   3. `chrome?: 'full' | 'none'` — amaga els seus controls, la seva línia de
- *      lectura i el seu avís de seguretat, i deixa només vídeo i llenç. Ara
- *      s'aconsegueix retallant-los amb `overflow`, que funciona però és una
- *      manera indirecta de dir el mateix.
- *   4. `onState?: (state: { cameraOn: boolean; calibrated: boolean;
- *      headingJitterDeg: number }) => void` — el HUD ha de poder dir «brúixola
- *      ±2°» a la línia d'estat, que és el que demana la referència, i saber si
- *      la càmera està oberta per no duplicar l'avís de seguretat.
- *   5. `mode?: 'mixed' | 'diagram'` controlat des de fora, perquè «com es
- *      veurà» i «esquema» són dues vistes de contingut i el seu lloc natural és
- *      el segmentat del HUD.
- * ---------------------------------------------------------------------------
+ * Les props que aquest fitxer documentava com a pendents (`AR_PROPS_NEEDED`)
+ * són ara reals a `ARView`: timeMs/onTimeChange, chrome, onState i mode. El
+ * bloc es va escriure quan `src/features/ar/` era d'una altra tasca; queda
+ * aquesta nota perquè l'arqueologia no faci buscar un deute que ja no hi és.
  */
