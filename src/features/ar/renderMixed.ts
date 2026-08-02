@@ -22,7 +22,12 @@
 import type { EclipseSample } from '../../core/astro/types';
 import { colorfulness, skyStateFromSample } from '../../core/sky';
 import type { Viewport } from './cameraGeometry';
-import { projectToScreen, type CameraPointing, type Calibration } from './orientation';
+import {
+  projectToScreen,
+  normalizeAngle,
+  type CameraPointing,
+  type Calibration,
+} from './orientation';
 import { renderPhaseTrack } from './renderPhaseTrack';
 import { canvasFont, withAlpha, type Palette } from '../../styles/palette';
 
@@ -62,6 +67,17 @@ export interface MixedOptions {
    */
   palette: Palette;
   locale?: 'ca' | 'es';
+  /**
+   * La guia de cerca i la confirmació de fixació. `label` ve localitzat del
+   * cridador; `sunLockedAtMs` és l'instant en què l'àncora de Sol va passar a
+   * manar (per al pols d'un segon), i `nowMs` el rellotge del dibuix.
+   */
+  guide?: {
+    label: string;
+    distanceDeg: number;
+    sunLockedAtMs: number | null;
+    nowMs: number;
+  };
 }
 
 /** Filtre CSS que s'aplica a l'element de vídeo. */
@@ -181,6 +197,131 @@ export function renderMixed(
   }
 
   drawDiscs(ctx, sample, isTotal, options);
+  if (options.guide) drawSunGuide(ctx, sample, options);
+}
+
+/**
+ * La fletxa que porta al Sol, i el pols que confirma que ja el tenim.
+ *
+ * És el patró de totes les apps de cel serioses: quan l'objectiu és fora de
+ * quadre, una fletxa a la vora indica el gir més curt i la distància en
+ * graus; quan entra, la fletxa desapareix. La fletxa apunta al Sol DIBUIXAT
+ * (l'instant del rellotge que governa la pantalla): en directe és el d'ara,
+ * i en simulació és justament el que l'usuari vol encaixar a la imatge.
+ *
+ * I quan l'àncora de Sol passa a manar, un anell breu al voltant del disc:
+ * la confirmació que allò que es veu ja no és una estimació de brúixola,
+ * sinó el Sol de debò clavat. Subtil a posta — un segon i fora.
+ */
+function drawSunGuide(
+  ctx: CanvasRenderingContext2D,
+  sample: EclipseSample,
+  options: MixedOptions,
+): void {
+  const { viewport, camera, calibration, palette, guide } = options;
+  if (!guide) return;
+
+  const p = projectToScreen(
+    sample.sun.azimuth,
+    sample.sun.altitudeApparent,
+    camera,
+    calibration,
+    viewport,
+  );
+
+  const MARGIN = 34;
+  const inFrame =
+    p.visible &&
+    p.x >= MARGIN &&
+    p.x <= viewport.width - MARGIN &&
+    p.y >= MARGIN &&
+    p.y <= viewport.height - MARGIN;
+
+  if (inFrame) {
+    // El pols de fixació, només mentre dura (1,2 s des de l'adquisició).
+    if (guide.sunLockedAtMs !== null) {
+      const t = (guide.nowMs - guide.sunLockedAtMs) / 1200;
+      if (t >= 0 && t <= 1) {
+        const sunR = Math.max(4, Math.tan(sample.sun.angularRadius * DEG) * viewport.focalPx);
+        const alpha = 0.8 * (1 - t);
+        const radius = sunR * (1.6 + 0.9 * t);
+        ctx.save();
+        ctx.strokeStyle = `rgba(255, 220, 150, ${alpha.toFixed(3)})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+    return;
+  }
+
+  // Direcció de la fletxa. Amb el Sol projectable, la geometria de pantalla
+  // és exacta; si cau darrere de la càmera, es reconstrueix la direcció al
+  // cel i es gira pel roll de la imatge, com fa la projecció.
+  const cx = viewport.width / 2;
+  const cy = viewport.height / 2;
+  let ang: number;
+  if (p.visible) {
+    ang = Math.atan2(p.y - cy, p.x - cx);
+  } else {
+    const cosAlt = Math.max(0.2, Math.cos(camera.altitude * DEG));
+    const dx = normalizeAngle(sample.sun.azimuth - camera.azimuth) * cosAlt;
+    const dy = sample.sun.altitudeApparent - camera.altitude;
+    const r = (camera.roll + camera.screenAngle) * DEG;
+    const sx = dx * Math.cos(r) + dy * Math.sin(r);
+    const sy = -(-dx * Math.sin(r) + dy * Math.cos(r));
+    ang = Math.atan2(sy, sx);
+  }
+
+  // Punt de la vora: el raig des del centre tallat amb el marc reculat.
+  const ux = Math.cos(ang);
+  const uy = Math.sin(ang);
+  const tx = ux !== 0 ? (ux > 0 ? viewport.width - MARGIN - cx : MARGIN - cx) / ux : Infinity;
+  const ty = uy !== 0 ? (uy > 0 ? viewport.height - MARGIN - cy : MARGIN - cy) / uy : Infinity;
+  const t = Math.min(Math.abs(tx), Math.abs(ty));
+  const ex = cx + ux * t;
+  const ey = cy + uy * t;
+
+  const label = `${guide.label} · ${Math.round(guide.distanceDeg)}°`;
+
+  ctx.save();
+  ctx.font = canvasFont(palette, 12, { mono: false });
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const textW = ctx.measureText(label).width;
+  const pillW = textW + 24;
+  const pillH = 26;
+
+  // La píndola es queda dins del marc; la punta de fletxa mira enfora.
+  const px = Math.max(MARGIN + pillW / 2, Math.min(viewport.width - MARGIN - pillW / 2, ex));
+  const py = Math.max(MARGIN + pillH / 2, Math.min(viewport.height - MARGIN - pillH / 2, ey));
+
+  ctx.fillStyle = 'rgba(12, 16, 28, 0.55)';
+  ctx.strokeStyle = 'rgba(255, 220, 150, 0.5)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(px - pillW / 2, py - pillH / 2, pillW, pillH, pillH / 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255, 228, 170, 0.95)';
+  ctx.fillText(label, px, py + 0.5);
+
+  // La punta, a tocar de la píndola, apuntant cap on cal girar.
+  const ax = px + ux * (pillW / 2 + 10);
+  const ay = py + uy * (pillH / 2 + 10) * (Math.abs(uy) > Math.abs(ux) ? 1 : 0.4);
+  ctx.translate(ax, ay);
+  ctx.rotate(ang);
+  ctx.fillStyle = 'rgba(255, 220, 150, 0.9)';
+  ctx.beginPath();
+  ctx.moveTo(8, 0);
+  ctx.lineTo(-4, -6);
+  ctx.lineTo(-4, 6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
 }
 
 /**

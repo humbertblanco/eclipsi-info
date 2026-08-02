@@ -557,6 +557,15 @@ const STRINGS = {
   'camera.diag.anchorLeads': { ca: 'mana', es: 'manda' },
   'camera.close': { ca: 'Tanca la càmera', es: 'Cierra la cámara' },
   'camera.compassJitter': { ca: 'brúixola ±{deg}°', es: 'brújula ±{deg}°' },
+  'camera.sunArrowLabel': { ca: 'el Sol', es: 'el Sol' },
+  'camera.calibrateCoach': {
+    ca: 'Brúixola marejada — mou el mòbil fent un vuit ∞',
+    es: 'Brújula mareada — mueve el móvil haciendo un ocho ∞',
+  },
+  'camera.lockSun': { ca: 'Sol fixat', es: 'Sol fijado' },
+  'camera.lockMoon': { ca: 'Lluna fixada', es: 'Luna fijada' },
+  'camera.lockTerrain': { ca: 'Terreny fixat', es: 'Terreno fijado' },
+  'camera.lockBoth': { ca: 'Sol + terreny', es: 'Sol + terreno' },
   'camera.diag.slew': { ca: 'Límit de correcció', es: 'Límite de corrección' },
   'camera.diag.slewClamped': { ca: 'retallant', es: 'recortando' },
   'camera.diag.pitchDegraded': {

@@ -67,6 +67,7 @@ import {
 import {
   normalizeAngle,
   projectToScreen,
+  angularSeparationDeg,
   DEFAULT_CALIBRATION,
   type CameraPointing,
   type Calibration,
@@ -153,6 +154,8 @@ interface Props {
     cameraOn: boolean;
     calibrated: boolean;
     headingJitterDeg: number;
+    /** Qui posa l'àncora absoluta ara mateix, per a la insígnia del HUD. */
+    anchorSource: 'sun' | 'moon' | 'terrain' | 'both' | null;
   }) => void;
 }
 
@@ -446,12 +449,23 @@ export function ARView({
   onStateRef.current = onState;
   const calibrated = diagnostics.measuredFovDeg !== null;
   const headingJitterQ = Math.round(orientation.jitterFiltered * 10) / 10;
+  const anchorSourceNow = diagnostics.anchorSource;
   useEffect(() => {
-    onStateRef.current?.({ cameraOn, calibrated, headingJitterDeg: headingJitterQ });
-  }, [cameraOn, calibrated, headingJitterQ]);
+    onStateRef.current?.({
+      cameraOn,
+      calibrated,
+      headingJitterDeg: headingJitterQ,
+      anchorSource: anchorSourceNow,
+    });
+  }, [cameraOn, calibrated, headingJitterQ, anchorSourceNow]);
   useEffect(
     () => () =>
-      onStateRef.current?.({ cameraOn: false, calibrated: false, headingJitterDeg: 0 }),
+      onStateRef.current?.({
+        cameraOn: false,
+        calibrated: false,
+        headingJitterDeg: 0,
+        anchorSource: null,
+      }),
     [],
   );
 
@@ -511,6 +525,8 @@ export function ARView({
   const anchorSourceRef = useRef<'sun' | 'moon' | 'terrain' | 'both' | null>(null);
   /** Refinador del centroide del Sol a resolució plena. Es reutilitza. */
   const sunRefinerRef = useRef<SunRefiner | null>(null);
+  /** Quan l'àncora de Sol va passar a manar, per al pols de confirmació. */
+  const sunLockRef = useRef<number | null>(null);
   /**
    * Última postura amb què s'ha DIBUIXAT, que és la fusionada i no la del
    * sensor.
@@ -1088,6 +1104,18 @@ export function ARView({
                       ? 'moon'
                       : 'sun'
                     : 'terrain';
+            // El pols de confirmació: només a l'ADQUISICIÓ (transició de no
+            // fixat a fixat amb confiança), no a cada refresc.
+            const sunLeads =
+              sunFix !== null &&
+              sunFix.confidence > 0.6 &&
+              anchorSourceRef.current !== 'terrain' &&
+              anchorSourceRef.current !== null;
+            if (sunLeads) {
+              if (sunLockRef.current === null) sunLockRef.current = nowMs;
+            } else {
+              sunLockRef.current = null;
+            }
             // Amb data, amb la postura del sensor d'aquell instant i amb la
             // velocitat a què anava: sense les dues primeres no hi ha manera
             // de saber si el fix encara val com a POSTURA; sense la tercera,
@@ -1235,6 +1263,17 @@ export function ARView({
           pathSamples: state.samples,
           locale: state.locale,
           palette: PALETTE,
+          guide: {
+            label: s('camera.sunArrowLabel', state.locale),
+            distanceDeg: angularSeparationDeg(
+              stable.azimuth,
+              stable.altitude,
+              state.currentSample.sun.azimuth,
+              state.currentSample.sun.altitudeApparent,
+            ),
+            sunLockedAtMs: sunLockRef.current,
+            nowMs,
+          },
         });
       } else {
         renderOverlay(ctx, state.circumstances, state.samples, {

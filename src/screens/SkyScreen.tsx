@@ -81,11 +81,36 @@ export function SkyScreen({
   const [offsetSec, setOffsetSec] = useState(0);
   const [tools, setTools] = useState(false);
   /** El que ARView reporta: si la càmera és oberta, calibratge, soroll. */
-  const [arState, setArState] = useState({
+  const [arState, setArState] = useState<{
+    cameraOn: boolean;
+    calibrated: boolean;
+    headingJitterDeg: number;
+    anchorSource: 'sun' | 'moon' | 'terrain' | 'both' | null;
+  }>({
     cameraOn: false,
     calibrated: false,
     headingJitterDeg: 0,
+    anchorSource: null,
   });
+
+  /*
+   * EL COACH DE CALIBRATGE: si la brúixola balla més de 8° durant tres
+   * segons, una píndola que ensenya el gest del vuit — el de tota la vida
+   * dels magnetòmetres. Amb histèresi (surt a 8, marxa a 6) perquè no
+   * parpellegi, i mai durant la fase que no s'ha d'interrompre.
+   */
+  const [coach, setCoach] = useState(false);
+  useEffect(() => {
+    if (!arState.cameraOn) {
+      setCoach(false);
+      return;
+    }
+    if (arState.headingJitterDeg > 8) {
+      const timer = setTimeout(() => setCoach(true), 3000);
+      return () => clearTimeout(timer);
+    }
+    if (arState.headingJitterDeg < 6) setCoach(false);
+  }, [arState.cameraOn, arState.headingJitterDeg]);
   /** La vista de contingut (imatge mesclada o esquema), governada des del HUD. */
   const [view, setView] = useState<'mixed' | 'diagram'>('mixed');
 
@@ -257,7 +282,30 @@ export function SkyScreen({
                     ? s('camera.blocked', locale)
                     : s('camera.free', locale)}
               </Badge>
+              {/*
+                Qui té l'overlay clavat ara: el Sol, el terreny o tots dos.
+                És la confiança feta visible — quan hi és, allò que es veu ja
+                no és una estimació de brúixola.
+              */}
+              {arState.cameraOn && arState.anchorSource !== null && (
+                <Badge tone="clear" dot>
+                  {s(
+                    arState.anchorSource === 'both'
+                      ? 'camera.lockBoth'
+                      : arState.anchorSource === 'sun'
+                        ? 'camera.lockSun'
+                        : arState.anchorSource === 'moon'
+                          ? 'camera.lockMoon'
+                          : 'camera.lockTerrain',
+                    locale,
+                  )}
+                </Badge>
+              )}
             </div>
+
+            {coach && !(obscuration >= 0.999 && central) && (
+              <p className="skyscreen__coach">{s('camera.calibrateCoach', locale)}</p>
+            )}
           </div>
 
           {/* Un sol HUD prim. */}

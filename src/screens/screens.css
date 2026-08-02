@@ -1094,6 +1094,23 @@
  * `SkyScreen.tsx` per què no és un `SafetyNotice`.
  */
 /*
+ * El coach de calibratge: una línia de vidre sota les insígnies quan la
+ * brúixola balla. No bloqueja res i marxa sola quan el sensor es calma.
+ */
+.skyscreen__coach {
+  margin: var(--sp-2) var(--sp-4) 0;
+  padding: var(--sp-2) var(--sp-4);
+  align-self: flex-start;
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  border: var(--bw-hair) solid var(--border-warning, var(--border-default));
+  border-radius: var(--r-pill);
+  color: var(--text-primary);
+  font: var(--text-label);
+}
+
+/*
  * La píndola del lloc, dins del HUD: en immersiu la barra d'ubicació del marc
  * no hi és, i cap xifra no s'ha de poder llegir sense el seu lloc a la vista.
  * Vidre com tot el que sura damunt de la imatge.
