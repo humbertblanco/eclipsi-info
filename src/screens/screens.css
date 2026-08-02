@@ -1424,3 +1424,127 @@
   flex-wrap: wrap;
   gap: var(--sp-3);
 }
+
+/* ============================================================================
+   Guia — «Els tres eclipsis, des d'aquí»
+   ========================================================================== */
+
+/*
+ * TRES FILES DINS D'UNA TARGETA, SEPARADES PER UNA FILERA FINA.
+ *
+ * Ni tres targetes ni una taula. Tres targetes farien tres superfícies amb la
+ * seva ombra competint entre elles i amb l'avís de seguretat de dalt, i el
+ * sistema demana una sola targeta amb resplendor per pantalla. I una taula no
+ * hi cap: a 390 px les cinc columnes que caldrien (hora, altura, teòrica,
+ * visible, ocultació) es queden en 60 px cadascuna i els dígits es parteixen.
+ *
+ * CAP TO NOU. Tot el bloc va amb els colors de text i de vora que ja hi ha;
+ * l'únic ambre d'aquesta pantalla és l'avís de seguretat de dalt de tot.
+ */
+.threeecl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.threeecl__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-top: var(--sp-5);
+  border-top: var(--bw-hair) solid var(--border-subtle);
+}
+
+/* La primera fila ja té la introducció al damunt: una filera més hi sobra. */
+.threeecl__item:first-child {
+  padding-top: var(--sp-0);
+  border-top: none;
+}
+
+/*
+ * L'ECLIPSI SELECCIONAT ES MARCA AMB SUPERFÍCIE, NO AMB COLOR.
+ *
+ * Una vora esquerra de color és el recurs obvi i és el que aquest projecte ja
+ * està desfent a `features/weather` i `features/spots`: afegeix un accent més a
+ * una pantalla que en va sobrada. Un fons enfonsat diu el mateix —«aquesta és
+ * la que estàs mirant»— sense gastar cap to, i la insígnia del costat ho diu
+ * amb paraules per a qui no distingeix el matís de fons.
+ */
+.threeecl__item--current {
+  background: var(--bg-inset);
+  border-radius: var(--r-md);
+  padding: var(--sp-5) var(--sp-4);
+  margin-inline: calc(var(--sp-4) * -1);
+}
+
+.threeecl__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.threeecl__name {
+  margin: 0;
+  font: var(--text-label);
+  color: var(--text-primary);
+}
+
+.threeecl__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/*
+ * Les xifres, en graella que s'adapta.
+ *
+ * `auto-fit` amb un mínim de 84 px i no un nombre fix de columnes perquè el
+ * nombre de xifres CANVIA per fila: un eclipsi amb fase central i perfil del
+ * terreny en té quatre, un de parcial només en té tres. Amb columnes fixes, la
+ * fila del parcial deixaria un forat que es llegiria com una dada que falta.
+ */
+.threeecl__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  gap: var(--sp-3) var(--sp-4);
+}
+
+/*
+ * La frase de la comporta de seguretat ocular.
+ *
+ * Va en secundari i no en apagat com la resta de notes: és l'única línia de la
+ * fila que parla de fer-se mal, i el sistema no permet que el text que evita un
+ * dany físic tingui menys contrast que el que l'envolta. Tampoc no és ambre —
+ * no és una xifra que decideix, i el vermell de perill ja el gasta l'avís de
+ * dalt de tot, que és qui mana a la pantalla.
+ */
+.threeecl__gate {
+  margin: 0;
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+/*
+ * Els consells qualitatius de cada eclipsi.
+ *
+ * Amb sagnat de llista i no amb pics propis: són frases llargues i el que ha de
+ * quedar clar en fer-hi un cop d'ull és quantes n'hi ha, no on comença cadascuna.
+ */
+.threeecl__tips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.threeecl__tips li::marker {
+  color: var(--border-strong);
+}

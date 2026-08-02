@@ -2,6 +2,7 @@ import { Button, Card, SafetyNotice } from '../ui';
 import { canRemoveFilter, FILTER_GATE_NOTE } from '../core/timer';
 import { GuideView } from '../features/guide/GuideView';
 import { OfflinePanel } from '../offline/OfflinePanel';
+import { ThreeEclipses } from './ThreeEclipses';
 import type { EclipseContext } from './context';
 import { s } from './strings';
 import { formatClockShort } from './format';
@@ -52,6 +53,7 @@ export function GuideScreen({
   placeLabel,
   circumstances,
   verdict,
+  horizon,
   onOpenCountdown,
 }: GuideScreenProps) {
   /*
@@ -131,6 +133,37 @@ export function GuideScreen({
           {s('nav.countdown', locale)}
         </Button>
       </Card>
+
+      {/*
+        ELS TRES ECLIPSIS, CALCULATS PER AL PUNT DE L'USUARI.
+
+        PER QUÈ AQUÍ I NO A LA PORTADA: és una decisió de planificació, no una
+        lectura del dia. Qui obre l'app el 12 d'agost a les vuit del vespre vol
+        una xifra i un compte enrere; qui compara tres eclipsis ho fa mesos
+        abans, i ho fa a la pantalla que es llegeix a casa — la mateixa
+        justificació que ja té el panell de preparació offline de sota.
+
+        PER QUÈ EN AQUESTA POSICIÓ, entre l'avís de 30 min i la preparació
+        offline: els dos avisos curts de dalt parlen de l'eclipsi que l'usuari
+        té triat i han de quedar junts. Aquesta targeta és el moment en què la
+        pantalla deixa de parlar d'un eclipsi i passa a parlar dels tres, i just
+        després ve l'acció de preparar-se. La guia de lectura va al final, que
+        és on ha d'anar el text llarg.
+
+        NO REP `circumstances` NI `verdict`: se'ls calcula tots tres pel seu
+        compte. El parell que porta el context és NOMÉS de l'eclipsi
+        seleccionat, i encadenar-lo aquí faria que canviar d'eclipsi al selector
+        de la capçalera refés les tres cerques d'arrels per obtenir exactament
+        els mateixos números. El que sí que hi passa és el `horizon`, que és
+        l'única peça compartida de debò: el perfil del terreny depèn del lloc i
+        no de l'eclipsi.
+      */}
+      <ThreeEclipses
+        eclipseId={eclipseId}
+        locale={locale}
+        location={location}
+        horizon={horizon}
+      />
 
       {/*
         LA PREPARACIÓ PER ANAR SENSE COBERTURA, QUE NO ES PODIA OBRIR DES
