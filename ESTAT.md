@@ -251,6 +251,19 @@ s'empeny ~30 ms endavant amb el giroscopi cru (`motionPredict`,
 `devicemotion.rotationRate`, costat de la multiplicació clavat al banc contra
 Euler) — el retard percebut en moviment queda a ~zero.
 
+LA SEGONA RONDA DE QUIETUD (després del primer camp): amb el cel ras i el
+mòbil quiet, si el sensor no declara moviment (<5°/s) i cap àncora vigila,
+NO s'integra res i es rebasa la referència — el soroll de brúixola ja no
+passeja la postura; els residus de menys d'una dècima es tanquen a 0,05°/s
+(rampa contínua de banda morta). El Sol es mesura ara A CADA FOTOGRAMA (el
+camí complet amb totes les portes — l'adquisició ÉS el seguiment, sense
+màquina d'estats que pugui seguir un núvol): l'àncora mai té més de 33 ms i
+aguanta el gest fins a ~30-40°/s; la silueta es queda al tick i només vota
+fresca (≤250 ms). Els blocs del seguidor són ADAPTATIUS (fins a 18, triats
+per variància amb punt-més-llunyà; `pitchDegraded` amb l'abast vertical com
+a únic àrbitre). I hi ha CAPTURA: composició vídeo+fosc de l'eclipsi
+(ctx.filter, amb vel de recanvi a iOS<18)+overlay+peu → share natiu.
+
 LA PANTALLA: `ARView` accepta `chrome/timeMs/onTimeChange/mode/onState`
 (l'antic backlog AR_PROPS_NEEDED, saldat — un sol rellotge per pantalla), i
 amb la càmera oberta l'app entra en MODE IMMERSIU (`.shell--immersive`:
