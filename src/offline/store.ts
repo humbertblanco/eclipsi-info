@@ -12,6 +12,8 @@
  * a una memòria de sessió.
  */
 
+import { CACHE_GRID_DECIMALS, snapCoordinate } from '../core/places/cache';
+
 const DB_NAME = 'appeclipsi-offline';
 const DB_VERSION = 1;
 const STORE = 'places';
@@ -84,15 +86,57 @@ function promisify<T>(request: IDBRequest<T>): Promise<T | null> {
  * Tres decimals són ~100 m, la mateixa resolució amb què es desa el perfil
  * d'horitzó. Si fos més fi, tornar al mateix mirador amb el GPS ballant
  * crearia una entrada nova cada vegada i la llista no voldria dir res.
+ *
+ * S'ARRODONEIX AMB `snapCoordinate` I NO AMB `toFixed` A SEQUES: toFixed
+ * conserva el signe del zero, i al meridià de Greenwich —que CREUA la franja
+ * del 2026 per Castelló— la mateixa cel·la quedava partida en dues claus,
+ * «0.000» per a lon +0,0004 i «-0.000» per a −0,0004: dues files a
+ * l'inventari del mateix mirador. El snap ve de `core/places/cache.ts`, que
+ * ja havia pagat la mateixa trampa.
  */
 export function preparedPlaceId(lat: number, lon: number): string {
-  return `${lat.toFixed(3)},${lon.toFixed(3)}`;
+  const la = snapCoordinate(lat).toFixed(CACHE_GRID_DECIMALS);
+  const lo = snapCoordinate(lon).toFixed(CACHE_GRID_DECIMALS);
+  return `${la},${lo}`;
+}
+
+/**
+ * Migració suau de les claus velles: les files desades abans del canvi de
+ * `preparedPlaceId` poden dur «-0.000» (o l'arrodoniment cru de toFixed).
+ * Es reconeixen perquè la clau recalculada de les seves coordenades no
+ * coincideix amb la desada; es queda la fila més recent de cada cel·la i les
+ * altres s'esborren aprofitant el viatge — la migració és llegir la llista.
+ */
+function splitByCanonicalId(places: PreparedPlace[]): {
+  keep: PreparedPlace[];
+  stale: PreparedPlace[];
+} {
+  const newest = new Map<string, PreparedPlace>();
+  const stale: PreparedPlace[] = [];
+  for (const place of places) {
+    const canonical = preparedPlaceId(place.lat, place.lon);
+    const seen = newest.get(canonical);
+    if (!seen) {
+      newest.set(canonical, place);
+    } else if (place.savedAtMs > seen.savedAtMs) {
+      stale.push(seen);
+      newest.set(canonical, place);
+    } else {
+      stale.push(place);
+    }
+  }
+  return { keep: [...newest.values()], stale };
 }
 
 /** Punts preparats, del més recent al més antic. */
 export async function listPreparedPlaces(): Promise<PreparedPlace[]> {
   const db = await openDatabase();
-  if (!db) return [...memory.values()].sort((a, b) => b.savedAtMs - a.savedAtMs);
+  if (!db) {
+    const all = [...memory.values()].sort((a, b) => b.savedAtMs - a.savedAtMs);
+    const { keep, stale } = splitByCanonicalId(all);
+    for (const old of stale) void deletePreparedPlace(old.id);
+    return keep;
+  }
 
   try {
     const tx = db.transaction(STORE, 'readonly');
@@ -100,7 +144,10 @@ export async function listPreparedPlaces(): Promise<PreparedPlace[]> {
       tx.objectStore(STORE).getAll() as IDBRequest<PreparedPlace[]>,
     );
     if (!all) return [];
-    return all.sort((a, b) => b.savedAtMs - a.savedAtMs);
+    all.sort((a, b) => b.savedAtMs - a.savedAtMs);
+    const { keep, stale } = splitByCanonicalId(all);
+    for (const old of stale) void deletePreparedPlace(old.id);
+    return keep;
   } catch {
     return [];
   }
