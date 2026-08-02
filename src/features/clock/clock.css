@@ -1,0 +1,46 @@
+/* ============================================================================
+   Deriva del rellotge del dispositiu — estils.
+
+   Tot amb variables del sistema de disseny: aquí no hi pot haver cap hex ni cap
+   mida escrita a mà.
+
+   CAP COLOR D'ACCENT. L'ambre de la portada ja el té la durada visible
+   (ESTAT.md §5: un sol ambre per pantalla, i és el de la xifra que decideix) i
+   el vermell és de la comporta ocular. Aquest bloc viu del contrast del text i
+   de la caixa d'informació que li dona `SafetyNotice level="info"`.
+
+   Importa'l des d'on es faci servir:  import './clock.css'
+   ========================================================================== */
+
+.clockcheck {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  align-items: flex-start;
+}
+
+/* Les tres frases de l'avís, una sota l'altra. `SafetyNotice` posa el seu fill
+   dins d'un sol `span`, o sigui que la columna es fa aquí dins. */
+.clockcheck__lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* D'on surt la xifra. Un pes menys que el text, com les insígnies d'origen del
+   selector de lloc: ha de ser llegible i no ha de competir amb la frase. */
+.clockcheck__origin {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* La línia discreta de quan no s'ha pogut comprovar res. Mateixa veu que
+   `.screen__note`: sense caixa, sense color d'estat i sense icona. No és una
+   alarma, és la constància que aquella comprovació no s'ha fet. */
+.clockcheck__note {
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+  margin: 0;
+  text-wrap: pretty;
+}

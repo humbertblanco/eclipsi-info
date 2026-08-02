@@ -12,6 +12,8 @@ import {
   type Tone,
 } from '../ui';
 import { SimulationView } from '../features/sim/SimulationView';
+import { ClockDriftNotice } from '../features/clock';
+import { ShareButton } from '../features/share';
 import { CountdownView } from '../features/countdown';
 import { useCloudOutlook } from '../features/weather';
 import { Countdown } from '../ui/eclipse/Countdown';
@@ -261,6 +263,17 @@ export function CountdownScreen({
           centralPhaseVisible={verdict ? verdict.centralVisibleSec > 0 : undefined}
         />
 
+        {/*
+          La deriva del rellotge del telèfon, JUST SOTA dels avisos de veu i no
+          a la columna principal. És on aporta: aquests avisos es programen amb
+          l'hora del sistema i amb marges de segons, o sigui que és aquí on
+          saber que el rellotge va malament canvia alguna cosa. I a la columna
+          estreta no li pren protagonisme a la xifra del compte enrere, que és
+          el que la gent hi ve a mirar. Quan el rellotge està comprovat i va bé
+          no pinta res.
+        */}
+        <ClockDriftNotice locale={locale} />
+
         {onOpenCamera ? (
           <Button size="lg" icon="camera" fullWidth onClick={onOpenCamera}>
             {s('home.openCamera', locale)}
@@ -270,6 +283,29 @@ export function CountdownScreen({
             {s('home.openMap', locale)}
           </Button>
         )}
+
+        {/*
+          COMPARTIR EL PUNT, SOTA L'ACCIÓ PRINCIPAL I EN `ghost`.
+
+          Va aquí perquè és la pantalla que respon «quants segons veuràs des
+          d'aquí», que és exactament el que s'envia. I va en fantasma perquè no
+          compet amb el botó gran: qui obre l'app ve a mirar la seva xifra, no a
+          enviar-la; compartir-la ve després.
+
+          Envia l'enllaç amb el punt i, si el sistema ho permet, la targeta amb
+          la silueta del teu horitzó com a fitxer — que és l'única manera que
+          una previsualització de veritat arribi a una conversa, perquè un lloc
+          estàtic no pot tenir una `og:image` diferent per punt.
+        */}
+        <ShareButton
+          eclipseId={eclipseId}
+          locale={locale}
+          location={location}
+          label={placeLabel}
+          circumstances={circumstances}
+          profile={horizon}
+          verdict={verdict}
+        />
 
         <p className="screen__note">
           {formatCoords(location.lat, location.lon)} ·{' '}

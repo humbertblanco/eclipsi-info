@@ -52,6 +52,33 @@ export type { CountdownInput, DurationParts } from './countdown';
 export { createMonotonicClock, DEFAULT_RESYNC_TOLERANCE_MS } from './clock';
 export type { ClockSources, MonotonicClock, MonotonicClockOptions } from './clock';
 
+/**
+ * El desfasament absolut del rellotge del dispositiu.
+ *
+ * `clock.ts` i `reference.ts` responen preguntes diferents i les dues fan
+ * falta: el primer detecta que el rellotge SALTA durant la sessió, el segon que
+ * anava malament des del principi. Ni el monòton ni el de paret poden veure la
+ * segona des de dins; cal una referència de fora, i qui hi va és
+ * `features/clock/`, no aquest mòdul.
+ */
+export {
+  bestClockOffset,
+  clockDriftLevel,
+  estimateClockOffset,
+  parseHttpDate,
+  CLOCK_DRIFT_ALERT_MS,
+  HTTP_DATE_RESOLUTION_MS,
+  MAX_USEFUL_ROUND_TRIP_MS,
+} from './reference';
+export type {
+  ClockDriftLevel,
+  ClockOffset,
+  ClockOffsetMeasured,
+  ClockOffsetUnknown,
+  ClockProbe,
+  ClockProbeProblem,
+} from './reference';
+
 export { createAlertRunner } from './runner';
 export type {
   AlertEvent,
