@@ -83,7 +83,17 @@ import type { Locale } from '../i18n';
 
 /* ------------------------------------------------------------------ tipus */
 
-/** To visual d'un avís. Es mapa a les variables de color de `src/index.css`. */
+/**
+ * To visual d'un avís. Es mapa a les variables de color del sistema.
+ *
+ * EL VOCABULARI DE L'AMBRE, DECIDIT AQUÍ I OBEÏT A `guide.css`: l'ambre
+ * (`--status-partial`, que és el mateix sun-500 de l'accent) queda RESERVAT
+ * als avisos de dany irreversible — la seguretat ocular i el 'warn' que la
+ * porta. Tot el que és consell, logística o context va en 'info', que es
+ * pinta NEUTRE (tinta secundària, sense taronja). La pantalla n'havia
+ * arribat a tenir vuit alhora entre insígnies, pics de llista i requadres:
+ * quan tot és ambre, l'ambre que t'ha de salvar la retina ja no crida.
+ */
 export type Tone = 'info' | 'good' | 'warn' | 'bad';
 
 export interface ParagraphBlock {
@@ -557,13 +567,15 @@ function guideCa(): GuideSection[] {
         },
         {
           kind: 'callout',
-          tone: 'warn',
+          // Logística, no seguretat: en 'info' pel vocabulari de l'ambre (Tone).
+          tone: 'info',
           title: 'Xarxa mòbil: dona-la per morta',
           text: 'Desenes de milers de persones concentrades en pocs quilòmetres saturen les antenes fins a deixar-les inservibles. No podràs consultar res, ni enviar missatges, ni fer servir mapes en línia. Baixa’t els mapes de la zona per a ús offline abans de sortir, decideix el punt de trobada amb el teu grup per endavant, i porta la ruta escrita. Aquesta app està pensada per funcionar sense connexió precisament per això.',
         },
         {
           kind: 'callout',
-          tone: 'warn',
+          // Logística, no seguretat: en 'info' pel vocabulari de l'ambre (Tone).
+          tone: 'info',
           title: 'Trànsit i aglomeracions',
           text: 'El patró és sempre el mateix: s’hi arriba amb comptagotes durant tot el dia i tothom marxa alhora en cinc minuts. Compta amb hores de cua a la sortida. Omple el dipòsit el dia abans, aparca de cara a la sortida i tingues clar que un mirador estret amb una sola carretera d’accés és una ratera. Molts ajuntaments limitaran l’accés als punts més coneguts: mira-ho abans.',
         },
@@ -893,13 +905,15 @@ function guideEs(): GuideSection[] {
         },
         {
           kind: 'callout',
-          tone: 'warn',
+          // Logística, no seguretat: en 'info' pel vocabulari de l'ambre (Tone).
+          tone: 'info',
           title: 'Red móvil: dala por muerta',
           text: 'Decenas de miles de personas concentradas en pocos kilómetros saturan las antenas hasta dejarlas inservibles. No podrás consultar nada, ni enviar mensajes, ni usar mapas en línea. Descarga los mapas de la zona para uso offline antes de salir, decide el punto de encuentro con tu grupo de antemano, y lleva la ruta escrita. Esta app está pensada para funcionar sin conexión precisamente por eso.',
         },
         {
           kind: 'callout',
-          tone: 'warn',
+          // Logística, no seguretat: en 'info' pel vocabulari de l'ambre (Tone).
+          tone: 'info',
           title: 'Tráfico y aglomeraciones',
           text: 'El patrón es siempre el mismo: se llega con cuentagotas durante todo el día y todo el mundo se va a la vez en cinco minutos. Cuenta con horas de cola a la salida. Llena el depósito el día antes, aparca de cara a la salida y ten claro que un mirador estrecho con una sola carretera de acceso es una ratonera. Muchos ayuntamientos limitarán el acceso a los puntos más conocidos: míralo antes.',
         },

@@ -62,6 +62,9 @@
   overflow: hidden;
 }
 
+/* L'ÚNIC contorn ambre de la pantalla: la secció de seguretat ocular. El
+   vocabulari el fixa `content/guide.ts` (tipus Tone): ambre = dany
+   irreversible, i prou. */
 .guide__section--critical { border-color: var(--accent); }
 
 .guide__summary {
@@ -105,8 +108,10 @@
   font: var(--text-overline);
   letter-spacing: var(--ls-caps);
   text-transform: uppercase;
-  color: var(--accent);
-  border: var(--bw-hair) solid var(--accent);
+  /* Neutre: és una etiqueta de secció, no un avís. En ambre competia amb la
+     seguretat ocular des de totes i cadascuna de les targetes. */
+  color: var(--text-muted);
+  border: var(--bw-hair) solid var(--border-subtle);
   border-radius: var(--r-pill);
   padding: var(--sp-1) var(--sp-3);
   flex: 0 0 auto;
@@ -147,7 +152,7 @@
 .guide__list--bad li::marker { color: var(--status-danger); }
 .guide__list--warn li::marker { color: var(--status-partial); }
 .guide__list--good li::marker { color: var(--status-clear); }
-.guide__list--info li::marker { color: var(--accent); }
+.guide__list--info li::marker { color: var(--text-muted); }
 
 /* --------------------------------------------------------- definicions */
 
@@ -163,7 +168,8 @@
 .guide__defs dt {
   font-size: var(--fs-body-sm);
   font-weight: var(--fw-semibold);
-  color: var(--accent);
+  /* El pes ja fa la jerarquia; l'ambre aquí era decoració. */
+  color: var(--text-primary);
 }
 
 .guide__defs dd {
@@ -216,11 +222,12 @@
  * `--status-danger` (#FF5A45): tres verds i tarongs de fora de la paleta que
  * arribaven al CSS compilat.
  */
+/* 'info' és neutre: requadre sí, taronja no (vegeu Tone a content/guide.ts). */
 .guide__callout--info {
-  border-color: color-mix(in oklab, var(--accent) 38%, transparent);
-  background: var(--accent-quiet);
+  border-color: var(--border-subtle);
+  background: var(--surface-card-hover);
 }
-.guide__callout--info strong { color: var(--accent); }
+.guide__callout--info strong { color: var(--text-primary); }
 
 .guide__callout--good {
   border-color: color-mix(in oklab, var(--status-clear) 38%, transparent);
@@ -321,4 +328,5 @@
   line-height: var(--lh-loose);
 }
 
-.guide__sources a { color: var(--accent); }
+/* El testimoni del to d'enllaç, no el d'accent: un enllaç no és cap avís. */
+.guide__sources a { color: var(--text-link); }
