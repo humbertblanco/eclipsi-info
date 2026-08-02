@@ -241,54 +241,47 @@ describe('tipus d’eclipsi i magnitud', () => {
   });
 
   /**
-   * DEFECTE CONEGUT, apuntat aquí perquè no es perdi.
+   * DEFECTE CORREGIT, i aquest test és el pany perquè no torni.
    *
-   * Als municipis del caire on el motor diu `partial`, la magnitud i
-   * l'obscuració del mateix objecte diuen 1,034 i 100%. És contradictori: la
-   * interfície hi ensenyaria «Parcial · magnitud 1,034 · 100% d'obscuració».
-   *
-   * La causa és que els dos números es calculen amb radis lunars diferents:
-   *   · `kind` surt de `separationMinusLimit(inner = true)`, que fa servir el
-   *     radi UMBRAL (k = 0,2722810), com toca per a un contacte C2/C3.
-   *   · `magnitude` i `obscuration` surten de `sampleAt()`, que crida
-   *     `moonAngularRadius()` sense paràmetre i per tant agafa el PENOMBRAL
-   *     (k = 0,2725076).
-   *
-   * Entre els dos llindars hi ha ~0,8″ de separació, i en aquesta franja
-   * primíssima el motor es contradiu. Coincideix exactament amb els 2-3 km del
-   * caire on tampoc no pot decidir el veredicte, o sigui que el nombre de llocs
-   * afectats és petit — però és justament on l'usuari mira.
-   *
-   * Solució raonable: que `sampleAt()` calculi la magnitud i l'obscuració amb
-   * el mateix radi umbral que ha decidit el `kind`, o bé que `kind` i magnitud
-   * surtin tots dos del mateix lloc. Cal decidir-ho a `src/core/astro/`.
+   * Als municipis del caire, el motor va arribar a dir «Parcial · magnitud
+   * 1,034 · 100% d'obscuració»: `kind` sortia dels contactes umbrals
+   * (k = 0,2722810) i la magnitud de `sampleAt()`, que feia servir el radi
+   * penombral (k = 0,2725076) via un «valor mitjà» que es presentava com a
+   * invisible. Des que `sampleAt()` calcula amb el radi umbral —el mateix que
+   * decideix on són C2 i C3—, els dos números surten del mateix disc i la
+   * contradicció és impossible per construcció. Si aquesta llista torna a
+   * tenir contingut, algú ha tornat a separar els radis.
    */
-  it('[DEFECTE CONEGUT] al caire, kind i magnitud es contradiuen', () => {
+  it('al caire, kind i magnitud surten del mateix radi i no es contradiuen', () => {
     const contradictory = MUNICIPALITIES.filter((m) => {
       const r = computed.get(m.ine);
       return r !== undefined && r.kind === 'partial' && r.contacts.max.magnitude >= 1;
     }).map((m) => m.name);
 
-    if (contradictory.length > 0) {
-      process.stdout.write(
-        `\n  DEFECTE: ${contradictory.length} municipis amb kind='partial' però magnitud >= 1:\n` +
-          `    ${contradictory.join(', ')}\n`,
-      );
-    }
-    // Quan es corregeixi, aquesta llista quedarà buida i el test saltarà.
-    expect(contradictory.length).toBeGreaterThan(0);
-    // Però mai no hauria d'afectar ningú fora del caire de la franja.
-    for (const name of contradictory) {
-      const m = MUNICIPALITIES.find((x) => x.name === name)!;
-      expect(m.role, `${name} no és del caire`).toBe('limit');
-    }
+    expect(contradictory, 'municipis amb kind=partial però magnitud >= 1').toEqual([]);
   });
 
+  /**
+   * ELS DESACORDATS DEL CAIRE S'EXCLOUEN DE LA COMPARACIÓ FINA, i el motiu és
+   * geomètric, no una tolerància relaxada: la fórmula de la magnitud té dues
+   * branques —raó de diàmetres si és total (≈1,03), fracció coberta si és
+   * parcial (≈1,00 al llindar)— amb un esglaó de ~0,03 entremig. Al municipi
+   * del caire on el nostre veredicte i el de l'IGN cauen a costats diferents
+   * de la moneda (vegeu el test del marge d'1″), cadascú publica la seva
+   * branca i la diferència ÉS l'esglaó, per molt bo que sigui el motor. Des
+   * que la magnitud es calcula amb el radi umbral, la branca sempre és la del
+   * nostre `kind`: coherent per dins, i al caire pot diferir de la taula.
+   */
   it('la magnitud quadra amb els dos decimals que publica l’IGN', () => {
     for (const m of MUNICIPALITIES) {
       const r = computed.get(m.ine);
       if (!r) continue;
-      expect(Math.abs(r.contacts.max.magnitude - m.magnitude)).toBeLessThanOrEqual(0.01);
+      const kindDisagrees = m.role === 'limit' && (m.c2 !== null) !== (r.kind === 'total');
+      if (kindDisagrees) continue;
+      expect(
+        Math.abs(r.contacts.max.magnitude - m.magnitude),
+        `${m.name}: motor ${r.contacts.max.magnitude.toFixed(3)}, IGN ${m.magnitude}`,
+      ).toBeLessThanOrEqual(0.01);
     }
   });
 });

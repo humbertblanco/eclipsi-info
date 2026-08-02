@@ -40,12 +40,19 @@ export const SUN_RADIUS_ARCSEC_AT_1AU = 959.63;
 export const MOON_RADIUS_RATIO_PENUMBRAL = 0.2725076;
 export const MOON_RADIUS_RATIO_UMBRAL = 0.2722810;
 
-/**
- * Valor per defecte per a tot allò que no és un contacte: dibuixar els discos,
- * calcular magnitud i obscuració. Aquí la diferència entre els dos valors és
- * de 0,2 segons d'arc, invisible.
+/*
+ * NO HI HA TERCER VALOR «MITJÀ», I VA COSTAR UN DEFECTE APRENDRE-HO. Hi havia
+ * un MOON_RADIUS_RATIO_MEAN, àlies del penombral, «per a tot allò que no és
+ * un contacte: magnitud, obscuració, discos — la diferència és invisible».
+ * Era fals al lloc més visible del producte: al caire de la franja, `kind`
+ * (que surt dels contactes umbrals) deia «parcial» mentre la magnitud
+ * (calculada amb el radi penombral, més gran) deia 1,034. La interfície
+ * ensenyava «Parcial · magnitud 1,034 · 100% d'obscuració» exactament als
+ * municipis on la gent decideix si es mou. Qui vulgui un radi de la Lluna
+ * ha de triar QUIN, i per a tot el que es compara amb el disc del Sol
+ * —magnitud, obscuració, el disc dibuixat— la tria coherent és l'umbral,
+ * perquè és el que ha decidit on són C2 i C3.
  */
-export const MOON_RADIUS_RATIO_MEAN = MOON_RADIUS_RATIO_PENUMBRAL;
 
 /**
  * Depressió del centre del Sol a la posta "oficial", en graus.

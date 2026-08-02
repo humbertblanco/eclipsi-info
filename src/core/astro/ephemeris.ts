@@ -28,7 +28,6 @@ type EquatorialCoordinates = AstronomyNs.EquatorialCoordinates;
 import {
   AU_KM,
   EARTH_EQUATORIAL_RADIUS_KM,
-  MOON_RADIUS_RATIO_MEAN,
   MOON_RADIUS_RATIO_PENUMBRAL,
   MOON_RADIUS_RATIO_UMBRAL,
   RAD,
@@ -60,11 +59,12 @@ export function sunAngularRadius(distanceAu: number): number {
  * El paràmetre `k` no és únic: els contactes umbrals (C2/C3) en volen un de
  * més petit que els penombrals (C1/C4). Vegeu la nota a `constants.ts` — no és
  * un detall, són desenes de segons de durada de totalitat.
+ *
+ * SENSE VALOR PER DEFECTE, a posta: triar el k ÉS la decisió, i el valor
+ * «mitjà» que hi havia aquí va fer que magnitud i veredicte es contradiguessin
+ * al caire de la franja (vegeu constants.ts).
  */
-export function moonAngularRadius(
-  distanceAu: number,
-  k: number = MOON_RADIUS_RATIO_MEAN,
-): number {
+export function moonAngularRadius(distanceAu: number, k: number): number {
   const distanceKm = distanceAu * AU_KM;
   return Math.asin((k * EARTH_EQUATORIAL_RADIUS_KM) / distanceKm) * RAD;
 }
@@ -109,7 +109,11 @@ export function sampleAt(
   const moonEq = Equator(Body.Moon, time, observer, true, true);
 
   const sunRadius = sunAngularRadius(sunEq.dist);
-  const moonRadius = moonAngularRadius(moonEq.dist);
+  // El radi UMBRAL, el mateix que decideix on són C2 i C3: així la magnitud,
+  // l'obscuració i el disc que es dibuixa no poden contradir mai el `kind`
+  // que surt dels contactes. Amb el penombral d'abans, al caire de la franja
+  // la fitxa deia «Parcial · magnitud 1,034».
+  const moonRadius = moonAngularRadius(moonEq.dist, MOON_RADIUS_RATIO_UMBRAL);
 
   const separation = angularSeparation(sunEq.ra, sunEq.dec, moonEq.ra, moonEq.dec);
 
