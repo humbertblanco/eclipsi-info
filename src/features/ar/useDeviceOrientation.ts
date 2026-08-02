@@ -31,6 +31,8 @@ import {
   type SmoothingTelemetry,
 } from './smoothing';
 import { PoseHistory } from './poseHistory';
+import { predictedPointingDelta, type RotationRate } from './motionPredict';
+import type { Quaternion } from './quaternion';
 import { trueAzimuth } from '../../core/geomag';
 
 export type PermissionState = 'unknown' | 'need-gesture' | 'granted' | 'denied' | 'unsupported';
@@ -98,6 +100,14 @@ export interface OrientationReading {
    * `poseHistory.ts`.
    */
   poseHistoryRef: React.RefObject<PoseHistory>;
+  /**
+   * Quant es mourà la punteria si el gir del giroscopi continua `aheadMs`
+   * mil·lisegons més, o null si no hi ha giroscopi o les dades són velles.
+   * És la predicció que treu el retard percebut del dibuix en moviment.
+   */
+  predictAheadRef: React.RefObject<
+    (nowMs: number, aheadMs: number) => { dAzDeg: number; dAltDeg: number; dRollDeg: number } | null
+  >;
   raw: { alpha: number | null; beta: number | null; gamma: number | null };
 }
 
@@ -151,6 +161,10 @@ export function useDeviceOrientation(
   const iosOffsetRef = useRef(new IosYawOffset());
   /** Postures amb marca de temps, per aparellar-hi els fotogrames de càmera. */
   const poseHistoryRef = useRef(new PoseHistory());
+  /** L'últim quaternió suavitzat, base de la predicció amb giroscopi. */
+  const lastQRef = useRef<Quaternion | null>(null);
+  /** L'última velocitat angular del giroscopi, en eixos del dispositiu. */
+  const rotationRateRef = useRef<(RotationRate & { tMs: number }) | null>(null);
 
   // I només això arriba a React, quatre vegades per segon.
   const [ui, setUi] = useState<{
@@ -253,10 +267,9 @@ export function useDeviceOrientation(
 
     const q = quaternionFromEulerZXY(alpha, e.beta, e.gamma);
     const rawPointing = cameraPointingFromQuaternion(q, screenAngle);
-    const smoothed = cameraPointingFromQuaternion(
-      smootherRef.current.push(q, dtSec),
-      screenAngle,
-    );
+    const smoothedQ = smootherRef.current.push(q, dtSec);
+    const smoothed = cameraPointingFromQuaternion(smoothedQ, screenAngle);
+    lastQRef.current = smoothedQ;
 
     const declination = declinationRef.current;
     cameraRef.current = {
@@ -282,6 +295,47 @@ export function useDeviceOrientation(
     }
   }, []);
 
+  /**
+   * El giroscopi cru, per a la predicció del dibuix. Arriba per `devicemotion`
+   * — un esdeveniment diferent, amb el seu permís propi a iOS (es demana al
+   * mateix gest). Si no n'hi ha, la predicció simplement no actua.
+   */
+  const handleMotion = useCallback((event: DeviceMotionEvent) => {
+    const rate = event.rotationRate;
+    if (!rate || rate.alpha === null || rate.beta === null || rate.gamma === null) return;
+    rotationRateRef.current = {
+      alphaDps: rate.alpha,
+      betaDps: rate.beta,
+      gammaDps: rate.gamma,
+      tMs: typeof performance !== 'undefined' ? performance.now() : Date.now(),
+    };
+  }, []);
+
+  /**
+   * Punteria empesa `aheadMs` endavant amb el gir actual. Compte amb les
+   * edats: la base és el quaternió de l'últim esdeveniment d'orientació, i
+   * s'empeny des d'ALLÀ fins a ara-més-endavant. Si el giroscopi calla un
+   * quart de segon, val més no predir que predir amb un gir mort.
+   */
+  const predictAheadRef = useRef(
+    (nowMs: number, aheadMs: number) => {
+      const q = lastQRef.current;
+      const rate = rotationRateRef.current;
+      if (q === null || rate === null) return null;
+      if (nowMs - rate.tMs > 250) return null;
+      const baseMs = lastEventMs.current;
+      if (baseMs === null) return null;
+      const dtSec = Math.min(0.08, Math.max(0, nowMs - baseMs + aheadMs) / 1000);
+      if (!(dtSec > 0)) return null;
+      return predictedPointingDelta(
+        q,
+        cameraRef.current?.screenAngle ?? 0,
+        rate,
+        dtSec,
+      );
+    },
+  );
+
   // Publicació cap a la interfície, desacoblada de la freqüència del sensor.
   useEffect(() => {
     const id = setInterval(() => {
@@ -304,7 +358,8 @@ export function useDeviceOrientation(
     // Escoltem els dos i deixem que guanyi el que porti dades absolutes.
     window.addEventListener('deviceorientationabsolute', handle as EventListener);
     window.addEventListener('deviceorientation', handle as EventListener);
-  }, [handle]);
+    window.addEventListener('devicemotion', handleMotion as EventListener);
+  }, [handle, handleMotion]);
 
   const request = useCallback(async () => {
     const ctor = DeviceOrientationEvent as unknown as PermissionCapableCtor;
@@ -320,6 +375,17 @@ export function useDeviceOrientation(
         return;
       }
     }
+    // El giroscopi té el seu permís propi a iOS. Es demana AL MATEIX GEST —
+    // el mateix toc que ha demanat l'orientació — i si el neguen, tot
+    // funciona igual, només que sense predicció.
+    const motionCtor = DeviceMotionEvent as unknown as PermissionCapableCtor;
+    if (typeof motionCtor?.requestPermission === 'function') {
+      try {
+        await motionCtor.requestPermission();
+      } catch {
+        // Sense giroscopi no passa res: la predicció calla sola.
+      }
+    }
     setPermission('granted');
     attach();
   }, [attach]);
@@ -330,8 +396,9 @@ export function useDeviceOrientation(
     return () => {
       window.removeEventListener('deviceorientationabsolute', handle as EventListener);
       window.removeEventListener('deviceorientation', handle as EventListener);
+      window.removeEventListener('devicemotion', handleMotion as EventListener);
     };
-  }, [permission, attach, handle]);
+  }, [permission, attach, handle, handleMotion]);
 
   return useMemo(
     () => ({
@@ -346,6 +413,7 @@ export function useDeviceOrientation(
       smoothing: ui.smoothing,
       smoothingRef,
       poseHistoryRef,
+      predictAheadRef,
       raw: ui.raw,
       request,
     }),

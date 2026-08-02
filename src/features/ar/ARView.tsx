@@ -209,6 +209,20 @@ const ANCHOR_MAX_MOVE_DEG = 3;
  */
 const ANCHOR_BIAS_MAX_SPEED_DEG_PER_SEC = 25;
 
+/**
+ * Quant s'empeny endavant la postura dibuixada amb el giroscopi, en ms.
+ *
+ * És la latència que hi ha entre llegir el sensor i veure el píxel: un
+ * fotograma de pantalla llarg. Quiet no s'aplica (per sota del llindar de
+ * velocitat la quietud ja és perfecta, i predir seria injectar soroll de
+ * giroscopi a una imatge parada); movent-se, és la diferència entre «va bé»
+ * i «va clavat».
+ */
+const PREDICT_AHEAD_MS = 30;
+
+/** Per sota d'aquesta velocitat no es prediu, i s'hi entra amb rampa. */
+const PREDICT_MIN_SPEED_DPS = 3;
+
 // Els límits del camp de visió viuen a `focalStore`: UN sol rang per a la
 // mesura, la persistència i el control lliscant. N'hi havia dos (25-140 aquí,
 // 40-130 al control) i un valor desat de la franja no coberta es podia
@@ -692,6 +706,7 @@ export function ARView({
   const cameraRef = orientation.cameraRef;
   const smoothingRef = orientation.smoothingRef;
   const poseHistoryRef = orientation.poseHistoryRef;
+  const predictAheadRef = orientation.predictAheadRef;
 
   useEffect(() => {
     let frame = 0;
@@ -1084,10 +1099,28 @@ export function ARView({
         anchorBias: anchorBiasInput(),
       });
 
+      /*
+       * LA PREDICCIÓ, NOMÉS AL DIBUIX. La fusió treballa en el seu temps i no
+       * es toca; el que s'empeny endavant és la postura que es PINTA, perquè
+       * el píxel arribi a l'ull quan el mòbil ja és allà. La rampa d'entrada
+       * evita l'esglaó al llindar.
+       */
+      let predAz = 0;
+      let predAlt = 0;
+      const speedNow = smoothingRef.current.angularSpeedDegPerSec;
+      if (speedNow > PREDICT_MIN_SPEED_DPS) {
+        const pred = predictAheadRef.current?.(nowMs, PREDICT_AHEAD_MS);
+        if (pred) {
+          const wPred = Math.min(1, (speedNow - PREDICT_MIN_SPEED_DPS) / 3);
+          predAz = wPred * pred.dAzDeg;
+          predAlt = wPred * pred.dAltDeg;
+        }
+      }
+
       const stable: CameraPointing = {
         ...camera,
-        azimuth: fused.azimuthDeg,
-        altitude: fused.altitudeDeg,
+        azimuth: normalizeAngle(fused.azimuthDeg + predAz),
+        altitude: Math.max(-90, Math.min(90, fused.altitudeDeg + predAlt)),
       };
       drawnCameraRef.current = stable;
 

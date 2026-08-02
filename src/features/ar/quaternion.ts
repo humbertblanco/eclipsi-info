@@ -114,6 +114,23 @@ export function quaternionNegate(q: Quaternion): Quaternion {
 }
 
 /**
+ * Producte de Hamilton: la rotació `b` composta DESPRÉS de `a` en el marc
+ * local d'`a` (multiplicació per la dreta = rotació intrínseca). És el que
+ * cal per empènyer una postura amb una velocitat angular expressada en els
+ * eixos del DISPOSITIU, que és com les dona el giroscopi.
+ */
+export function quaternionMultiply(a: Quaternion, b: Quaternion): Quaternion {
+  const [ax, ay, az, aw] = a;
+  const [bx, by, bz, bw] = b;
+  return [
+    aw * bx + ax * bw + ay * bz - az * by,
+    aw * by - ax * bz + ay * bw + az * bx,
+    aw * bz + ax * by - ay * bx + az * bw,
+    aw * bw - ax * bx - ay * by - az * bz,
+  ];
+}
+
+/**
  * Quaternió que porta de `a` a `b`, pel camí curt: delta = b · conjugat(a).
  *
  * El signe es tria perquè la part escalar surti positiva. q i −q són la
