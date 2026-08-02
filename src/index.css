@@ -328,6 +328,18 @@ body {
   pointer-events: none;
 }
 
+/*
+ * La sortida del mode immersiu: viu DINS del marc de la càmera perquè en
+ * aquell mode no hi ha cap altra barra. Les vores respecten el notch; la
+ * pantalla amfitriona el pot abaixar si hi posa res a sobre.
+ */
+.ar__close {
+  position: absolute;
+  top: max(var(--sp-4), env(safe-area-inset-top));
+  right: max(var(--sp-4), env(safe-area-inset-right));
+  z-index: 3;
+}
+
 /* --- Diagnòstic ---------------------------------------------------------- */
 
 .readout {

@@ -54,7 +54,7 @@ import {
 } from './sunAnchor';
 import { nakedEyeAllowedAt, type FilterGateInput } from '../../core/timer';
 import { useNow } from '../../state/useNow';
-import { Icon, ICON_LG } from '../../ui';
+import { Icon, IconButton, ICON_LG } from '../../ui';
 import { SafetyBanner } from '../guide/SafetyBanner';
 import { renderOverlay } from './renderOverlay';
 import { lightState, renderMixed, type SkyBody } from './renderMixed';
@@ -130,9 +130,51 @@ interface Props {
    * lloc ja se sap (`SkyScreen` no la munta sense).
    */
   onRequestLocation?: () => void;
+  /**
+   * Quanta interfície pròpia es renderitza. Amb `none`, només el marc de la
+   * càmera (vídeo + llenç + avís de seguretat + botó de tancar) i els avisos
+   * d'error: la pantalla amfitriona posa la resta. És el que enterra el truc
+   * de retallar amb `overflow` que hi havia a SkyScreen.
+   */
+  chrome?: 'full' | 'none';
+  /**
+   * L'instant a dibuixar, en mil·lisegons d'època. Si es passa, el rellotge
+   * el governa QUI CRIDA — un sol rellotge per pantalla — i el control
+   * lliscant intern passa a informar `onTimeChange` en comptes de moure's
+   * pel seu compte. Dins de la finestra C1-C4 s'usa la mostra precalculada;
+   * fora, es calcula la mostra de l'instant — el mode «directe» de debò.
+   */
+  timeMs?: number;
+  onTimeChange?: (ms: number) => void;
+  /** Mode de dibuix governat des de fora. Sense ell, els botons interns. */
+  mode?: Mode;
+  /** Estat que la pantalla amfitriona necessita per decidir el seu embolcall. */
+  onState?: (state: {
+    cameraOn: boolean;
+    calibrated: boolean;
+    headingJitterDeg: number;
+  }) => void;
 }
 
 type Mode = 'mixed' | 'diagram';
+
+/**
+ * Índex de la mostra precalculada per a un instant, dins de la finestra.
+ *
+ * Pur i exportat perquè el banc el clavi: els extrems han de caure a la
+ * primera i l'última mostra exactes, i una finestra degenerada no pot dividir
+ * per zero.
+ */
+export function sampleIndexForTime(
+  timeMs: number,
+  startMs: number,
+  endMs: number,
+  count: number,
+): number {
+  if (count <= 1 || endMs <= startMs) return 0;
+  const p = Math.max(0, Math.min(1, (timeMs - startMs) / (endMs - startMs)));
+  return Math.round(p * (count - 1));
+}
 
 const PATH_SAMPLES = 160;
 
@@ -338,6 +380,11 @@ export function ARView({
   horizon,
   centralPhaseVisible,
   onRequestLocation,
+  chrome = 'full',
+  timeMs,
+  onTimeChange,
+  mode: modeProp,
+  onState,
 }: Props) {
   // La declinació magnètica converteix el nord de la brúixola en el geogràfic.
   // Sense ella l'error és de −3,51° a Tenerife i +2,07° a Barcelona: sistemàtic,
@@ -375,7 +422,9 @@ export function ARView({
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [calibration, setCalibration] = useState<Calibration>(DEFAULT_CALIBRATION);
-  const [mode, setMode] = useState<Mode>('mixed');
+  const [modeState, setModeState] = useState<Mode>('mixed');
+  // Qui mana el mode: la prop si hi és (pantalla amfitriona), l'estat si no.
+  const mode = modeProp ?? modeState;
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [progress, setProgress] = useState(0.5);
   const [fovReadout, setFovReadout] = useState<{ horizontal: number; vertical: number } | null>(
@@ -383,6 +432,28 @@ export function ARView({
   );
   const [cameraInfo, setCameraInfo] = useState<CameraOpenResult | null>(null);
   const [diagnostics, setDiagnostics] = useState<TrackingDiagnostics>(INITIAL_DIAGNOSTICS);
+
+  /*
+   * L'ESTAT CAP A LA PANTALLA AMFITRIONA (mode immersiu). El callback viu en
+   * una ref per no lligar l'efecte a la seva identitat; es dispara només quan
+   * canvia alguna cosa (el jitter, quantitzat a dècimes, per no repintar
+   * seixanta cops per segon). I el cleanup del desmuntatge dispara
+   * cameraOn:false: és el que desencalla l'embolcall immersiu si aquesta
+   * vista peta i l'ErrorBoundary se l'empassa — React executa els cleanups
+   * també en aquells desmuntatges.
+   */
+  const onStateRef = useRef(onState);
+  onStateRef.current = onState;
+  const calibrated = diagnostics.measuredFovDeg !== null;
+  const headingJitterQ = Math.round(orientation.jitterFiltered * 10) / 10;
+  useEffect(() => {
+    onStateRef.current?.({ cameraOn, calibrated, headingJitterDeg: headingJitterQ });
+  }, [cameraOn, calibrated, headingJitterQ]);
+  useEffect(
+    () => () =>
+      onStateRef.current?.({ cameraOn: false, calibrated: false, headingJitterDeg: 0 }),
+    [],
+  );
 
   // ---- Ancoratge visual. Tot en refs: s'actualitza a cada fotograma i no ha
   // de provocar cap render de React.
@@ -471,7 +542,37 @@ export function ARView({
     return out;
   }, [circumstances, location]);
 
+  // La finestra C1-C4 en mil·lisegons, per al rellotge governat i el regle.
+  const trackWindow = useMemo(() => {
+    const { c1, c4, max } = circumstances.contacts;
+    return {
+      startMs: (c1 ?? max).time.getTime(),
+      endMs: (c4 ?? max).time.getTime(),
+    };
+  }, [circumstances]);
+
+  /*
+   * UN SOL RELLOTGE. Amb `timeMs` la pantalla amfitriona governa l'instant:
+   * dins de la finestra de l'eclipsi s'usa la mostra precalculada; fora, es
+   * calcula la mostra d'AQUELL instant — així el mode «directe» dibuixa el
+   * disc on el cel el té ara, que a més fa l'àncora de Sol verificable a ull.
+   */
+  const controlledSample = useMemo(() => {
+    if (timeMs === undefined) return null;
+    if (
+      samples.length > 1 &&
+      timeMs >= trackWindow.startMs &&
+      timeMs <= trackWindow.endMs
+    ) {
+      return samples[
+        sampleIndexForTime(timeMs, trackWindow.startMs, trackWindow.endMs, samples.length)
+      ];
+    }
+    return sampleAt(new Date(timeMs), location);
+  }, [timeMs, samples, trackWindow, location]);
+
   const currentSample =
+    controlledSample ??
     samples[Math.max(0, Math.min(samples.length - 1, Math.round(progress * (samples.length - 1))))];
 
   /*
@@ -1154,7 +1255,7 @@ export function ARView({
 
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
-  }, [cameraRef, smoothingRef]);
+  }, [cameraRef, smoothingRef, poseHistoryRef, predictAheadRef]);
 
   // ---- Diagnòstic i calibratge de focal, desacoblats del bucle de dibuix. --
   useEffect(() => {
@@ -1292,17 +1393,17 @@ export function ARView({
         <p className="warn">{s('camera.openError', locale, { error: cameraError })}</p>
       )}
 
-      {cameraOn && (
+      {cameraOn && chrome === 'full' && modeProp === undefined && (
         <div className="ar__modes">
           <button
             className={mode === 'mixed' ? 'tab tab--on' : 'tab'}
-            onClick={() => setMode('mixed')}
+            onClick={() => setModeState('mixed')}
           >
             {s('camera.modeMixed', locale)}
           </button>
           <button
             className={mode === 'diagram' ? 'tab tab--on' : 'tab'}
-            onClick={() => setMode('diagram')}
+            onClick={() => setModeState('diagram')}
           >
             {s('camera.modeDiagram', locale)}
           </button>
@@ -1331,18 +1432,55 @@ export function ARView({
         {cameraOn && (
           <SafetyBanner eclipseKind={circumstances.kind} isInTotality={nakedEyeNow} />
         )}
+
+        {/*
+          LA SORTIDA VIU AMB LA CÀMERA. En mode immersiu la pantalla
+          amfitriona amaga capçalera i pestanyes: aquest botó és el camí de
+          tornada, i tancar la càmera és el que restaura totes les barres
+          (vegeu onState).
+        */}
+        {cameraOn && chrome === 'none' && (
+          <IconButton
+            icon="x"
+            className="ui-iconbtn--over ar__close"
+            label={s('camera.close', locale)}
+            onClick={stopCamera}
+          />
+        )}
       </div>
 
-      {cameraOn && (
+      {chrome === 'full' && (
         <>
-          <input
-            className="scrub"
+          {cameraOn && (
+            <>
+              <input
+                className="scrub"
             type="range"
             min={0}
             max={1}
             step={1 / PATH_SAMPLES}
-            value={progress}
-            onChange={(e) => setProgress(Number(e.target.value))}
+            value={
+              timeMs !== undefined && trackWindow.endMs > trackWindow.startMs
+                ? Math.max(
+                    0,
+                    Math.min(
+                      1,
+                      (timeMs - trackWindow.startMs) /
+                        (trackWindow.endMs - trackWindow.startMs),
+                    ),
+                  )
+                : progress
+            }
+            onChange={(e) => {
+              const p = Number(e.target.value);
+              if (onTimeChange) {
+                onTimeChange(
+                  trackWindow.startMs + p * (trackWindow.endMs - trackWindow.startMs),
+                );
+              } else {
+                setProgress(p);
+              }
+            }}
             aria-label={s('camera.scrub', locale)}
           />
           {/*
@@ -1737,6 +1875,8 @@ export function ARView({
             <strong>{s('camera.diag.noiseTerm', locale)}</strong>
             {noiseAfter}
           </p>
+        </>
+      )}
         </>
       )}
     </div>
