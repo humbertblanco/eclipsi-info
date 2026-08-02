@@ -55,8 +55,13 @@ export const MEAN_DISC_INTENSITY = 1 - LIMB_DARKENING_U / 3;
  * (radi `moonRadius`, centre a distància `separation`).
  *
  * Trigonometria de dues circumferències, sense cap aproximació.
+ *
+ * S'exporta perquè l'àncora de Sol de la càmera (`features/ar/sunAnchor`) la
+ * fa servir per calcular el CENTROIDE del creixent durant la parcialitat: el
+ * mateix arc cobert que aquí decideix quanta llum falta, allà decideix cap on
+ * es desplaça el centre de llum que la càmera veu.
  */
-function ringCoveredFraction(
+export function ringCoveredFraction(
   r: number,
   separation: number,
   moonRadius: number,

@@ -54,6 +54,7 @@ import type { Calibration, CameraPointing } from './orientation';
 import { projectToScreen, unprojectFromScreen, normalizeAngle } from './orientation';
 import type { Viewport } from './cameraGeometry';
 import type { TrackerGeometry } from './visualTracker';
+import { gridToScreen } from './visualTracker';
 
 /** Un tall cel/terra trobat en una columna de la imatge. */
 export interface SkylineHit {
@@ -126,8 +127,6 @@ export function detectSkyline(
   const minContrast = range * MIN_CONTRAST_FRACTION;
 
   const hits: SkylineHit[] = [];
-  const halfGridX = w / 2;
-  const halfGridY = h / 2;
 
   for (let gx = 0; gx < w; gx += COLUMN_STEP) {
     let bestRow = -1;
@@ -173,9 +172,10 @@ export function detectSkyline(
       }
     }
 
+    const screen = gridToScreen(gx, refined, geometry, viewport);
     hits.push({
-      x: viewport.width / 2 + (gx + 0.5 - halfGridX) * geometry.scaleX,
-      y: viewport.height / 2 + (refined + 0.5 - halfGridY) * geometry.scaleY,
+      x: screen.x,
+      y: screen.y,
       // Normalitzat, perquè el pes de l'ajust i la confiança no depenguin de
       // l'escala en què hagi arribat el fotograma.
       contrast: bestContrast / range,

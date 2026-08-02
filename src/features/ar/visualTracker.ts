@@ -282,6 +282,26 @@ function clampInt(value: number, min: number, max: number): number {
 }
 
 /**
+ * D'un punt de la GRAELLA reduïda a píxels de PANTALLA.
+ *
+ * És la mateixa aritmètica que feien inline l'skyline i ara l'àncora de Sol:
+ * el centre de la graella coincideix amb el centre del marc, i cada eix escala
+ * pel seu factor. `gx`/`gy` poden ser fraccionaris (centroides, subpíxel); el
+ * +0,5 és el centre del píxel.
+ */
+export function gridToScreen(
+  gx: number,
+  gy: number,
+  geometry: TrackerGeometry,
+  viewport: { width: number; height: number },
+): { x: number; y: number } {
+  return {
+    x: viewport.width / 2 + (gx + 0.5 - geometry.gridWidth / 2) * geometry.scaleX,
+    y: viewport.height / 2 + (gy + 0.5 - geometry.gridHeight / 2) * geometry.scaleY,
+  };
+}
+
+/**
  * Flux d'imatge que produeix una rotació petita de la càmera.
  *
  * Model estàndard de flux rotacional per a una càmera estenopeica, amb el punt
