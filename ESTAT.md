@@ -10,7 +10,14 @@ no s'ha de tornar a trencar**. Actualitzat l'1 d'agost de 2026.
 **EL DOMINI PRINCIPAL ÉS eclipsi.info** (vhost propi al mateix servidor,
 subscripció `eclipsi.info` del client cosesdelhumbert, creat el 2-8-2026;
 usuari de sistema `eclipsiinfo`). El build per defecte ja surt amb base `/` i
-canònica `https://eclipsi.info/`:
+canònica `https://eclipsi.info/`.
+
+**DNS PENDENT (2-8-2026):** els registres A de `@` i `www` cap a
+37.187.151.83 els ha de posar l'Humbert al panell del registrador. Fins
+llavors el vhost només respon per IP amb capçalera Host. Quan el DNS resolgui,
+emetre el certificat Let's Encrypt des de Plesk (`plesk bin extension --exec
+letsencrypt cli.php ...` o el botó SSL/TLS del panell) — sense certificat, la
+càmera i el GPS no funcionen perquè el navegador exigeix HTTPS:
 
 ```bash
 npm run build                     # SI AIXÒ FALLA, PARA. Vegeu l'avís de sota.
@@ -103,61 +110,32 @@ d'aquests tests es posa vermell, **no el toquis: has trencat alguna cosa**.
 
 ## 4. Què queda obert
 
-Ordenat per gravetat. Tot això surt de sis revisions independents del codi i
-**cada punt es va verificar corrent el codi**, no llegint-lo.
-
-### Greu
-
-- **Els dos motors d'ombra discrepen 2,9 km.** `core/eclipses/besselian.ts`
-  fa servir un ΔT (71,4-71,9 s) que el mateix projecte declara incorrecte a
-  `core/astro/deltaT.ts` (69,19-69,32 s segons l'IERS). La franja dibuixada al
-  mapa és una translació de la que calcula el motor de punts: planta't al límit
-  sud del mapa i el motor et dona 22 s de totalitat; al límit nord, cap. 0,41 km
-  són el ΔT i ~2,5 km el residu entre `astronomy-engine` i DE441.
-  `core/astro/uncertainty.ts:161` atribueix aquest residu al desplaçament per
-  cota, i és fals: amb cota zero la discrepància hi és igual.
-- **La `k` mitjana s'escola a tot el que no és un contacte.** `ephemeris.ts:112`
-  construeix el radi lunar amb `MOON_RADIUS_RATIO_MEAN` mentre `kind` i les
-  durades surten de la umbral. Els 0,77″ de diferència són 3,66 km: hi ha una
-  franja d'aquest gruix a cada caire on l'app diu «parcial, 0 s» i «total,
-  100,0 %» alhora.
-- **El paquet fa 1,52 MB en un sol tros**, amb MapLibre (856 kB) i la vista de
-  RA carregats a la primera pintada encara que visquin darrere de pestanyes.
-  El dia de l'eclipsi, desenes de milers de persones en una cel·la saturada.
-  `React.lazy` a les pantalles de mapa, cel i guia en treu ~900 kB.
+L'auditoria de l'agost de 2026 (sis revisions independents, cada punt
+verificat corrent el codi) va llistar onze coses. El 2-8-2026 es van tancar
+totes les de gravetat alta: la `k` mitjana (ara magnitud, obscuració i disc
+surten del radi umbral — el daurat de `circumstances.test.ts` vigila que no
+torni), el paquet d'1,52 MB (React.lazy: 384 kB de primera pintada), la
+càmera que no sobrevivia la pèrdua de pista, el `-0` de l'inventari offline
+(amb migració en llegir), les coordenades amb punt, els vuit ambres de la
+guia (vocabulari fixat al tipus `Tone`), el rellotge mai qüestionat
+(`features/clock` contra el servidor, amb la incertesa dita) i el cercador
+de llocs i l'enquadrament sense pantalla (les 5 vistes del mapa). La
+discrepància ΔT dels dos motors d'ombra NO es toca: és decisió de producte
+(vegeu §5). El que segueix és el que QUEDA.
 
 ### Mitjà
 
-- **`verdict.summary` és català per construcció.** `buildSummary` a
-  `core/visibility/verdict.ts` escriu la frase en català i prou, i la pinten
-  tres pantalles: qui té l'app en castellà rep una frase catalana per pantalla.
-  Arreglar-ho vol un paràmetre d'idioma a través de `computeVisibility`.
-- **`formatDegrees` encara escriu el punt decimal** (`screens/format.ts`),
-  mentre la resta ja escriu la coma. A la pantalla del compte enrere es veuen
-  totes dues alhora.
-- **La pantalla de la guia té vuit elements ambre**, no un. Arreglar-ho vol
-  decidir el vocabulari de tons a `GuideView.tsx` i `content/guide.ts`, no
-  només tocar la fulla d'estils.
-- **Encara hi ha vores esquerres de color** a `features/weather/weather.css` i
-  `features/spots/spots.css`, els dos components que no es munten enlloc.
-- **El rellotge del dispositiu no es qüestiona mai.** `driftMs()` existeix i no
-  el crida ningú. Amb el rellotge trenta segons endarrerit, els avisos de
-  «posa't el filtre» sonen vint-i-cinc segons DESPRÉS de C3, amb el Sol ja
-  tornat i l'ull adaptat a la foscor.
 - **La guia i el guió de la totalitat es contradiuen en diverses xifres**: el
   rang d'altura del Sol (tres valors diferents per al mateix fet), «al
   capvespre» per a un eclipsi que és a les 9:45, i les xifres de lux del cas
   espanyol calculades amb fracció lluminosa però etiquetades com a obscuració.
-- **`src/content/totality-script.ts`** (1.657 línies, ben fet i ben provat) **no
-  el crida ningú.** El guió segon a segon de la totalitat no s'ha connectat mai.
-- **El cercador de llocs** (`core/spots`, tot provat, amb el seu worker) tampoc
-  és accessible des de la interfície.
-- **`prepare.ts` / `storage.ts` / `store.ts` d'`offline` no tenen cap test**, i
-  `store.ts` fa servir `${lat.toFixed(3)},${lon.toFixed(3)}` com a clau primària
-  d'IndexedDB — el bug del `-0` que `core/places/cache.ts` ja va haver
-  d'arreglar.
+  És feina de contingut, no de codi: decidir la xifra bona i escriure-la als
+  dos llocs.
 - **Cap component de React té cap test.** `vitest.config.ts` només inclou
-  `*.test.ts` amb entorn `node`, i no hi ha ni un `*.test.tsx`.
+  `*.test.ts` amb entorn `node`, i no hi ha ni un `*.test.tsx`. La política
+  fins ara: les parts pures es testegen (i en tenen molts), el render queda al
+  protocol manual. Si mai es munta jsdom, començar pels components amb lògica
+  de decisió (LocationSheet, CloudPanel), no pels de pintar.
 
 ### Baix
 
@@ -190,6 +168,15 @@ Perquè no es desfacin per accident.
   d'introducció pròpia; la càmera no s'obre mai sola.
 - **La càmera no es calibra tocant el Sol.** Ho feia i es va treure: demanava
   apuntar el dit a un Sol que encara no hi és, o mirar-lo per encertar-lo.
+- **La ΔT dels dos motors d'ombra NO s'unifica, a posta.** La franja del mapa
+  (`besselian.ts`, ΔT 71,4-71,9 s) i el motor de punts (`deltaT.ts`, 69,19-69,32 s
+  IERS) discrepen 2,9 km — però la ΔT només n'explica 0,41; la resta és el residu
+  entre `astronomy-engine` i DE441, que no és a les nostres mans. Unificar-la
+  faria que la franja dibuixada DISCREPÉS de les taules publicades de la NASA i
+  de l'IGN, que és amb qui la compara tothom, per guanyar 400 m d'una precisió
+  que el motor no té. El test daurat ho diu literalment: «que ningú no hi perdi
+  temps». `edgeUncertain` ja fa que la interfície digui «al caire, ves-hi amb
+  marge» exactament on aquests quilòmetres importen.
 - **`src/core` no toca el DOM.** L'única excepció que queda és el
   `document.createElement('canvas')` de reserva a `horizon/elevation.ts`, que
   dins d'un Worker peta i es reporta com un problema de connexió.
@@ -289,10 +276,15 @@ brúixola balla, pols de confirmació quan el Sol queda fixat i insígnia de qui
 aguanta l'overlay. Els dos avisos de seguretat ocular, intactes i no
 descartables.
 
-**El que encara falta a la càmera**: no gestiona que el sistema li prengui la
-càmera (una trucada, canviar d'app: es queda una fotografia congelada amb la
-superposició lliscant-hi per sobre — el bucle sí que s'atura amb la pàgina
-amagada); el bucle de dibuix corre encara que la càmera no estigui oberta; es
+LA PISTA JA ES VIGILA (2-8-2026, `watchTrackLoss` a `camera.ts`): si el
+sistema pren la càmera ('ended' — trucada, càmera nativa) tot s'apaga pel
+camí únic i la invitació torna amb el motiu escrit, represa d'un toc; si la
+silencia ('mute'/'unmute' — segon pla) surt un rètol de vidre i el
+rastrejador perd la referència als dos costats del silenci, perquè un
+fotograma congelat li semblaria quietud perfecta amb confiança plena.
+
+**El que encara falta a la càmera**: el bucle de dibuix corre encara que la
+càmera no estigui oberta; es
 dibuixen 60 fotogrames per segon quan la càmera només en dona 30 (el cost del
 cos surt ara al panell de diagnòstic, `ms de dibuix`); i l'offset d'iOS
 congelat apuntant amunt deixa la deriva del giroscopi sense correcció si no hi
