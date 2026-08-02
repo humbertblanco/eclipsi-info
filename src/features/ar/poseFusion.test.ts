@@ -61,6 +61,8 @@ describe('qui porta la postura', () => {
         sensorAltitudeDeg: 10,
         newFrame: i % 2 === 0,
         ...NO_VISUAL,
+        // El test ha de declarar la velocitat que simula: 0,1°/fotograma a 60 Hz són 6°/s.
+        sensorSpeedDegPerSec: 6,
       });
     }
     const out = fusion.update({
@@ -150,6 +152,8 @@ describe('qui porta la postura', () => {
         sensorAltitudeDeg: 0,
         newFrame: false,
         ...NO_VISUAL,
+        // El test ha de declarar la velocitat que simula: 0,1°/fotograma a 60 Hz són 6°/s.
+        sensorSpeedDegPerSec: 6,
       });
     }
     expect(out.azimuthDeg).toBeCloseTo(206, 1);
@@ -694,5 +698,113 @@ describe('la física asimètrica del biaix', () => {
     expect(fusion.telemetry.biasAzDeg).toBeCloseTo(learned, 1);
     expect(Math.abs(out.azimuthDeg - (AZ - 10))).toBeLessThan(1);
     expect(out.altitudeDeg).toBeLessThan(ALT_VERITAT - 0.4);
+  });
+});
+
+/*
+ * LA CONGELACIÓ SENSE REFERÈNCIES.
+ *
+ * L'informe de camp deia: «la superposició tremola una mica quan estic quiet».
+ * La causa era al ras: amb el cel buit — ni mesura visual ni terreny — cada
+ * fotograma integrava el delta del sensor, i el soroll de la brúixola filtrada
+ * passava 1:1 a la postura. Ara, quan res absolut no vigila i el sensor no
+ * declara moviment, la postura no avança: es rebasa la referència i el que
+ * quedi ho cobra l'estirada, al pas que el règim de quietud permet.
+ */
+describe('la congelació sense referències', () => {
+  const dt = 1 / 60;
+
+  it('cel ras i mòbil quiet: el soroll de la brúixola no passeja la postura', () => {
+    const fusion = new PoseFusion();
+    const rnd = (() => {
+      let s = 54321;
+      return () => {
+        s = (s * 1103515245 + 12345) % 2147483648;
+        return s / 2147483648;
+      };
+    })();
+
+    fusion.update({ sensorAzimuthDeg: 250, sensorAltitudeDeg: 20, newFrame: true, ...NO_VISUAL });
+    let minAz = Infinity;
+    let maxAz = -Infinity;
+    let minAlt = Infinity;
+    let maxAlt = -Infinity;
+    for (let i = 0; i < 10 * 60; i++) {
+      const noise = rnd() - 0.5; // ±0,5°: el tremolor d'una brúixola filtrada
+      const out = fusion.update({
+        sensorAzimuthDeg: 250 + noise,
+        sensorAltitudeDeg: 20 + noise * 0.3,
+        imageRollDeg: 0,
+        newFrame: i % 2 === 0,
+        visual: null,
+        sensorSpeedDegPerSec: 0,
+        dtSec: dt,
+      });
+      if (i >= 60) {
+        minAz = Math.min(minAz, out.azimuthDeg);
+        maxAz = Math.max(maxAz, out.azimuthDeg);
+        minAlt = Math.min(minAlt, out.altitudeDeg);
+        maxAlt = Math.max(maxAlt, out.altitudeDeg);
+      }
+    }
+    // Pic a pic després d'un segon d'escalfament: és el que l'ull veu com a
+    // tremolor. Abans de la congelació, això era l'amplada sencera del soroll.
+    expect(maxAz - minAz).toBeLessThanOrEqual(0.2);
+    expect(maxAlt - minAlt).toBeLessThanOrEqual(0.2);
+  });
+
+  it('un gest de debò travessa la porta i la postura segueix el sensor', () => {
+    const fusion = new PoseFusion();
+    fusion.update({ sensorAzimuthDeg: 250, sensorAltitudeDeg: 20, newFrame: true, ...NO_VISUAL });
+    let az = 250;
+    let out = { azimuthDeg: 250, altitudeDeg: 20 };
+    for (let i = 0; i < 2 * 60; i++) {
+      az += 20 / 60; // escombrada declarada de 20°/s: molt per sobre de la porta
+      out = fusion.update({
+        sensorAzimuthDeg: az,
+        sensorAltitudeDeg: 20,
+        imageRollDeg: 0,
+        newFrame: i % 2 === 0,
+        visual: null,
+        sensorSpeedDegPerSec: 20,
+        dtSec: dt,
+      });
+    }
+    expect(Math.abs(out.azimuthDeg - az)).toBeLessThan(1);
+  });
+
+  it('la deriva lenta per sota de la porta acaba arribant per l’estirada', () => {
+    // Panoràmica deliberada a 3°/s — per sota de la porta de 5 — de 3° en
+    // total, i després quiet. La congelació no integra el gest, però la deriva
+    // NO es perd: l'estirada la veu i la va cobrant. La banda morta fa lenta
+    // l'última dècima; per això s'exigeix 0,6° i no 0,1.
+    const fusion = new PoseFusion();
+    fusion.update({ sensorAzimuthDeg: 250, sensorAltitudeDeg: 20, newFrame: true, ...NO_VISUAL });
+    let az = 250;
+    for (let i = 0; i < 60; i++) {
+      az += 3 / 60;
+      fusion.update({
+        sensorAzimuthDeg: az,
+        sensorAltitudeDeg: 20,
+        imageRollDeg: 0,
+        newFrame: i % 2 === 0,
+        visual: null,
+        sensorSpeedDegPerSec: 3,
+        dtSec: dt,
+      });
+    }
+    let out = { azimuthDeg: 0, altitudeDeg: 0 };
+    for (let i = 0; i < 3 * 60; i++) {
+      out = fusion.update({
+        sensorAzimuthDeg: az,
+        sensorAltitudeDeg: 20,
+        imageRollDeg: 0,
+        newFrame: i % 2 === 0,
+        visual: null,
+        sensorSpeedDegPerSec: 0,
+        dtSec: dt,
+      });
+    }
+    expect(Math.abs(out.azimuthDeg - az)).toBeLessThan(0.6);
   });
 });

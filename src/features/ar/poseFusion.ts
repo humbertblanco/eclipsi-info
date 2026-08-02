@@ -62,6 +62,29 @@ const PULL_SPEED_LOW = 5;
 const PULL_SPEED_HIGH = 40;
 
 /**
+ * Velocitat per sota de la qual, sense cap referència absoluta a la vista, el
+ * sensor NO fa avançar la postura. En graus per segon; de la mateixa família
+ * que `PULL_SPEED_LOW`: per sota d'això, el gest no és gest.
+ *
+ * L'informe de camp deia «tremola una mica quan estic quiet», i la causa era
+ * aquí: amb el cel ras — cap mesura visual, cap terreny aparellat — el delta
+ * del sensor s'integrava a cada fotograma, i el soroll de la brúixola filtrada
+ * passava 1:1 a la postura. Quan res absolut no vigila, el soroll no ha de
+ * poder passejar-la: si el sensor no declara moviment, no s'avança res i es
+ * REBASA la referència, amb el mateix patró que fa servir el bloc de
+ * l'ancoratge. La deriva real lenta no es perd — segueix fluint pel canal de
+ * l'estirada, que ja va limitada pel règim de quietud — i un gest de debò
+ * travessa els 5°/s i la integració es reprèn a l'acte, sense cap salt
+ * pendent gràcies al rebasament.
+ *
+ * El preu, conegut: una panoràmica deliberada més lenta de 5°/s amb el cel
+ * ras va ~1° endarrerida via l'estirada fins que alguna cosa ancori. És
+ * invisible: sense cap referència al quadre, no hi ha res contra què veure el
+ * retard.
+ */
+const FREEZE_MAX_SPEED_DEG_PER_SEC = 5;
+
+/**
  * Separació màxima tolerada entre la postura fusionada i el sensor, en graus.
  *
  * L'ancoratge visual pot fugir: prou textura repetitiva, un camió que ocupa
@@ -102,6 +125,28 @@ const INNOVATION_MAX_DEG = 1.5;
  * de sostre del que es considera imperceptible.
  */
 const SLEW_STILL_DEG_PER_SEC = 0.3;
+
+/**
+ * Residu per sota del qual el pas de quietud es va tancant, en graus.
+ *
+ * A tres dècimes per segon constants, un residu de cinc centèsimes es
+ * corregia, es passava de llarg i es tornava a corregir: una cacera perpètua
+ * al voltant del zero que a la pantalla es veia com una respiració fina. Per
+ * sota d'aquest llindar el límit baixa en RAMPA CONTÍNUA — per distància a
+ * l'objectiu, no amb un interruptor, que faria un esglaó de velocitat just al
+ * llindar — fins a `SLEW_MICRO_DEG_PER_SEC`.
+ */
+const CORR_DEADBAND_DEG = 0.1;
+
+/**
+ * Velocitat de correcció al fons de la banda morta, en graus per segon.
+ *
+ * Cinc centèsimes per segon: els residus de menys d'una dècima es tanquen a
+ * una velocitat que cap ull no distingeix d'estar clavada, i tot i així es
+ * tanquen — la dècima sencera triga com a molt dos segons. És el que fa
+ * imperceptible la micro-cacera sense renunciar mai a arribar al zero.
+ */
+const SLEW_MICRO_DEG_PER_SEC = 0.05;
 
 /**
  * Desalineació a partir de la qual el límit de correcció s'obre, en graus.
@@ -521,6 +566,12 @@ export class PoseFusion {
     const moving = clamp01((speed - PULL_SPEED_LOW) / (PULL_SPEED_HIGH - PULL_SPEED_LOW));
     this.speedEnv = Math.max(speed, this.speedEnv * Math.exp(-dt / SETTLE_TAU_SEC));
 
+    // L'ancoratge es llegeix abans del pas: la congelació d'aquí sota ha de
+    // saber si hi ha cap referència absoluta mirant. El bloc que l'APLICA ve
+    // després, com sempre.
+    const anchor = input.anchor ?? null;
+    const anchorActive = anchor !== null && anchor.confidence > 0;
+
     if (usable && visual) {
       const step = rotationToPoseDelta(visual, input.imageRollDeg, this.altitude);
       const cosA = cosAltFactor(this.altitude);
@@ -578,12 +629,31 @@ export class PoseFusion {
       this.sumVV = this.sumVV * decay + vh * vh + vv * vv;
       this.sumSS = this.sumSS * decay + sh * sh + sv * sv;
     } else if (!this.visualActive || input.newFrame) {
-      // Sense ancoratge visual s'integra el sensor a cada fotograma; amb
-      // ancoratge actiu però un fotograma de vídeo sense mesura, s'hi recorre
-      // només per aquell interval.
-      dAz = sensorDAz;
-      dAlt = sensorDAlt;
-      stepped = true;
+      if (!anchorActive && speed < FREEZE_MAX_SPEED_DEG_PER_SEC) {
+        /*
+         * LA CONGELACIÓ SENSE REFERÈNCIES. Cel ras i sensor quiet: si
+         * s'integrés el delta, el soroll de la brúixola filtrada passaria 1:1
+         * a la postura — el «tremola una mica quan estic quiet» de l'informe
+         * de camp. Quan res absolut no vigila, no s'avança res; es REBASA la
+         * referència perquè el soroll d'aquest fotograma no quedi pendent com
+         * si fos gir. La deriva real lenta no es perd: l'estirada d'aquí sota
+         * la segueix veient — `driftAz` es mesura contra el sensor, no contra
+         * el pas — i la va cobrant al ritme que el règim de quietud permet.
+         * Un gest de debò travessa els 5°/s i la integració es reprèn sense
+         * cap salt, precisament gràcies al rebasament.
+         */
+        this.sensorAtLastStep = {
+          az: input.sensorAzimuthDeg,
+          alt: input.sensorAltitudeDeg,
+        };
+      } else {
+        // Sense ancoratge visual s'integra el sensor a cada fotograma; amb
+        // ancoratge actiu però un fotograma de vídeo sense mesura, s'hi
+        // recorre només per aquell interval.
+        dAz = sensorDAz;
+        dAlt = sensorDAlt;
+        stepped = true;
+      }
     }
 
     if (stepped) {
@@ -633,8 +703,6 @@ export class PoseFusion {
      * brúixola deu graus fora es corregeixi sol abans que l'usuari se n'adoni,
      * i prou lent perquè un aparellament dolent no faci saltar res.
      */
-    const anchor = input.anchor ?? null;
-    const anchorActive = anchor !== null && anchor.confidence > 0;
     let gapDeg = driftDeg;
     if (anchor !== null && anchorActive) {
       const anchorPull = Math.min(1, (dt / ANCHOR_TAU_SEC) * anchor.confidence);
@@ -666,8 +734,17 @@ export class PoseFusion {
      * separat, l'estirada i l'ancoratge tornarien a tenir la batalla de forces
      * que el biaix va desarmar.
      */
+    // El pas base es tanca en rampa quan el residu entra a la banda morta —
+    // per DISTÀNCIA A L'OBJECTIU (`gapDeg`: l'ancoratge quan n'hi ha, la
+    // deriva si no), no per la mida de la correcció del fotograma. Vegeu
+    // `CORR_DEADBAND_DEG`: és el que fa imperceptible la micro-cacera.
+    const stillBase =
+      gapDeg >= CORR_DEADBAND_DEG
+        ? SLEW_STILL_DEG_PER_SEC
+        : SLEW_MICRO_DEG_PER_SEC +
+          ((SLEW_STILL_DEG_PER_SEC - SLEW_MICRO_DEG_PER_SEC) * gapDeg) / CORR_DEADBAND_DEG;
     const slew =
-      SLEW_STILL_DEG_PER_SEC +
+      stillBase +
       Math.max(0, this.speedEnv - PULL_SPEED_LOW) +
       SLEW_OPEN_RATE_PER_SEC * Math.max(0, gapDeg - SLEW_OPEN_DEG);
     const maxCorr = slew * dt;
