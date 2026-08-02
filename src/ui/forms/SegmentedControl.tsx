@@ -19,6 +19,24 @@ export interface SegmentedControlProps<T extends string>
    * simulat". Amb `false`, s'ajusta al contingut.
    */
   fullWidth?: boolean;
+  /**
+   * Deixa que les opcions baixin a una segona fila quan no hi caben.
+   *
+   * PER QUÈ CAL. Aquest control reparteix l'amplada en columnes IGUALS, i amb
+   * cinc opcions dins d'una columna de 256 px cada etiqueta rep 44 px: «Franja»
+   * es llegia «Fr…» i «Enquadra», «E…». Cinc pastilles de dues lletres no són
+   * un commutador, són un test d'endevinalles.
+   *
+   * Amb `wrap`, les columnes es declaren per amplada mínima i no per nombre: on
+   * hi càpiguen totes, queden en una fila; on no, baixen. Cap etiqueta no es
+   * talla mai.
+   *
+   * NO ÉS EL COMPORTAMENT PER DEFECTE a posta: amb dues o tres opcions —que és
+   * per a què es va fer aquest control— la fila única és el correcte, i una
+   * segona fila que apareix sola en una amplada intermèdia mouria els botons
+   * sota el dit.
+   */
+  wrap?: boolean;
   /** Nom del grup per als lectors de pantalla. */
   label?: string;
 }
@@ -38,6 +56,7 @@ export function SegmentedControl<T extends string>({
   onChange,
   options,
   fullWidth = true,
+  wrap = false,
   label,
   className,
   style,
@@ -47,12 +66,19 @@ export function SegmentedControl<T extends string>({
     <div
       role="tablist"
       aria-label={label}
-      className={['ui-seg', fullWidth ? 'ui-seg--full' : '', className ?? '']
+      className={[
+        'ui-seg',
+        fullWidth ? 'ui-seg--full' : '',
+        wrap ? 'ui-seg--wrap' : '',
+        className ?? '',
+      ]
         .filter(Boolean)
         .join(' ')}
       // Les columnes es declaren aquí i no al CSS perquè el nombre d'opcions
-      // només es coneix en temps d'execució.
-      style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)`, ...style }}
+      // només es coneix en temps d'execució. Amb `wrap` no s'hi posen: les
+      // decideix la fulla d'estils per amplada mínima, i una columna fixa aquí
+      // guanyaria sempre i tornaria a tallar les etiquetes.
+      style={wrap ? style : { gridTemplateColumns: `repeat(${options.length}, 1fr)`, ...style }}
       {...rest}
     >
       {options.map((option) => {

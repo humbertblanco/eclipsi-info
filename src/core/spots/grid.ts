@@ -76,30 +76,61 @@ export function bearingDeg(
   return ((Math.atan2(dx, dy) * RAD) % 360 + 360) % 360;
 }
 
-/** Els setze rumbs, en català, per dir «14 km al nord-oest» i no «a 312°». */
-const COMPASS = [
-  'nord',
-  'nord-nord-est',
-  'nord-est',
-  'est-nord-est',
-  'est',
-  'est-sud-est',
-  'sud-est',
-  'sud-sud-est',
-  'sud',
-  'sud-sud-oest',
-  'sud-oest',
-  'oest-sud-oest',
-  'oest',
-  'oest-nord-oest',
-  'nord-oest',
-  'nord-nord-oest',
-];
+/**
+ * Els setze rumbs, per dir «14 km al nord-oest» i no «a 312°».
+ *
+ * SÓN SETZE I NO VUIT a posta: amb vuit, un punt a 283° es descriu com «a
+ * l'oest» i un altre a 260° també, i qui hi va per un camí de carena els busca
+ * al mateix lloc. La rosa de setze parteix el que els vuit ajunten.
+ *
+ * LES DUES LLENGÜES VIUEN JUNTES aquí i no una a `core` i l'altra a la
+ * interfície. Una llista partida en dos fitxers és la manera segura que un dia
+ * en creixi una i l'altra no: el mateix defecte que ja ha calgut arreglar amb
+ * el veredicte, amb el guió de la totalitat i amb la zona de l'AR.
+ */
+const COMPASS: Record<'ca' | 'es', readonly string[]> = {
+  ca: [
+    'nord',
+    'nord-nord-est',
+    'nord-est',
+    'est-nord-est',
+    'est',
+    'est-sud-est',
+    'sud-est',
+    'sud-sud-est',
+    'sud',
+    'sud-sud-oest',
+    'sud-oest',
+    'oest-sud-oest',
+    'oest',
+    'oest-nord-oest',
+    'nord-oest',
+    'nord-nord-oest',
+  ],
+  es: [
+    'norte',
+    'nor-noreste',
+    'noreste',
+    'este-noreste',
+    'este',
+    'este-sureste',
+    'sureste',
+    'sur-sureste',
+    'sur',
+    'sur-suroeste',
+    'suroeste',
+    'oeste-suroeste',
+    'oeste',
+    'oeste-noroeste',
+    'noroeste',
+    'nor-noroeste',
+  ],
+};
 
-/** Nom del rumb en català. */
-export function compassName(degrees: number): string {
+/** Nom del rumb. Per defecte, català: és l'idioma amb què va néixer el mòdul. */
+export function compassName(degrees: number, locale: 'ca' | 'es' = 'ca'): string {
   const index = Math.round((((degrees % 360) + 360) % 360) / 22.5) % 16;
-  return COMPASS[index];
+  return COMPASS[locale][index];
 }
 
 /**

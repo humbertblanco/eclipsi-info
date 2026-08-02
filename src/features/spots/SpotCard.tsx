@@ -21,6 +21,7 @@
 import { useState } from 'react';
 import { Badge, Button, Card, Stat, type Tone } from '../../ui';
 import type { SpotResult } from '../../core/spots/types';
+import type { Locale } from '../../i18n';
 import {
   bearingPhrase,
   durationText,
@@ -33,12 +34,24 @@ import {
   formatPercent,
   mapUrl,
 } from './format';
+import { sp } from './strings';
 import './spots.css';
 
 export interface SpotCardProps {
   spot: SpotResult;
   /** Posició a la llista, començant per 1. */
   rank: number;
+  locale: Locale;
+  /**
+   * Fa que aquest punt passi a ser el de l'app.
+   *
+   * SENSE AIXÒ LA FITXA ÉS UN CUL-DE-SAC: el cercador et diu que a 14 km al
+   * nord-oest hi ha 41 segons més, i l'única manera d'anar-hi era copiar les
+   * coordenades i tornar-les a enganxar a la fulla d'ubicació. Amb el botó, el
+   * punt es fa teu i totes les pantalles es recalculen —incloent-hi el perfil
+   * d'horitzó de veritat, que és més fi que el del cercador.
+   */
+  onSelect?: (spot: SpotResult) => void;
   className?: string;
 }
 
@@ -56,31 +69,37 @@ function verdictTone(spot: SpotResult): Tone {
   return 'partial';
 }
 
-function verdictLabel(spot: SpotResult): string {
-  if (spot.centralTotalSec <= 0) return 'Sense fase central';
-  if (spot.centralVisibleSec <= 0) return 'Tapat';
-  if (spot.centralVisibleSec >= spot.centralTotalSec - 0.5) return 'Sencera';
-  return 'A mitges';
+function verdictLabel(spot: SpotResult, locale: Locale): string {
+  if (spot.centralTotalSec <= 0) return sp('card.verdict.none', locale);
+  if (spot.centralVisibleSec <= 0) return sp('card.verdict.blocked', locale);
+  if (spot.centralVisibleSec >= spot.centralTotalSec - 0.5) return sp('card.verdict.full', locale);
+  return sp('card.verdict.partial', locale);
 }
 
 /** Què et tapa, a quina distància, i per quant. */
-function blockingText(spot: SpotResult): string {
-  const altura = formatDegrees(spot.horizonAltitudeDeg);
-  const distancia =
-    spot.blockingDistanceKm === null ? '' : ` a ${formatDistance(spot.blockingDistanceKm)}`;
+function blockingText(spot: SpotResult, locale: Locale): string {
+  const altitude = formatDegrees(spot.horizonAltitudeDeg, locale);
+  const distance =
+    spot.blockingDistanceKm === null
+      ? ''
+      : sp('card.at', locale, { distance: formatDistance(spot.blockingDistanceKm, locale) });
 
   if (spot.clearanceDeg >= 0) {
-    return `El terreny arriba a ${altura}${distancia}. El Sol hi passa ${formatDegrees(
-      spot.clearanceDeg,
-    )} per damunt.`;
+    return sp('card.blocking', locale, {
+      altitude,
+      distance,
+      clearance: formatDegrees(spot.clearanceDeg, locale),
+    });
   }
-  return `El terreny arriba a ${altura}${distancia} i se’t menja el Sol per ${formatDegrees(
-    -spot.clearanceDeg,
-  )}.`;
+  return sp('card.blockingEats', locale, {
+    altitude,
+    distance,
+    clearance: formatDegrees(-spot.clearanceDeg, locale),
+  });
 }
 
 /** Botó de copiar amb confirmació breu. Al camp es prem amb guants i sense mirar. */
-function CopyCoords({ lat, lon }: { lat: number; lon: number }) {
+function CopyCoords({ lat, lon, locale }: { lat: number; lon: number; locale: Locale }) {
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
@@ -95,12 +114,12 @@ function CopyCoords({ lat, lon }: { lat: number; lon: number }) {
 
   return (
     <Button variant="secondary" size="sm" icon="crosshair" onClick={copy}>
-      {copied ? 'Copiades' : 'Copia les coordenades'}
+      {copied ? sp('card.copied', locale) : sp('card.copy', locale)}
     </Button>
   );
 }
 
-export function SpotCard({ spot, rank, className }: SpotCardProps) {
+export function SpotCard({ spot, rank, locale, onSelect, className }: SpotCardProps) {
   const visible = formatDuration(spot.centralVisibleSec);
   const total = formatDuration(spot.centralTotalSec);
   const perdut = spot.centralLostSec;
@@ -114,16 +133,19 @@ export function SpotCard({ spot, rank, className }: SpotCardProps) {
         .join(' ')}
     >
       <header className="spotcard__head">
-        <span className="spotcard__rank eclipsi-data" aria-label={`Posició ${rank}`}>
+        <span
+          className="spotcard__rank eclipsi-data"
+          aria-label={sp('card.rank', locale, { n: rank })}
+        >
           {rank}
         </span>
         <p className="spotcard__where">
-          {formatDistance(spot.distanceKm)} {bearingPhrase(spot.bearingDeg)}
-          <span className="spotcard__alt"> · {formatMetres(spot.elevation)}</span>
+          {formatDistance(spot.distanceKm, locale)} {bearingPhrase(spot.bearingDeg, locale)}
+          <span className="spotcard__alt"> · {formatMetres(spot.elevation, locale)}</span>
         </p>
         <span className="spotcard__badges">
           <Badge tone={verdictTone(spot)} dot>
-            {verdictLabel(spot)}
+            {verdictLabel(spot, locale)}
           </Badge>
         </span>
       </header>
@@ -131,69 +153,76 @@ export function SpotCard({ spot, rank, className }: SpotCardProps) {
       <div className="spotcard__figures">
         <Stat
           className="spotcard__headline"
-          label="Hi veuràs"
+          label={sp('card.willSee', locale)}
           value={visible.value}
           unit={visible.unit}
           size="lg"
         />
-        <Stat label="N’hi ha" value={total.value} unit={total.unit} />
-        <Stat label="Marge sobre el terreny" value={formatDegrees(spot.clearanceDeg)} />
+        <Stat label={sp('card.thereIs', locale)} value={total.value} unit={total.unit} />
+        <Stat
+          label={sp('card.clearance', locale)}
+          value={formatDegrees(spot.clearanceDeg, locale)}
+        />
       </div>
 
-      <p className="spotcard__blocking">{blockingText(spot)}</p>
+      <p className="spotcard__blocking">{blockingText(spot, locale)}</p>
 
       {perdut > 0.5 && (
         <p className="spotcard__climb">
           {spot.climbToRecoverM === null
-            ? `Se’n perden ${durationText(perdut)} i des d’aquí no es recuperen pujant.`
-            : `Se’n perden ${durationText(perdut)}. Pujant ${formatMetres(
-                spot.climbToRecoverM,
-              )} els recuperaries.`}
+            ? sp('card.lostNoClimb', locale, { lost: durationText(perdut) })
+            : sp('card.lostClimb', locale, {
+                lost: durationText(perdut),
+                climb: formatMetres(spot.climbToRecoverM, locale),
+              })}
         </p>
       )}
 
       <dl className="spotcard__meta">
         <div>
-          <dt>Coordenades</dt>
+          <dt>{sp('card.coords', locale)}</dt>
           <dd className="eclipsi-data">{formatCoords(spot.lat, spot.lon)}</dd>
         </div>
         <div>
-          <dt>Mig de la fase central</dt>
-          <dd className="eclipsi-data">{formatClock(spot.midCentralMs)}</dd>
+          <dt>{sp('card.midCentral', locale)}</dt>
+          <dd className="eclipsi-data">{formatClock(spot.midCentralMs, locale)}</dd>
         </div>
         <div>
-          <dt>Sol</dt>
+          <dt>{sp('card.sun', locale)}</dt>
           <dd className="eclipsi-data">
-            {formatDegrees(spot.sunAltitudeDeg)} · {Math.round(spot.sunAzimuthDeg)}°
+            {formatDegrees(spot.sunAltitudeDeg, locale)} · {Math.round(spot.sunAzimuthDeg)}°
           </dd>
         </div>
       </dl>
 
       <div className="spotcard__notes">
-        {spot.detail === 'sieve' && (
-          <Badge tone="cloudy">Estimació amb terreny gruixut</Badge>
-        )}
+        {spot.detail === 'sieve' && <Badge tone="cloudy">{sp('card.sieve', locale)}</Badge>}
         {spot.edgeUncertain && (
           <Badge tone="cloudy" dot>
-            Vora de la franja
+            {sp('card.edge', locale)}
           </Badge>
         )}
         {spot.coverage < 0.999 && (
           <Badge tone="cloudy">
-            Relleu incomplet ({formatPercent(spot.coverage)})
+            {sp('card.coverage', locale, { percent: formatPercent(spot.coverage, locale) })}
           </Badge>
         )}
       </div>
 
       <div className="spotcard__actions">
-        <CopyCoords lat={spot.lat} lon={spot.lon} />
+        {onSelect && (
+          <Button variant="secondary" size="sm" icon="map-pin" onClick={() => onSelect(spot)}>
+            {sp('card.makeMine', locale)}
+          </Button>
+        )}
+        <CopyCoords lat={spot.lat} lon={spot.lon} locale={locale} />
         <a
           className="spotcard__map"
           href={mapUrl(spot.lat, spot.lon)}
           target="_blank"
           rel="noreferrer"
         >
-          Obre al mapa
+          {sp('card.openMap', locale)}
         </a>
       </div>
     </Card>

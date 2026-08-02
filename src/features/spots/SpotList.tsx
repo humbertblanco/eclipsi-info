@@ -11,24 +11,28 @@
  * amb dues dècimes de marge és, a la pràctica, un lloc sense marge.
  */
 
-import type { SpotSearchOutcome } from '../../core/spots/types';
+import type { SpotResult, SpotSearchOutcome } from '../../core/spots/types';
+import type { Locale } from '../../i18n';
 import { SpotCard } from './SpotCard';
 import { durationText, formatDistance } from './format';
+import { sp } from './strings';
 import './spots.css';
 
 export interface SpotListProps {
   outcome: SpotSearchOutcome;
+  locale: Locale;
+  /** Es passa avall a cada targeta: fer d'un resultat el punt de l'app. */
+  onSelect?: (spot: SpotResult) => void;
   className?: string;
 }
 
-export function SpotList({ outcome, className }: SpotListProps) {
+export function SpotList({ outcome, locale, onSelect, className }: SpotListProps) {
   const { results, radiusKm, candidates, bestCentralSec, centralReachable } = outcome;
 
   if (results.length === 0) {
     return (
       <p className={['spotlist__empty', className ?? ''].filter(Boolean).join(' ')}>
-        Dins de {formatDistance(radiusKm)} no hi ha cap punt des d’on el Sol quedi
-        per damunt de l’horitzó durant l’eclipsi. Prova d’eixamplar el radi.
+        {sp('list.empty', locale, { radius: formatDistance(radiusKm, locale) })}
       </p>
     );
   }
@@ -36,33 +40,29 @@ export function SpotList({ outcome, className }: SpotListProps) {
   return (
     <div className={['spotlist', className ?? ''].filter(Boolean).join(' ')}>
       <p className="spotlist__context">
-        {results.length} {results.length === 1 ? 'lloc' : 'llocs'} de{' '}
-        {candidates} punts mirats dins de {formatDistance(radiusKm)}.{' '}
+        {sp(results.length === 1 ? 'list.contextOne' : 'list.contextMany', locale, {
+          n: results.length,
+          candidates,
+          radius: formatDistance(radiusKm, locale),
+        })}{' '}
         {centralReachable
-          ? `La millor fase central de la zona dura ${durationText(bestCentralSec)}.`
-          : 'Dins d’aquest radi no hi arriba la franja de centralitat: la llista ordena per horitzó i per distància, no per segons de totalitat.'}
+          ? sp('list.best', locale, { duration: durationText(bestCentralSec) })
+          : sp('list.noCentral', locale)}
       </p>
 
       {outcome.estimatedOnly && (
-        <p className="spotlist__estimate">
-          Tots aquests números són estimacions del garbell, amb terreny gruixut.
-          Es poden equivocar en desenes de segons.
-        </p>
+        <p className="spotlist__estimate">{sp('list.estimate', locale)}</p>
       )}
 
       <ol className="spotlist__items">
         {results.map((spot, index) => (
           <li key={spot.id}>
-            <SpotCard spot={spot} rank={index + 1} />
+            <SpotCard spot={spot} rank={index + 1} locale={locale} onSelect={onSelect} />
           </li>
         ))}
       </ol>
 
-      <p className="spotlist__caveat">
-        El relleu surt d’un model de terra nua: no hi ha arbres, ni edificis, ni
-        tanques. Una filera de pollancres a 500 m val 2°. Amb menys de mig grau de
-        marge, ves-hi abans i mira-t’ho.
-      </p>
+      <p className="spotlist__caveat">{sp('list.caveat', locale)}</p>
     </div>
   );
 }

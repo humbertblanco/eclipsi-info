@@ -12,7 +12,9 @@
  */
 
 import type { SpotSearchCost, SpotSearchStage } from '../../core/spots/types';
+import type { Locale } from '../../i18n';
 import { formatBytes, formatCount, formatMs, formatRatio } from './format';
+import { sp } from './strings';
 import './spots.css';
 
 /**
@@ -27,35 +29,35 @@ import './spots.css';
  */
 const TILE_BYTES = 120 * 1024;
 
-const STAGE_LABEL: Record<Exclude<SpotSearchStage, 'done'>, string> = {
-  grid: 'Graella de candidats',
-  astro: 'A · Astronomia barata',
-  tiles: 'B · Tessel·les compartides',
-  sieve: 'C · Garbell d’horitzó',
-  refineTiles: 'D1 · Tessel·les dels finalistes',
-  refine: 'D2 · Càlcul complet',
-};
+const STAGES: Exclude<SpotSearchStage, 'done'>[] = [
+  'grid',
+  'astro',
+  'tiles',
+  'sieve',
+  'refineTiles',
+  'refine',
+];
 
-const STAGES = Object.keys(STAGE_LABEL) as Exclude<SpotSearchStage, 'done'>[];
-
-function megabytes(tiles: number): string {
-  return formatBytes(tiles * TILE_BYTES);
+function megabytes(tiles: number, locale: Locale): string {
+  return formatBytes(tiles * TILE_BYTES, locale);
 }
 
 export interface SpotFunnelCostProps {
   cost: SpotSearchCost;
   /** Candidats de la graella inicial. Serveix per llegir les files per candidat. */
   candidates: number;
+  locale: Locale;
   className?: string;
 }
 
-export function SpotFunnelCost({ cost, candidates, className }: SpotFunnelCostProps) {
+export function SpotFunnelCost({ cost, candidates, locale, className }: SpotFunnelCostProps) {
   return (
     <details className={['spotcost', className ?? ''].filter(Boolean).join(' ')}>
       <summary className="spotcost__summary">
-        <span className="eclipsi-overline">Cost de l’embut</span>
+        <span className="eclipsi-overline">{sp('cost.title', locale)}</span>
         <span className="eclipsi-data">
-          {formatMs(cost.totalMs)} · {formatCount(cost.uniqueTiles)} tessel·les
+          {formatMs(cost.totalMs, locale)} · {formatCount(cost.uniqueTiles, locale)}{' '}
+          {sp('cost.tiles', locale)}
         </span>
       </summary>
 
@@ -63,13 +65,13 @@ export function SpotFunnelCost({ cost, candidates, className }: SpotFunnelCostPr
         <table className="spotcost__table">
           <thead>
             <tr>
-              <th scope="col">Etapa</th>
-              <th scope="col">Entren</th>
-              <th scope="col">Surten</th>
-              <th scope="col">Temps</th>
-              <th scope="col">Efemèrides</th>
-              <th scope="col">Mostres</th>
-              <th scope="col">Tessel·les</th>
+              <th scope="col">{sp('cost.stage', locale)}</th>
+              <th scope="col">{sp('cost.in', locale)}</th>
+              <th scope="col">{sp('cost.out', locale)}</th>
+              <th scope="col">{sp('cost.time', locale)}</th>
+              <th scope="col">{sp('cost.ephemeris', locale)}</th>
+              <th scope="col">{sp('cost.samples', locale)}</th>
+              <th scope="col">{sp('cost.tilesCol', locale)}</th>
             </tr>
           </thead>
           <tbody>
@@ -77,13 +79,13 @@ export function SpotFunnelCost({ cost, candidates, className }: SpotFunnelCostPr
               const row = cost[stage];
               return (
                 <tr key={stage}>
-                  <th scope="row">{STAGE_LABEL[stage]}</th>
-                  <td className="eclipsi-data">{formatCount(row.entered)}</td>
-                  <td className="eclipsi-data">{formatCount(row.survived)}</td>
-                  <td className="eclipsi-data">{formatMs(row.ms)}</td>
-                  <td className="eclipsi-data">{formatCount(row.ephemerisCalls)}</td>
-                  <td className="eclipsi-data">{formatCount(row.terrainSamples)}</td>
-                  <td className="eclipsi-data">{formatCount(row.tiles)}</td>
+                  <th scope="row">{sp(`cost.stage.${stage}`, locale)}</th>
+                  <td className="eclipsi-data">{formatCount(row.entered, locale)}</td>
+                  <td className="eclipsi-data">{formatCount(row.survived, locale)}</td>
+                  <td className="eclipsi-data">{formatMs(row.ms, locale)}</td>
+                  <td className="eclipsi-data">{formatCount(row.ephemerisCalls, locale)}</td>
+                  <td className="eclipsi-data">{formatCount(row.terrainSamples, locale)}</td>
+                  <td className="eclipsi-data">{formatCount(row.tiles, locale)}</td>
                 </tr>
               );
             })}
@@ -93,47 +95,44 @@ export function SpotFunnelCost({ cost, candidates, className }: SpotFunnelCostPr
 
       <dl className="spotcost__totals">
         <div>
-          <dt>Candidats</dt>
-          <dd className="eclipsi-data">{formatCount(candidates)}</dd>
+          <dt>{sp('cost.candidates', locale)}</dt>
+          <dd className="eclipsi-data">{formatCount(candidates, locale)}</dd>
         </div>
         <div>
-          <dt>Temps total</dt>
-          <dd className="eclipsi-data">{formatMs(cost.totalMs)}</dd>
+          <dt>{sp('cost.totalTime', locale)}</dt>
+          <dd className="eclipsi-data">{formatMs(cost.totalMs, locale)}</dd>
         </div>
         <div>
-          <dt>Tessel·les baixades</dt>
+          <dt>{sp('cost.downloaded', locale)}</dt>
           <dd className="eclipsi-data">
-            {formatCount(cost.uniqueTiles)} · {megabytes(cost.uniqueTiles)}
+            {formatCount(cost.uniqueTiles, locale)} · {megabytes(cost.uniqueTiles, locale)}
           </dd>
         </div>
         <div>
-          <dt>Si es fes candidat a candidat</dt>
+          <dt>{sp('cost.naive', locale)}</dt>
           <dd className="eclipsi-data">
-            {formatCount(cost.tilesIfNaive)} · {megabytes(cost.tilesIfNaive)}
+            {formatCount(cost.tilesIfNaive, locale)} · {megabytes(cost.tilesIfNaive, locale)}
           </dd>
         </div>
         <div>
-          <dt>Estalvi de xarxa</dt>
+          <dt>{sp('cost.netSaving', locale)}</dt>
           <dd className="eclipsi-data">
-            {formatRatio(cost.uniqueTiles, cost.tilesIfNaive)}
+            {formatRatio(cost.uniqueTiles, cost.tilesIfNaive, locale)}
           </dd>
         </div>
         <div>
-          <dt>Estalvi de terreny</dt>
+          <dt>{sp('cost.terrainSaving', locale)}</dt>
           <dd className="eclipsi-data">
             {formatRatio(
               cost.sieve.terrainSamples + cost.refine.terrainSamples,
               cost.terrainSamplesIfNaive,
+              locale,
             )}
           </dd>
         </div>
       </dl>
 
-      <p className="spotcost__note">
-        Els números de la dreta són el que costaria calcular el perfil complet de
-        cada candidat un per un. Si l’estalvi baixa d’unes cent vegades, val la
-        pena tornar a mirar els paràmetres del garbell.
-      </p>
+      <p className="spotcost__note">{sp('cost.note', locale)}</p>
     </details>
   );
 }

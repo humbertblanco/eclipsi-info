@@ -19,6 +19,9 @@ export type { SpotCardProps } from './SpotCard';
 export { SpotFunnelCost } from './SpotFunnelCost';
 export type { SpotFunnelCostProps } from './SpotFunnelCost';
 
+export { sp } from './strings';
+export type { SpotStringKey } from './strings';
+
 export { useSpotSearch } from './useSpotSearch';
 export type {
   SpotSearchStatus,

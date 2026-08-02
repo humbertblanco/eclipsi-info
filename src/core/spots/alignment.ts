@@ -248,13 +248,37 @@ export type AlignmentProblem =
   /** Caldria plantar-se més lluny del límit acceptat. */
   | 'out-of-range';
 
+/**
+ * El que fa falta per escriure la frase del fracàs, en l'idioma que sigui.
+ *
+ * PER QUÈ SÓN DADES I NO UNA FRASE. Abans `AlignmentImpossible` portava el text
+ * ja escrit, i en català. Mentre aquest mòdul no el muntava ningú, això era
+ * gratis; en obrir-lo a la interfície voldria dir que qui té l'app en castellà
+ * rep la meitat de les respostes en català — exactament el defecte que en
+ * aquest projecte ja s'ha hagut d'arreglar al veredicte, al guió de la
+ * totalitat i a la zona de la realitat augmentada.
+ *
+ * La frase la fa `describeAlignment`, que és qui sap l'idioma.
+ */
+export interface AlignmentProblemDetail {
+  targetName: string;
+  /** Altura aparent del Sol a l'instant demanat. Null quan encara no se sap. */
+  sunAltitudeDeg: number | null;
+  /** Límit de distància acceptat, en km. */
+  maxDistanceKm: number;
+  /** Cota de la punta de l'element, quan se'n sap. */
+  topElevationM: number | null;
+  /** Quin contacte es demanava, quan el problema és que allà no existeix. */
+  moment: AlignmentMoment | null;
+}
+
 export interface AlignmentImpossible {
   ok: false;
   problem: AlignmentProblem;
   /** Distància que demanaria la geometria, en km, quan en surt alguna. */
   wouldNeedKm: number | null;
-  /** Frase en català que diu què passa. Mai una xifra sense sentit. */
-  message: string;
+  /** Les xifres del fracàs. La frase la munta `describeAlignment`. */
+  detail: AlignmentProblemDetail;
 }
 
 export type AlignmentOutcome = AlignmentSolution | AlignmentImpossible;
@@ -307,21 +331,31 @@ const BEARING_PASSES = 3;
 /** Error de rumb per sota del qual ja no val la pena tornar-hi, en graus. */
 const BEARING_TOLERANCE_DEG = 0.002;
 
-const MOMENT_LABEL: Record<AlignmentMoment, string> = {
-  c1: 'al primer contacte',
-  c2: 'a l’inici de la fase central',
-  max: 'al màxim de l’eclipsi',
-  c3: 'al final de la fase central',
-  c4: 'al quart contacte',
+/**
+ * Idiomes en què aquest mòdul sap escriure.
+ *
+ * És el tipus literal i no el `Locale` de `src/i18n` a posta: `core` no importa
+ * res de la capa d'interfície. És el mateix que fa `core/astro/gradient.ts`.
+ */
+export type AlignmentLocale = 'ca' | 'es';
+
+type Bilingual = Record<AlignmentLocale, string>;
+
+const MOMENT_LABEL: Record<AlignmentMoment, Bilingual> = {
+  c1: { ca: 'al primer contacte', es: 'en el primer contacto' },
+  c2: { ca: 'a l’inici de la fase central', es: 'al inicio de la fase central' },
+  max: { ca: 'al màxim de l’eclipsi', es: 'en el máximo del eclipse' },
+  c3: { ca: 'al final de la fase central', es: 'al final de la fase central' },
+  c4: { ca: 'al quart contacte', es: 'en el cuarto contacto' },
 };
 
 /** El mateix instant dit com a nom, per encaixar-lo dins d'una negació. */
-const MOMENT_NOUN: Record<AlignmentMoment, string> = {
-  c1: 'primer contacte',
-  c2: 'fase central',
-  max: 'màxim',
-  c3: 'fase central',
-  c4: 'quart contacte',
+const MOMENT_NOUN: Record<AlignmentMoment, Bilingual> = {
+  c1: { ca: 'primer contacte', es: 'primer contacto' },
+  c2: { ca: 'fase central', es: 'fase central' },
+  max: { ca: 'màxim', es: 'máximo' },
+  c3: { ca: 'fase central', es: 'fase central' },
+  c4: { ca: 'quart contacte', es: 'cuarto contacto' },
 };
 
 /* ── Geometria pura ───────────────────────────────────────────────────────── */
@@ -973,9 +1007,9 @@ function solveAtInstant(
 function impossible(
   problem: AlignmentProblem,
   wouldNeedKm: number | null,
-  message: string,
+  detail: AlignmentProblemDetail,
 ): AlignmentImpossible {
-  return { ok: false, problem, wouldNeedKm, message };
+  return { ok: false, problem, wouldNeedKm, detail };
 }
 
 function toAlignmentPoint(point: SolvedPoint): AlignmentPoint {
@@ -1022,11 +1056,13 @@ export function solveAlignment(options: AlignmentOptions): AlignmentOutcome {
       : undefined);
 
   if (targetGroundElevationM === undefined) {
-    return impossible(
-      'no-elevation',
-      null,
-      `No sabem a quina cota és ${target.name}. Sense el model del terreny ni una cota donada no hi ha res a calcular.`,
-    );
+    return impossible('no-elevation', null, {
+      targetName: target.name,
+      sunAltitudeDeg: null,
+      maxDistanceKm: options.maxDistanceKm ?? DEFAULT_MAX_DISTANCE_KM,
+      topElevationM: null,
+      moment: null,
+    });
   }
 
   const topElevationM =
@@ -1049,11 +1085,13 @@ export function solveAlignment(options: AlignmentOptions): AlignmentOutcome {
     const atTarget = computeLocalCircumstances(eclipseId, targetLocation, atmosphere);
     const ms = contactMs(atTarget, moment);
     if (ms === undefined) {
-      return impossible(
-        'no-contact',
-        null,
-        `Des ${of(target.name)} no hi ha ${MOMENT_NOUN[moment]}: l’eclipsi no arriba a aquesta fase en aquest punt.`,
-      );
+      return impossible('no-contact', null, {
+        targetName: target.name,
+        sunAltitudeDeg: null,
+        maxDistanceKm: options.maxDistanceKm ?? DEFAULT_MAX_DISTANCE_KM,
+        topElevationM,
+        moment,
+      });
     }
     usedMoment = moment;
     instantMs = ms;
@@ -1163,58 +1201,83 @@ function failureToOutcome(
   topElevationM: number,
   options: AlignmentOptions,
 ): AlignmentImpossible {
-  const maxKm = options.maxDistanceKm ?? DEFAULT_MAX_DISTANCE_KM;
+  const detail: AlignmentProblemDetail = {
+    targetName: name,
+    sunAltitudeDeg: failure.sunAltitudeDeg,
+    maxDistanceKm: options.maxDistanceKm ?? DEFAULT_MAX_DISTANCE_KM,
+    topElevationM,
+    moment: null,
+  };
 
-  switch (failure.problem) {
-    case 'sun-below-horizon':
-      return impossible(
-        'sun-below-horizon',
-        null,
-        `En aquell instant el Sol és a ${formatDeg(failure.sunAltitudeDeg)} d’altura aparent. Per sota de l’horitzó no hi ha cap punt des d’on quedi damunt ${of(name)}.`,
-      );
-    case 'target-too-low':
-      return impossible(
-        'target-too-low',
-        null,
-        `Amb el Sol a ${formatDeg(failure.sunAltitudeDeg)}, ${name} no s’aixeca prou per damunt del terreny del voltant: la punta ja neix per sota del Sol i cap distància no l’hi puja.`,
-      );
-    case 'out-of-range':
-      return impossible(
-        'out-of-range',
-        failure.wouldNeedKm,
-        failure.wouldNeedKm === null
-          ? `Amb el Sol a ${formatDeg(failure.sunAltitudeDeg)}, la punta ${of(name)} (${Math.round(topElevationM)} m) encara queda per damunt del Sol a ${maxKm} km. La curvatura de la Terra rebaixa l’element més de pressa del que el Sol hi baixa.`
-          : `Amb el Sol a ${formatDeg(failure.sunAltitudeDeg)} caldria plantar-se a uns ${formatKm(failure.wouldNeedKm)} ${of(name)}, més enllà del límit de ${maxKm} km que has demanat.`,
-      );
-    // Els altres problemes es detecten abans d'arribar aquí.
-    case 'no-elevation':
-    case 'no-contact':
-      return impossible(failure.problem, null, `No es pot calcular l’alineació amb ${name}.`);
-  }
+  return impossible(
+    failure.problem,
+    failure.problem === 'out-of-range' ? failure.wouldNeedKm : null,
+    detail,
+  );
 }
-
 /* ── Text ─────────────────────────────────────────────────────────────────── */
 
-function formatDeg(value: number): string {
-  return `${value.toFixed(2)}°`;
+/*
+ * TOT EL TEXT D'AQUEST MÒDUL ÉS BILINGÜE, I NO ÉS UN AFEGIT COSMÈTIC.
+ *
+ * Aquesta funcionalitat es va escriure sencera en català perquè no la muntava
+ * ningú. En obrir-la a la interfície, una sola frase catalana a l'app d'algú que
+ * l'ha posat en castellà és el mateix defecte que ja s'ha hagut d'arreglar tres
+ * vegades en aquest projecte (el veredicte, el guió de la totalitat i la zona
+ * de la realitat augmentada), i sempre pel mateix motiu: el text vivia lluny de
+ * la pantalla i ningú el va veure fins que era a producció.
+ *
+ * LES DUES LLENGÜES NO COMPARTEIXEN FÓRMULA. El català apostrofa l'article dels
+ * rumbs que comencen per vocal («cap a l'oest») i contrau la preposició («del
+ * castell»); el castellà només contrau «de el» → «del». Intentar una sola
+ * funció per als dos casos donaria un text escrit a martellades en tots dos
+ * idiomes, i per això cadascun té la seva línia.
+ */
+
+/*
+ * LA COMA DECIMAL.
+ *
+ * Aquest mòdul escrivia `toFixed(2)`, o sigui «6.23°», i tota la resta de
+ * l'aplicació escriu «6,23°». No és una manca d'estil: ESTAT.md ja documenta
+ * que veure les dues notacions a la mateixa pantalla fa dubtar de totes dues
+ * xifres, i aquí passaria literalment —la fitxa del mapa i aquest text es
+ * llegeixen l'un sota l'altre.
+ *
+ * Català i castellà escriuen els números igual; es passa l'idioma igualment
+ * perquè el dia que n'entri un tercer no s'hagi de descobrir amb un «1.083 m»
+ * a la pantalla d'algú.
+ */
+const NUM: Record<AlignmentLocale, string> = { ca: 'ca-ES', es: 'es-ES' };
+
+function decimals(value: number, digits: number, locale: AlignmentLocale): string {
+  return new Intl.NumberFormat(NUM[locale], {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value);
 }
 
-function formatKm(km: number): string {
+function formatDeg(value: number, locale: AlignmentLocale): string {
+  return `${decimals(value, 2, locale)}°`;
+}
+
+function formatKm(km: number, locale: AlignmentLocale): string {
   if (km < 1) return `${Math.round(km * 1000)} m`;
-  if (km < 10) return `${km.toFixed(2)} km`;
-  return `${km.toFixed(1)} km`;
+  if (km < 10) return `${decimals(km, 2, locale)} km`;
+  return `${decimals(km, 1, locale)} km`;
 }
 
-function formatMeters(m: number): string {
-  return m < 10 ? `${m.toFixed(1)} m` : `${Math.round(m)} m`;
+function formatMeters(m: number, locale: AlignmentLocale): string {
+  return m < 10 ? `${decimals(m, 1, locale)} m` : `${Math.round(m)} m`;
 }
 
 /**
  * «cap al nord», però «cap a l'oest». Els rumbs que comencen per vocal volen
  * article apostrofat, i escriure-ho malament fa que tot el text soni a màquina.
+ * En castellà no hi ha apòstrof i l'article és sempre el mateix.
  */
-function towards(bearingDeg: number): string {
-  const name = compassName(bearingDeg);
+function towards(bearingDeg: number, locale: AlignmentLocale): string {
+  const name = compassName(bearingDeg, locale);
+  if (locale === 'es') return `hacia el ${name}`;
   return /^[aeiou]/.test(name) ? `cap a l’${name}` : `cap al ${name}`;
 }
 
@@ -1224,19 +1287,25 @@ function towards(bearingDeg: number): string {
  * En català «de el castell» no existeix: és «del castell». El nom ens arriba de
  * fora amb article o sense — «el castell», «la torre», «l'ermita», «Loarre» —,
  * i la contracció s'ha de resoldre aquí o el text queda escrit a martellades.
+ * El castellà té la mateixa contracció amb «el» i cap més.
  */
-function of(name: string): string {
+function of(name: string, locale: AlignmentLocale): string {
+  if (locale === 'es') {
+    if (/^el /i.test(name)) return `del ${name.slice(3)}`;
+    return `de ${name}`;
+  }
   if (/^el /i.test(name)) return `del ${name.slice(3)}`;
   if (/^els /i.test(name)) return `dels ${name.slice(4)}`;
   return `de ${name}`;
 }
 
-function formatSeconds(seconds: number): string {
+function formatSeconds(seconds: number, locale: AlignmentLocale): string {
   const total = Math.round(seconds);
   if (total < 60) return `${total} s`;
   const minutes = Math.floor(total / 60);
   const rest = total % 60;
-  return rest === 0 ? `${minutes} min` : `${minutes} min ${rest} s`;
+  const min = locale === 'es' ? 'min' : 'min';
+  return rest === 0 ? `${minutes} ${min}` : `${minutes} ${min} ${rest} s`;
 }
 
 export interface AlignmentText {
@@ -1255,16 +1324,83 @@ export interface AlignmentText {
 }
 
 /**
- * El resultat, en català i llest per ensenyar.
+ * Per què no hi ha cap punt on plantar-se, dit amb les xifres del cas.
+ *
+ * Cada problema té la seva frase perquè cada problema demana una decisió
+ * diferent: si el Sol ja s'ha post no hi ha res a fer, si l'element és massa
+ * baix cal buscar-ne un altre, i si el punt cau massa lluny només cal eixamplar
+ * el límit. Una frase genèrica de «no es pot» les faria semblar el mateix.
+ */
+function impossibleHeadline(
+  outcome: AlignmentImpossible,
+  locale: AlignmentLocale,
+): string {
+  const { detail, problem, wouldNeedKm } = outcome;
+  const name = detail.targetName;
+  const target = of(name, locale);
+  const sun = detail.sunAltitudeDeg === null ? null : formatDeg(detail.sunAltitudeDeg, locale);
+  const maxKm = detail.maxDistanceKm;
+
+  switch (problem) {
+    case 'no-elevation':
+      return locale === 'es'
+        ? `No sabemos a qué cota está ${name}. Sin el modelo del terreno ni una cota dada no hay nada que calcular.`
+        : `No sabem a quina cota és ${name}. Sense el model del terreny ni una cota donada no hi ha res a calcular.`;
+
+    case 'no-contact': {
+      const noun =
+        detail.moment === null
+          ? locale === 'es'
+            ? 'ese contacto'
+            : 'aquell contacte'
+          : MOMENT_NOUN[detail.moment][locale];
+      return locale === 'es'
+        ? `Desde ${target} no hay ${noun}: el eclipse no llega a esa fase en este punto.`
+        : `Des ${target} no hi ha ${noun}: l’eclipsi no arriba a aquesta fase en aquest punt.`;
+    }
+
+    case 'sun-below-horizon':
+      return locale === 'es'
+        ? `En ese instante el Sol está a ${sun} de altura aparente. Por debajo del horizonte no hay ningún punto desde el que quede encima ${target}.`
+        : `En aquell instant el Sol és a ${sun} d’altura aparent. Per sota de l’horitzó no hi ha cap punt des d’on quedi damunt ${target}.`;
+
+    case 'target-too-low':
+      return locale === 'es'
+        ? `Con el Sol a ${sun}, ${name} no se levanta lo suficiente por encima del terreno de alrededor: la punta ya nace por debajo del Sol y ninguna distancia se la sube.`
+        : `Amb el Sol a ${sun}, ${name} no s’aixeca prou per damunt del terreny del voltant: la punta ja neix per sota del Sol i cap distància no l’hi puja.`;
+
+    case 'out-of-range': {
+      const top =
+        detail.topElevationM === null ? '' : ` (${Math.round(detail.topElevationM)} m)`;
+      if (wouldNeedKm === null) {
+        return locale === 'es'
+          ? `Con el Sol a ${sun}, la punta ${target}${top} todavía queda por encima del Sol a ${maxKm} km. La curvatura de la Tierra rebaja el elemento más deprisa de lo que el Sol baja.`
+          : `Amb el Sol a ${sun}, la punta ${target}${top} encara queda per damunt del Sol a ${maxKm} km. La curvatura de la Terra rebaixa l’element més de pressa del que el Sol hi baixa.`;
+      }
+      return locale === 'es'
+        ? `Con el Sol a ${sun} habría que ponerse a unos ${formatKm(wouldNeedKm, locale)} ${target}, más allá del límite de ${maxKm} km que has pedido.`
+        : `Amb el Sol a ${sun} caldria plantar-se a uns ${formatKm(wouldNeedKm, locale)} ${target}, més enllà del límit de ${maxKm} km que has demanat.`;
+    }
+  }
+}
+
+/**
+ * El resultat, llest per ensenyar.
  *
  * Aquí és on la incertesa es diu en veu alta: la tolerància de posició, el
  * terreny que no es veu, el model que no porta ni arbres ni edificis. Un punt
  * amb cinc decimals i sense cap d'aquestes frases seria una precisió falsa.
+ *
+ * L'IDIOMA VE PER DEFECTE EN CATALÀ perquè hi ha crides i proves anteriors a
+ * l'idioma; qui pinta text a la pantalla l'ha de passar SEMPRE.
  */
-export function describeAlignment(outcome: AlignmentOutcome): AlignmentText {
+export function describeAlignment(
+  outcome: AlignmentOutcome,
+  locale: AlignmentLocale = 'ca',
+): AlignmentText {
   if (!outcome.ok) {
     return {
-      headline: outcome.message,
+      headline: impossibleHeadline(outcome, locale),
       coordinates: null,
       approach: null,
       tolerance: null,
@@ -1273,108 +1409,151 @@ export function describeAlignment(outcome: AlignmentOutcome): AlignmentText {
     };
   }
 
-  const when =
-    outcome.moment === null ? 'a l’instant demanat' : MOMENT_LABEL[outcome.moment];
+  const es = locale === 'es';
+  const target = of(outcome.targetName, locale);
 
-  const headline =
-    `${when.charAt(0).toUpperCase()}${when.slice(1)}, el Sol queda damunt` +
-    ` ${of(outcome.targetName)} a ${formatDeg(outcome.sunAltitudeDeg)} d’altura,` +
-    ` ${towards(outcome.sunAzimuthDeg)}.`;
+  const when =
+    outcome.moment === null
+      ? es
+        ? 'en el instante pedido'
+        : 'a l’instant demanat'
+      : MOMENT_LABEL[outcome.moment][locale];
+
+  const headline = es
+    ? `${when.charAt(0).toUpperCase()}${when.slice(1)}, el Sol queda encima` +
+      ` ${target} a ${formatDeg(outcome.sunAltitudeDeg, locale)} de altura,` +
+      ` ${towards(outcome.sunAzimuthDeg, locale)}.`
+    : `${when.charAt(0).toUpperCase()}${when.slice(1)}, el Sol queda damunt` +
+      ` ${target} a ${formatDeg(outcome.sunAltitudeDeg, locale)} d’altura,` +
+      ` ${towards(outcome.sunAzimuthDeg, locale)}.`;
 
   const coordinates = `${outcome.point.lat.toFixed(5)}, ${outcome.point.lon.toFixed(5)}`;
 
-  const fromTarget =
-    `El punt és a ${formatKm(outcome.point.distanceKm)} ${of(outcome.targetName)},` +
-    ` ${towards(outcome.bearingFromTargetDeg)}, a` +
-    ` ${Math.round(outcome.point.groundElevationM)} m d’altitud.`;
+  const fromTarget = es
+    ? `El punto está a ${formatKm(outcome.point.distanceKm, locale)} ${target},` +
+      ` ${towards(outcome.bearingFromTargetDeg, locale)}, a` +
+      ` ${Math.round(outcome.point.groundElevationM)} m de altitud.`
+    : `El punt és a ${formatKm(outcome.point.distanceKm, locale)} ${target},` +
+      ` ${towards(outcome.bearingFromTargetDeg, locale)}, a` +
+      ` ${Math.round(outcome.point.groundElevationM)} m d’altitud.`;
 
   const approach =
     outcome.fromOrigin === null
       ? fromTarget
-      : `A ${formatKm(outcome.fromOrigin.distanceKm)} d’on ets,` +
-        ` ${towards(outcome.fromOrigin.bearingDeg)}, en línia recta.` +
-        ` ${fromTarget}`;
+      : es
+        ? `A ${formatKm(outcome.fromOrigin.distanceKm, locale)} de donde estás,` +
+          ` ${towards(outcome.fromOrigin.bearingDeg, locale)}, en línea recta.` +
+          ` ${fromTarget}`
+        : `A ${formatKm(outcome.fromOrigin.distanceKm, locale)} d’on ets,` +
+          ` ${towards(outcome.fromOrigin.bearingDeg, locale)}, en línia recta.` +
+          ` ${fromTarget}`;
 
-  const tolerance =
-    `Tens ${formatMeters(outcome.toleranceAlongM)} de marge endavant o endarrere i` +
-    ` ${formatMeters(outcome.toleranceLateralM)} de costat. Més enllà, la punta se surt del disc solar.`;
+  const tolerance = es
+    ? `Tienes ${formatMeters(outcome.toleranceAlongM, locale)} de margen adelante o atrás y` +
+      ` ${formatMeters(outcome.toleranceLateralM, locale)} de lado. Más allá, la punta se sale del disco solar.`
+    : `Tens ${formatMeters(outcome.toleranceAlongM, locale)} de marge endavant o endarrere i` +
+      ` ${formatMeters(outcome.toleranceLateralM, locale)} de costat. Més enllà, la punta se surt del disc solar.`;
 
-  const terrain = describeTerrain(outcome);
+  const terrain = describeTerrain(outcome, locale);
 
   const caveats: string[] = [];
 
   if (outcome.terrain.checked) {
     caveats.push(
-      'El model del terreny és de terreny nu: no hi ha ni arbres ni edificis. Comprova-ho sobre la imatge de la càmera.',
+      es
+        ? 'El modelo del terreno es de terreno desnudo: no hay ni árboles ni edificios. Compruébalo sobre la imagen de la cámara.'
+        : 'El model del terreny és de terreny nu: no hi ha ni arbres ni edificis. Comprova-ho sobre la imatge de la càmera.',
     );
     if (outcome.terrain.coverage < 1) {
+      const pct = Math.round((1 - outcome.terrain.coverage) * 100);
       caveats.push(
-        `Falten dades del terreny en un ${Math.round((1 - outcome.terrain.coverage) * 100)} % del recorregut: en aquests trams no sabem què hi ha.`,
+        es
+          ? `Faltan datos del terreno en un ${pct} % del recorrido: en esos tramos no sabemos qué hay.`
+          : `Falten dades del terreny en un ${pct} % del recorregut: en aquests trams no sabem què hi ha.`,
       );
     }
   }
 
   if (outcome.centralDurationSec !== null && outcome.centralDurationSec <= 0) {
     caveats.push(
-      'Des d’aquest punt no hi ha fase central: el Sol hi queda alineat però no del tot tapat.',
+      es
+        ? 'Desde este punto no hay fase central: el Sol queda alineado pero no del todo tapado.'
+        : 'Des d’aquest punt no hi ha fase central: el Sol hi queda alineat però no del tot tapat.',
     );
   } else if (outcome.centralDurationSec !== null) {
+    const dur = formatSeconds(outcome.centralDurationSec, locale);
     caveats.push(
-      `Al punt hi ha ${formatSeconds(outcome.centralDurationSec)} de fase central.`,
+      es ? `En el punto hay ${dur} de fase central.` : `Al punt hi ha ${dur} de fase central.`,
     );
   }
 
   if (outcome.edgeUncertain) {
     caveats.push(
-      'Ets a la vora de la franja, i allà el marge és més petit que l’error de les efemèrides (uns 2 segons d’arc): que hi hagi fase central no es pot donar per segur.',
+      es
+        ? 'Estás en el borde de la franja, y ahí el margen es más pequeño que el error de las efemérides (unos 2 segundos de arco): que haya fase central no se puede dar por seguro.'
+        : 'Ets a la vora de la franja, i allà el marge és més petit que l’error de les efemèrides (uns 2 segons d’arc): que hi hagi fase central no es pot donar per segur.',
     );
   }
 
   for (const other of outcome.alternatives) {
+    const where = `${formatKm(other.distanceKm, locale)} ${target}`;
     caveats.push(
-      `Sobre la mateixa línia l’alineació també es dona a` +
-        ` ${formatKm(other.distanceKm)} ${of(outcome.targetName)}` +
-        `${other.terrainClear ? '.' : ', però amb el terreny pel mig.'}`,
+      es
+        ? `Sobre la misma línea la alineación también se da a ${where}` +
+          `${other.terrainClear ? '.' : ', pero con el terreno de por medio.'}`
+        : `Sobre la mateixa línia l’alineació també es dona a ${where}` +
+          `${other.terrainClear ? '.' : ', però amb el terreny pel mig.'}`,
     );
   }
 
   return { headline, coordinates, approach, tolerance, terrain, caveats };
 }
 
-function describeTerrain(outcome: AlignmentSolution): string {
+function describeTerrain(outcome: AlignmentSolution, locale: AlignmentLocale): string {
   const t = outcome.terrain;
+  const es = locale === 'es';
+  const name = outcome.targetName;
+  const target = of(name, locale);
 
   if (t.skipped === 'too-close') {
-    return (
-      `El punt queda a ${formatKm(outcome.point.distanceKm)} ${of(outcome.targetName)}:` +
-      ' entremig no hi cap ni una cel·la del model del terreny, i per tant no hi ha res a comprovar. Mira-t’ho sobre la imatge de la càmera.'
-    );
+    return es
+      ? `El punto queda a ${formatKm(outcome.point.distanceKm, locale)} ${target}:` +
+          ' en medio no cabe ni una celda del modelo del terreno, así que no hay nada que comprobar. Míratelo sobre la imagen de la cámara.'
+      : `El punt queda a ${formatKm(outcome.point.distanceKm, locale)} ${target}:` +
+          ' entremig no hi cap ni una cel·la del model del terreny, i per tant no hi ha res a comprovar. Mira-t’ho sobre la imatge de la càmera.';
   }
 
   if (!t.checked) {
-    return `Sense dades del terreny: no s’ha pogut comprovar que des d’allà es vegi ${outcome.targetName}.`;
+    return es
+      ? `Sin datos del terreno: no se ha podido comprobar que desde ahí se vea ${name}.`
+      : `Sense dades del terreny: no s’ha pogut comprovar que des d’allà es vegi ${name}.`;
   }
 
   if (!t.clear) {
     const distance =
       t.foregroundDistanceKm === null
         ? ''
-        : ` L’obstacle és a ${formatKm(t.foregroundDistanceKm)} del punt.`;
-    return (
-      `El terreny del mig tapa ${outcome.targetName} per ${formatDeg(-t.marginDeg)}, i amb ell el Sol.` +
-      ` Des d’aquest punt no serveix.${distance}`
-    );
+        : es
+          ? ` El obstáculo está a ${formatKm(t.foregroundDistanceKm, locale)} del punto.`
+          : ` L’obstacle és a ${formatKm(t.foregroundDistanceKm, locale)} del punt.`;
+    return es
+      ? `El terreno de en medio tapa ${name} por ${formatDeg(-t.marginDeg, locale)}, y con él el Sol.` +
+          ` Desde este punto no sirve.${distance}`
+      : `El terreny del mig tapa ${name} per ${formatDeg(-t.marginDeg, locale)}, i amb ell el Sol.` +
+          ` Des d’aquest punt no serveix.${distance}`;
   }
 
   if (t.hiddenBaseM > 1) {
-    return (
-      `La punta es veu amb ${formatDeg(t.marginDeg)} de marge, però el terreny del mig` +
-      ` n’amaga els ${formatMeters(t.hiddenBaseM)} de baix.`
-    );
+    return es
+      ? `La punta se ve con ${formatDeg(t.marginDeg, locale)} de margen, pero el terreno de en medio` +
+          ` esconde los ${formatMeters(t.hiddenBaseM, locale)} de abajo.`
+      : `La punta es veu amb ${formatDeg(t.marginDeg, locale)} de marge, però el terreny del mig` +
+          ` n’amaga els ${formatMeters(t.hiddenBaseM, locale)} de baix.`;
   }
 
-  return (
-    `El terreny del mig no s’hi posa: ${outcome.targetName} es veu de dalt a baix,` +
-    ` amb ${formatDeg(t.marginDeg)} de marge.`
-  );
+  return es
+    ? `El terreno de en medio no se mete: ${name} se ve de arriba abajo,` +
+        ` con ${formatDeg(t.marginDeg, locale)} de margen.`
+    : `El terreny del mig no s’hi posa: ${name} es veu de dalt a baix,` +
+        ` amb ${formatDeg(t.marginDeg, locale)} de marge.`;
 }

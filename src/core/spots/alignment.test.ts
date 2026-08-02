@@ -389,7 +389,11 @@ describe('solveAlignment quan no hi ha solució', () => {
     expect(outcome.ok).toBe(false);
     if (outcome.ok) return;
     expect(outcome.problem).toBe('target-too-low');
-    expect(outcome.message).toContain('el pal');
+    // La frase ja no viatja dins del resultat: el resultat porta les xifres i
+    // el text el munta `describeAlignment`, que és qui sap en quin idioma va
+    // l'app. Aquí es comprova que el nom de l'element hi arribi.
+    expect(describeAlignment(outcome).headline).toContain('el pal');
+    expect(describeAlignment(outcome, 'es').headline).toContain('el pal');
     expect(outcome.wouldNeedKm).toBeNull();
   });
 
@@ -410,7 +414,7 @@ describe('solveAlignment quan no hi ha solució', () => {
     expect(outcome.wouldNeedKm).not.toBeNull();
     expect(outcome.wouldNeedKm as number).toBeGreaterThan(20);
     expect(outcome.wouldNeedKm as number).toBeLessThan(26);
-    expect(outcome.message).toContain('12 km');
+    expect(describeAlignment(outcome).headline).toContain('12 km');
   });
 
   it('amb el Sol post no hi ha cap punt on plantar-se', () => {
@@ -425,7 +429,8 @@ describe('solveAlignment quan no hi ha solució', () => {
     expect(outcome.ok).toBe(false);
     if (outcome.ok) return;
     expect(outcome.problem).toBe('sun-below-horizon');
-    expect(outcome.message).toContain('horitzó');
+    expect(describeAlignment(outcome).headline).toContain('horitzó');
+    expect(describeAlignment(outcome, 'es').headline).toContain('horizonte');
   });
 
   it('sense cota de l’element no s’inventa res', () => {
@@ -485,5 +490,104 @@ describe('describeAlignment', () => {
     ].join(' ');
     expect(all).not.toMatch(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u);
     expect(all).not.toContain('!');
+  });
+
+  /*
+   * EL CASTELLÀ, PROVAT PEÇA A PEÇA.
+   *
+   * Aquest mòdul es va escriure sencer en català perquè no el muntava ningú.
+   * Ara que va a la pantalla, una frase catalana enmig del castellà seria el
+   * mateix defecte que ja s'ha arreglat tres vegades en aquest projecte, i
+   * costa de veure a ull perquè el text el munten set funcions diferents.
+   */
+  describe('en castellà', () => {
+    it('cap tros del resultat no es queda en català', () => {
+      const text = describeAlignment(outcome, 'es');
+      expect(text.headline).toContain('el castell'); // el nom el posa l'usuari
+      expect(text.approach).toContain('donde estás');
+      expect(text.tolerance).toContain('margen');
+      expect(text.caveats.some((c) => c.includes('terreno desnudo'))).toBe(true);
+
+      const all = [
+        text.headline,
+        text.approach ?? '',
+        text.tolerance ?? '',
+        text.terrain ?? '',
+        ...text.caveats,
+      ].join(' ');
+      /*
+       * Paraules que només existeixen a la versió catalana. Si en surt cap, és
+       * que una branca s'ha quedat sense traduir.
+       *
+       * VAN AMB VORA DE PARAULA (`\b`) I NO AMB `toContain`: «margen» conté
+       * «marge» i «terreno» conté «terreny» retallat. Amb la comparació de
+       * subcadena, aquesta prova fallava sobre un text perfectament castellà —
+       * i una prova que crida el llop no la mira ningú a la tercera vegada.
+       */
+      for (const catalanism of [/\bdamunt\b/, /d’on ets/, /\bmarge\b/, /\bterreny\b/]) {
+        expect(all).not.toMatch(catalanism);
+      }
+    });
+
+      /*
+     * LA COMA DECIMAL, QUE AQUEST MÒDUL ESCRIVIA AMB PUNT.
+     *
+     * `toFixed` dona «6.23°» i tota la resta de l'app escriu «6,23°». Amb els
+     * dos textos un sota l'altre a la mateixa fitxa del mapa, la barreja fa
+     * dubtar de les dues xifres —és el mateix defecte que ESTAT.md ja recull
+     * per a `formatDegrees`.
+     */
+    it('les xifres van amb coma decimal, com la resta de l’app', () => {
+      for (const locale of ['ca', 'es'] as const) {
+        const text = describeAlignment(outcome, locale);
+        const all = [text.headline, text.approach ?? '', text.tolerance ?? ''].join(' ');
+        // Un dígit, un punt i un dígit és la firma de `toFixed`.
+        expect(all).not.toMatch(/\d\.\d/);
+        expect(all).toMatch(/\d,\d/);
+      }
+    });
+
+  it('els cinc problemes tenen frase en totes dues llengües', () => {
+      const cases = [
+        // sense cota: no hi ha model ni cota donada
+        solveAlignment({
+          eclipseId: ECLIPSE,
+          target: { name: 'el cim desconegut', lat: SORIA.lat, lon: SORIA.lon },
+          moment: 'c2',
+        }),
+        // element massa baix
+        solveAlignment({
+          eclipseId: ECLIPSE,
+          target: { name: 'el pal', lat: SORIA.lat, lon: SORIA.lon, heightAboveGroundM: 1 },
+          moment: 'c2',
+          elevation: flatGround,
+        }),
+        // fora de radi
+        solveAlignment({
+          eclipseId: ECLIPSE,
+          target: tower(3000),
+          moment: 'c2',
+          elevation: flatGround,
+          maxDistanceKm: 12,
+        }),
+        // Sol post
+        solveAlignment({
+          eclipseId: ECLIPSE,
+          target: tower(100),
+          atUtcMs: Date.UTC(2026, 7, 12, 21, 29, 0),
+          elevation: flatGround,
+        }),
+      ];
+
+      for (const c of cases) {
+        expect(c.ok).toBe(false);
+        for (const locale of ['ca', 'es'] as const) {
+          const text = describeAlignment(c, locale);
+          expect(text.headline.length).toBeGreaterThan(20);
+          expect(text.headline).not.toContain('undefined');
+          expect(text.headline).not.toContain('null');
+        }
+      }
+    });
   });
 });

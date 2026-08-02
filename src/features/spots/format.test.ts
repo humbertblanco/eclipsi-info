@@ -8,6 +8,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { compassName } from '../../core/spots/grid';
 import {
   NBSP,
   bearingPhrase,
@@ -76,6 +77,38 @@ describe('rumbs', () => {
       expect(frase.startsWith('cap al ') || frase.startsWith('cap a l’')).toBe(true);
       expect(frase).not.toMatch(/cap al [aeiou]/);
     }
+  });
+
+  /*
+   * EL CASTELLÀ NO ÉS UN AFEGIT COSMÈTIC: aquest cercador es va escriure sencer
+   * en català perquè no es muntava enlloc. En muntar-lo, una sola frase
+   * catalana a la llista de qui té l'app en castellà és el mateix defecte que
+   * ja ha calgut arreglar amb el veredicte, amb el guió de la totalitat i amb
+   * la zona de la realitat augmentada.
+   */
+  it('en castellà l’article no s’apostrofa mai', () => {
+    expect(bearingPhrase(0, 'es')).toBe('hacia el norte');
+    expect(bearingPhrase(90, 'es')).toBe('hacia el este');
+    expect(bearingPhrase(270, 'es')).toBe('hacia el oeste');
+    expect(bearingPhrase(283.5, 'es')).toBe('hacia el oeste-noroeste');
+  });
+
+  it('la rosa castellana té els setze rumbs i cap d’ells no és el català', () => {
+    const ca = new Set<string>();
+    for (let deg = 0; deg < 360; deg += 22.5) {
+      ca.add(compassName(deg, 'ca'));
+      const es = compassName(deg, 'es');
+      expect(es.length).toBeGreaterThan(0);
+      // Si una entrada de la taula castellana s'oblidés, `undefined` petaria
+      // aquí; si es copiés del català, ho cacem amb la comparació de sota.
+      expect(es).not.toBe(compassName(deg, 'ca'));
+    }
+    expect(ca.size).toBe(16);
+  });
+
+  it('el rumb per defecte segueix essent el català', () => {
+    // Hi ha crides antigues sense idioma i han de continuar dient el mateix.
+    expect(compassName(45)).toBe(compassName(45, 'ca'));
   });
 });
 

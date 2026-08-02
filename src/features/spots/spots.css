@@ -144,10 +144,34 @@
   gap: var(--sp-4);
 }
 
-/* El veredicte, llegible de reüll. */
-.spotcard--clear { border-left: var(--bw-thick) solid var(--status-clear); }
-.spotcard--partial { border-left: var(--bw-thick) solid var(--status-partial); }
-.spotcard--cloudy { border-left: var(--bw-thick) solid var(--status-cloudy); }
+/*
+ * El veredicte, llegible de reüll.
+ *
+ * AQUÍ HI HAVIA UNA VORA ESQUERRA DE COLOR, i el sistema les prohibeix (el
+ * color va a la caixa sencera, no a una ratlla lateral). Es podia mantenir
+ * mentre aquest component no es muntava enlloc; en obrir-lo al mapa deixa de
+ * ser un deute teòric i passa a ser una targeta que no s'assembla a cap altra
+ * de l'app.
+ *
+ * El substitut és el mateix recurs de `Badge` i de `.shell__alert`: el to
+ * apagat de l'estat com a fons i la vora del mateix color a tot el perímetre.
+ * A 390 px es distingeix igual de reüll i, a diferència de la ratlla, no fa
+ * que la targeta sembli una cita.
+ */
+.spotcard--clear {
+  border: var(--bw-hair) solid var(--status-clear);
+  background: var(--status-clear-quiet);
+}
+
+.spotcard--partial {
+  border: var(--bw-hair) solid var(--status-partial);
+  background: var(--status-partial-quiet);
+}
+
+.spotcard--cloudy {
+  border: var(--bw-hair) solid var(--status-cloudy);
+  background: var(--status-cloudy-quiet);
+}
 
 .spotcard__head {
   display: flex;

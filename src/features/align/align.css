@@ -1,0 +1,227 @@
+/*
+ * Alineació Sol–element.
+ *
+ * Calca l'estructura de `features/spots/spots.css`, que és el panell germà: el
+ * mateix ritme vertical, la mateixa barra de progrés i les mateixes targetes.
+ * Dos panells que fan la mateixa mena de feina no poden semblar de dues
+ * aplicacions diferents.
+ *
+ * CAP VORA ESQUERRA DE COLOR: el sistema les prohibeix. El color, quan cal, va
+ * a la caixa sencera.
+ */
+
+.alignpanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.alignpanel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.alignpanel__title {
+  margin: 0;
+  font: var(--type-title-sm);
+  color: var(--text-strong);
+}
+
+.alignpanel__lead {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-muted);
+  font: var(--type-body-sm);
+  max-width: 46ch;
+}
+
+.alignpanel__note {
+  margin: 0;
+  color: var(--text-muted);
+  font: var(--type-body-sm);
+}
+
+.alignpanel__error {
+  margin: 0;
+  color: var(--status-danger);
+  font: var(--type-body-sm);
+}
+
+/* ------------------------------------------------------------- formulari */
+
+/*
+ * `fieldset` sense vora ni farciment: es fa servir pel que val de debò, que és
+ * lligar la `legend` amb els camps per als lectors de pantalla. La vora del
+ * navegador no s'assembla a res de la resta de l'app.
+ */
+.alignpanel__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.alignpanel__chosen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-inset);
+}
+
+.alignpanel__chosenname {
+  margin: 0;
+  color: var(--text-strong);
+}
+
+/* ------------------------------------------------------------ tria del cim */
+
+.alignpicker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.alignpicker__hits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*
+ * Cada resultat és un objectiu de dit: `--tap-min` és el mínim del sistema i
+ * aquesta llista es fa servir a fora, amb guants i amb el braç estirat.
+ */
+.alignpicker__hit {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.alignpicker__hit:hover,
+.alignpicker__hit:focus-visible {
+  background: var(--surface-inset);
+}
+
+.alignpicker__hitname {
+  color: var(--text-strong);
+}
+
+.alignpicker__hitdetail {
+  color: var(--text-muted);
+  font: var(--type-body-sm);
+}
+
+.alignpicker__coords {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: var(--bw-hair) solid var(--border-hairline);
+}
+
+/* --------------------------------------------------------------- progrés */
+
+.alignpanel__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/*
+ * La barra va en blau (`--status-info`) i no en ambre pel mateix motiu que la
+ * del cercador de llocs: informa, no és ni una acció ni un veredicte.
+ */
+.alignprogress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-inset);
+  overflow: hidden;
+}
+
+.alignprogress__fill {
+  display: block;
+  height: 100%;
+  background: var(--status-info);
+  transition: width var(--motion-fast) linear;
+}
+
+/* -------------------------------------------------------------- resultat */
+
+.alignresult {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.alignresult__headline {
+  margin: 0;
+  color: var(--text-strong);
+}
+
+.alignresult__line {
+  margin: 0;
+  color: var(--text-body);
+  font: var(--type-body-sm);
+}
+
+.alignresult__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: 0;
+}
+
+.alignresult__meta dt {
+  color: var(--text-muted);
+  font: var(--type-body-sm);
+}
+
+.alignresult__meta dd {
+  margin: 0;
+  color: var(--text-strong);
+}
+
+/*
+ * Els avisos van en llista i no en un paràgraf seguit: cadascun és una raó
+ * independent per no anar-hi, i enganxats es llegeixen com un sol matís.
+ */
+.alignresult__caveats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding-left: var(--sp-4);
+  color: var(--text-muted);
+  font: var(--type-body-sm);
+}
+
+.alignresult__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.alignresult__map {
+  color: var(--text-muted);
+  font: var(--type-body-sm);
+}

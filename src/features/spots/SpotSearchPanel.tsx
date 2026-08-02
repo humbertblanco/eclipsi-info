@@ -21,20 +21,26 @@
  */
 
 import type { GeoLocation } from '../../core/astro/types';
+import type { SpotResult } from '../../core/spots/types';
 import type { SpotsWorkerOptions } from '../../workers/spots.worker';
+import type { Locale } from '../../i18n';
 import { Button, Card } from '../../ui';
 import { SpotFunnelCost } from './SpotFunnelCost';
 import { SpotList } from './SpotList';
 import { formatPercent } from './format';
+import { sp } from './strings';
 import { useSpotSearch } from './useSpotSearch';
 import './spots.css';
 
 export interface SpotSearchPanelProps {
   eclipseId: string;
+  locale: Locale;
   /** `null` mentre no se sap on és l'usuari. El panell ho diu i espera. */
   origin: GeoLocation | null;
   /** Paràmetres de l'embut. Es llegeixen en prémer el botó. */
   options?: SpotsWorkerOptions;
+  /** Fer d'un resultat el punt de l'app. Es passa avall fins a cada targeta. */
+  onSelect?: (spot: SpotResult) => void;
   /**
    * Ensenya el desglossament del cost de cada etapa. Va destinat a qui toqui
    * els paràmetres, no a qui busca un lloc.
@@ -45,12 +51,20 @@ export interface SpotSearchPanelProps {
 
 export function SpotSearchPanel({
   eclipseId,
+  locale,
   origin,
   options,
-  showCost = false,
+  onSelect,
+  // La taula de cost és un diagnòstic d'enginyeria, no una funció d'usuari:
+  // visible a `npm run dev` per mesurar el cercador, fora del build de
+  // producció — una app que no demana res sense explicar-ho no planta una
+  // taula de set columnes davant d'algú que vol saber on posar-se.
+  showCost = import.meta.env.DEV,
   className,
 }: SpotSearchPanelProps) {
-  const { status, progress, outcome, error, canSearch, search, cancel } = useSpotSearch({
+  // `error` no es llegeix a posta: el que en surt és text del motor, en català
+  // i tècnic. A la pantalla hi va la frase traduïda de `panel.failed`.
+  const { status, progress, outcome, canSearch, search, cancel } = useSpotSearch({
     eclipseId,
     origin,
     options,
@@ -63,15 +77,12 @@ export function SpotSearchPanel({
     <section className={['spotpanel', className ?? ''].filter(Boolean).join(' ')}>
       <header className="spotpanel__head">
         <div>
-          <h3 className="spotpanel__title">On m’he de plantar</h3>
-          <p className="spotpanel__lead">
-            Escombra el voltant i creua la trajectòria del Sol amb el relleu real
-            de cada punt.
-          </p>
+          <h3 className="spotpanel__title">{sp('panel.title', locale)}</h3>
+          <p className="spotpanel__lead">{sp('panel.lead', locale)}</p>
         </div>
         {running ? (
           <Button variant="secondary" icon="timer" onClick={cancel}>
-            Atura
+            {sp('panel.stop', locale)}
           </Button>
         ) : (
           <Button
@@ -80,15 +91,17 @@ export function SpotSearchPanel({
             onClick={search}
             disabled={!canSearch}
           >
-            {teResultats ? 'Torna a cercar' : 'Busca llocs'}
+            {teResultats ? sp('panel.searchAgain', locale) : sp('panel.search', locale)}
           </Button>
         )}
       </header>
 
-      {origin === null && (
-        <p className="spotpanel__wait">
-          Cal saber on ets per poder buscar-hi al voltant.
-        </p>
+      {origin === null && <p className="spotpanel__wait">{sp('panel.needOrigin', locale)}</p>}
+
+      {/* El cost de dades es diu ABANS de prémer, que és quan encara es pot
+          decidir. Un cop la cerca corre, l'avís seria una factura. */}
+      {origin !== null && !running && outcome === null && (
+        <p className="spotpanel__wait">{sp('panel.dataWarning', locale)}</p>
       )}
 
       {running && progress && (
@@ -99,7 +112,7 @@ export function SpotSearchPanel({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(progress.ratio * 100)}
-            aria-label="Progrés de la cerca"
+            aria-label={sp('panel.progressLabel', locale)}
           >
             <span
               className="spotprogress__fill"
@@ -107,23 +120,36 @@ export function SpotSearchPanel({
             />
           </div>
           <p className="spotpanel__stage">
-            <span>{progress.message}</span>
-            <span className="eclipsi-data">{formatPercent(progress.ratio)}</span>
+            {/*
+              L'ETAPA, NO EL `message` DEL MOTOR.
+
+              `SpotSearchProgress` porta un `message` que `core/spots/search.ts`
+              escriu en català. Fer-lo servir aquí posaria una frase catalana a
+              la pantalla de qui té l'app en castellà — el mateix defecte que ja
+              ha calgut arreglar tres vegades. L'etapa és un codi i el text surt
+              de `strings.ts`.
+            */}
+            <span>{sp(`stage.${progress.stage}`, locale)}</span>
+            <span className="eclipsi-data">{formatPercent(progress.ratio, locale)}</span>
           </p>
         </div>
       )}
 
       {status === 'cancelled' && (
-        <p className="spotpanel__wait">Cerca aturada. No s’ha baixat res més.</p>
+        <p className="spotpanel__wait">{sp('panel.cancelled', locale)}</p>
       )}
 
-      {status === 'error' && error && <p className="spotpanel__error">{error}</p>}
+      {status === 'error' && <p className="spotpanel__error">{sp('panel.failed', locale)}</p>}
 
-      {outcome && <SpotList outcome={outcome} />}
+      {outcome && <SpotList outcome={outcome} locale={locale} onSelect={onSelect} />}
 
       {showCost && outcome && (
         <Card tone="inset" padding="var(--sp-4)">
-          <SpotFunnelCost cost={outcome.cost} candidates={outcome.candidates} />
+          <SpotFunnelCost
+            cost={outcome.cost}
+            candidates={outcome.candidates}
+            locale={locale}
+          />
         </Card>
       )}
     </section>

@@ -158,6 +158,21 @@ const STRINGS = {
   'map.view.band': { ca: 'Franja', es: 'Franja' },
   'map.view.clouds': { ca: 'Núvols', es: 'Nubes' },
   'map.view.move': { ca: 'Durada', es: 'Duración' },
+  /*
+   * La quarta vista: el cercador de llocs.
+   *
+   * «Llocs» i no «Cercador» perquè el que hi trobes són llocs concrets on
+   * plantar-te, i perquè a la barra segmentada hi caben quatre etiquetes de
+   * mòbil justes: la paraula més curta que digui la veritat guanya.
+   */
+  'map.view.spots': { ca: 'Llocs', es: 'Sitios' },
+  /*
+   * La cinquena vista: l'alineació Sol–cim.
+   *
+   * «Enquadra» i no «Alineació» perquè és el que en fa qui la vol: enquadrar el
+   * Sol damunt d'una cosa. La paraula tècnica la sap el motor; la barra, no cal.
+   */
+  'map.view.align': { ca: 'Enquadra', es: 'Encuadra' },
   'map.legend.band': { ca: 'Franja de centralitat', es: 'Franja de centralidad' },
   'map.legend.center': { ca: 'Línia central', es: 'Línea central' },
   'map.gradientFlat': {
@@ -567,6 +582,18 @@ const STRINGS = {
   'camera.lockTerrain': { ca: 'Terreny fixat', es: 'Terreno fijado' },
   'camera.lockBoth': { ca: 'Sol + terreny', es: 'Sol + terreno' },
   'camera.capture': { ca: 'Captura i comparteix la vista', es: 'Captura y comparte la vista' },
+  'map.toCenter': { ca: 'A la línia central', es: 'A la línea central' },
+  /*
+   * EL TEXT DEL GEST DEL MAPA, QUE DIU EL QUE EL GEST FA ARA.
+   *
+   * Abans prometia «sense perdre el teu punt», que era veritat mentre el clic
+   * només obria una previsualització. Ara el clic ÉS el canvi de punt, i
+   * deixar la frase antiga seria pitjor que no tenir-ne cap.
+   */
+  'map.pickNote': {
+    ca: 'Toca qualsevol punt del mapa i passa a ser el teu: es recalcula tot, a totes les pantalles. Els llocs que toquis queden a l’historial.',
+    es: 'Toca cualquier punto del mapa y pasa a ser el tuyo: se recalcula todo, en todas las pantallas. Los lugares que toques quedan en el historial.',
+  },
   'camera.diag.slew': { ca: 'Límit de correcció', es: 'Límite de corrección' },
   'camera.diag.slewClamped': { ca: 'retallant', es: 'recortando' },
   'camera.diag.pitchDegraded': {
@@ -671,6 +698,49 @@ const STRINGS = {
   'guide.unsafeBody': {
     ca: 'Des d’aquest punt no hi ha fase central. Filtre certificat de C1 a C4, sense excepció.',
     es: 'Desde este punto no hay fase central. Filtro certificado de C1 a C4, sin excepción.',
+  },
+
+  /* --- guia: els tres eclipsis, des d'aquí ---
+   *
+   * Les xifres d'aquestes frases sempre arriben ja formatades des de la
+   * pantalla (`formatDuration`, `formatDegrees`, `formatObscurationPercent`):
+   * cap forat d'aquí no rep un número cru. Si es passés un número i s'hi
+   * afegís la unitat dins de la frase, tornaríem a tenir una regla de format
+   * escrita per separat, que és exactament el defecte que documenta
+   * `core/astro/obscuration.ts`.
+   */
+  'three.title': { ca: 'Els tres eclipsis, des d’aquí', es: 'Los tres eclipses, desde aquí' },
+  'three.intro': {
+    ca: 'Els tres calculats per a les teves coordenades, no llegits de cap taula. El perfil de l’horitzó depèn del lloc i no de l’eclipsi: el mateix relleu que tens al voltant val per als tres.',
+    es: 'Los tres calculados para tus coordenadas, no leídos de ninguna tabla. El perfil del horizonte depende del lugar y no del eclipse: el mismo relieve que tienes alrededor vale para los tres.',
+  },
+  'three.selected': { ca: 'El que tens triat', es: 'El que tienes elegido' },
+  'three.max': { ca: 'Màxim', es: 'Máximo' },
+  /* El que sobreviu al relleu, quan el terreny en roba una part. */
+  'three.terrainEats': {
+    ca: 'Des d’aquí el relleu se’n menja {lost} dels {total}.',
+    es: 'Desde aquí el relieve se come {lost} de los {total}.',
+  },
+  /*
+   * La frase que cap altra app pot dir: amb el Sol alt, el terreny deixa de
+   * decidir. Les dues altures van juntes perquè la conclusió és la RESTA, i
+   * donar-ne només una obligaria a creure’ns.
+   */
+  'three.terrainClear': {
+    ca: 'Sol a {alt} i terreny a {horizon} en aquell azimut: aquí el relleu no hi compta.',
+    es: 'Sol a {alt} y terreno a {horizon} en ese acimut: aquí el relieve no cuenta.',
+  },
+  'three.terrainPending': {
+    ca: 'El perfil del terreny d’aquest punt encara no està calculat: aquestes durades són les teòriques, amb horitzó pla.',
+    es: 'El perfil del terreno de este punto todavía no está calculado: estas duraciones son las teóricas, con horizonte plano.',
+  },
+  'three.maxBlocked': {
+    ca: 'Al màxim el Sol ja queda darrere el terreny.',
+    es: 'En el máximo el Sol ya queda detrás del terreno.',
+  },
+  'three.noCentral': {
+    ca: 'Des d’aquest punt no hi ha fase central: com a màxim, {pct} del disc solar tapat.',
+    es: 'Desde este punto no hay fase central: como máximo, {pct} del disco solar tapado.',
   },
 
   /* --- escriptori: taula d'efemèrides --- */

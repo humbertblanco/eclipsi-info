@@ -501,6 +501,27 @@
   display: grid;
 }
 
+/* Columnes per AMPLADA MÍNIMA i no per nombre: amb cinc opcions dins de la
+   fitxa del mapa (230 px a l'escriptori) cada etiqueta rebia 44 px i es llegia
+   «Fr…», «N…», «E…». Amb `auto-fit`, on hi caben totes queden en una fila i on
+   no, baixen senceres. El radi de pastilla del contenidor aguanta les dues
+   files perquè el farciment és el mateix.
+
+   D'ON SURT EL MÍNIM: 4,75 rem són 76 px, que és el que ocupa l'etiqueta més
+   llarga del mapa —«Enquadra»— amb el seu farciment. Amb menys, torna a sortir
+   retallada; amb més, a 230 px hi cabrien dues columnes i les cinc opcions
+   demanarien tres files. */
+.ui-seg--wrap {
+  grid-template-columns: repeat(auto-fit, minmax(4.75rem, 1fr));
+}
+
+/* El farciment lateral de 20 px està calculat per a una fila de tres opcions
+   amples. Amb cinc, se'l menja tot i l'etiqueta torna a sortir amb punts
+   suspensius: en mode `wrap`, l'espai el reparteix la graella. */
+.ui-seg--wrap .ui-seg__opt {
+  padding: 0 var(--sp-2);
+}
+
 /* 44 px, no 40. Aquest és el commutador de mode de la càmera i del mapa: es fa
    servir dret, a fora, amb una sola mà i sovint amb guants o amb el mòbil
    sostingut cap amunt. `--sp-9` (40 px) quedava per sota del mínim tàctil del

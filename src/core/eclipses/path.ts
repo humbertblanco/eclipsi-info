@@ -811,6 +811,61 @@ export function eclipsePathToGeoJson(path: EclipsePath): EclipsePathGeoJson {
  * (errors per sota del metre en distàncies de desenes de km) i evita
  * l'aritmètica delicada de la fórmula d'haversine amb angles minúsculs.
  */
+/** Km per grau de latitud: constant de l'el·lipsoide, prou fina aquí. */
+const KM_PER_DEG_LAT = 111.32;
+
+/**
+ * Distància mínima d'un punt a la línia central DIBUIXADA, en km.
+ *
+ * És geometria sobre la polilínia del mapa i no una derivada del marge umbral
+ * a posta: el número ha de coincidir amb la línia que l'usuari té davant, i la
+ * linealització marge/gradient es queda curta lluny del límit. Equirectangular
+ * local al punt amb projecció sobre cada segment: la línia és suau i els
+ * segments fan ~60 km, o sigui que prop del mínim —que és l'únic tram que
+ * decideix res— l'error és de metres.
+ *
+ * Vivia a MapScreen amb una nota que demanava mudar-se aquí, al costat
+ * d'`approxDistanceKm`. Feta la mudança, tal qual.
+ */
+export function distanceToCenterLineKm(
+  point: { lat: number; lon: number },
+  line: readonly PathPoint[],
+): number | null {
+  if (line.length === 0) return null;
+  const kmPerDegLon = KM_PER_DEG_LAT * Math.cos(point.lat * DEG);
+
+  // Coordenades locals en km. La longitud del camí ve DESENROTLLADA (aquest
+  // fitxer no la redueix a ±180° per poder creuar l'antimeridià sense
+  // ratlles); la diferència es normalitza perquè el punt tocat sí que arriba
+  // normalitzat.
+  const xy = line.map((q) => {
+    const dLon = ((((q.lon - point.lon + 180) % 360) + 360) % 360) - 180;
+    return { x: dLon * kmPerDegLon, y: (q.lat - point.lat) * KM_PER_DEG_LAT };
+  });
+
+  let best = Infinity;
+  for (let i = 0; i < xy.length; i++) {
+    const a = xy[i];
+    best = Math.min(best, Math.hypot(a.x, a.y));
+
+    const b = xy[i + 1];
+    if (b === undefined) continue;
+    // Si la normalització ha partit el segment per l'antimeridià, projectar-hi
+    // dibuixaria una corda falsa travessant mig món. Es salta, i hi queden les
+    // distàncies als dos extrems, que allà són la resposta honesta.
+    if (Math.abs(b.x - a.x) > 90 * kmPerDegLon) continue;
+
+    const abx = b.x - a.x;
+    const aby = b.y - a.y;
+    const len2 = abx * abx + aby * aby;
+    if (len2 < 1e-9) continue;
+    const t = -(a.x * abx + a.y * aby) / len2;
+    if (t <= 0 || t >= 1) continue;
+    best = Math.min(best, Math.hypot(a.x + t * abx, a.y + t * aby));
+  }
+  return Number.isFinite(best) ? best : null;
+}
+
 export function approxDistanceKm(
   a: { lat: number; lon: number },
   b: { lat: number; lon: number },
