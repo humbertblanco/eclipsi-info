@@ -221,6 +221,46 @@ describe('el seguidor mesura el gir que se li ha aplicat', () => {
     expect(r.yawRad * RAD).toBeCloseTo(1, 1);
     expect(Math.abs(r.pitchRad * RAD)).toBeLessThan(0.06);
     expect(r.confidence).toBeGreaterThan(0.8);
+    // La graella de 3×5: amb tota l'escena texturada hi treballen els quinze
+    // blocs i el braç de palanca vertical és sa.
+    expect(r.usedBlocks).toBeGreaterThanOrEqual(12);
+    expect(r.pitchDegraded).toBe(false);
+  });
+
+  it('el cel es menja les files de dalt i el pitch ho diu en veu alta', () => {
+    // Panorama amb cel llis per sobre de l'horitzó: apuntant a 10° amunt,
+    // només les dues files de baix del fotograma toquen terreny. El pitch
+    // queda mal condicionat — és el desplaçament vertical comú de dues files
+    // veïnes — i la mesura ho ha de DIR, no sortir amb la cara d'una de bona.
+    // (Amb el tall més amunt, tres files sobreviuen i la graella de cinc se'n
+    // surt sola: és exactament el marge que les cinc files compren.)
+    const skyless = (azDeg: number, altDeg: number) =>
+      altDeg > 0 ? 128 : panorama(azDeg, altDeg);
+
+    const tracker = new FrameTracker();
+    tracker.measure(renderFrame(skyless, geometry, pose(270, 10)), geometry, null);
+    const r = tracker.measure(renderFrame(skyless, geometry, pose(270.8, 10)), geometry, null);
+    expect(r).not.toBeNull();
+    expect(r!.pitchDegraded).toBe(true);
+    // El yaw no en té culpa: segueix sortint bé amb les files que queden.
+    expect(r!.yawRad * RAD).toBeCloseTo(0.8, 1);
+  });
+
+  it('una rampa d’exposició no desplaça la mesura', () => {
+    // L'autoexposició dispara un +15% de guany quan el cel entra al quadre.
+    // El SAD hi és força insensible però el subpíxel per gradients no: sense
+    // igualar el guany, el gradient temporal global es llegia com a moviment.
+    const tracker = new FrameTracker();
+    tracker.measure(renderFrame(panorama, geometry, pose(270, 10)), geometry, null);
+    const r = tracker.measure(
+      renderFrameRS(panorama, geometry, () => pose(270.5, 10), { gain: 1.15 }),
+      geometry,
+      null,
+    );
+    expect(r).not.toBeNull();
+    expect(r!.confidence).toBeGreaterThan(0.35);
+    expect(r!.yawRad * RAD).toBeCloseTo(0.5, 1);
+    expect(Math.abs(r!.pitchRad * RAD)).toBeLessThan(0.1);
   });
 
   it('una inclinació cap amunt dona pitch POSITIU i de la mida correcta', () => {
@@ -235,14 +275,39 @@ describe('el seguidor mesura el gir que se li ha aplicat', () => {
     expect(r.pitchRad * RAD).toBeCloseTo(-1, 1);
   });
 
-  it('un gir de canell es mesura com a roll i no com a translació', () => {
+  it('un gir de canell es mesura com a roll SIGNAT i no com a translació', () => {
     const r = measureBetween(panorama, geometry, pose(270, 10, 0), pose(270, 10, 2));
-    // El signe és el del gir de la càmera al voltant de l'eix òptic.
-    expect(Math.abs(r.rollRad * RAD)).toBeCloseTo(2, 1);
+    // EL SIGNE EL FIXA AQUEST BANC, no cap raonament sobre convencions: la
+    // pista de roll d'ARView usa exactament aquesta relació (camera.roll que
+    // creix ⇒ rollRad que el seguidor mesura) i si algú la canvia, això es
+    // posa vermell abans que la pista saturi els blocs del cantó al carrer.
+    expect(r.rollRad * RAD).toBeGreaterThan(1.8);
+    expect(r.rollRad * RAD).toBeLessThan(2.3);
     // I sobretot: NO s'ha de confondre amb un canvi d'azimut o d'altura, que és
     // el que passava amb la mediana de translacions.
     expect(Math.abs(r.yawRad * RAD)).toBeLessThan(0.15);
     expect(Math.abs(r.pitchRad * RAD)).toBeLessThan(0.15);
+  });
+
+  it('la pista de roll manté vius els blocs del cantó en un cop de canell', () => {
+    // Un cop de canell de 8° per fotograma desplaça els blocs de les
+    // cantonades més enllà del radi de cerca. Sense pista es descarten en
+    // silenci — i són justament els que porten el braç de palanca del pitch i
+    // del roll. Amb la pista del sensor — el MATEIX signe que acaba de clavar
+    // el test de dalt — la cerca hi va centrada i sobreviuen.
+    const blind = measureBetween(panorama, geometry, pose(270, 10, 0), pose(270, 10, 8));
+
+    const tracker = new FrameTracker();
+    tracker.measure(renderFrame(panorama, geometry, pose(270, 10, 0)), geometry, null);
+    const hinted = tracker.measure(
+      renderFrame(panorama, geometry, pose(270, 10, 8)),
+      geometry,
+      { pitchRad: 0, yawRad: 0, rollRad: 8 * DEG },
+    );
+    expect(hinted).not.toBeNull();
+    expect(hinted!.saturated).toBe(false);
+    expect(hinted!.usedBlocks).toBeGreaterThan(blind.usedBlocks);
+    expect(hinted!.rollRad * RAD).toBeCloseTo(8, 0);
   });
 
   it('mesura girs molt per sota d’un píxel de graella (subpíxel)', () => {

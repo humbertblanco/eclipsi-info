@@ -305,7 +305,7 @@ export function ARView({
   const viewportRef = useRef<Viewport | null>(null);
   const diagnosticsRef = useRef<TrackingDiagnostics>(INITIAL_DIAGNOSTICS);
   /** Postura del sensor l'últim cop que va arribar un fotograma de càmera. */
-  const sensorAtFrameRef = useRef<{ az: number; alt: number } | null>(null);
+  const sensorAtFrameRef = useRef<{ az: number; alt: number; imageRoll: number } | null>(null);
   const lastDrawMsRef = useRef<number | null>(null);
   /** Camp de visió mesurat, en graus sobre el costat llarg del sensor. */
   const measuredFovRef = useRef<number | null>(null);
@@ -675,7 +675,14 @@ export function ARView({
       const video = videoRef.current;
 
       // ---- Ancoratge visual, només amb fotograma NOU de càmera -------------
-      const newFrame = video !== null && frameClockRef.current.consume();
+      const framesConsumed = video !== null ? frameClockRef.current.consume() : 0;
+      const newFrame = framesConsumed > 0;
+      // Dos fotogrames de càmera fosos en un fotograma de dibuix: la mesura
+      // cobriria el doble d'interval. Es mesura igualment — cal que el
+      // fotograma de referència del seguidor es refresqui — però el resultat
+      // es descarta i la fusió integra el sensor, que sí que sap quant temps
+      // ha passat.
+      const mergedFrames = framesConsumed > 1;
       let visual: VisualRotation | null = null;
 
       if (newFrame && video) {
@@ -705,11 +712,20 @@ export function ARView({
               imageRoll,
               camera.altitude,
             );
-            hint = { ...sensorStep, rollRad: 0 };
+            // El roll també es prediu: el gir de canell acompanya el gest
+            // d'inclinar, i sense la seva pista desplaça primer els blocs de
+            // les cantonades — els que porten el braç de palanca del pitch.
+            // El signe (roll del sensor que creix ⇒ roll que mesura el
+            // seguidor) el clava el banc: «un gir de canell es mesura com a
+            // roll SIGNAT».
+            hint = {
+              ...sensorStep,
+              rollRad: normalizeAngle(imageRoll - previous.imageRoll) * (Math.PI / 180),
+            };
           }
-          sensorAtFrameRef.current = { az: camera.azimuth, alt: camera.altitude };
 
           visual = trackerRef.current.measure(video, geometry, hint);
+          if (mergedFrames) visual = null;
 
           if (
             visual &&
@@ -787,6 +803,16 @@ export function ARView({
             residualPx: visual?.residualPx ?? 0,
           };
         }
+
+        // La referència de la pista s'actualitza a CADA fotograma de càmera,
+        // també si la geometria ha sortit nul·la un instant: si no, la pista
+        // següent abastaria dos intervals i aniria el doble de lluny del
+        // compte — i contaminaria l'estimador de focal amb un parell fals.
+        sensorAtFrameRef.current = {
+          az: camera.azimuth,
+          alt: camera.altitude,
+          imageRoll: camera.roll + camera.screenAngle,
+        };
       }
 
       /*

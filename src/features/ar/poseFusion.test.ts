@@ -20,9 +20,10 @@ function visual(yawDeg: number, pitchDeg: number): VisualRotation {
     yawRad: yawDeg * DEG,
     rollRad: 0,
     confidence: 1,
-    usedBlocks: 9,
+    usedBlocks: 15,
     saturated: false,
     residualPx: 0.02,
+    pitchDegraded: false,
   };
 }
 
@@ -205,6 +206,34 @@ describe('qui porta la postura', () => {
     // s'hauria aturat als 10,6°, que segueixen sent vint diàmetres solars. El
     // sostre dur el reté al límit.
     expect(fusion.telemetry.driftDeg).toBeLessThan(8.5);
+  });
+
+  it('amb el pitch degradat, la vertical recula cap al sensor', () => {
+    // El cel s'ha menjat les files de dalt: el pitch de la imatge és el
+    // desplaçament vertical comú amb un altre nom, i un biaix vertical
+    // (exposició, un núvol) hi entra 1:1. La vertical ha de seguir el sensor;
+    // el yaw no en té culpa i es queda com estava.
+    const run = (degraded: boolean): number => {
+      const fusion = new PoseFusion();
+      fusion.update({ sensorAzimuthDeg: 100, sensorAltitudeDeg: 10, newFrame: true, ...NO_VISUAL });
+      let out = { azimuthDeg: 0, altitudeDeg: 0 };
+      for (let i = 0; i < 30; i++) {
+        out = fusion.update({
+          sensorAzimuthDeg: 100,
+          sensorAltitudeDeg: 10,
+          imageRollDeg: 0,
+          newFrame: true,
+          visual: { ...visual(0, 0.4), pitchDegraded: degraded },
+          sensorSpeedDegPerSec: 0,
+          dtSec: 1 / 60,
+        });
+      }
+      return Math.abs(out.altitudeDeg - 10);
+    };
+
+    const withFlag = run(true);
+    const withoutFlag = run(false);
+    expect(withFlag).toBeLessThan(withoutFlag / 2.5);
   });
 
   it('la concordança denuncia un signe invertit', () => {

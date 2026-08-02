@@ -552,8 +552,14 @@ export class PoseFusion {
       }
 
       const w = Math.min(1, (visual.confidence - MIN_CONFIDENCE) / (1 - MIN_CONFIDENCE));
+      // Amb el braç de palanca vertical col·lapsat — el cel s'ha menjat les
+      // files de dalt — el pitch de la imatge és el desplaçament vertical comú
+      // amb un altre nom, i la VERTICAL recula cap al sensor. La component
+      // vertical de la innovació ve del pitch a través del roll de la imatge:
+      // és exactament la que es modera. El yaw i el roll no en tenen culpa.
+      const wAlt = visual.pitchDegraded ? Math.min(w, 0.25) : w;
       dAz = sensorDAz + (w * innovH) / cosA;
-      dAlt = sensorDAlt + w * innovV;
+      dAlt = sensorDAlt + wAlt * innovV;
       stepped = true;
       // La telemetria publica el pas CRU de la imatge: si algú ha de
       // diagnosticar un signe invertit al camp, li cal el que la imatge DIU,

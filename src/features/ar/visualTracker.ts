@@ -61,8 +61,31 @@
 const BLOCK = 16;
 /** Radi de cerca al voltant de la posició predita, en píxels de graella. */
 const SEARCH = 7;
-/** Blocs per costat: una graella de 3×3 en dona nou. */
-const GRID = 3;
+/**
+ * Fraccions dels centres de bloc a cada eix: 3 al costat curt, 5 al llarg.
+ *
+ * PER QUÈ 5 AL LLARG. En vertical — que és com s'aguanta el mòbil — el costat
+ * llarg és el vertical, i és l'eix que pateix: apuntant al cel, el gate de
+ * variància mata els blocs de dalt i el braç de palanca del pitch col·lapsava
+ * de 3 files a 2 de veïnes. Amb 5 files, perdre'n dues o tres de dalt encara
+ * deixa files separades — i quan tot i així no n'hi ha prou, `pitchDegraded`
+ * ho diu en veu alta en comptes de deixar que un pitch mal condicionat surti
+ * amb la mateixa cara que un de bo.
+ */
+const SHORT_AXIS_FRACTIONS = [0.2, 0.5, 0.8] as const;
+const LONG_AXIS_FRACTIONS = [0.15, 0.325, 0.5, 0.675, 0.85] as const;
+/**
+ * Abast vertical mínim dels blocs supervivents perquè el pitch valgui,
+ * com a fracció de l'alçada del fotograma.
+ *
+ * Amb el model de rotació, el coeficient del pitch (f + v²/f) és gairebé
+ * constant entre blocs: el pitch és, de facto, el desplaçament vertical
+ * comú. Si totes les mesures vives cauen en una franja estreta, qualsevol
+ * biaix vertical global — exposició, un núvol, l'obturador — hi entra 1:1
+ * sense que cap residu el delati. Dues files adjacents de cinc són el 17,5%:
+ * per sota del llindar. Dues de separades, el 35%: per sobre.
+ */
+const PITCH_SPREAD_MIN_FRACTION = 0.22;
 /**
  * Variància mínima d'un bloc perquè valgui la pena buscar-lo.
  *
@@ -126,6 +149,14 @@ export interface VisualRotation {
   saturated: boolean;
   /** Residu quadràtic mitjà de l'ajust, en píxels de pantalla. */
   residualPx: number;
+  /**
+   * Cert quan els blocs supervivents no tenen prou braç de palanca VERTICAL
+   * perquè el pitch sigui de fiar — el cel s'ha menjat les files de dalt i
+   * les mesures vives cauen en una franja estreta. El yaw i el roll encara
+   * valen; qui ho rebi ha de fer recular NOMÉS la vertical cap al sensor,
+   * no llençar la mesura sencera.
+   */
+  pitchDegraded: boolean;
 }
 
 /** Predicció del gir per centrar-hi la cerca. Ve del sensor. */
@@ -208,21 +239,33 @@ export function geometryFor(
   };
 }
 
-/** Posicions dels nou blocs dins la graella, i els seus centres a pantalla. */
+/** Posicions dels quinze blocs dins la graella, i els seus centres a pantalla. */
 function blockSlots(geometry: TrackerGeometry): BlockSlot[] {
   const slots: BlockSlot[] = [];
   const cx = geometry.gridWidth / 2;
   const cy = geometry.gridHeight / 2;
 
-  for (let j = 0; j < GRID; j++) {
-    for (let i = 0; i < GRID; i++) {
-      // Fraccions 0,2 / 0,5 / 0,8: prou separades perquè el gir al voltant de
-      // l'eix òptic tingui braç de palanca, i prou endins perquè la finestra de
-      // cerca no surti de la imatge.
-      const fx = 0.2 + (0.6 * i) / (GRID - 1);
-      const fy = 0.2 + (0.6 * j) / (GRID - 1);
-      const ox = clampInt(Math.round(fx * geometry.gridWidth - BLOCK / 2), 0, geometry.gridWidth - BLOCK);
-      const oy = clampInt(Math.round(fy * geometry.gridHeight - BLOCK / 2), 0, geometry.gridHeight - BLOCK);
+  // 3 columnes × 5 files en vertical (5 × 3 en horitzontal): el costat llarg
+  // rep les cinc. Els orígens es retenen de manera que la finestra de cerca
+  // SENCERA càpiga dins la imatge: un bloc amb la finestra escapçada d'un
+  // costat mesuraria amb un biaix cap a l'altre.
+  const xs =
+    geometry.gridWidth >= geometry.gridHeight ? LONG_AXIS_FRACTIONS : SHORT_AXIS_FRACTIONS;
+  const ys =
+    geometry.gridHeight >= geometry.gridWidth ? LONG_AXIS_FRACTIONS : SHORT_AXIS_FRACTIONS;
+
+  for (const fy of ys) {
+    for (const fx of xs) {
+      const ox = clampInt(
+        Math.round(fx * geometry.gridWidth - BLOCK / 2),
+        SEARCH,
+        geometry.gridWidth - BLOCK - SEARCH,
+      );
+      const oy = clampInt(
+        Math.round(fy * geometry.gridHeight - BLOCK / 2),
+        SEARCH,
+        geometry.gridHeight - BLOCK - SEARCH,
+      );
       slots.push({
         ox,
         oy,
@@ -269,17 +312,27 @@ export function rotationalFlow(
 /**
  * Ajust per mínims quadrats del gir de tres graus de llibertat.
  *
- * Nou blocs donen divuit equacions per a tres incògnites. Es resol pel sistema
- * normal 3×3, i després es repeteix descartant els blocs amb residu gros: si
- * passa una persona pel davant o es mou una branca, aquell bloc dona una
- * mesura que no té res a veure amb el gir del telèfon, i sense el descart
+ * Quinze blocs donen trenta equacions per a tres incògnites. Es resol pel
+ * sistema normal 3×3, i després es repeteix descartant els blocs amb residu
+ * gros: si passa una persona pel davant o es mou una branca, aquell bloc dona
+ * una mesura que no té res a veure amb el gir del telèfon, i sense el descart
  * s'emportaria l'ajust darrere seu. És el que feia la mediana, però conservant
  * el model geomètric.
+ *
+ * Torna també les mesures que han entrat a l'ajust final: qui el crida ha de
+ * poder jutjar la GEOMETRIA dels supervivents, no només quants són — sis
+ * blocs arrenglerats en dues files veïnes no valen el mateix que sis
+ * d'escampats.
  */
 export function fitRotation(
   measures: readonly BlockMeasure[],
   focalPx: number,
-): { rotation: RotationHint; residualPx: number; used: number } | null {
+): {
+  rotation: RotationHint;
+  residualPx: number;
+  used: number;
+  measures: readonly BlockMeasure[];
+} | null {
   if (measures.length < 3) return null;
 
   const first = solveRotation(measures, focalPx);
@@ -311,6 +364,7 @@ export function fitRotation(
     rotation: solution,
     residualPx: Math.sqrt(sumSq / (2 * source.length)),
     used: source.length,
+    measures: source,
   };
 }
 
@@ -388,6 +442,10 @@ function solve3(
  */
 export class FrameTracker {
   private previous: Float32Array | null = null;
+  /** Mitjana del fotograma de referència, per igualar-hi l'exposició del nou. */
+  private previousMean = 0;
+  /** Còpia del fotograma nou amb el guany igualat. Es reutilitza. */
+  private scaled: Float32Array | null = null;
   private width = 0;
   private height = 0;
   private slots: BlockSlot[] = [];
@@ -417,14 +475,45 @@ export class FrameTracker {
       this.slotsKey = key;
     }
 
+    const n = w * h;
+    let curMean = 0;
+    for (let i = 0; i < n; i++) curMean += gray[i];
+    curMean /= n;
+
     if (this.previous === null || this.width !== w || this.height !== h) {
-      this.previous = Float32Array.from(gray.subarray(0, w * h));
+      this.previous = Float32Array.from(gray.subarray(0, n));
+      this.previousMean = curMean;
       this.width = w;
       this.height = h;
       return null;
     }
 
     const prev = this.previous;
+
+    /*
+     * IGUALACIÓ D'EXPOSICIÓ. L'exposició automàtica dispara una rampa de guany
+     * justament quan el cel entra o surt del quadre — el gest d'aquesta app.
+     * La cerca per SAD hi és força insensible (un desplaçament uniforme suma
+     * igual a tot arreu), però el refinament subpíxel per gradients NO: un
+     * gradient temporal global es reparteix pels gradients espacials i
+     * desplaça la mesura, i en vertical, que és on el cel canvia la llum.
+     * S'iguala el guany mitjà del fotograma nou al de referència abans de
+     * comparar; la referència es guarda sempre CRUA. Fora del rang 0,5-2 no
+     * és exposició, és una altra escena: no es toca res. I per sota del 2%
+     * tampoc: la mitjana del quadre també es mou pel CONTINGUT — escombrant,
+     * el paisatge que entra no té la mateixa llum que el que surt — i
+     * «corregir» aquella deriva petita embrutava mesures bones. Les rampes
+     * d'exposició de debò van del 3% per fotograma cap amunt.
+     */
+    let cur: Float32Array = gray;
+    const gain = curMean > 1e-6 ? this.previousMean / curMean : 1;
+    if (gain > 0.5 && gain < 2 && Math.abs(gain - 1) > 0.02) {
+      if (this.scaled === null || this.scaled.length < n) this.scaled = new Float32Array(n);
+      const scaled = this.scaled;
+      for (let i = 0; i < n; i++) scaled[i] = gray[i] * gain;
+      cur = scaled;
+    }
+
     const measures: BlockMeasure[] = [];
 
     for (const slot of this.slots) {
@@ -437,7 +526,7 @@ export class FrameTracker {
         predY = Math.round(flow.dv / geometry.scaleY);
       }
 
-      const match = matchBlock(prev, gray, w, h, slot, predX, predY);
+      const match = matchBlock(prev, cur, w, h, slot, predX, predY);
       if (!match) continue;
       measures.push({
         slot,
@@ -447,7 +536,8 @@ export class FrameTracker {
       });
     }
 
-    prev.set(gray.subarray(0, w * h));
+    prev.set(gray.subarray(0, n));
+    this.previousMean = curMean;
 
     if (measures.length < 3) return null;
 
@@ -480,6 +570,20 @@ export class FrameTracker {
     // sobre cel obert no ha de baixar la confiança de tota la mesura.
     const coverage = Math.min(1, fit.used / 6);
 
+    // Condicionament del pitch: files diferents i abast vertical dels
+    // supervivents. Vegeu `PITCH_SPREAD_MIN_FRACTION`.
+    const rows = new Set<number>();
+    let vMin = Infinity;
+    let vMax = -Infinity;
+    for (const m of fit.measures) {
+      rows.add(m.slot.oy);
+      if (m.slot.v < vMin) vMin = m.slot.v;
+      if (m.slot.v > vMax) vMax = m.slot.v;
+    }
+    const vSpreadPx = vMax - vMin;
+    const pitchDegraded =
+      rows.size < 2 || vSpreadPx < PITCH_SPREAD_MIN_FRACTION * h * geometry.scaleY;
+
     return {
       pitchRad: fit.rotation.pitchRad,
       yawRad: fit.rotation.yawRad,
@@ -488,11 +592,13 @@ export class FrameTracker {
       usedBlocks: fit.used,
       saturated,
       residualPx: fit.residualPx,
+      pitchDegraded,
     };
   }
 
   reset(): void {
     this.previous = null;
+    this.previousMean = 0;
     this.slotsKey = '';
   }
 }
@@ -677,7 +783,15 @@ function refineSubpixel(
 export class VideoFrameClock {
   private video: HTMLVideoElement | null = null;
   private handle: number | null = null;
-  private pending = false;
+  /**
+   * COMPTADOR, no bandera. Si el bucle de dibuix va just i entremig arriben
+   * DOS fotogrames de càmera, una bandera els fondria en un i la mesura
+   * cobriria el doble d'interval — el doble de desplaçament, molt més a prop
+   * del límit de cerca — sense que ningú ho sabés: la telemetria d'fps compta
+   * bé i no ho delata. Amb el comptador, qui consumeix sap quants n'han
+   * passat i pot descartar la mesura fosa.
+   */
+  private pendingCount = 0;
   private lastTime = -1;
   private stamps: number[] = [];
   private usesCallback = false;
@@ -697,7 +811,7 @@ export class VideoFrameClock {
     const video = this.video;
     if (!video || typeof video.requestVideoFrameCallback !== 'function') return;
     this.handle = video.requestVideoFrameCallback(() => {
-      this.pending = true;
+      this.pendingCount++;
       this.mark();
       this.schedule();
     });
@@ -717,25 +831,29 @@ export class VideoFrameClock {
    * cridar un cop per fotograma.
    */
   get pendingFrame(): boolean {
-    if (this.usesCallback) return this.pending;
+    if (this.usesCallback) return this.pendingCount > 0;
     const video = this.video;
     if (!video) return false;
     return video.currentTime !== this.lastTime;
   }
 
-  /** Cert un sol cop per cada fotograma nou. */
-  consume(): boolean {
+  /**
+   * Quants fotogrames nous hi havia esperant. Zero vol dir cap; més d'un vol
+   * dir que la mesura següent els cobrirà tots junts i val més descartar-la.
+   * El camí sense `requestVideoFrameCallback` no pot comptar: diu 0 o 1.
+   */
+  consume(): number {
     if (this.usesCallback) {
-      if (!this.pending) return false;
-      this.pending = false;
-      return true;
+      const count = this.pendingCount;
+      this.pendingCount = 0;
+      return count;
     }
     const video = this.video;
-    if (!video) return false;
-    if (video.currentTime === this.lastTime) return false;
+    if (!video) return 0;
+    if (video.currentTime === this.lastTime) return 0;
     this.lastTime = video.currentTime;
     this.mark();
-    return true;
+    return 1;
   }
 
   /** Fotogrames de vídeo per segon que arriben de veritat. */
@@ -754,7 +872,7 @@ export class VideoFrameClock {
     }
     this.video = null;
     this.handle = null;
-    this.pending = false;
+    this.pendingCount = 0;
     this.lastTime = -1;
     this.stamps.length = 0;
   }
