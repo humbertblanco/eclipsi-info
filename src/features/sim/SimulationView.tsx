@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { computeLocalCircumstances, findSunset } from '../../core/astro/contacts';
-import { sampleAt } from '../../core/astro/ephemeris';
 import { STANDARD_ATMOSPHERE } from '../../core/astro/constants';
 import type { GeoLocation } from '../../core/astro/types';
 import { getEclipse } from '../../core/eclipses/catalog';
@@ -8,6 +7,7 @@ import { horizonSampler, type HorizonProfile } from '../../core/horizon/profile'
 import { computeVisibility } from '../../core/visibility/verdict';
 import { renderEclipseSky } from './renderSky';
 import { renderTrajectory } from './renderTrajectory';
+import { TRAJECTORY_SAMPLES, trajectorySamples } from './samples';
 import {
   formatObscurationPercent,
   partialCaveat,
@@ -31,8 +31,14 @@ interface Props {
   horizon: HorizonProfile | null;
 }
 
-/** Nombre de mostres del recorregut. 240 dona una corba suau sense penalitzar. */
-const TRAJECTORY_SAMPLES = 240;
+/*
+ * LES MOSTRES DEL RECORREGUT VIUEN A `samples.ts`.
+ *
+ * Estaven aquí dins, en un `useMemo`, i per això la miniatura de l'historial no
+ * podia obtenir la corba d'un punt sense muntar aquesta pantalla sencera. El
+ * nombre de passos de la barra de temps és el mateix `TRAJECTORY_SAMPLES` a
+ * posta: així el marcador de l'instant cau damunt d'una mostra i no entre dues.
+ */
 
 /*
  * NI HORES NI DURADES PRÒPIES: TOT VE DE `screens/format`.
@@ -62,19 +68,10 @@ export function SimulationView({ location, eclipseId, locale, horizon }: Props) 
     [horizon],
   );
 
-  const samples = useMemo(() => {
-    const { c1, c4, max } = circumstances.contacts;
-    const start = (c1 ?? max).time.getTime();
-    const end = (c4 ?? max).time.getTime();
-    if (end <= start) return [max];
-
-    const out = [];
-    for (let i = 0; i <= TRAJECTORY_SAMPLES; i++) {
-      const t = start + ((end - start) * i) / TRAJECTORY_SAMPLES;
-      out.push(sampleAt(new Date(t), location));
-    }
-    return out;
-  }, [circumstances, location]);
+  const samples = useMemo(
+    () => trajectorySamples(circumstances, location),
+    [circumstances, location],
+  );
 
   const sunset = useMemo(
     () => findSunset(location, circumstances.contacts.max.time),

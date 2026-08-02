@@ -5,6 +5,14 @@
  * És el gràfic que respon la pregunta del projecte: "des d'aquí, el terreny
  * em tapa la totalitat?". Els contactes hi surten marcats i la part de la
  * trajectòria que queda per sota de l'horitzó es dibuixa esmorteïda.
+ *
+ * TÉ DOS VESTITS I UN SOL DIBUIX. En mode `full` és el gràfic de la pantalla de
+ * simulació, amb graella, etiquetes i marcador de l'instant. En mode `mini` no
+ * hi queda res d'això: només la silueta del terreny i el camí del Sol, que és
+ * la imatge que identifica un punt d'un cop d'ull i la que fa servir la
+ * miniatura de l'historial i la targeta compartible. NO hi ha un segon
+ * renderitzador — seria la manera segura que la miniatura i el gràfic gran
+ * acabessin dient coses diferents del mateix lloc.
  */
 
 import type { EclipseSample, LocalCircumstances } from '../../core/astro/types';
@@ -14,6 +22,29 @@ export interface TrajectoryOptions {
   /** Instant que s'està mostrant a la simulació, per marcar-lo. */
   currentTime?: Date;
   locale: 'ca' | 'es';
+  /**
+   * Quanta cosa es dibuixa a part de la imatge.
+   *
+   * `full` (per defecte) és el gràfic de sempre. `mini` treu la graella, les
+   * etiquetes dels contactes, el marcador de l'instant i els marges dels eixos:
+   * a 56 px d'amplada cap d'aquests elements és llegible, i el que queda —
+   * terreny i camí del Sol — és justament el que distingeix un punt d'un altre.
+   */
+  chrome?: 'full' | 'mini';
+  /**
+   * Què sabem del terreny que estem dibuixant.
+   *
+   * `measured` vol dir que la silueta ve d'un perfil calculat de debò.
+   * `assumed` vol dir que NO n'hi ha cap i que el que es pinta és l'horitzó pla
+   * de reserva; llavors es dibuixa en traç discontinu i apagat.
+   *
+   * PER QUÈ NO ES DIBUIXA IGUAL. Un horitzó pla i sòlid es llegeix com «aquí no
+   * hi ha muntanyes», que és una afirmació que no hem fet i que és optimista
+   * per construcció: l'horitzó pla no amaga mai el Sol. Aquesta app existeix
+   * per no mentir en aquesta direcció (ESTAT.md §3.5). El traç discontinu diu
+   * el que passa de veritat: el terreny d'aquest punt encara no s'ha calculat.
+   */
+  terrain?: 'measured' | 'assumed';
 }
 
 interface Bounds {
@@ -52,7 +83,14 @@ export function renderTrajectory(
 ): void {
   if (samples.length === 0) return;
 
-  const pad = { left: 44, right: 14, top: 16, bottom: 30 };
+  const mini = options.chrome === 'mini';
+
+  // Els marges dels eixos només serveixen per encabir-hi les etiquetes de graus.
+  // Sense graella no hi ha res a encabir i la imatge ocupa el llenç sencer, que
+  // és el que fa que una miniatura de 56 px encara ensenyi la carena.
+  const pad = mini
+    ? { left: 0, right: 0, top: 0, bottom: 0 }
+    : { left: 44, right: 14, top: 16, bottom: 30 };
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
 
@@ -65,14 +103,32 @@ export function renderTrajectory(
   ctx.fillStyle = '#0d1016';
   ctx.fillRect(0, 0, width, height);
 
-  drawGrid(ctx, bounds, toX, toY, pad, plotW, plotH);
-  drawTerrain(ctx, bounds, toY, pad, plotW, plotH, options);
-  drawSunPath(ctx, samples, toX, toY, options);
+  const scale = strokeScale(height, options);
+
+  if (!mini) drawGrid(ctx, bounds, toX, toY, pad, plotW, plotH);
+  drawTerrain(ctx, bounds, toY, pad, plotW, plotH, options, scale);
+  drawSunPath(ctx, samples, toX, toY, options, scale);
+  if (mini) return;
+
   drawContacts(ctx, circumstances, toX, toY, options);
 
   if (options.currentTime) {
     drawCurrentMarker(ctx, samples, options.currentTime, toX, toY);
   }
+}
+
+/**
+ * Gruix de traç segons la mida del dibuix.
+ *
+ * Els gruixos del mode `full` estan triats per a un llenç de 230 px d'alçada
+ * (`--h-canvas-traj`). Clavats en una miniatura de 36 px, la línia del Sol en
+ * taparia una desena part i la silueta del terreny quedaria amagada sota la
+ * seva pròpia vora; a la targeta de 630 px passa el contrari i tot es veu prim
+ * i tímid. S'escalen amb l'alçada i es limiten perquè mai desapareguin del tot.
+ */
+function strokeScale(height: number, options: TrajectoryOptions): number {
+  if (options.chrome !== 'mini') return 1;
+  return Math.max(0.4, Math.min(3, height / 230));
 }
 
 function computeBounds(samples: EclipseSample[], options: TrajectoryOptions): Bounds {
@@ -141,7 +197,12 @@ function drawGrid(
   }
 }
 
-/** Silueta del terreny. Sense perfil DEM, l'horitzó pla del mar a 0°. */
+/**
+ * Silueta del terreny. Sense perfil DEM, l'horitzó pla del mar a 0°.
+ *
+ * Amb `terrain: 'assumed'` la mateixa silueta es dibuixa en traç discontinu i
+ * amb la tinta baixada: vegeu el perquè a `TrajectoryOptions.terrain`.
+ */
 function drawTerrain(
   ctx: CanvasRenderingContext2D,
   bounds: Bounds,
@@ -150,7 +211,10 @@ function drawTerrain(
   plotW: number,
   plotH: number,
   options: TrajectoryOptions,
+  scale = 1,
 ): void {
+  const assumed = options.terrain === 'assumed';
+
   ctx.beginPath();
   ctx.moveTo(pad.left, pad.top + plotH);
 
@@ -164,9 +228,13 @@ function drawTerrain(
   ctx.closePath();
   ctx.fillStyle = options.horizonProfile ? '#1a2430' : '#151b24';
   ctx.fill();
-  ctx.strokeStyle = 'rgba(140,170,200,0.55)';
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = assumed ? 'rgba(140,170,200,0.30)' : 'rgba(140,170,200,0.55)';
+  ctx.lineWidth = 1.5 * scale;
+  // El patró s'escala amb el traç: a la miniatura, guions de 6 px sobre una
+  // línia de 40 es llegirien com una línia contínua mal dibuixada.
+  if (assumed) ctx.setLineDash([5 * scale, 4 * scale]);
   ctx.stroke();
+  ctx.setLineDash([]);
 }
 
 function drawSunPath(
@@ -175,6 +243,7 @@ function drawSunPath(
   toX: (az: number) => number,
   toY: (alt: number) => number,
   options: TrajectoryOptions,
+  scale = 1,
 ): void {
   // La trajectòria es dibuixa segment a segment, amb el color codificant
   // l'obscuració: així es veu d'un cop d'ull on és la totalitat i si cau per
@@ -195,7 +264,7 @@ function drawSunPath(
     else color = '#ffd966';
 
     ctx.strokeStyle = hidden ? 'rgba(120,120,130,0.35)' : color;
-    ctx.lineWidth = hidden ? 2 : 3.5;
+    ctx.lineWidth = (hidden ? 2 : 3.5) * scale;
     ctx.beginPath();
     ctx.moveTo(toX(a.sun.azimuth), toY(a.sun.altitudeApparent));
     ctx.lineTo(toX(b.sun.azimuth), toY(b.sun.altitudeApparent));
