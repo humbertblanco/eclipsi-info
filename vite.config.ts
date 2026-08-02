@@ -27,9 +27,10 @@ const ONE_YEAR_S = 60 * 60 * 24 * 365
  * —que NO pot controlar res per damunt del seu propi directori— i el manifest.
  *
  * Es pot sobreescriure amb la variable d'entorn ECLIPSI_BASE per publicar-ho
- * a un altre lloc sense tocar codi.
+ * a un altre lloc sense tocar codi — el desplegament de llegat al camí
+ * /eclipsi/ de lacuinade.estic.online passa `ECLIPSI_BASE=/eclipsi/`.
  */
-const BASE = process.env.ECLIPSI_BASE ?? '/eclipsi/'
+const BASE = process.env.ECLIPSI_BASE ?? '/'
 
 /**
  * On viu l'app, amb origen i tot.
@@ -40,13 +41,13 @@ const BASE = process.env.ECLIPSI_BASE ?? '/eclipsi/'
  * ha d'haver l'origen escrit, i val més que sigui aquí que escampat per
  * l'`index.html`.
  *
- * ATENCIÓ AL DOMINI. Tota la marca diu «eclipsi.info» —el manifest, el peu, el
- * títol— i aquest domini avui no resol. Mentre no es compri, els enllaços que
- * es comparteixin i els codis QR que s'imprimeixin apuntaran aquí. El dia que
- * es compri, això és l'única línia que cal canviar (o `ECLIPSI_SITE_URL`).
+ * EL DOMINI JA ÉS NOSTRE. eclipsi.info es va comprar i el vhost viu al
+ * servidor (2 d'agost de 2026): aquesta és la línia que la nota d'aquí sota
+ * deia que es canviaria aquell dia, canviada. El desplegament de llegat al
+ * camí de lacuinade passa `ECLIPSI_SITE_URL` explícita si mai cal refer-lo.
  */
 const SITE_URL = (
-  process.env.ECLIPSI_SITE_URL ?? 'https://lacuinade.estic.online/eclipsi/'
+  process.env.ECLIPSI_SITE_URL ?? 'https://eclipsi.info/'
 ).replace(/\/?$/, '/')
 
 // https://vite.dev/config/

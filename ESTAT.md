@@ -7,9 +7,15 @@ no s'ha de tornar a trencar**. Actualitzat l'1 d'agost de 2026.
 
 ## 1. Com es desplega
 
+**EL DOMINI PRINCIPAL ÉS eclipsi.info** (vhost propi al mateix servidor,
+subscripció `eclipsi.info` del client cosesdelhumbert, creat el 2-8-2026;
+usuari de sistema `eclipsiinfo`). El build per defecte ja surt amb base `/` i
+canònica `https://eclipsi.info/`:
+
 ```bash
 npm run build                     # SI AIXÒ FALLA, PARA. Vegeu l'avís de sota.
-rsync -az --delete dist/ root@server.estic.online:/var/www/vhosts/lacuinade.estic.online/httpdocs/eclipsi/
+rsync -az --delete dist/ root@server.estic.online:/var/www/vhosts/eclipsi.info/httpdocs/
+ssh root@server.estic.online 'chown -R eclipsiinfo:psaserv /var/www/vhosts/eclipsi.info/httpdocs/'
 ```
 
 Després **verifica per checksum**, no per vista:
@@ -17,7 +23,15 @@ Després **verifica per checksum**, no per vista:
 ```bash
 BUNDLE=$(ls -t dist/assets/index-*.js | head -1 | xargs basename)
 shasum -a 256 dist/assets/$BUNDLE
-curl -s "https://lacuinade.estic.online/eclipsi/assets/$BUNDLE" | shasum -a 256
+curl -s "https://eclipsi.info/assets/$BUNDLE" | shasum -a 256
+```
+
+El desplegament de LLEGAT al camí antic (lacuinade.estic.online/eclipsi/), si
+mai cal refer-lo, necessita les dues variables:
+
+```bash
+ECLIPSI_BASE=/eclipsi/ ECLIPSI_SITE_URL=https://lacuinade.estic.online/eclipsi/ npm run build
+rsync -az --delete dist/ root@server.estic.online:/var/www/vhosts/lacuinade.estic.online/httpdocs/eclipsi/
 ```
 
 **AVÍS QUE JA HA COSTAT DUES VEGADES:** `npm run build` pot fallar per un error
