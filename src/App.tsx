@@ -43,9 +43,31 @@ import {
   type TabBarItem,
 } from './ui';
 import { CountdownScreen } from './screens/CountdownScreen';
-import { MapScreen } from './screens/MapScreen';
-import { SkyScreen } from './screens/SkyScreen';
-import { GuideScreen } from './screens/GuideScreen';
+
+/*
+ * LES TRES PANTALLES QUE NO SÓN LA PRIMERA, MANDROSES.
+ *
+ * El compte enrere és la primera pintada i es queda al paquet principal; el
+ * mapa (que arrossega MapLibre), el cel (la vista de RA sencera) i la guia
+ * es porten el seu tros de paquet i només es baixen quan es toquen. El dia
+ * de l'eclipsi, amb la cel·la saturada, cada kB del camí crític es paga en
+ * segons — i aquests tres no hi pinten res fins que algú els obre.
+ *
+ * ELS SEUS CHUNKS ES QUEDEN AL PRECACHE del service worker, i és una decisió:
+ * la garantia offline és el producte (vite.config: globPatterns ho escombra
+ * tot). El que es guanya aquí és el camí crític de la primera visita, no el
+ * total de bytes de la instal·lació — i és el guany que compta.
+ */
+import { lazy, Suspense } from 'react';
+const MapScreen = lazy(() =>
+  import('./screens/MapScreen').then((m) => ({ default: m.MapScreen })),
+);
+const SkyScreen = lazy(() =>
+  import('./screens/SkyScreen').then((m) => ({ default: m.SkyScreen })),
+);
+const GuideScreen = lazy(() =>
+  import('./screens/GuideScreen').then((m) => ({ default: m.GuideScreen })),
+);
 import type { EclipseContext } from './screens/context';
 import { s } from './screens/strings';
 import { formatCoords, formatDuration, NO_DATA } from './screens/format';
@@ -583,21 +605,32 @@ function Shell() {
               onOpenMap={() => setTab('map')}
             />
           )}
+          {/*
+            El fallback és un marc buit amb l'estil de pantalla, no un
+            rodet: el chunk arriba en dècimes i un parpelleig de contingut
+            fals és pitjor que una espera curta i quieta.
+          */}
           {tab === 'map' && (
-            <MapScreen {...context} onPickLocation={observer.setManual} />
+            <Suspense fallback={<div className="screen screen--full" />}>
+              <MapScreen {...context} onPickLocation={observer.setManual} />
+            </Suspense>
           )}
           {tab === 'sky' && (
             // Ja no dispara el GPS a seques: obre la fulla, que és on hi ha
             // les quatre maneres de dir on seràs. El dia de l'eclipsi el GPS és
             // el primer botó de la fulla i el gest segueix essent curt.
-            <SkyScreen
-              {...context}
-              onRequestLocation={() => setSheetOpen(true)}
-              onImmersiveChange={setSkyImmersive}
-            />
+            <Suspense fallback={<div className="screen screen--full" />}>
+              <SkyScreen
+                {...context}
+                onRequestLocation={() => setSheetOpen(true)}
+                onImmersiveChange={setSkyImmersive}
+              />
+            </Suspense>
           )}
           {tab === 'guide' && (
-            <GuideScreen {...context} onOpenCountdown={() => setTab('countdown')} />
+            <Suspense fallback={<div className="screen screen--full" />}>
+              <GuideScreen {...context} onOpenCountdown={() => setTab('countdown')} />
+            </Suspense>
           )}
         </ErrorBoundary>
         {/*
