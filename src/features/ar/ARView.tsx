@@ -235,6 +235,8 @@ const INITIAL_DIAGNOSTICS: TrackingDiagnostics = {
     lastSensorStepDeg: 0,
     biasAzDeg: 0,
     biasAltDeg: 0,
+    slewDegPerSec: 0,
+    slewClamped: false,
   },
   focalWindows: 0,
   measuredFovDeg: null,

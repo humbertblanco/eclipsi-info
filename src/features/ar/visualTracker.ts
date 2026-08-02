@@ -892,9 +892,24 @@ export class FocalEstimator {
     { visual: 0, sensor: 0, reference: 0, steps: 0 },
   ];
 
-  private sumVS = 0;
-  private sumVV = 0;
-  private samples = 0;
+  /*
+   * LES SUMES TAMBÉ VAN PER EIX, i la focal que s'aplica surt NOMÉS del gir
+   * horitzontal (eix 0).
+   *
+   * Abans les finestres eren per eix però la regressió era comuna, i això
+   * tenia dues conseqüències silencioses: com que l'usuari gira desenes de
+   * graus i n'inclina quatre, la finestra d'inclinació gairebé mai es tancava
+   * — la focal era de facto un calibratge de guinyada — i quan es tancava,
+   * hi entrava esbiaixada per l'obturador rodant, que infla o encongeix el
+   * pitch segons el sentit del gest però deixa la guinyada gairebé neta (en
+   * horitzontal la deformació és cisalla, i el model l'absorbeix com a
+   * residu). Ara l'eix d'inclinació s'acumula igualment, però només com a
+   * DIAGNÒSTIC: si `gainForAxis(1)` s'allunya de `gainForAxis(0)`, allò és
+   * l'empremta de l'obturador rodant, no una focal diferent.
+   */
+  private sumVS: [number, number] = [0, 0];
+  private sumVV: [number, number] = [0, 0];
+  private samples: [number, number] = [0, 0];
 
   /** Gir net que ha de tenir una finestra per valer, en radians (8°). */
   private static readonly WINDOW_RAD = (8 * Math.PI) / 180;
@@ -939,9 +954,9 @@ export class FocalEstimator {
       // que s'ha mogut és l'escena, o bé el signe està invertit — i en aquest
       // segon cas val més no calibrar res que calibrar-ho al revés.
       if (Math.sign(w.visual) === Math.sign(w.sensor)) {
-        this.sumVS += w.visual * w.sensor;
-        this.sumVV += w.visual * w.visual;
-        this.samples++;
+        this.sumVS[axis] += w.visual * w.sensor;
+        this.sumVV[axis] += w.visual * w.visual;
+        this.samples[axis]++;
       }
       this.dropWindow(axis);
     } else if (w.steps >= FocalEstimator.WINDOW_MAX_STEPS) {
@@ -965,10 +980,16 @@ export class FocalEstimator {
    * on el soroll és a la resposta i no esbiaixa res, i després s'inverteix.
    */
   get gain(): number | null {
+    // Només l'eix de guinyada calibra: vegeu el comentari de les sumes.
+    return this.gainForAxis(0);
+  }
+
+  /** Guany d'un eix concret. L'eix 1 (inclinació) és només de diagnòstic. */
+  gainForAxis(axis: 0 | 1): number | null {
     // Sis finestres de vuit graus són uns cinquanta graus de panoràmica: el
     // que fa qualsevol usuari en els primers deu segons buscant el Sol.
-    if (this.samples < 6 || this.sumVV <= 0 || this.sumVS <= 0) return null;
-    const slope = this.sumVS / this.sumVV;
+    if (this.samples[axis] < 6 || this.sumVV[axis] <= 0 || this.sumVS[axis] <= 0) return null;
+    const slope = this.sumVS[axis] / this.sumVV[axis];
     if (!Number.isFinite(slope) || slope <= 0) return null;
     return 1 / slope;
   }
@@ -985,14 +1006,19 @@ export class FocalEstimator {
   }
 
   get count(): number {
-    return this.samples;
+    return this.samples[0];
+  }
+
+  /** Finestres tancades d'un eix. L'eix 1 diu si el diagnòstic RS té base. */
+  countForAxis(axis: 0 | 1): number {
+    return this.samples[axis];
   }
 
   reset(): void {
     this.dropWindow(0);
     this.dropWindow(1);
-    this.sumVS = 0;
-    this.sumVV = 0;
-    this.samples = 0;
+    this.sumVS = [0, 0];
+    this.sumVV = [0, 0];
+    this.samples = [0, 0];
   }
 }

@@ -639,6 +639,42 @@ describe('la postura fusionada es queda clavada damunt de l’escena', () => {
     expect(bad.agreement).toBeLessThan(-0.75);
   });
 
+  it('AMB OBTURADOR RODANT: inclinant de pressa amb àncora, l’error queda acotat i es recull', () => {
+    // El cas del carrer que el banc d'obturador global no podia veure: cada
+    // fila del fotograma es llegeix en un instant diferent i el pitch mesurat
+    // surt esbiaixat proporcionalment a la velocitat. Amb el retall
+    // d'innovació, l'ancoratge (quan la velocitat el deixa viure) i el biaix
+    // per captura, l'error durant el gest ha de quedar en pocs deumils de
+    // radiant i el final, un cop quiet, per sota del criteri de sempre.
+    const steps = 360;
+    const path = (i: number) => {
+      const t = Math.min(i, 240); // 4 s de gest (31°/s de pic), 2 s quiet al final
+      return {
+        azimuth: 250,
+        altitude: 10 + 15 * (1 - Math.cos((t / 90) * Math.PI)),
+        roll: 0,
+      };
+    };
+    const { errorDeg } = runSequence({
+      path,
+      steps,
+      sensorNoiseDeg: 1.2,
+      readoutFraction: 0.75,
+      anchor: {},
+    });
+
+    // Mesurat en escriure això: 1,04° pic a pic. L'obturador rodant durant el
+    // gest no es pot DESFER sense modelar-lo (cap font n'informa al
+    // navegador); el que es garanteix és que queda d'aquest ordre — abans el
+    // mateix error d'escala podia créixer fins al sostre de 8° — i, sobretot,
+    // que en parar es recull de seguida i NO deixa empremta al biaix.
+    expect(peakToPeak(errorDeg)).toBeLessThan(1.15);
+    // Els últims dos segons són quiets: l'error s'ha d'haver recollit.
+    const tail = errorDeg.slice(-60);
+    const tailMean = tail.reduce((a, b) => a + b, 0) / tail.length;
+    expect(tailMean).toBeLessThan(0.3);
+  });
+
   it('una focal equivocada es nota, i és la raó de mesurar-la', () => {
     // L'ultra-angular d'iOS dona una focal molt més petita de la que se suposa.
     // L'ancoratge visual llavors mesura girs massa grossos i la superposició se
@@ -740,5 +776,26 @@ describe('l’estimador de focal', () => {
     const estimator = new FocalEstimator();
     for (let i = 0; i < 200; i++) estimator.add(0, 0.6 * DEG, -0.6 * DEG, 500, 0.9);
     expect(estimator.count).toBe(0);
+  });
+
+  it('la focal només es calibra amb el gir horitzontal', () => {
+    // L'obturador rodant esbiaixa el pitch però deixa la guinyada gairebé
+    // neta. Si la inclinació contaminada entrés a la mateixa regressió, la
+    // focal aplicada als DOS eixos en sortiria falsa. Ara l'eix 1 només és un
+    // diagnòstic: la seva desviació respecte de l'eix 0 és l'empremta de
+    // l'obturador.
+    const estimator = new FocalEstimator();
+    for (let i = 0; i < 900; i++) {
+      estimator.add(0, 0.6 * DEG, 0.6 * DEG, 500, 0.9); // net: guany 1
+      estimator.add(1, 0.69 * DEG, 0.6 * DEG, 500, 0.9); // inflat un 15%
+    }
+    expect(estimator.gain).not.toBeNull();
+    expect(estimator.gain!).toBeCloseTo(1, 2);
+    // El guany és visual/sensor: la imatge inflada un 15% per l'obturador
+    // dona un guany d'1,15 — i NO ha de contaminar `gain`, que és el que
+    // s'aplica a la focal.
+    expect(estimator.gainForAxis(1)).not.toBeNull();
+    expect(estimator.gainForAxis(1)!).toBeGreaterThan(1.08);
+    expect(estimator.countForAxis(1)).toBeGreaterThan(0);
   });
 });

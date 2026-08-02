@@ -321,6 +321,190 @@ describe('la brúixola desviada i el terreny', () => {
 });
 
 /*
+ * LA REGLA DE LA QUIETUD: quan el mòbil no es mou, la superposició no es mou.
+ *
+ * Les correccions — l'estirada cap al sensor, l'ancoratge a 5 Hz — segueixen
+ * actuant, però retallades a una velocitat que l'ull no distingeix d'estar
+ * clavada (0,3°/s). El límit s'obre amb la velocitat, amb la seva cua i amb
+ * l'excés de desalineació, perquè ni el gest ni l'arrencada amb la brúixola
+ * desviada es tornin lents.
+ */
+describe('la regla de la quietud', () => {
+  const dt = 1 / 60;
+
+  it('quiet vol dir quiet: ni el soroll del sensor ni el ball dels fixos es veuen', () => {
+    const fusion = new PoseFusion();
+    const rnd = (() => {
+      let s = 12345;
+      return () => {
+        s = (s * 1103515245 + 12345) % 2147483648;
+        return s / 2147483648;
+      };
+    })();
+
+    let prev: { azimuthDeg: number; altitudeDeg: number } | null = null;
+    let maxStep = 0;
+    let maxError = 0;
+    let fix = { azimuthDeg: 250, altitudeDeg: 20, confidence: 1 };
+    for (let i = 0; i < 20 * 60; i++) {
+      const noiseAz = (rnd() - 0.5) * 0.6;
+      const noiseAlt = (rnd() - 0.5) * 0.6;
+      if (i % 12 === 0) {
+        // Cada fix balla una mica, com els de debò.
+        fix = {
+          azimuthDeg: 250 + (rnd() - 0.5) * 0.6,
+          altitudeDeg: 20 + (rnd() - 0.5) * 0.6,
+          confidence: 1,
+        };
+      }
+      const out = fusion.update({
+        sensorAzimuthDeg: 250 + noiseAz,
+        sensorAltitudeDeg: 20 + noiseAlt,
+        imageRollDeg: 0,
+        newFrame: i % 2 === 0,
+        visual: i % 2 === 0 ? visual(0, 0) : null,
+        sensorSpeedDegPerSec: 0,
+        dtSec: dt,
+        anchor: fix,
+        anchorBias: {
+          errAzDeg: noiseAz - (fix.azimuthDeg - 250),
+          errAltDeg: noiseAlt - (fix.altitudeDeg - 20),
+          confidence: 1,
+        },
+      });
+      if (i > 120) {
+        if (prev) {
+          // El pas es mesura ANGULAR (l'azimut escalat per cos alt), que és el
+          // que limita el règim de quietud i el que l'ull veu.
+          const cosAlt = Math.cos((20 * Math.PI) / 180);
+          maxStep = Math.max(
+            maxStep,
+            Math.hypot(
+              (out.azimuthDeg - prev.azimuthDeg) * cosAlt,
+              out.altitudeDeg - prev.altitudeDeg,
+            ),
+          );
+        }
+        maxError = Math.max(
+          maxError,
+          Math.abs(out.azimuthDeg - 250),
+          Math.abs(out.altitudeDeg - 20),
+        );
+      }
+      prev = out;
+    }
+
+    // El moviment per fotograma no pot passar del règim de quietud (0,3°/s).
+    // El marge és de coma flotant, no de disseny.
+    expect(maxStep).toBeLessThanOrEqual(0.3 * dt * 1.001 + 1e-6);
+    // I la postura es queda on toca, no passejant pel soroll.
+    expect(maxError).toBeLessThan(0.5);
+  });
+
+  it('una mesura visual grollera no injecta més que el retall', () => {
+    const fusion = new PoseFusion();
+    fusion.update({ sensorAzimuthDeg: 100, sensorAltitudeDeg: 0, newFrame: true, ...NO_VISUAL });
+    // La imatge diu 5° quan el sensor n'ha vist 0,1: correspondència falsa que
+    // ha passat els filtres. Abans entrava sencera.
+    const out = fusion.update({
+      sensorAzimuthDeg: 100.1,
+      sensorAltitudeDeg: 0,
+      newFrame: true,
+      imageRollDeg: 0,
+      visual: visual(5, 0),
+      sensorSpeedDegPerSec: 0,
+      dtSec: dt,
+    });
+    expect(out.azimuthDeg).toBeLessThan(100.1 + 1.5 + 0.05);
+  });
+
+  it('les correccions no passegen la postura: fixos que ballen ±0,4°', () => {
+    const fusion = new PoseFusion();
+    fusion.update({ sensorAzimuthDeg: 100, sensorAltitudeDeg: 10, newFrame: true, ...NO_VISUAL });
+    let prev: number | null = null;
+    let maxStep = 0;
+    for (let i = 0; i < 10 * 60; i++) {
+      const fixAlt = 10 + (Math.floor(i / 12) % 2 === 0 ? 0.4 : -0.4);
+      const out = fusion.update({
+        sensorAzimuthDeg: 100,
+        sensorAltitudeDeg: 10,
+        imageRollDeg: 0,
+        newFrame: i % 2 === 0,
+        visual: null,
+        sensorSpeedDegPerSec: 0,
+        dtSec: dt,
+        anchor: { azimuthDeg: 100, altitudeDeg: fixAlt, confidence: 1 },
+        anchorBias: { errAzDeg: 0, errAltDeg: 10 - fixAlt, confidence: 1 },
+      });
+      if (i > 60 && prev !== null) {
+        maxStep = Math.max(maxStep, Math.abs(out.altitudeDeg - prev));
+      }
+      prev = out.altitudeDeg;
+    }
+    expect(maxStep).toBeLessThanOrEqual(0.3 * dt + 1e-6);
+  });
+
+  it('l’obertura per desalineació no fa lenta l’arrencada amb la brúixola fora', () => {
+    // Amb 10° d'error inicial, el límit s'obre (0,3 + 4·excés ≈ 36°/s) i la
+    // correcció gran va de pressa; només el refinat final va al pas de quietud.
+    const fusion = new PoseFusion();
+    let out = { azimuthDeg: 0, altitudeDeg: 0 };
+    for (let i = 0; i < 10 * 60; i++) {
+      out = fusion.update({
+        sensorAzimuthDeg: 110,
+        sensorAltitudeDeg: 5,
+        imageRollDeg: 0,
+        newFrame: i % 2 === 0,
+        visual: null,
+        sensorSpeedDegPerSec: 0,
+        dtSec: dt,
+        anchor: { azimuthDeg: 100, altitudeDeg: 5, confidence: 1 },
+        anchorBias: { errAzDeg: 10, errAltDeg: 0, confidence: 1 },
+      });
+    }
+    expect(Math.abs(out.azimuthDeg - 100)).toBeLessThan(1);
+  });
+
+  it('un error d’escala sostingut queda retingut pel sostre i es recupera en parar', () => {
+    // Obturador rodant caricaturitzat: la imatge sempre un 15% més gran que el
+    // sensor, dos segons de gir seguit. La deriva no pot passar del sostre, i
+    // en parar — quan l'ancoratge torna — s'ha de recollir de seguida.
+    const fusion = new PoseFusion();
+    let az = 100;
+    fusion.update({ sensorAzimuthDeg: az, sensorAltitudeDeg: 0, newFrame: true, ...NO_VISUAL });
+    for (let i = 0; i < 2 * 60; i++) {
+      az += 0.5; // 30°/s
+      fusion.update({
+        sensorAzimuthDeg: az,
+        sensorAltitudeDeg: 0,
+        imageRollDeg: 0,
+        newFrame: i % 2 === 0,
+        visual: i % 2 === 0 ? visual(1.15, 0) : null, // sensor 1°/fotograma, imatge 1,15°
+        sensorSpeedDegPerSec: 30,
+        dtSec: dt,
+      });
+      expect(fusion.telemetry.driftDeg).toBeLessThanOrEqual(8.5);
+    }
+    // Es para: el sensor es queda quiet i l'ancoratge torna a veure el terreny.
+    let out = { azimuthDeg: 0, altitudeDeg: 0 };
+    for (let i = 0; i < 2 * 60; i++) {
+      out = fusion.update({
+        sensorAzimuthDeg: az,
+        sensorAltitudeDeg: 0,
+        imageRollDeg: 0,
+        newFrame: i % 2 === 0,
+        visual: i % 2 === 0 ? visual(0, 0) : null,
+        sensorSpeedDegPerSec: 0,
+        dtSec: dt,
+        anchor: { azimuthDeg: az, altitudeDeg: 0, confidence: 1 },
+        anchorBias: { errAzDeg: 0, errAltDeg: 0, confidence: 1 },
+      });
+    }
+    expect(Math.abs(out.azimuthDeg - az)).toBeLessThan(0.5);
+  });
+});
+
+/*
  * LA FÍSICA ASIMÈTRICA DEL BIAIX.
  *
  * El biaix d'azimut corregeix el magnetòmetre, que vora metall menteix desenes

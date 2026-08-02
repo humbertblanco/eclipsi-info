@@ -76,6 +76,57 @@ const MAX_DRIFT_DEG = 8;
 const AGREEMENT_TAU_SEC = 2;
 
 /**
+ * Discrepància màxima entre la imatge i el sensor en UN fotograma de càmera,
+ * en graus.
+ *
+ * És un llindar d'ERROR GROLLER, no un modelador de soroll. A velocitat alta
+ * el filtre del sensor obre el tall i deixa passar soroll que la imatge
+ * corregeix legítimament fotograma a fotograma — mesurat al banc, aquestes
+ * discrepàncies BONES arriben al grau llarg, i retallar-les a mig grau feia
+ * doblar l'error del gir de 90°. El que s'ha d'aturar és el que cap física
+ * raonable explica: una correspondència falsa que ha passat els filtres (fins
+ * a ±3,3°, el radi de cerca), un signe invertit a velocitat (el doble del pas)
+ * o un desfasament groller de la canonada. Grau i mig deixa passar tot el
+ * senyal i barra el pas a tot això altre; el que s'escoli per sota, el sostre
+ * de deriva ho reté igualment.
+ */
+const INNOVATION_MAX_DEG = 1.5;
+
+/**
+ * Velocitat de correcció visible amb el telèfon QUIET, en graus per segon.
+ *
+ * LA REGLA DE LA QUIETUD: quan el mòbil no es mou, la superposició no s'ha de
+ * moure. Les correccions — l'estirada cap al sensor, l'ancoratge al terreny —
+ * segueixen actuant, però a una velocitat que l'ull no pot distingir d'estar
+ * clavada. Tres dècimes de grau per segon: mig diàmetre solar cada segon fa
+ * de sostre del que es considera imperceptible.
+ */
+const SLEW_STILL_DEG_PER_SEC = 0.3;
+
+/**
+ * Desalineació a partir de la qual el límit de correcció s'obre, en graus.
+ *
+ * Si la superposició està VISIBLEMENT fora de lloc — obrir l'app amb la
+ * brúixola deu graus desviada — fer-la lliscar a tres dècimes per segon seria
+ * mig minut de vergonya. Per damunt d'un grau d'error, corregir de pressa
+ * molesta menys que no corregir: el límit creix amb l'excés.
+ */
+const SLEW_OPEN_DEG = 1;
+
+/** Quant s'obre el límit per cada grau d'excés, en (°/s) per grau. */
+const SLEW_OPEN_RATE_PER_SEC = 4;
+
+/**
+ * Memòria de la velocitat, en segons.
+ *
+ * Just després d'un gest encara es pot corregir de pressa: l'ull ve de veure
+ * moviment i una correcció que arriba amb el gest encara als dits no es nota.
+ * És l'emmascarament perceptiu de tota la vida; segon i mig cobreix el temps
+ * que triga la vista a tornar-se exigent.
+ */
+const SETTLE_TAU_SEC = 1.5;
+
+/**
  * Temps sense cap fotograma de càmera a partir del qual es deixa de creure en
  * l'ancoratge visual, en segons.
  *
@@ -196,6 +247,10 @@ export interface FusionTelemetry {
   biasAzDeg: number;
   /** Biaix d'altura après, en graus. Si s'acosta al sostre d'1,5°, sospita. */
   biasAltDeg: number;
+  /** Límit de correcció vigent, en graus per segon. 0,3 = règim de quietud. */
+  slewDegPerSec: number;
+  /** Cert si l'últim fotograma ha hagut de retallar les correccions. */
+  slewClamped: boolean;
 }
 
 const INITIAL_TELEMETRY: FusionTelemetry = {
@@ -207,6 +262,8 @@ const INITIAL_TELEMETRY: FusionTelemetry = {
   lastSensorStepDeg: 0,
   biasAzDeg: 0,
   biasAltDeg: 0,
+  slewDegPerSec: SLEW_STILL_DEG_PER_SEC,
+  slewClamped: false,
 };
 
 /** Diferència d'angles normalitzada a (−180, 180]. */
@@ -379,6 +436,11 @@ export class PoseFusion {
   private visualMisses = 0;
   /** Temps des de l'últim fotograma de càmera, en segons. */
   private sinceFrameSec = 0;
+  /**
+   * Envoltant de la velocitat: puja de cop, baixa amb τ = `SETTLE_TAU_SEC`.
+   * És el «fa un moment encara em movia» del límit de correcció.
+   */
+  private speedEnv = 0;
 
   // Sumes per a la correlació entre les dues fonts, amb oblit exponencial.
   private sumVS = 0;
@@ -395,6 +457,7 @@ export class PoseFusion {
     this.visualActive = false;
     this.visualMisses = 0;
     this.sinceFrameSec = 0;
+    this.speedEnv = 0;
     this.sumVS = 0;
     this.sumVV = 0;
     this.sumSS = 0;
@@ -452,16 +515,50 @@ export class PoseFusion {
     let stepped = false;
     let visualStepDeg = 0;
 
+    // Velocitat i la seva envoltant: es calculen abans del pas perquè
+    // l'autoritat de la imatge també en depèn, no només l'estirada.
+    const speed = Math.abs(input.sensorSpeedDegPerSec);
+    const moving = clamp01((speed - PULL_SPEED_LOW) / (PULL_SPEED_HIGH - PULL_SPEED_LOW));
+    this.speedEnv = Math.max(speed, this.speedEnv * Math.exp(-dt / SETTLE_TAU_SEC));
+
     if (usable && visual) {
       const step = rotationToPoseDelta(visual, input.imageRollDeg, this.altitude);
-      // Barreja proporcional a la confiança: entre "la imatge no diu res" i
-      // "la imatge ho diu tot" no hi ha d'haver cap salt, perquè la confiança
-      // baixa i puja sola segons la textura que hi hagi al davant.
+      const cosA = cosAltFactor(this.altitude);
+
+      /*
+       * El pas es descompon en «el que diu el sensor» més «el que la imatge hi
+       * DISCREPA» (la innovació). La barreja per confiança d'abans és
+       * exactament això — w·imatge + (1−w)·sensor = sensor + w·innovació — i
+       * escriure-ho així permet RETALLAR només la discrepància: en condicions
+       * sanes és de centèsimes de grau i el retall no toca res; una
+       * correspondència falsa que ha passat els filtres, un fotograma doble o
+       * un desfasament de la canonada de càmera no poden injectar més de mig
+       * grau per fotograma, vingui d'on vingui l'error.
+       *
+       * ES VA PROVAR d'atenuar també la innovació amb la velocitat (el sensor
+       * mana movent-se de pressa) i el banc ho va vetar: el sensor suavitzat
+       * arrossega retard durant les acceleracions i és la imatge qui el
+       * corregeix — atenuar-la duplicava l'error del gir de 90°. La imatge
+       * sana és millor que el sensor JUSTAMENT movent-se; el que cal acotar
+       * és la imatge malalta, i això ho fa el retall, no la velocitat.
+       */
+      let innovH = (step.dAzDeg - sensorDAz) * cosA;
+      let innovV = step.dAltDeg - sensorDAlt;
+      const innovMag = Math.hypot(innovH, innovV);
+      if (innovMag > INNOVATION_MAX_DEG) {
+        const k = INNOVATION_MAX_DEG / innovMag;
+        innovH *= k;
+        innovV *= k;
+      }
+
       const w = Math.min(1, (visual.confidence - MIN_CONFIDENCE) / (1 - MIN_CONFIDENCE));
-      dAz = w * step.dAzDeg + (1 - w) * sensorDAz;
-      dAlt = w * step.dAltDeg + (1 - w) * sensorDAlt;
+      dAz = sensorDAz + (w * innovH) / cosA;
+      dAlt = sensorDAlt + w * innovV;
       stepped = true;
-      visualStepDeg = Math.hypot(step.dAzDeg * cosAltFactor(this.altitude), step.dAltDeg);
+      // La telemetria publica el pas CRU de la imatge: si algú ha de
+      // diagnosticar un signe invertit al camp, li cal el que la imatge DIU,
+      // no el que se n'ha acceptat.
+      visualStepDeg = Math.hypot(step.dAzDeg * cosA, step.dAltDeg);
 
       // Correlació entre les dues fonts, amb oblit exponencial. Es fa sobre el
       // parell (horitzontal, vertical) i no sobre les magnituds: el que s'ha de
@@ -504,40 +601,26 @@ export class PoseFusion {
     const sensorAlt = input.sensorAltitudeDeg - this.biasAlt;
     const driftAz = normalizeDelta(sensorAz - this.azimuth);
     const driftAlt = sensorAlt - this.altitude;
-    const driftDeg = Math.hypot(driftAz * cosAltFactor(this.altitude), driftAlt);
+    const cosDrift = cosAltFactor(this.altitude);
+    const driftDeg = Math.hypot(driftAz * cosDrift, driftAlt);
 
     // Força de l'estirada: fort quiet, fluix movent-se, i fort altre cop si la
     // deriva s'ha escapat.
-    const speed = Math.abs(input.sensorSpeedDegPerSec);
-    const moving = clamp01((speed - PULL_SPEED_LOW) / (PULL_SPEED_HIGH - PULL_SPEED_LOW));
     const runaway = clamp01(driftDeg / MAX_DRIFT_DEG);
     const blend = moving * (1 - runaway);
     const tau = PULL_TAU_STILL_SEC + (PULL_TAU_MOVING_SEC - PULL_TAU_STILL_SEC) * blend;
     const pull = 1 - Math.exp(-dt / tau);
 
-    this.azimuth += pull * driftAz;
-    this.altitude += pull * driftAlt;
-
-    // Sostre dur. L'estirada gradual sola té un punt d'equilibri: si
-    // l'ancoratge visual s'equivoca de manera sostinguda —textura repetitiva,
-    // un vehicle que ocupa mitja imatge— la deriva s'atura on la correcció
-    // iguala l'error, i amb un error de mig grau per fotograma això passa als
-    // 10,6°. Vint diàmetres solars és massa. Aquí es limita del tot: val més un
-    // salt petit que una superposició que se'n va del paisatge.
-    const excess = 1 - MAX_DRIFT_DEG / Math.max(MAX_DRIFT_DEG, driftDeg);
-    if (excess > 0) {
-      this.azimuth += excess * driftAz;
-      this.altitude += excess * driftAlt;
-    }
+    let corrAz = pull * driftAz;
+    let corrAlt = pull * driftAlt;
 
     /*
      * L'ANCORATGE AL TERRENY, L'ÚLTIM I PER DAMUNT DE TOT.
      *
-     * Va al final a posta: tot el que hi ha abans és relatiu —el sensor diu
-     * quant s'ha girat, la imatge diu quant s'ha girat— i això diu ON ETS. Que
-     * l'última paraula la tingui una mesura absoluta és el que fa que la
-     * deriva no s'acumuli mai: cada cop que el terreny és a la vista, el
-     * comptador es torna a posar a zero.
+     * Tot el que hi ha abans és relatiu —el sensor diu quant s'ha girat, la
+     * imatge diu quant s'ha girat— i això diu ON ETS. Que l'última paraula la
+     * tingui una mesura absoluta és el que fa que la deriva no s'acumuli mai:
+     * cada cop que el terreny és a la vista, el comptador es torna a zero.
      *
      * S'aplica com una fracció de la diferència, no de cop. Amb confiança 1 la
      * constant de temps és de mig segon: prou ràpid perquè obrir l'app amb la
@@ -545,17 +628,68 @@ export class PoseFusion {
      * i prou lent perquè un aparellament dolent no faci saltar res.
      */
     const anchor = input.anchor ?? null;
-    if (anchor !== null && anchor.confidence > 0) {
-      const pull = Math.min(1, (dt / ANCHOR_TAU_SEC) * anchor.confidence);
+    const anchorActive = anchor !== null && anchor.confidence > 0;
+    let gapDeg = driftDeg;
+    if (anchor !== null && anchorActive) {
+      const anchorPull = Math.min(1, (dt / ANCHOR_TAU_SEC) * anchor.confidence);
       // Un fix d'horitzó pla sap l'altura però s'ha inventat l'azimut (dAz=0):
       // d'aquell azimut no se n'estira res.
-      if (!anchor.altitudeOnly) {
-        this.azimuth += pull * normalizeDelta(anchor.azimuthDeg - this.azimuth);
-      }
-      this.altitude += pull * (anchor.altitudeDeg - this.altitude);
+      const anchorDAz = anchor.altitudeOnly
+        ? 0
+        : normalizeDelta(anchor.azimuthDeg - this.azimuth);
+      const anchorDAlt = anchor.altitudeDeg - this.altitude;
+      corrAz += anchorPull * anchorDAz;
+      corrAlt += anchorPull * anchorDAlt;
+      gapDeg = Math.hypot(anchorDAz * cosDrift, anchorDAlt);
+    }
+
+    /*
+     * LA REGLA DE LA QUIETUD: les correccions — estirada i ancoratge junts —
+     * no poden moure la superposició més de pressa del que l'ull perdona.
+     *
+     * Quiet i ben quadrat, tres dècimes de grau per segon: les correccions
+     * segueixen actuant però no es VEUEN, i la superposició queda clavada en
+     * comptes de respirar amb el soroll del sensor i el ball de cada fix a
+     * 5 Hz. El límit s'obre amb tres coses: la velocitat (una correcció enmig
+     * del gest no es nota), la cua de velocitat (just després de parar l'ull
+     * encara ve de veure moviment) i l'excés de desalineació (per damunt d'un
+     * grau, no corregir molesta més que corregir — i obrir l'app amb la
+     * brúixola 10° fora s'ha de resoldre en menys d'un segon, com sempre).
+     *
+     * Es retalla la SUMA de correccions, no cadascuna: si es retallessin per
+     * separat, l'estirada i l'ancoratge tornarien a tenir la batalla de forces
+     * que el biaix va desarmar.
+     */
+    const slew =
+      SLEW_STILL_DEG_PER_SEC +
+      Math.max(0, this.speedEnv - PULL_SPEED_LOW) +
+      SLEW_OPEN_RATE_PER_SEC * Math.max(0, gapDeg - SLEW_OPEN_DEG);
+    const maxCorr = slew * dt;
+    const corrMag = Math.hypot(corrAz * cosDrift, corrAlt);
+    let slewClamped = false;
+    if (corrMag > maxCorr && corrMag > 0) {
+      const k = maxCorr / corrMag;
+      corrAz *= k;
+      corrAlt *= k;
+      slewClamped = true;
+    }
+    this.azimuth += corrAz;
+    this.altitude += corrAlt;
+
+    // Sostre dur, FORA del límit de quietud: és la vàlvula de seguretat. Si
+    // l'ancoratge visual fuig de debò —textura repetitiva, un vehicle que
+    // ocupa mitja imatge— val més un salt petit que una superposició que
+    // se'n va del paisatge.
+    const excess = 1 - MAX_DRIFT_DEG / Math.max(MAX_DRIFT_DEG, driftDeg);
+    if (excess > 0) {
+      this.azimuth += excess * driftAz;
+      this.altitude += excess * driftAlt;
+    }
+
+    if (anchorActive) {
       // El sensor és la referència de la qual es mesuren els increments: si no
-      // s'hi mou també, l'estirada següent la desfaria comptant com a deriva
-      // el que acabem de corregir a posta.
+      // s'hi mou també, l'estirada següent desfaria la correcció de l'ancoratge
+      // comptant com a deriva el que acabem de corregir a posta.
       this.sensorAtLastStep = {
         az: input.sensorAzimuthDeg,
         alt: input.sensorAltitudeDeg,
@@ -611,6 +745,8 @@ export class PoseFusion {
       lastSensorStepDeg: Math.hypot(sensorDAz * cosAltFactor(this.altitude), sensorDAlt),
       biasAzDeg: this.biasAz,
       biasAltDeg: this.biasAlt,
+      slewDegPerSec: slew,
+      slewClamped,
     };
 
     return { azimuthDeg: this.azimuth, altitudeDeg: this.altitude };
