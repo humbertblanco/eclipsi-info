@@ -548,6 +548,13 @@ const STRINGS = {
   },
   'camera.diag.terrainAltOnly': { ca: 'només altura', es: 'solo altura' },
   'camera.diag.terrainNone': { ca: 'cap a la vista', es: 'ninguna a la vista' },
+  'camera.diag.sunAnchor': { ca: 'Àncora de Sol', es: 'Ancla de Sol' },
+  'camera.diag.sunAnchorValue': {
+    ca: '{pct}% · Δaz {daz}° · Δalt {dalt}°',
+    es: '{pct}% · Δaz {daz}° · Δalt {dalt}°',
+  },
+  'camera.diag.sunAnchorNone': { ca: 'no detectat', es: 'no detectado' },
+  'camera.diag.anchorLeads': { ca: 'mana', es: 'manda' },
   'camera.diag.slew': { ca: 'Límit de correcció', es: 'Límite de corrección' },
   'camera.diag.slewClamped': { ca: 'retallant', es: 'recortando' },
   'camera.diag.pitchDegraded': {

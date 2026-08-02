@@ -44,6 +44,14 @@ import { getEclipse } from '../../core/eclipses/catalog';
 import { declination } from '../../core/geomag';
 import { horizonSampler, type HorizonProfile } from '../../core/horizon/profile';
 import { detectSkyline, fitSkyline, type SkylineFix } from './skyline';
+import {
+  detectSunBlob,
+  sunFixFrom,
+  fitSunFix,
+  expectedBrightBody,
+  mergeAnchors,
+  SunRefiner,
+} from './sunAnchor';
 import { nakedEyeAllowedAt, type FilterGateInput } from '../../core/timer';
 import { useNow } from '../../state/useNow';
 import { Icon, ICON_LG } from '../../ui';
@@ -58,6 +66,7 @@ import {
 } from './cameraGeometry';
 import {
   normalizeAngle,
+  projectToScreen,
   DEFAULT_CALIBRATION,
   type CameraPointing,
   type Calibration,
@@ -230,6 +239,14 @@ interface RenderState {
   calibration: Calibration;
   circumstances: LocalCircumstances;
   currentSample: EclipseSample;
+  /**
+   * La mostra d'efemèrides de L'INSTANT REAL, per a l'àncora de Sol.
+   *
+   * `currentSample` és l'instant del CONTROL LLISCANT — un instant simulat,
+   * potser d'aquí a dos anys. La càmera veu el cel d'ARA: la detecció es
+   * compara sempre contra aquesta, mai contra la del simulador.
+   */
+  liveSample: EclipseSample;
   samples: EclipseSample[];
   bodies: SkyBody[];
   horizonProfile: ((azimuthDeg: number) => number) | undefined;
@@ -261,6 +278,14 @@ interface TrackingDiagnostics {
   drawMs: number;
   /** Guany de focal de l'eix d'inclinació: l'empremta de l'obturador rodant. */
   pitchGain: number | null;
+  /** L'últim fix de Sol (o Lluna), si n'hi ha. */
+  sunAnchor: {
+    confidence: number;
+    deltaAzDeg: number;
+    deltaAltDeg: number;
+  } | null;
+  /** Qui posa l'àncora vigent. */
+  anchorSource: 'sun' | 'moon' | 'terrain' | 'both' | null;
 }
 
 const INITIAL_DIAGNOSTICS: TrackingDiagnostics = {
@@ -274,6 +299,8 @@ const INITIAL_DIAGNOSTICS: TrackingDiagnostics = {
   terrainAnchor: null,
   drawMs: 0,
   pitchGain: null,
+  sunAnchor: null,
+  anchorSource: null,
   fusion: {
     agreement: 0,
     usingVisual: false,
@@ -393,6 +420,12 @@ export function ARView({
   );
   /** Compta fotogrames de càmera per no ancorar a cadascun. */
   const anchorTickRef = useRef(0);
+  /** L'últim fix de Sol per separat, per al diagnòstic. */
+  const sunFixRef = useRef<SkylineFix | null>(null);
+  /** Qui ha posat l'àncora vigent: el Sol, el terreny, o tots dos fusionats. */
+  const anchorSourceRef = useRef<'sun' | 'moon' | 'terrain' | 'both' | null>(null);
+  /** Refinador del centroide del Sol a resolució plena. Es reutilitza. */
+  const sunRefinerRef = useRef<SunRefiner | null>(null);
   /**
    * Última postura amb què s'ha DIBUIXAT, que és la fusionada i no la del
    * sensor.
@@ -514,12 +547,20 @@ export function ARView({
 
   const light = useMemo(() => lightState(currentSample), [currentSample]);
 
+  // Efemèrides de l'instant REAL, que són la referència del calibratge i de
+  // l'àncora de Sol. El rellotge que les mou és el de dalt: aquí hi havia un
+  // segon `setInterval` amb el seu propi `new Date()`, i és el que va deixar
+  // la comporta de seguretat sense tic. A 1 Hz sobra: el Sol es mou 0,004°/s.
+  const liveSample = useMemo(() => sampleAt(now, location), [now, location]);
+  const sunNow = liveSample.sun;
+
   // Mirall del que el bucle de dibuix necessita. S'escriu DESPRÉS de cada
   // render, mai durant: el bucle no s'ha de tornar a crear per això.
   const renderRef = useRef<RenderState>({
     calibration,
     circumstances,
     currentSample,
+    liveSample,
     samples,
     bodies,
     horizonProfile,
@@ -531,6 +572,7 @@ export function ARView({
       calibration,
       circumstances,
       currentSample,
+      liveSample,
       samples,
       bodies,
       horizonProfile,
@@ -538,11 +580,6 @@ export function ARView({
       mode,
     };
   });
-
-  // Posició del Sol ARA, que és la referència del calibratge. El rellotge que
-  // la mou és el de dalt: aquí hi havia un segon `setInterval` amb el seu propi
-  // `new Date()`, i és el que va deixar la comporta de seguretat sense tic.
-  const sunNow = useMemo(() => sampleAt(now, location).sun, [now, location]);
 
   /**
    * Apaga la càmera de debò: pistes aturades, vigilància d'objectiu desada i
@@ -822,23 +859,99 @@ export function ARView({
            * sisè fotograma de càmera són uns 5 Hz.
            */
           anchorTickRef.current++;
-          if (
-            state.horizonProfile &&
-            trackerRef.current &&
-            anchorTickRef.current % ANCHOR_EVERY_FRAMES === 0
-          ) {
-            const hits = detectSkyline(trackerRef.current.lastGray, geometry, viewport);
-            let fix = fitSkyline(
-              hits,
-              camera,
-              state.calibration,
-              viewport,
-              state.horizonProfile,
-            );
-            // La porta de plausibilitat: l'acceleròmetre no pot anar tres
-            // graus errat d'altura; una silueta que ho afirmi és falsa.
-            if (fix && Math.abs(fix.deltaAltitudeDeg) > MAX_PLAUSIBLE_ALT_DEG) fix = null;
+          if (trackerRef.current && anchorTickRef.current % ANCHOR_EVERY_FRAMES === 0) {
+            // ── El far del terreny: la silueta contra el model ──────────────
+            let terrainFix: SkylineFix | null = null;
+            if (state.horizonProfile) {
+              const hits = detectSkyline(trackerRef.current.lastGray, geometry, viewport);
+              terrainFix = fitSkyline(
+                hits,
+                camera,
+                state.calibration,
+                viewport,
+                state.horizonProfile,
+              );
+              // La porta de plausibilitat: l'acceleròmetre no pot anar tres
+              // graus errat d'altura; una silueta que ho afirmi és falsa.
+              if (terrainFix && Math.abs(terrainFix.deltaAltitudeDeg) > MAX_PLAUSIBLE_ALT_DEG) {
+                terrainFix = null;
+              }
+            }
+
+            /*
+             * ── El far del Sol (o la Lluna, de nit): la taca contra les
+             * efemèrides DE L'INSTANT REAL ──────────────────────────────────
+             *
+             * A diferència de la silueta, aquest far no necessita ni model de
+             * terreny (mar, plana, perfil encara baixant-se) ni carena a la
+             * vista: necessita el cos al quadre — que és el que l'usuari fa.
+             * La cerca es guia amb la posició PREDITA per la projecció; el
+             * candidat coarse es refina a resolució plena de vídeo.
+             */
+            let sunFix: SkylineFix | null = null;
+            const body = expectedBrightBody(state.liveSample);
+            if (body !== null) {
+              const predicted = projectToScreen(
+                body.body.azimuth,
+                body.body.altitudeApparent,
+                camera,
+                state.calibration,
+                viewport,
+              );
+              let blob = detectSunBlob(
+                trackerRef.current.lastGray,
+                geometry,
+                viewport,
+                predicted.visible ? { x: predicted.x, y: predicted.y } : null,
+              );
+              if (blob !== null) {
+                if (!sunRefinerRef.current) sunRefinerRef.current = new SunRefiner();
+                const refined = sunRefinerRef.current.refine(
+                  video,
+                  { x: blob.screenX, y: blob.screenY },
+                  viewport,
+                );
+                if (refined !== null) blob = { ...blob, screenX: refined.x, screenY: refined.y };
+              }
+              sunFix =
+                body.kind === 'sun'
+                  ? sunFixFrom(
+                      blob,
+                      camera,
+                      state.calibration,
+                      viewport,
+                      state.liveSample,
+                      state.horizonProfile,
+                    )
+                  : blob !== null
+                    ? fitSunFix(
+                        blob,
+                        body.body,
+                        camera,
+                        state.calibration,
+                        viewport,
+                        { dAzDeg: 0, dAltDeg: 0 },
+                        1,
+                        state.horizonProfile,
+                      )
+                    : null;
+            }
+
+            // ── La fusió dels fars: als eclipsis d'aquesta app el Sol va
+            // arran d'horitzó i el cas normal és tenir tots dos al quadre.
+            const fix = mergeAnchors(sunFix, terrainFix);
             anchorRef.current = fix;
+            sunFixRef.current = sunFix;
+            anchorSourceRef.current =
+              fix === null
+                ? null
+                : sunFix !== null && terrainFix !== null
+                  ? 'both'
+                  : sunFix !== null
+                    ? body?.kind === 'moon'
+                      ? 'moon'
+                      : 'sun'
+                    : 'terrain';
             // Amb data, amb la postura del sensor d'aquell instant i amb la
             // velocitat a què anava: sense les dues primeres no hi ha manera
             // de saber si el fix encara val com a POSTURA; sense la tercera,
@@ -1068,6 +1181,15 @@ export function ARView({
               },
         drawMs: drawMsRef.current,
         pitchGain: focalRef.current.gainForAxis(1),
+        sunAnchor:
+          sunFixRef.current === null
+            ? null
+            : {
+                confidence: sunFixRef.current.confidence,
+                deltaAzDeg: sunFixRef.current.deltaAzimuthDeg,
+                deltaAltDeg: sunFixRef.current.deltaAltitudeDeg,
+              },
+        anchorSource: anchorSourceRef.current,
       };
       setDiagnostics(diagnosticsRef.current);
     }, DIAGNOSTICS_MS);
@@ -1420,8 +1542,36 @@ export function ARView({
                       diagnostics.terrainAnchor.altitudeOnly
                         ? ` · ${s('camera.diag.terrainAltOnly', locale)}`
                         : ''
+                    }${
+                      diagnostics.anchorSource === 'terrain' ||
+                      diagnostics.anchorSource === 'both'
+                        ? ` · ${s('camera.diag.anchorLeads', locale)}`
+                        : ''
                     }`
                   : s('camera.diag.terrainNone', locale)}
+              </dd>
+            </div>
+            <div>
+              {/*
+                El segon far: la taca del Sol (o la Lluna, de nit) contra les
+                efemèrides de l'instant real. Res d'aquest panell no convida a
+                MIRAR el Sol: la detecció és de la càmera i prou.
+              */}
+              <dt>{s('camera.diag.sunAnchor', locale)}</dt>
+              <dd className={diagnostics.sunAnchor ? 'good' : undefined}>
+                {diagnostics.sunAnchor
+                  ? `${s('camera.diag.sunAnchorValue', locale, {
+                      pct: (diagnostics.sunAnchor.confidence * 100).toFixed(0),
+                      daz: diagnostics.sunAnchor.deltaAzDeg.toFixed(2),
+                      dalt: diagnostics.sunAnchor.deltaAltDeg.toFixed(2),
+                    })}${
+                      diagnostics.anchorSource === 'sun' ||
+                      diagnostics.anchorSource === 'moon' ||
+                      diagnostics.anchorSource === 'both'
+                        ? ` · ${s('camera.diag.anchorLeads', locale)}`
+                        : ''
+                    }`
+                  : s('camera.diag.sunAnchorNone', locale)}
               </dd>
             </div>
             <div>

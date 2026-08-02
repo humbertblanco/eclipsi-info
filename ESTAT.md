@@ -207,6 +207,18 @@ Perquè no es desfacin per accident.
    `altitudeOnly` (altura sí, azimut no — i no toca el biaix d'azimut), un fix
    que afirmi més de 3° d'error d'altura es descarta (l'acceleròmetre no pot
    anar tan errat: allò és una teulada), i corre a ~10 Hz.
+4. **Àncora de Sol** (`sunAnchor`): la taca que satura el sensor contra les
+   efemèrides DE L'INSTANT REAL (mai el del simulador). És el calibratge
+   automàtic cap on apuntava la decisió del §5: no demana res a ningú. Detecta
+   per components connexes del sostre del rang (autonormalitzat), poda per
+   compacitat, rebutja fantasmes de lent per col·linearitat amb el centre
+   òptic, refina el centroide a resolució plena (~0,05°), corregeix el
+   centroide del CREIXENT durant la parcialitat (integració d'anells de
+   `solarDisc`, validada contra 2D al banc) i s'apaga amb el flux a tocar de
+   la totalitat. Portes: ±25° az, ±3° alt, mai sota la carena del model. De
+   nit, la Lluna (assajos). Els fixos de Sol i terreny es FUSIONEN
+   (`mergeAnchors`): fallen al revés l'un de l'altre, i als eclipsis d'aquest
+   catàleg — Sol arran d'horitzó — el cas normal és tenir tots dos al quadre.
 
 La FUSIÓ (`poseFusion`) té dues regles amb física pròpia:
 
