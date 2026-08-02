@@ -12,6 +12,23 @@
 
 import type { GeoLocation } from '../astro/types';
 
+/**
+ * Els mateixos dos idiomes que `src/i18n`, sense dependre'n.
+ *
+ * El tipus s'escriu literal i no s'importa de `src/i18n` per la mateixa raó
+ * que a `core/timer/types.ts` i a `core/astro/gradient.ts`: `src/i18n` és un
+ * mòdul de React amb context i `import` de JSON, i aquest nucli ha de poder
+ * córrer dins d'un Worker i a Node. Si algun dia divergeixen, divergeix una
+ * unió de dues cadenes i el compilador ho dirà a tots els llocs alhora.
+ */
+export type WeatherLocale = 'ca' | 'es';
+
+/** Text que ha d'anar a la pantalla, en els dos idiomes. */
+export interface LocalisedText {
+  ca: string;
+  es: string;
+}
+
 /** Les tres capes de núvols que separa qualsevol model meteorològic. */
 export type CloudLayerId = 'low' | 'mid' | 'high';
 
@@ -191,14 +208,62 @@ export interface CloudOutlookOptions {
   signal?: AbortSignal;
   /** Salta la memòria cau i força una consulta nova. */
   forceRefresh?: boolean;
+  /**
+   * Idioma del `caveat`. Per defecte català, perquè és l'idioma per defecte de
+   * l'app i perquè així qui ja cridava això no ha de canviar res.
+   */
+  locale?: WeatherLocale;
 }
+
+/**
+ * Per què ha fallat, en un valor que es pot traduir.
+ *
+ * El `message` de l'error segueix sent català i és per al registre i per a qui
+ * llegeixi la consola; el que es pinta a la pantalla surt de `CLOUD_ERROR_TEXT`
+ * amb l'idioma actiu. Si es fes servir el `message` directament, un usuari en
+ * castellà rebria una frase catalana just al moment en què l'app li ha fallat,
+ * que és el pitjor moment per semblar una altra app.
+ */
+export type CloudErrorCode =
+  /** Open-Meteo ha tornat menys punts dels demanats. */
+  | 'partial-points'
+  /** La graella horària no arriba a l'hora de l'eclipsi. */
+  | 'no-hour'
+  /** L'arxiu no ha donat prou anys per fer una climatologia honesta. */
+  | 'not-enough-years'
+  /** Qualsevol altra cosa: xarxa caiguda, JSON trencat, avortament. */
+  | 'unknown';
+
+/** El mateix error, dit a l'usuari. Sense culpar-lo i sense parlar d'HTTP. */
+export const CLOUD_ERROR_TEXT: Record<CloudErrorCode, LocalisedText> = {
+  'partial-points': {
+    ca: 'La consulta del cel ha tornat incompleta. Torna-ho a provar.',
+    es: 'La consulta del cielo ha vuelto incompleta. Vuelve a probarlo.',
+  },
+  'no-hour': {
+    ca: 'La previsió no arriba a l’hora de l’eclipsi.',
+    es: 'La previsión no llega a la hora del eclipse.',
+  },
+  'not-enough-years': {
+    ca: 'No hi ha prou anys d’arxiu en aquest punt per dir què hi sol fer.',
+    es: 'No hay suficientes años de archivo en este punto para decir qué suele hacer.',
+  },
+  unknown: {
+    ca: 'No s’ha pogut obtenir la nuvolositat.',
+    es: 'No se ha podido obtener la nubosidad.',
+  },
+};
 
 /** Error del mòdul amb prou context per pintar un missatge útil. */
 export class CloudOutlookError extends Error {
-  constructor(message: string, cause?: unknown) {
+  /** Per triar la frase que veurà l'usuari, en el seu idioma. */
+  readonly code: CloudErrorCode;
+
+  constructor(message: string, code: CloudErrorCode = 'unknown', cause?: unknown) {
     // `cause` per l'opció estàndard d'ES2022: així no trepitgem la propietat
     // de la classe base i la cadena d'errors original no es perd.
     super(message, { cause });
     this.name = 'CloudOutlookError';
+    this.code = code;
   }
 }

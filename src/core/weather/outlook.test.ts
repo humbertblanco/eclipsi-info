@@ -10,8 +10,20 @@
 
 import { afterEach, describe, expect, it } from 'vitest';
 import { clearWeatherCache } from './cache';
-import { confidenceForLead, getCloudOutlook, outlookMode } from './outlook';
-import { CloudOutlookError, type CloudOutlookRequest } from './types';
+import {
+  CONFIDENCE_LABEL,
+  climatologyCaveat,
+  confidenceForLead,
+  forecastCaveat,
+  getCloudOutlook,
+  outlookMode,
+} from './outlook';
+import {
+  CLOUD_ERROR_TEXT,
+  CloudOutlookError,
+  type Confidence,
+  type CloudOutlookRequest,
+} from './types';
 
 const OBSERVER = { lat: 41.5, lon: -2.5, elevation: 1100 };
 
@@ -238,6 +250,83 @@ describe('getCloudOutlook — climatologia', () => {
       fetchImpl: fake.impl,
     });
     for (const url of fake.urls) expect(decodeURIComponent(url)).not.toContain('visibility');
+  });
+});
+
+describe('el text que surt d’aquí, en castellà', () => {
+  const CONFIDENCES: Confidence[] = ['high', 'medium', 'low', 'very-low'];
+
+  it('cap taula no té claus a mitges', () => {
+    for (const c of CONFIDENCES) {
+      expect(CONFIDENCE_LABEL[c].ca.length, c).toBeGreaterThan(0);
+      expect(CONFIDENCE_LABEL[c].es.length, c).toBeGreaterThan(0);
+    }
+    for (const entry of Object.values(CLOUD_ERROR_TEXT)) {
+      expect(entry.ca.length).toBeGreaterThan(0);
+      expect(entry.es.length).toBeGreaterThan(0);
+      expect(entry.ca).not.toBe(entry.es);
+    }
+  });
+
+  it('el caveat de previsió té les quatre fiabilitats en tots dos idiomes', () => {
+    for (const c of CONFIDENCES) {
+      const ca = forecastCaveat(3, c, false, 'ca');
+      const es = forecastCaveat(3, c, false, 'es');
+      expect(ca).toContain('Falten 3.0 dies.');
+      expect(es).toContain('Faltan 3.0 días.');
+      // Si algú afegeix una fiabilitat nova i se n'oblida, la castellana
+      // sortiria igual que la catalana o buida.
+      expect(es).not.toBe(ca);
+      expect(es.length).toBeGreaterThan('Faltan 3.0 días.'.length + 10);
+    }
+  });
+
+  it('l’avís de "sense desglossament" també es tradueix', () => {
+    expect(forecastCaveat(1, 'high', true, 'es')).toContain('desglose por capas');
+    expect(forecastCaveat(1, 'high', true, 'ca')).toContain('desglossament per capes');
+  });
+
+  it('la climatologia diu NO en majúscules en tots dos idiomes', () => {
+    // És l'única cosa que impedeix llegir quinze anys d'estadística com si
+    // fossin una previsió. No es pot perdre en traduir-la.
+    expect(climatologyCaveat(15, 'ca')).toContain('NO és una previsió');
+    expect(climatologyCaveat(15, 'es')).toContain('NO es una previsión');
+    expect(climatologyCaveat(15, 'es')).toContain('15 años');
+  });
+
+  it('el defecte de tot plegat segueix sent el català', () => {
+    expect(forecastCaveat(2, 'low', false)).toBe(forecastCaveat(2, 'low', false, 'ca'));
+    expect(climatologyCaveat(9)).toBe(climatologyCaveat(9, 'ca'));
+  });
+
+  it('getCloudOutlook escriu el caveat en l’idioma demanat', async () => {
+    const fake = makeFetch((url) => forecastBody(pointCount(url), { low: 0, mid: 0, high: 0, total: 0 }));
+    const outlook = await getCloudOutlook(REQUEST, {
+      nowMs: ECLIPSE_MS - 86_400_000,
+      fetchImpl: fake.impl,
+      locale: 'es',
+    });
+    expect(outlook.caveat).toContain('Faltan');
+    expect(outlook.caveat).not.toContain('Falten');
+  });
+
+  it('canviar d’idioma reescriu el caveat SENSE tornar a la xarxa', async () => {
+    // La memòria cau desa números, i els números no canvien de llengua. Si
+    // l'idioma entrés a la clau, canviar el selector de la capçalera costaria
+    // una consulta nova; amb la climatologia, quinze.
+    const fake = makeFetch((url) => forecastBody(pointCount(url), { low: 0, mid: 0, high: 0, total: 0 }));
+    const now = ECLIPSE_MS - 86_400_000;
+    const ca = await getCloudOutlook(REQUEST, { nowMs: now, fetchImpl: fake.impl });
+    const es = await getCloudOutlook(REQUEST, {
+      nowMs: now + 60_000,
+      fetchImpl: fake.impl,
+      locale: 'es',
+    });
+
+    expect(fake.urls).toHaveLength(1);
+    expect(ca.caveat).toContain('Falten');
+    expect(es.caveat).toContain('Faltan');
+    expect(es.score.score).toBe(ca.score.score);
   });
 });
 

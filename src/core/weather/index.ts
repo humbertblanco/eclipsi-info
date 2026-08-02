@@ -11,6 +11,8 @@ export {
   outlookMode,
   leadDays,
   confidenceForLead,
+  forecastCaveat,
+  climatologyCaveat,
   CONFIDENCE_LABEL,
   CLIMATOLOGY_YEARS,
   CLIMATOLOGY_WINDOW_DAYS,
@@ -68,8 +70,11 @@ export {
 
 export { clearWeatherCache } from './cache';
 
-export { CloudOutlookError } from './types';
+export { CloudOutlookError, CLOUD_ERROR_TEXT } from './types';
 export type {
+  CloudErrorCode,
+  LocalisedText,
+  WeatherLocale,
   CloudOutlook,
   ForecastOutlook,
   ClimatologyOutlook,

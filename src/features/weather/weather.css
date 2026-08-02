@@ -26,10 +26,48 @@
   box-shadow: var(--sh-2), var(--sh-inset-top);
 }
 
-/* La vora esquerra porta la semàntica: es veu de reüll, sense llegir res. */
-.cloudpanel--clear { border-left: var(--bw-thick) solid var(--status-clear); }
-.cloudpanel--partial { border-left: var(--bw-thick) solid var(--status-partial); }
-.cloudpanel--cloudy { border-left: var(--bw-thick) solid var(--status-cloudy); }
+/*
+ * L'estat del cel, llegible de reüll.
+ *
+ * AQUÍ HI HAVIA UNA VORA ESQUERRA DE COLOR, i el sistema les prohibeix: el
+ * color va a la caixa sencera, no a una ratlla lateral (ESTAT.md §4 i el
+ * comentari de `shell__alert` a `src/App.tsx`). Es podia deixar mentre aquest
+ * panell no el muntava ningú; en obrir-lo al mapa deixa de ser un deute teòric
+ * i passa a ser una caixa que no s'assembla a cap altra de l'app.
+ *
+ * El substitut és el mateix recurs de `Badge` (`src/ui/ui.css`) i de
+ * `.spotcard--*`: el to apagat de l'estat com a fons i la vora del mateix
+ * color a tot el perímetre. La vora és fina i no gruixuda perquè aquí ja n'hi
+ * havia una de neutra al voltant i el que canvia és el color, no el gruix.
+ *
+ * EL TO VA A SOBRE DE `--surface-card` I NO AL SEU LLOC. Els `--status-*-quiet`
+ * són translúcids (14 % i 18 %) perquè una insígnia els posa damunt de la
+ * targeta que la conté. Aquí la targeta és aquest mateix element: substituir
+ * el fons pel to deixaria veure el fons de la pàgina a través del panell i el
+ * panell deixaria de semblar una targeta. Les dues capes de `background` —el
+ * degradat pla és la manera d'apilar un color damunt d'un altre— donen
+ * exactament el mateix resultat compost que el de `Badge`.
+ */
+.cloudpanel--clear {
+  border: var(--bw-hair) solid var(--status-clear);
+  background:
+    linear-gradient(var(--status-clear-quiet), var(--status-clear-quiet)),
+    var(--surface-card);
+}
+
+.cloudpanel--partial {
+  border: var(--bw-hair) solid var(--status-partial);
+  background:
+    linear-gradient(var(--status-partial-quiet), var(--status-partial-quiet)),
+    var(--surface-card);
+}
+
+.cloudpanel--cloudy {
+  border: var(--bw-hair) solid var(--status-cloudy);
+  background:
+    linear-gradient(var(--status-cloudy-quiet), var(--status-cloudy-quiet)),
+    var(--surface-card);
+}
 
 .cloudpanel__head {
   display: flex;

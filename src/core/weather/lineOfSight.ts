@@ -34,7 +34,12 @@
 
 import { DEG, EARTH_EQUATORIAL_RADIUS_KM, RAD } from '../astro/constants';
 import { LAYER_ORDER } from './layers';
-import type { CloudLayerId, LineOfSightPoint, SamplingPlan } from './types';
+import type {
+  CloudLayerId,
+  LineOfSightPoint,
+  SamplingPlan,
+  WeatherLocale,
+} from './types';
 
 /** Mateixa k que el raycast del terreny: refracció terrestre estàndard. */
 export const TERRESTRIAL_REFRACTION_K = 0.13;
@@ -280,9 +285,26 @@ export function planSignature(plan: SamplingPlan): string {
   return `${az}/${alt}/${plan.points.length}`;
 }
 
-/** Punt cardinal en català per a un azimut. Per explicar cap on mirem. */
-export function compassLabel(azimuthDeg: number): string {
-  const names = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSO', 'SO', 'OSO', 'O', 'ONO', 'NO', 'NNO'];
+/**
+ * Les setze sigles de la rosa dels vents, per idioma.
+ *
+ * AVUI LES DUES LLISTES SÓN IDÈNTIQUES, i no és un descuit. Català i castellà
+ * abreugen igual els quatre punts i les setze direccions perquè les inicials
+ * coincideixen (nord/norte, est/este, sud/sur, oest/oeste), i cap dels dos fa
+ * servir la W anglesa. La taula hi és igualment perquè l'alternativa és que el
+ * dia que entri un idioma on no coincideixin —o que algú decideixi escriure
+ * els noms sencers, on ja no coincideixen: «nord-oest» contra «noroeste»— el
+ * defecte es descobreixi a la pantalla d'algú. És el mateix criteri que
+ * `INTL` a `features/spots/format.ts`.
+ */
+const COMPASS_NAMES: Record<WeatherLocale, readonly string[]> = {
+  ca: ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSO', 'SO', 'OSO', 'O', 'ONO', 'NO', 'NNO'],
+  es: ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSO', 'SO', 'OSO', 'O', 'ONO', 'NO', 'NNO'],
+};
+
+/** Punt cardinal per a un azimut. Per explicar cap on mirem. */
+export function compassLabel(azimuthDeg: number, locale: WeatherLocale = 'ca'): string {
+  const names = COMPASS_NAMES[locale];
   const index = Math.round((((azimuthDeg % 360) + 360) % 360) / 22.5) % 16;
   return names[index];
 }

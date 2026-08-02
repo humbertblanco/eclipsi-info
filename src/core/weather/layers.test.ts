@@ -8,7 +8,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   BAND_CLEAR_MIN,
+  LAYER_LABEL,
+  LAYER_NOTE,
   LAYER_OPACITY,
+  LAYER_ORDER,
   averageLayers,
   bandForScore,
   estimateHaze,
@@ -122,6 +125,29 @@ describe('estimateHaze', () => {
   it('amb aire net i Sol alt gairebé no hi ha extinció', () => {
     const haze = estimateHaze(80_000, 70);
     expect(haze!.transmission).toBeGreaterThan(0.9);
+  });
+});
+
+describe('les etiquetes de les capes', () => {
+  it('tenen les tres capes en tots dos idiomes', () => {
+    for (const layer of LAYER_ORDER) {
+      for (const locale of ['ca', 'es'] as const) {
+        expect(LAYER_LABEL[layer][locale].length, `${layer}.${locale}`).toBeGreaterThan(0);
+        expect(LAYER_NOTE[layer][locale].length, `${layer}.${locale}`).toBeGreaterThan(0);
+      }
+      expect(LAYER_LABEL[layer].ca).not.toBe(LAYER_LABEL[layer].es);
+      expect(LAYER_NOTE[layer].ca).not.toBe(LAYER_NOTE[layer].es);
+    }
+  });
+
+  it('concorden amb el nom del núvol de cada idioma', () => {
+    // No és una traducció literal: en català concorden amb «núvols» (masculí)
+    // i en castellà amb «nubes» (femení), perquè `describeDominantLayer` les
+    // enganxa dins d'una frase. Si algú les "corregeix" a «Bajos», la frase
+    // castellana passa a dir «las nubes bajos».
+    expect(LAYER_LABEL.low.es).toBe('Bajas');
+    expect(LAYER_LABEL.mid.es).toBe('Medias');
+    expect(LAYER_LABEL.high.es).toBe('Altas');
   });
 });
 

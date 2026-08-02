@@ -17,6 +17,12 @@
  *    accent ambre per pantalla, i aquí l'ambre ja té una feina assignada:
  *    `--status-partial`. Barrejar-los faria que un cel a mitges es confongués
  *    amb un botó.
+ *
+ * IDIOMA. Res d'aquest fitxer no escriu text: les afirmacions sobre el cel
+ * surten de `core/weather` amb `locale`, i les etiquetes, de `./strings.ts`.
+ * El panell es va escriure monolingüe mentre no el muntava ningú; en obrir-lo
+ * al mapa, deixar-lo així seria el mateix defecte que ESTAT.md descriu a
+ * `verdict.summary`.
  */
 
 import type { GeoLocation } from '../../core/astro/types';
@@ -38,10 +44,13 @@ import {
   type CloudLayerId,
   type CloudOutlook,
 } from '../../core/weather';
-import { useCloudOutlook } from './useCloudOutlook';
+import type { Locale } from '../../i18n';
+import { ws } from './strings';
+import { useCloudOutlook, type UseCloudOutlookResult } from './useCloudOutlook';
 import './weather.css';
 
 export interface CloudPanelProps {
+  locale: Locale;
   /** `null` mentre no se sap on és l'usuari. El panell ho diu i espera. */
   location: GeoLocation | null;
   /** Instant del màxim de l'eclipsi des d'aquest lloc, en ms d'època. */
@@ -50,28 +59,51 @@ export interface CloudPanelProps {
   sunAzimuthDeg: number | null;
   /** Altura APARENT del Sol en aquell instant, en graus (amb refracció). */
   sunAltitudeDeg: number | null;
+  /**
+   * Resultat JA RESOLT de `useCloudOutlook`. Quan es dona, el panell NO fa
+   * cap petició pròpia: es reaprofita la que ja té la pantalla.
+   */
+  outlook?: UseCloudOutlookResult;
   /** Nom de l'instant consultat. Per defecte, el màxim de l'eclipsi. */
   eventLabel?: string;
   className?: string;
 }
 
-const percent = new Intl.NumberFormat('ca-ES', { maximumFractionDigits: 0 });
-
 /**
- * Percentatge amb espai fi abans del signe, com mana la tipografia catalana.
- * L'espai és dur perquè la xifra i el signe no se separin mai de línia.
+ * Etiqueta BCP-47 de cada idioma. Català i castellà escriuen els números
+ * igual, però l'hora no: `Intl` en dona el mes abreujat («d’ag.» contra
+ * «ago») i, sobretot, el dia que entri una tercera llengua no s'ha de
+ * descobrir amb una data catalana enmig d'una altra pantalla.
  */
-function pct(value: number): string {
-  return `${percent.format(value)}\u00a0%`;
+const INTL: Record<Locale, string> = { ca: 'ca-ES', es: 'es-ES' };
+
+const percentFmt: Partial<Record<Locale, Intl.NumberFormat>> = {};
+const hourFmt: Partial<Record<Locale, Intl.DateTimeFormat>> = {};
+
+/** Es memoritzen: construir un `Intl` a cada pintada no és barat. */
+function percent(locale: Locale): Intl.NumberFormat {
+  return (percentFmt[locale] ??= new Intl.NumberFormat(INTL[locale], {
+    maximumFractionDigits: 0,
+  }));
 }
 
-function formatHour(timeMs: number): string {
-  return new Intl.DateTimeFormat('ca-ES', {
+/**
+ * Percentatge amb espai fi abans del signe, com mana la tipografia catalana
+ * i la castellana. L'espai és dur perquè la xifra i el signe no se separin
+ * mai de línia.
+ */
+function pct(value: number, locale: Locale): string {
+  return `${percent(locale).format(value)}\u00a0%`;
+}
+
+function formatHour(timeMs: number, locale: Locale): string {
+  const fmt = (hourFmt[locale] ??= new Intl.DateTimeFormat(INTL[locale], {
     hour: '2-digit',
     minute: '2-digit',
     day: 'numeric',
     month: 'short',
-  }).format(new Date(timeMs));
+  }));
+  return fmt.format(new Date(timeMs));
 }
 
 /* ------------------------------------------------------------ subcomponents */
@@ -85,15 +117,17 @@ function LayerRow({
   layer,
   cover,
   dominant,
+  locale,
 }: {
   layer: CloudLayerId;
   cover: number;
   dominant: boolean;
+  locale: Locale;
 }) {
   return (
     <div className={dominant ? 'cloudlayer cloudlayer--on' : 'cloudlayer'}>
-      <span className="cloudlayer__name">{LAYER_LABEL[layer]}</span>
-      <span className="cloudlayer__track" title={LAYER_NOTE[layer]}>
+      <span className="cloudlayer__name">{LAYER_LABEL[layer][locale]}</span>
+      <span className="cloudlayer__track" title={LAYER_NOTE[layer][locale]}>
         <span
           className="cloudlayer__fill"
           style={{
@@ -102,7 +136,7 @@ function LayerRow({
           }}
         />
       </span>
-      <span className="cloudlayer__value eclipsi-data">{pct(cover)}</span>
+      <span className="cloudlayer__value eclipsi-data">{pct(cover, locale)}</span>
       <span className="cloudlayer__weight eclipsi-data">
         ×{LAYER_OPACITY[layer].toFixed(2)}
       </span>
@@ -121,14 +155,20 @@ function MetaRow({ label, value }: { label: string; value: string }) {
 }
 
 /** Els punts que s'han consultat al llarg de la línia de visió. */
-function LineOfSightStrip({ outlook }: { outlook: CloudOutlook }) {
+function LineOfSightStrip({
+  outlook,
+  locale,
+}: {
+  outlook: CloudOutlook;
+  locale: Locale;
+}) {
   const { sampling } = outlook;
   if (!sampling.slanted) return null;
 
   return (
     <div className="cloudlos">
-      <p className="eclipsi-overline">Línia de visió</p>
-      <p className="cloudlos__text">{describeLineOfSight(outlook)}</p>
+      <p className="eclipsi-overline">{ws('los.overline', locale)}</p>
+      <p className="cloudlos__text">{describeLineOfSight(outlook, locale)}</p>
       {sampling.lineOfSightUsed && (
         <ul className="cloudlos__chips">
           {sampling.points.map((point) => (
@@ -139,10 +179,7 @@ function LineOfSightStrip({ outlook }: { outlook: CloudOutlook }) {
         </ul>
       )}
       {sampling.truncated && (
-        <p className="cloudlos__note">
-          La línia de visió surt de la zona que consultem. Els núvols més
-          llunyans no hi entren.
-        </p>
+        <p className="cloudlos__note">{ws('los.truncated', locale)}</p>
       )}
     </div>
   );
@@ -155,13 +192,20 @@ function LineOfSightStrip({ outlook }: { outlook: CloudOutlook }) {
  * nuvolositat no és normal ni de bon tros: s'acumula als extrems (o cel net o
  * cel tancat) i una desviació típica hi diria molt poc.
  */
-function ClimatologySpread({ outlook }: { outlook: CloudOutlook }) {
+function ClimatologySpread({
+  outlook,
+  locale,
+}: {
+  outlook: CloudOutlook;
+  locale: Locale;
+}) {
   if (outlook.mode !== 'climatology') return null;
   const { stats, firstYear, lastYear, windowDays } = outlook;
+  const n = percent(locale);
 
   return (
     <div className="cloudclimo">
-      <p className="eclipsi-overline">Repartiment dels anys</p>
+      <p className="eclipsi-overline">{ws('climo.overline', locale)}</p>
       <div className="cloudclimo__track">
         <span
           className="cloudclimo__box"
@@ -175,16 +219,35 @@ function ClimatologySpread({ outlook }: { outlook: CloudOutlook }) {
         <span>100</span>
       </div>
       <dl className="cloudmeta">
-        <MetaRow label="Hores amb cel net" value={pct(stats.clearFraction * 100)} />
-        <MetaRow label="Hores amb cel tapat" value={pct(stats.cloudyFraction * 100)} />
         <MetaRow
-          label="La meitat dels casos, entre"
-          value={`${percent.format(stats.p25)} i ${percent.format(stats.p75)}`}
+          label={ws('climo.clearHours', locale)}
+          value={pct(stats.clearFraction * 100, locale)}
         />
-        <MetaRow label="Sèrie" value={`${firstYear}–${lastYear}, ±${windowDays} dies`} />
         <MetaRow
-          label="Hores observades"
-          value={`${percent.format(stats.sampleCount)} en ${stats.years} anys`}
+          label={ws('climo.cloudyHours', locale)}
+          value={pct(stats.cloudyFraction * 100, locale)}
+        />
+        <MetaRow
+          label={ws('climo.half', locale)}
+          value={ws('climo.halfValue', locale, {
+            a: n.format(stats.p25),
+            b: n.format(stats.p75),
+          })}
+        />
+        <MetaRow
+          label={ws('climo.series', locale)}
+          value={ws('climo.seriesValue', locale, {
+            first: firstYear,
+            last: lastYear,
+            days: windowDays,
+          })}
+        />
+        <MetaRow
+          label={ws('climo.hours', locale)}
+          value={ws('climo.hoursValue', locale, {
+            n: n.format(stats.sampleCount),
+            years: stats.years,
+          })}
         />
       </dl>
     </div>
@@ -193,53 +256,80 @@ function ClimatologySpread({ outlook }: { outlook: CloudOutlook }) {
 
 /* ---------------------------------------------------------------- component */
 
+/**
+ * Entrades que deixen el hook aturat: sense lloc i sense hora no hi ha res a
+ * consultar i l'efecte de `useCloudOutlook` surt per la primera branca.
+ * Constant de mòdul perquè la identitat no balli entre pintades.
+ */
+const IDLE: Parameters<typeof useCloudOutlook>[0] = {
+  location: null,
+  targetTimeMs: null,
+  sunAzimuthDeg: null,
+  sunAltitudeDeg: null,
+};
+
 export function CloudPanel({
+  locale,
   location,
   targetTimeMs,
   sunAzimuthDeg,
   sunAltitudeDeg,
-  eventLabel = 'Màxim de l’eclipsi',
+  outlook: provided,
+  eventLabel,
   className,
 }: CloudPanelProps) {
-  const { outlook, loading, error, online, nowMs, refresh } = useCloudOutlook({
-    location,
-    targetTimeMs,
-    sunAzimuthDeg,
-    sunAltitudeDeg,
-  });
+  /*
+   * LA REGLA DELS HOOKS, RESOLTA CRIDANT SEMPRE EL HOOK.
+   *
+   * De les dues sortides possibles —un component intern per a cada cas, o una
+   * sola crida amb paràmetres nuls— es tria la segona, i per dues raons:
+   *
+   *  1. Amb dos components, el dia que la pantalla comenci o deixi de passar
+   *     `outlook` (per exemple, mentre encara no té la posició), React
+   *     desmuntaria un subarbre i en muntaria un altre: el panell parpellejaria
+   *     i perdria l'estat de desplaçament. Amb una sola crida no passa res.
+   *  2. La crida en va és PROVADAMENT inerta: amb `location` i `targetTimeMs`
+   *     a `null`, `query` és `null`, l'efecte neteja i retorna sense obrir cap
+   *     `AbortController` ni cap petició, i el rellotge de l'edat no arrenca
+   *     perquè no hi ha `outlook` a envellir. El cost és un `useState` i dos
+   *     efectes que no fan res, no una consulta a Open-Meteo.
+   */
+  const own = useCloudOutlook(
+    provided ? IDLE : { location, targetTimeMs, sunAzimuthDeg, sunAltitudeDeg, locale },
+  );
+  const { outlook, loading, error, online, nowMs, refresh } = provided ?? own;
 
   const root = className ? `cloudpanel ${className}` : 'cloudpanel';
+  const title = ws('title', locale);
 
   if (!location || targetTimeMs === null) {
     return (
-      <section className={root} aria-label="Nuvolositat">
-        <p className="eclipsi-overline">Nuvolositat</p>
-        <p className="cloudpanel__empty">
-          Cal saber on ets i a quina hora et passa l’eclipsi.
-        </p>
+      <section className={root} aria-label={title}>
+        <p className="eclipsi-overline">{title}</p>
+        <p className="cloudpanel__empty">{ws('empty.noInput', locale)}</p>
       </section>
     );
   }
 
   if (loading && !outlook) {
     return (
-      <section className={root} aria-label="Nuvolositat" aria-busy="true">
-        <p className="eclipsi-overline">Nuvolositat</p>
-        <p className="cloudpanel__empty">Consultant Open-Meteo…</p>
+      <section className={root} aria-label={title} aria-busy="true">
+        <p className="eclipsi-overline">{title}</p>
+        <p className="cloudpanel__empty">{ws('loading', locale)}</p>
       </section>
     );
   }
 
   if (!outlook) {
     return (
-      <section className={root} aria-label="Nuvolositat">
-        <p className="eclipsi-overline">Nuvolositat</p>
+      <section className={root} aria-label={title}>
+        <p className="eclipsi-overline">{title}</p>
         <p className="cloudpanel__error">
-          {error ?? 'No hi ha dada de nuvolositat.'}
-          {!online && ' Estàs sense connexió i no hi ha res desat d’aquest lloc.'}
+          {error ?? ws('error.none', locale)}
+          {!online && ws('error.offline', locale)}
         </p>
         <button type="button" className="cloudpanel__retry" onClick={refresh}>
-          Torna-ho a provar
+          {ws('retry', locale)}
         </button>
       </section>
     );
@@ -247,26 +337,26 @@ export function CloudPanel({
 
   const band = outlook.score.band;
   const ageMs = Math.max(0, nowMs - outlook.fetchedAtMs);
-  const dominantNote = describeDominantLayer(outlook);
-  const hazeNote = describeHaze(outlook);
+  const dominantNote = describeDominantLayer(outlook, locale);
+  const hazeNote = describeHaze(outlook, locale);
 
   return (
     <section
       className={`${root} cloudpanel--${band}`}
-      aria-label="Nuvolositat"
+      aria-label={title}
       aria-busy={loading || undefined}
     >
       <header className="cloudpanel__head">
-        <p className="eclipsi-overline">Nuvolositat</p>
+        <p className="eclipsi-overline">{title}</p>
         <span className={`cloudbadge cloudbadge--${outlook.mode}`}>
-          {outlook.mode === 'forecast' ? 'Previsió' : 'Climatologia'}
+          {ws(outlook.mode === 'forecast' ? 'badge.forecast' : 'badge.climatology', locale)}
         </span>
       </header>
 
       {outlook.stale && (
         <p className="cloudpanel__stale">
-          Sense connexió. Aquesta és l’última dada que es va desar,{' '}
-          <strong className="eclipsi-data">{describeAgeSince(ageMs)}</strong>.
+          {ws('stale.lead', locale)}{' '}
+          <strong className="eclipsi-data">{describeAgeSince(ageMs, locale)}</strong>.
         </p>
       )}
 
@@ -276,59 +366,65 @@ export function CloudPanel({
           <span className="cloudscore__unit eclipsi-data">/100</span>
         </div>
         <div className="cloudscore__text">
-          <h3 className="cloudscore__title">{BAND_TITLE[band]}</h3>
-          <p className="cloudscore__meaning">{BAND_MEANING[band]}</p>
+          <h3 className="cloudscore__title">{BAND_TITLE[band][locale]}</h3>
+          <p className="cloudscore__meaning">{BAND_MEANING[band][locale]}</p>
           {dominantNote && <p className="cloudscore__note">{dominantNote}</p>}
         </div>
       </div>
 
       <div className="cloudlayers">
-        <p className="eclipsi-overline">Capes de núvols</p>
+        <p className="eclipsi-overline">{ws('layers.overline', locale)}</p>
         {LAYER_ORDER.map((layer) => (
           <LayerRow
             key={layer}
             layer={layer}
             cover={outlook.layers[layer]}
             dominant={outlook.score.dominant === layer}
+            locale={locale}
           />
         ))}
-        <p className="cloudlayers__legend">
-          El pes de la dreta és quanta llum atura cada capa. Els cirrus deixen
-          passar la corona; els estrats, no.
-        </p>
+        <p className="cloudlayers__legend">{ws('layers.legend', locale)}</p>
         {outlook.score.fromTotalOnly && (
           <p className="cloudlayers__legend cloudlayers__legend--warn">
-            El model no ha donat el desglossament per capes. La xifra és
-            grollera.
+            {ws('layers.totalOnly', locale)}
           </p>
         )}
       </div>
 
-      <LineOfSightStrip outlook={outlook} />
-      <ClimatologySpread outlook={outlook} />
+      <LineOfSightStrip outlook={outlook} locale={locale} />
+      <ClimatologySpread outlook={outlook} locale={locale} />
 
       {hazeNote && <p className="cloudhaze">{hazeNote}</p>}
 
       <dl className="cloudmeta cloudmeta--foot">
-        <MetaRow label={eventLabel} value={formatHour(targetTimeMs)} />
+        <MetaRow
+          label={eventLabel ?? ws('event.max', locale)}
+          value={formatHour(targetTimeMs, locale)}
+        />
         {outlook.mode === 'forecast' && (
-          <MetaRow label="Antelació" value={describeLead(outlook.leadDays)} />
+          <MetaRow
+            label={ws('meta.lead', locale)}
+            value={describeLead(outlook.leadDays, locale)}
+          />
         )}
-        <MetaRow label="Fiabilitat de la xifra" value={CONFIDENCE_LABEL[outlook.confidence]} />
-        <MetaRow label="Dada de" value={describeAge(ageMs)} />
+        <MetaRow
+          label={ws('meta.confidence', locale)}
+          value={CONFIDENCE_LABEL[outlook.confidence][locale]}
+        />
+        <MetaRow label={ws('meta.age', locale)} value={describeAge(ageMs, locale)} />
       </dl>
 
       <p className="cloudpanel__caveat">{outlook.caveat}</p>
 
       <footer className="cloudpanel__foot">
-        <span className="cloudpanel__source">{OPEN_METEO_ATTRIBUTION}</span>
+        <span className="cloudpanel__source">{OPEN_METEO_ATTRIBUTION[locale]}</span>
         <button
           type="button"
           className="cloudpanel__retry"
           onClick={refresh}
           disabled={loading}
         >
-          {loading ? 'Consultant…' : 'Actualitza'}
+          {ws(loading ? 'refreshing' : 'refresh', locale)}
         </button>
       </footer>
     </section>

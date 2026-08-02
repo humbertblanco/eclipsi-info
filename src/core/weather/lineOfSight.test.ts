@@ -150,4 +150,16 @@ describe('compassLabel', () => {
     expect(compassLabel(292.5)).toBe('ONO');
     expect(compassLabel(360)).toBe('N');
   });
+
+  it('accepta idioma i té les setze direccions en tots dos', () => {
+    // Les sigles catalanes i castellanes coincideixen (cap dels dos idiomes
+    // fa servir la W), i per això aquí es comprova que la llista castellana hi
+    // sigui SENCERA i no que digui coses diferents: el que es vol evitar és
+    // una taula amb dotze entrades i quatre `undefined`.
+    for (let az = 0; az < 360; az += 22.5) {
+      const es = compassLabel(az, 'es');
+      expect(es, `azimut ${az}`).toMatch(/^[NSEO]{1,3}$/);
+      expect(es).toBe(compassLabel(az, 'ca'));
+    }
+  });
 });

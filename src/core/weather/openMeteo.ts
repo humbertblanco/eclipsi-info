@@ -22,13 +22,22 @@
  * Cap dependència de DOM: aquest mòdul ha de poder córrer en un Worker o en Node.
  */
 
-import { CloudOutlookError } from './types';
+import { CloudOutlookError, type LocalisedText } from './types';
 
 export const FORECAST_ENDPOINT = 'https://api.open-meteo.com/v1/forecast';
 export const ARCHIVE_ENDPOINT = 'https://archive-api.open-meteo.com/v1/archive';
 
-/** Atribució obligatòria per la llicència CC-BY 4.0 de les dades. */
-export const OPEN_METEO_ATTRIBUTION = 'Dades meteorològiques d’Open-Meteo.com (CC BY 4.0)';
+/**
+ * Atribució obligatòria per la llicència CC-BY 4.0 de les dades.
+ *
+ * El nom del servei i la sigla de la llicència no es tradueixen mai —són el
+ * que fa que l'atribució serveixi de res—; l'única part que canvia és la
+ * frase que els envolta.
+ */
+export const OPEN_METEO_ATTRIBUTION: LocalisedText = {
+  ca: 'Dades meteorològiques d’Open-Meteo.com (CC BY 4.0)',
+  es: 'Datos meteorológicos de Open-Meteo.com (CC BY 4.0)',
+};
 
 /** Horitzó màxim del model numèric, en dies. Passat això no hi ha previsió. */
 export const MAX_FORECAST_DAYS = 16;
@@ -148,7 +157,10 @@ async function requestJson(url: string, options: FetchOptions): Promise<unknown>
     return await response.json();
   } catch (error) {
     if (error instanceof CloudOutlookError) throw error;
-    throw new CloudOutlookError('No s’ha pogut consultar Open-Meteo', error);
+    // Xarxa caiguda, temps esgotat o JSON trencat. Cap dels tres es pot
+    // explicar a l'usuari amb més detall que "no s'ha pogut": el que el
+    // salva no és el motiu, és la dada desada que hi ha darrere.
+    throw new CloudOutlookError('No s’ha pogut consultar Open-Meteo', 'unknown', error);
   } finally {
     clearTimeout(timer);
     options.signal?.removeEventListener('abort', onAbort);

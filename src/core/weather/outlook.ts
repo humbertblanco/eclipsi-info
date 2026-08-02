@@ -46,8 +46,10 @@ import {
   type CloudOutlookRequest,
   type Confidence,
   type ForecastOutlook,
+  type LocalisedText,
   type OutlookMode,
   type SamplingPlan,
+  type WeatherLocale,
 } from './types';
 
 const HOUR_MS = 3_600_000;
@@ -121,11 +123,11 @@ function confidenceForYears(years: number): Confidence {
   return 'very-low';
 }
 
-export const CONFIDENCE_LABEL: Record<Confidence, string> = {
-  high: 'Alta',
-  medium: 'Mitjana',
-  low: 'Baixa',
-  'very-low': 'Molt baixa',
+export const CONFIDENCE_LABEL: Record<Confidence, LocalisedText> = {
+  high: { ca: 'Alta', es: 'Alta' },
+  medium: { ca: 'Mitjana', es: 'Media' },
+  low: { ca: 'Baixa', es: 'Baja' },
+  'very-low': { ca: 'Molt baixa', es: 'Muy baja' },
 };
 
 /* ------------------------------------------------------- lectura de dades */
@@ -215,12 +217,15 @@ async function buildForecast(
   );
 
   if (responses.length !== points.length) {
-    throw new CloudOutlookError('Open-Meteo ha tornat menys punts dels demanats');
+    throw new CloudOutlookError(
+      'Open-Meteo ha tornat menys punts dels demanats',
+      'partial-points',
+    );
   }
 
   const observerIndex = nearestIndex(responses[0].hourly, request.targetTimeMs);
   if (observerIndex < 0) {
-    throw new CloudOutlookError('La previsió no cobreix l’hora de l’eclipsi');
+    throw new CloudOutlookError('La previsió no cobreix l’hora de l’eclipsi', 'no-hour');
   }
   const validAtMs = responses[0].hourly.time[observerIndex] * 1000;
 
@@ -260,31 +265,103 @@ async function buildForecast(
     score,
     sampling: plan,
     confidence,
-    caveat: forecastCaveat(lead, confidence, score.fromTotalOnly),
+    caveat: forecastCaveat(lead, confidence, score.fromTotalOnly, options.locale ?? 'ca'),
     leadDays: lead,
     validAtMs,
     haze: estimateHaze(meanVisibility, request.sunAltitudeDeg),
   };
 }
 
-function forecastCaveat(
+/** Què val una previsió segons l'antelació, dit sense embuts. */
+const FORECAST_CAVEAT_BASE: Record<Confidence, LocalisedText> = {
+  high: {
+    ca: 'Previsió a poques hores vista. És el millor que es pot saber.',
+    es: 'Previsión a pocas horas vista. Es lo mejor que se puede saber.',
+  },
+  medium: {
+    ca: 'Previsió a mig termini. La posició exacta dels núvols encara ballarà.',
+    es: 'Previsión a medio plazo. La posición exacta de las nubes todavía bailará.',
+  },
+  low: {
+    ca: 'Previsió llunyana. Serveix per a la tendència, no per decidir.',
+    es: 'Previsión lejana. Sirve para la tendencia, no para decidir.',
+  },
+  'very-low': {
+    ca: 'Previsió al límit del model. Torna-hi quan falti menys d’una setmana.',
+    es: 'Previsión al límite del modelo. Vuelve cuando falte menos de una semana.',
+  },
+};
+
+/** L'avís de quan el model no ha donat les tres capes. */
+const FROM_TOTAL_ONLY_NOTE: LocalisedText = {
+  ca: ' El model no ha donat el desglossament per capes: la xifra és grollera.',
+  es: ' El modelo no ha dado el desglose por capas: la cifra es tosca.',
+};
+
+/**
+ * S'exporta perquè el `caveat` s'ha de poder TORNAR A ESCRIURE sense tornar a
+ * consultar res: la frase viatja dins de l'objecte desat a la memòria cau, i
+ * el dia que algú canviï d'idioma amb una dada desada al davant, la frase s'ha
+ * de refer amb el que ja tenim. Vegeu `localiseCaveat`.
+ */
+export function forecastCaveat(
   lead: number,
   confidence: Confidence,
   fromTotalOnly: boolean,
+  locale: WeatherLocale = 'ca',
 ): string {
-  const base =
-    confidence === 'high'
-      ? 'Previsió a poques hores vista. És el millor que es pot saber.'
-      : confidence === 'medium'
-        ? 'Previsió a mig termini. La posició exacta dels núvols encara ballarà.'
-        : confidence === 'low'
-          ? 'Previsió llunyana. Serveix per a la tendència, no per decidir.'
-          : 'Previsió al límit del model. Torna-hi quan falti menys d’una setmana.';
-  const days = `Falten ${lead.toFixed(1)} dies.`;
-  const extra = fromTotalOnly
-    ? ' El model no ha donat el desglossament per capes: la xifra és grollera.'
-    : '';
+  const base = FORECAST_CAVEAT_BASE[confidence][locale];
+  const days =
+    locale === 'es' ? `Faltan ${lead.toFixed(1)} días.` : `Falten ${lead.toFixed(1)} dies.`;
+  const extra = fromTotalOnly ? FROM_TOTAL_ONLY_NOTE[locale] : '';
   return `${days} ${base}${extra}`;
+}
+
+/**
+ * La frase que impedeix que una climatologia es llegeixi com una previsió.
+ *
+ * El «NO» va en majúscules a posta i en tots dos idiomes: és l'única part
+ * d'aquest mòdul que evita que algú planifiqui un viatge de sis-cents
+ * quilòmetres amb una estadística de quinze anys creient que sap què farà el
+ * cel el dia 12.
+ */
+export function climatologyCaveat(years: number, locale: WeatherLocale = 'ca'): string {
+  if (locale === 'es') {
+    return (
+      'Esto NO es una previsión. Es lo que hizo el cielo estos mismos días ' +
+      `los últimos ${years} años. Sirve para elegir adónde vas, no para saber si verás algo.`
+    );
+  }
+  return (
+    'Això NO és una previsió. És el que va fer el cel aquests mateixos dies ' +
+    `els últims ${years} anys. Serveix per triar on vas, no per saber si veuràs res.`
+  );
+}
+
+/**
+ * Reescriu el `caveat` d'un resultat en l'idioma demanat.
+ *
+ * PER QUÈ L'IDIOMA NO ENTRA A LA CLAU DE LA MEMÒRIA CAU. Tot el que hi ha
+ * desat són números, i els números no canvien de llengua. Si l'idioma formés
+ * part de la clau, canviar el selector de la capçalera invalidaria la dada i
+ * dispararia una consulta nova —quinze peticions d'arxiu, en el cas de la
+ * climatologia— per reescriure una frase que ja podem reconstruir aquí amb el
+ * que l'objecte porta a dins. Al camp, amb cobertura dolenta, això és la
+ * diferència entre canviar d'idioma i quedar-se sense dada.
+ */
+function localiseCaveat(outlook: CloudOutlook, locale: WeatherLocale): CloudOutlook {
+  if (outlook.mode === 'forecast') {
+    return {
+      ...outlook,
+      caveat: forecastCaveat(
+        outlook.leadDays,
+        outlook.confidence,
+        outlook.score.fromTotalOnly,
+        locale,
+      ),
+    };
+  }
+  return { ...outlook, caveat: climatologyCaveat(outlook.stats.years, locale) };
 }
 
 /* ----------------------------------------------------------- climatologia */
@@ -391,6 +468,7 @@ async function buildClimatology(
   if (usableYears < CLIMATOLOGY_MIN_YEARS) {
     throw new CloudOutlookError(
       'L’arxiu d’Open-Meteo no ha donat prou anys per fer una climatologia',
+      'not-enough-years',
     );
   }
 
@@ -431,9 +509,7 @@ async function buildClimatology(
     // per poder-la explicar, però marquem que no s'ha fet servir.
     sampling: { ...plan, lineOfSightUsed: false },
     confidence,
-    caveat:
-      'Això NO és una previsió. És el que va fer el cel aquests mateixos dies ' +
-      `els últims ${usableYears} anys. Serveix per triar on vas, no per saber si veuràs res.`,
+    caveat: climatologyCaveat(usableYears, options.locale ?? 'ca'),
     stats,
     firstYear: lastYear - CLIMATOLOGY_YEARS + 1,
     lastYear,
@@ -477,6 +553,7 @@ export async function getCloudOutlook(
   options: CloudOutlookOptions = {},
 ): Promise<CloudOutlook> {
   const nowMs = options.nowMs ?? Date.now();
+  const locale = options.locale ?? 'ca';
   const mode = outlookMode(request.targetTimeMs, nowMs);
   const plan = planLineOfSight(
     request.location.lat,
@@ -492,7 +569,7 @@ export async function getCloudOutlook(
   // `fetchedAtMs` és l'instant que la interfície ensenya com a edat de la
   // dada, i les dues xifres han de sortir sempre del mateix rellotge.
   if (!options.forceRefresh && cached && nowMs - cached.outlook.fetchedAtMs < ttl) {
-    return cached.outlook;
+    return localiseCaveat(cached.outlook, locale);
   }
 
   try {
@@ -503,9 +580,9 @@ export async function getCloudOutlook(
     await writeCachedOutlook(key, outlook);
     return outlook;
   } catch (error) {
-    if (cached) return { ...cached.outlook, stale: true };
+    if (cached) return localiseCaveat({ ...cached.outlook, stale: true }, locale);
     throw error instanceof CloudOutlookError
       ? error
-      : new CloudOutlookError('No s’ha pogut obtenir la nuvolositat', error);
+      : new CloudOutlookError('No s’ha pogut obtenir la nuvolositat', 'unknown', error);
   }
 }

@@ -58,7 +58,14 @@
  * Cap dependència de DOM: aquest mòdul ha de poder córrer en un Worker o en Node.
  */
 
-import type { CloudLayerId, CloudLayers, CloudScore, HazeEstimate, SkyBand } from './types';
+import type {
+  CloudLayerId,
+  CloudLayers,
+  CloudScore,
+  HazeEstimate,
+  LocalisedText,
+  SkyBand,
+} from './types';
 
 /**
  * Transmissió visual efectiva de cada capa quan cobreix el cel del tot.
@@ -258,16 +265,34 @@ export function averageLayers(samples: readonly CloudLayers[]): CloudLayers {
   return { low: low / n, mid: mid / n, high: high / n, total: total / n };
 }
 
-/** Nom curt de cada capa per a la interfície. */
-export const LAYER_LABEL: Record<CloudLayerId, string> = {
-  low: 'Baixos',
-  mid: 'Mitjans',
-  high: 'Alts',
+/**
+ * Nom curt de cada capa per a la interfície.
+ *
+ * EL GÈNERE NO COINCIDEIX ENTRE ELS DOS IDIOMES i és a posta. En català
+ * l'etiqueta concorda amb «núvols» (masculí: «baixos») i en castellà amb
+ * «nubes» (femení: «bajas»). No és una traducció descuidada: `describeDominantLayer`
+ * reutilitza aquesta mateixa etiqueta en minúscules dins d'una frase («els
+ * núvols baixos» / «las nubes bajas»), i amb un «bajos» aquí la frase castellana
+ * sortiria mal concordada.
+ */
+export const LAYER_LABEL: Record<CloudLayerId, LocalisedText> = {
+  low: { ca: 'Baixos', es: 'Bajas' },
+  mid: { ca: 'Mitjans', es: 'Medias' },
+  high: { ca: 'Alts', es: 'Altas' },
 };
 
 /** Què és cada capa i què et fa. Frases curtes, per a la interfície. */
-export const LAYER_NOTE: Record<CloudLayerId, string> = {
-  low: 'Estrats i cúmuls, fins a 2 km. Tapen del tot.',
-  mid: 'Altostrats, de 2 a 6 km. El Sol es veu lletós, la corona no.',
-  high: 'Cirrus, per damunt de 6 km. La corona encara passa.',
+export const LAYER_NOTE: Record<CloudLayerId, LocalisedText> = {
+  low: {
+    ca: 'Estrats i cúmuls, fins a 2 km. Tapen del tot.',
+    es: 'Estratos y cúmulos, hasta 2 km. Tapan del todo.',
+  },
+  mid: {
+    ca: 'Altostrats, de 2 a 6 km. El Sol es veu lletós, la corona no.',
+    es: 'Altoestratos, de 2 a 6 km. El Sol se ve lechoso, la corona no.',
+  },
+  high: {
+    ca: 'Cirrus, per damunt de 6 km. La corona encara passa.',
+    es: 'Cirros, por encima de 6 km. La corona todavía pasa.',
+  },
 };

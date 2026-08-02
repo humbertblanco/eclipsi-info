@@ -17,7 +17,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GeoLocation } from '../../core/astro/types';
-import { CloudOutlookError, getCloudOutlook, type CloudOutlook } from '../../core/weather';
+import {
+  CLOUD_ERROR_TEXT,
+  CloudOutlookError,
+  getCloudOutlook,
+  type CloudOutlook,
+} from '../../core/weather';
+import { FALLBACK_LOCALE, type Locale } from '../../i18n';
 
 export interface UseCloudOutlookParams {
   /** `null` mentre no sabem on és l'usuari. */
@@ -28,12 +34,22 @@ export interface UseCloudOutlookParams {
   sunAzimuthDeg: number | null;
   /** Altura APARENT del Sol en aquell instant, en graus. */
   sunAltitudeDeg: number | null;
+  /**
+   * Idioma del `caveat` i del missatge d'error.
+   *
+   * ÉS OPCIONAL A POSTA, i el defecte és el català. Qui ja cridava aquest hook
+   * no ha de canviar res, i el dia que la pantalla que el munta encara no el
+   * passi, el que surt és l'idioma per defecte de l'app i no una cadena buida.
+   * Si el resultat s'ensenya a `CloudPanel`, passa-hi el MATEIX idioma que al
+   * panell: si no, el panell surt en castellà amb el caveat en català.
+   */
+  locale?: Locale;
 }
 
 export interface UseCloudOutlookResult {
   outlook: CloudOutlook | null;
   loading: boolean;
-  /** Missatge en català, ja llest per pintar. `null` si tot ha anat bé. */
+  /** Missatge ja llest per pintar, en l'idioma demanat. `null` si tot ha anat bé. */
   error: string | null;
   /** Estat de la connexió, per poder-ho dir abans que falli res. */
   online: boolean;
@@ -66,7 +82,13 @@ function useOnline(): boolean {
 }
 
 export function useCloudOutlook(params: UseCloudOutlookParams): UseCloudOutlookResult {
-  const { location, targetTimeMs, sunAzimuthDeg, sunAltitudeDeg } = params;
+  const {
+    location,
+    targetTimeMs,
+    sunAzimuthDeg,
+    sunAltitudeDeg,
+    locale = FALLBACK_LOCALE,
+  } = params;
 
   const [outlook, setOutlook] = useState<CloudOutlook | null>(null);
   const [loading, setLoading] = useState(false);
@@ -137,7 +159,7 @@ export function useCloudOutlook(params: UseCloudOutlookParams): UseCloudOutlookR
         sunAzimuthDeg: query.az,
         sunAltitudeDeg: query.alt,
       },
-      { signal: controller.signal, forceRefresh: force },
+      { signal: controller.signal, forceRefresh: force, locale },
     )
       .then((result) => {
         if (controller.signal.aborted) return;
@@ -147,10 +169,13 @@ export function useCloudOutlook(params: UseCloudOutlookParams): UseCloudOutlookR
       .catch((cause: unknown) => {
         if (controller.signal.aborted) return;
         setOutlook(null);
+        // El `message` de l'error és sempre català i és per a la consola; el
+        // que veu l'usuari surt del codi, que sí que està traduït. Quan l'app
+        // acaba de fallar és el pitjor moment per parlar-li en un altre idioma.
         setError(
-          cause instanceof CloudOutlookError
-            ? cause.message
-            : 'No s’ha pogut obtenir la nuvolositat',
+          CLOUD_ERROR_TEXT[cause instanceof CloudOutlookError ? cause.code : 'unknown'][
+            locale
+          ],
         );
       })
       .finally(() => {
@@ -160,8 +185,14 @@ export function useCloudOutlook(params: UseCloudOutlookParams): UseCloudOutlookR
     return () => controller.abort();
     // `key` resumeix totes les entrades arrodonides; `query` canvia d'identitat
     // però no de contingut, i seguir-lo dispararia peticions per no res.
+    //
+    // `locale` SÍ que hi és: el text del `caveat` i el de l'error surten d'aquí
+    // dins, i sense la dependència canviar d'idioma deixaria la frase anterior
+    // a la pantalla. No costa cap petició: la clau de la memòria cau del nucli
+    // no porta l'idioma i la frase es reescriu amb la dada ja desada (vegeu
+    // `localiseCaveat` a `core/weather/outlook.ts`).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, reloadToken]);
+  }, [key, reloadToken, locale]);
 
   // El rellotge només corre mentre hi ha alguna cosa a envellir.
   useEffect(() => {
