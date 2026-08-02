@@ -243,6 +243,25 @@ sintètic ara també sap fer obturador rodant (`renderFrameRS`), rampes
 d'exposició i ancoratge dins de `runSequence`: el gest d'inclinar amb àncora
 queda a ~1° pic a pic durant el gest i recollit a <0,3° als dos segons.
 
+DUES MILLORES TRANSVERSALS DE TEMPS: cada fotograma de càmera es compara amb
+la postura DE QUAN ES VA CAPTURAR (`poseHistory` + `frameCaptureMs` — exacte
+amb `metadata.captureTime` a Chrome, estimat −50 ms a Safari; abans es colaven
+40-80 ms de canonada sencers a totes les mesures), i la postura DIBUIXADA
+s'empeny ~30 ms endavant amb el giroscopi cru (`motionPredict`,
+`devicemotion.rotationRate`, costat de la multiplicació clavat al banc contra
+Euler) — el retard percebut en moviment queda a ~zero.
+
+LA PANTALLA: `ARView` accepta `chrome/timeMs/onTimeChange/mode/onState`
+(l'antic backlog AR_PROPS_NEEDED, saldat — un sol rellotge per pantalla), i
+amb la càmera oberta l'app entra en MODE IMMERSIU (`.shell--immersive`:
+barres a 0px amb unitat i tot el que en deriva segueix sol; sortida = botó de
+tancar de la càmera, i qualsevol camí que la tanqui restaura les barres).
+Píndola de lloc al HUD (cap xifra sense el seu lloc), wake lock amb càmera
+oberta, fletxa de guia cap al Sol a la vora del marc, coach del vuit quan la
+brúixola balla, pols de confirmació quan el Sol queda fixat i insígnia de qui
+aguanta l'overlay. Els dos avisos de seguretat ocular, intactes i no
+descartables.
+
 **El que encara falta a la càmera**: no gestiona que el sistema li prengui la
 càmera (una trucada, canviar d'app: es queda una fotografia congelada amb la
 superposició lliscant-hi per sobre — el bucle sí que s'atura amb la pàgina
