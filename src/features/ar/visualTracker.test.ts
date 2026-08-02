@@ -25,7 +25,7 @@ import {
   type TrackerGeometry,
   type VisualRotation,
 } from './visualTracker';
-import { PoseFusion, rotationToPoseDelta } from './poseFusion';
+import { PoseFusion, rotationToPoseDelta, normalizeDelta } from './poseFusion';
 import {
   cameraPointingFromQuaternion,
   unprojectFromScreen,
@@ -101,17 +101,44 @@ function renderFrame(
   noiseAmplitude = 0,
   seed = 1,
 ): Float32Array {
+  return renderFrameRS(panorama, geometry, () => camera, { noiseAmplitude, seed });
+}
+
+/**
+ * Com `renderFrame`, però amb la postura en funció de la FILA.
+ *
+ * És el que fa un sensor de mòbil de debò: l'obturador és rodant (rolling
+ * shutter) i cada fila es llegeix en un instant diferent. Mentre la càmera
+ * gira, cada fila veu una postura lleugerament diferent i el fotograma surt
+ * geomètricament deformat — un moviment vertical s'estira o s'encongeix segons
+ * el sentit, i un d'horitzontal es converteix en cisalla. El seguidor NO ho
+ * modela: el que es prova amb això és que la resta del sistema (retall
+ * d'innovació, atenuació per velocitat, ancoratge) acoti l'error que aquesta
+ * deformació introdueix.
+ *
+ * `gain` multiplica el valor mostrejat: simula la rampa d'exposició automàtica
+ * que dispara apuntar més amunt o més avall del cel.
+ */
+function renderFrameRS(
+  panorama: (azDeg: number, altDeg: number) => number,
+  geometry: TrackerGeometry,
+  poseAtRowFraction: (rowFraction: number) => CameraPointing,
+  options: { noiseAmplitude?: number; seed?: number; gain?: number } = {},
+): Float32Array {
   const { gridWidth: w, gridHeight: h, scaleX, scaleY, focalPx } = geometry;
+  const noiseAmplitude = options.noiseAmplitude ?? 0;
+  const gain = options.gain ?? 1;
   const viewport = {
     width: w * scaleX,
     height: h * scaleY,
     focalPx,
   };
   const out = new Float32Array(w * h);
-  const rnd = makeRandom(seed);
+  const rnd = makeRandom(options.seed ?? 1);
 
   for (let gy = 0; gy < h; gy++) {
     const screenY = (gy + 0.5) * scaleY;
+    const camera = poseAtRowFraction((gy + 0.5) / h);
     for (let gx = 0; gx < w; gx++) {
       const screenX = (gx + 0.5) * scaleX;
       const ray = unprojectFromScreen(
@@ -121,7 +148,7 @@ function renderFrame(
         DEFAULT_CALIBRATION,
         viewport,
       );
-      let value = panorama(ray.azimuth, ray.altitude);
+      let value = gain * panorama(ray.azimuth, ray.altitude);
       if (noiseAmplitude > 0) value += (rnd() - 0.5) * 2 * noiseAmplitude;
       out[gy * w + gx] = value;
     }
@@ -317,11 +344,35 @@ function runSequence(options: {
   visualSign?: number;
   /** Error d'escala de la focal, com a factor. 1 = focal exacta. */
   focalError?: number;
+  /**
+   * Fracció del període de fotograma que triga l'obturador rodant a llegir el
+   * sensor, de 0 (obturador global, el d'abans) a 1. Els mòbils reals van de
+   * 0,5 a 0,9. Amb un valor positiu, cada fila del fotograma es genera amb la
+   * postura de l'instant en què es llegeix, avaluant `path` amb índex
+   * fraccionari — les trajectòries són fórmules contínues i ho admeten.
+   */
+  readoutFraction?: number;
+  /**
+   * Fixos absoluts de terreny com els de l'skyline: veritat a la captura +
+   * error configurable, cada `everyDrawSteps` (12 ≈ 5 Hz com ARView), amb el
+   * MATEIX gating de frescor que `freshAnchor` (edat ≤ 0,5 s, moviment ≤ 3°
+   * amb el terme d'azimut escalat per cos(alt)).
+   */
+  anchor?: {
+    everyDrawSteps?: number;
+    errorAzDeg?: number;
+    errorAltDeg?: number;
+    noiseDeg?: number;
+    confidence?: number;
+    /** Quan és fals, aquell pas no produeix fix: simula perdre el terreny. */
+    activeWhile?: (i: number) => boolean;
+  };
   seed?: number;
 }): {
   errorDeg: number[];
   agreement: number;
   sensorOnlyErrorDeg: number[];
+  telemetry: PoseFusion['telemetry'];
 } {
   const panorama = makePanorama(options.seed ?? 11);
   const trueGeometry = portraitGeometry(500);
@@ -341,6 +392,15 @@ function runSequence(options: {
   let shownPose: { azimuth: number; altitude: number } | null = null;
   let lastSmoothed = { azimuth: 0, altitude: 0 };
 
+  // Estat de l'ancoratge simulat: l'últim fix, quan es va mesurar i quina
+  // postura tenia el sensor en aquell moment — el mateix que guarda ARView.
+  const anchorCfg = options.anchor;
+  let lastFix: { azimuthDeg: number; altitudeDeg: number; confidence: number } | null = null;
+  let lastFixAtStep = -1;
+  let lastFixSensor: { az: number; alt: number } | null = null;
+
+  const readout = options.readoutFraction ?? 0;
+
   for (let i = 0; i < options.steps; i++) {
     const truth = options.path(i);
     const camera = pose(truth.azimuth, truth.altitude, truth.roll);
@@ -355,7 +415,15 @@ function runSequence(options: {
     // --- vídeo a 30 Hz: només la meitat dels fotogrames de dibuix en porten un
     let visual: VisualRotation | null = null;
     if (i % 2 === 0) {
-      const gray = renderFrame(panorama, trueGeometry, camera);
+      // Amb obturador rodant, l'última fila es llegeix ARA i la primera fa
+      // `2·readout` passos de dibuix: cada fila veu la postura del seu instant.
+      const gray =
+        readout > 0
+          ? renderFrameRS(panorama, trueGeometry, (f) => {
+              const t = options.path(i - 2 * readout * (1 - f));
+              return pose(t.azimuth, t.altitude, t.roll);
+            })
+          : renderFrame(panorama, trueGeometry, camera);
       const hint = previousFrame
         ? {
             pitchRad: (truth.altitude - previousFrame.altitude) * DEG,
@@ -379,6 +447,33 @@ function runSequence(options: {
       }
     }
 
+    // --- ancoratge absolut, amb el gating de frescor d'ARView ---
+    if (
+      anchorCfg &&
+      (anchorCfg.activeWhile?.(i) ?? true) &&
+      i % (anchorCfg.everyDrawSteps ?? 12) === 0
+    ) {
+      const noiseDeg = anchorCfg.noiseDeg ?? 0;
+      lastFix = {
+        azimuthDeg: truth.azimuth + (anchorCfg.errorAzDeg ?? 0) + (rnd() - 0.5) * 2 * noiseDeg,
+        altitudeDeg: truth.altitude + (anchorCfg.errorAltDeg ?? 0) + (rnd() - 0.5) * 2 * noiseDeg,
+        confidence: anchorCfg.confidence ?? 1,
+      };
+      lastFixAtStep = i;
+      lastFixSensor = { az: smoothed.azimuth, alt: smoothed.altitude };
+    }
+    let anchorInput: { azimuthDeg: number; altitudeDeg: number; confidence: number } | null =
+      null;
+    if (lastFix && lastFixSensor) {
+      const ageSec = (i - lastFixAtStep) * dt;
+      const cosAlt = Math.max(0.2, Math.cos(smoothed.altitude * DEG));
+      const moved = Math.hypot(
+        normalizeDelta(smoothed.azimuth - lastFixSensor.az) * cosAlt,
+        smoothed.altitude - lastFixSensor.alt,
+      );
+      if (ageSec <= 0.5 && moved <= 3) anchorInput = lastFix;
+    }
+
     const fused = fusion.update({
       sensorAzimuthDeg: smoothed.azimuth,
       sensorAltitudeDeg: smoothed.altitude,
@@ -387,6 +482,7 @@ function runSequence(options: {
       visual,
       sensorSpeedDegPerSec: smoother.getTelemetry().angularSpeedDegPerSec,
       dtSec: dt,
+      anchor: anchorInput,
     });
 
     // LA REFERÈNCIA ÉS LA POSTURA DEL FOTOGRAMA QUE S'ESTÀ VEIENT, no la de
@@ -412,7 +508,12 @@ function runSequence(options: {
     }
   }
 
-  return { errorDeg, agreement: fusion.telemetry.agreement, sensorOnlyErrorDeg };
+  return {
+    errorDeg,
+    agreement: fusion.telemetry.agreement,
+    sensorOnlyErrorDeg,
+    telemetry: fusion.telemetry,
+  };
 }
 
 /** Separació angular real entre dues direccions, en graus. */
@@ -533,6 +634,52 @@ describe('la postura fusionada es queda clavada damunt de l’escena', () => {
       focalError: 0.6,
     });
     expect(Math.max(...errorDeg)).toBeGreaterThan(1);
+  });
+});
+
+describe('el banc estès: obturador rodant, exposició i ancoratge', () => {
+  const panorama = makePanorama(7);
+  const geometry = portraitGeometry();
+
+  it('amb la postura constant, el fotograma RS és idèntic al normal', () => {
+    const normal = renderFrame(panorama, geometry, pose(250, 15), 6, 4);
+    const rs = renderFrameRS(panorama, geometry, () => pose(250, 15), {
+      noiseAmplitude: 6,
+      seed: 4,
+    });
+    expect(rs).toEqual(normal);
+  });
+
+  it('amb la càmera girant, l’obturador rodant deforma el fotograma', () => {
+    // Inclinació de 2° durant la lectura: la primera fila veu una postura i
+    // l'última una altra. Si això sortís igual que l'obturador global, el banc
+    // no estaria simulant res.
+    const global = renderFrame(panorama, geometry, pose(250, 15));
+    const rolling = renderFrameRS(panorama, geometry, (f) => pose(250, 13 + 2 * f));
+    let maxDiff = 0;
+    for (let i = 0; i < global.length; i++) {
+      maxDiff = Math.max(maxDiff, Math.abs(global[i] - rolling[i]));
+    }
+    expect(maxDiff).toBeGreaterThan(10);
+  });
+
+  it('el guany multiplica la imatge', () => {
+    const base = renderFrame(panorama, geometry, pose(250, 15));
+    const brighter = renderFrameRS(panorama, geometry, () => pose(250, 15), { gain: 1.15 });
+    // Float32Array: la comparació es fa a la precisió que té el contenidor.
+    expect(brighter[1234]).toBeCloseTo(base[1234] * 1.15, 3);
+  });
+
+  it('amb un fix de terreny exacte, la postura quieta segueix clavada', () => {
+    // Sanitat del circuit de l'ancoratge dins del banc: un fix perfecte a 5 Hz
+    // no ha d'empitjorar res.
+    const { errorDeg } = runSequence({
+      path: () => ({ azimuth: 250, altitude: 20, roll: 0 }),
+      steps: 300,
+      sensorNoiseDeg: 1.5,
+      anchor: {},
+    });
+    expect(peakToPeak(errorDeg)).toBeLessThan(0.5);
   });
 });
 
