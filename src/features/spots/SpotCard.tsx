@@ -26,6 +26,7 @@
  */
 
 import { useState } from 'react';
+import { track } from '../../core/analytics';
 import { Badge, Button, Card, Stat, type Tone } from '../../ui';
 import type { SpotResult } from '../../core/spots/types';
 import type { Locale } from '../../i18n';
@@ -139,6 +140,12 @@ function CopyCoords({ lat, lon, locale }: { lat: number; lon: number; locale: Lo
  * botó de compartir de la portada: primer el full nadiu, i si no n'hi ha (o
  * l'usuari el tanca sense triar, que no és cap error), el porta-retalls amb
  * la confirmació de dos segons.
+ *
+ * AQUÍ NOMÉS HI HA DOS ESGLAONS I TOTS DOS SÓN D'ENLLAÇ: aquest camí no dibuixa
+ * cap targeta, perquè la simulació del cel es fa des del punt de l'usuari i
+ * aquest encara no ho és. Per això els dos esdeveniments que en poden sortir
+ * són `native_link` i `clipboard_link` — i és informació, no un descuit: si
+ * `surface: spot` pesa a l'informe, la targeta per candidat es guanya el cost.
  */
 function ShareSpot({
   lat,
@@ -162,6 +169,7 @@ function ShareSpot({
     if (typeof navigator.share === 'function') {
       try {
         await navigator.share({ url });
+        track('share_done', { surface: 'spot', channel: 'native_link' });
         return;
       } catch (error) {
         if (isAbortError(error)) return;
@@ -170,6 +178,7 @@ function ShareSpot({
     }
     try {
       await navigator.clipboard.writeText(url);
+      track('share_done', { surface: 'spot', channel: 'clipboard_link' });
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {

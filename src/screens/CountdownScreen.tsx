@@ -377,6 +377,9 @@ export function CountdownScreen({
           circumstances={circumstances}
           profile={horizon}
           verdict={verdict}
+          /* Des d'on es comparteix, per saber quin esglaó de l'escala guanya a
+             cada pantalla. Sense aquesta prop el gest no s'apunta enlloc. */
+          surface="home"
         />
 
         {/*

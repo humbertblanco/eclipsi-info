@@ -9,8 +9,22 @@
  * Al final hi ha l'única cosa que el motor no pot saber: el model del terreny
  * és de TERRA NUA. No hi ha arbres, ni cases, ni la tanca del càmping. Un lloc
  * amb dues dècimes de marge és, a la pràctica, un lloc sense marge.
+ *
+ * ── PER QUÈ `spot_pick` S'EMET AQUÍ I NO A `SpotCard` ───────────────────────
+ *
+ * Perquè aquí l'índex és el de la llista (base zero) i és el mateix que fa
+ * servir `rankBucket()`. `SpotCard` rep `rank` JA SUMAT (base u, perquè és el
+ * número que es pinta al cercle), i convertir-lo allà voldria dir escriure un
+ * `rank - 1` que ningú no vigila: el dia que algú canviés la numeració visible,
+ * tots els primers llocs passarien a comptar-se com a segons i la columna que
+ * ha de dir «l'ordenació encerta» diria justament el contrari, sense que res es
+ * posés vermell. La llista és qui sap l'ordre; la targeta només el pinta.
+ *
+ * La franja i no el número: amb prou resultats, «el 7è» comença a assenyalar
+ * quin lloc era, i un lloc és una ubicació (vegeu `core/analytics/buckets.ts`).
  */
 
+import { rankBucket, track } from '../../core/analytics';
 import { PLACES_ATTRIBUTION } from '../../core/places';
 import type { SpotResult, SpotSearchOutcome } from '../../core/spots/types';
 import type { Locale } from '../../i18n';
@@ -65,7 +79,16 @@ export function SpotList({ outcome, locale, eclipseId, onSelect, className }: Sp
               rank={index + 1}
               locale={locale}
               eclipseId={eclipseId}
-              onSelect={onSelect}
+              onSelect={
+                onSelect &&
+                ((picked) => {
+                  // Primer la mesura i després l'acció: fer d'aquest lloc el
+                  // punt de l'app repinta mitja aplicació i pot desmuntar
+                  // aquesta llista abans d'acabar la línia de sota.
+                  track('spot_pick', { rank: rankBucket(index) });
+                  onSelect(picked);
+                })
+              }
             />
           </li>
         ))}

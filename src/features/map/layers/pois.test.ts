@@ -181,9 +181,29 @@ describe('applyPois', () => {
     const map = new FakeMap();
     applyPois(map.asMap(), palette, [point()]);
 
-    const dot = map.layers.get(POI_DOT_LAYER)?.paint as Record<string, number>;
+    const dot = map.layers.get(POI_DOT_LAYER)?.paint as Record<string, unknown>;
     const hit = map.layers.get(POI_HIT_LAYER)?.paint as Record<string, number>;
-    expect(hit['circle-radius']).toBeGreaterThan(dot['circle-radius']);
+
+    /*
+     * EL DISC ARA ENCONGEIX AMB EL ZOOM i el seu radi és una expressió de
+     * MapLibre, no un número: amb 274 punts a escala de país es formava una
+     * taca blava sòlida. La comparació segueix sent la mateixa —el dit no pot
+     * tenir una diana més petita que el dibuix— però s'ha de fer contra el
+     * radi MÀXIM que arriba a prendre l'expressió, que és l'últim graó de la
+     * interpolació.
+     */
+    // L'expressió és ['interpolate', <corba>, ['zoom'], z1, r1, z2, r2, …]:
+    // els radis són els elements PARELLS a partir del quart. Prendre'ls tots
+    // barrejats faria passar la prova comparant el dit amb un nivell de zoom,
+    // que és el mateix error que aquest fitxer existeix per caçar.
+    const expression = dot['circle-radius'] as unknown[];
+    expect(expression[0], 'el radi del disc ja no és una interpolació').toBe('interpolate');
+    const radii = expression
+      .slice(3)
+      .filter((_, i) => i % 2 === 1)
+      .filter((v): v is number => typeof v === 'number');
+    expect(radii.length).toBeGreaterThanOrEqual(2);
+    expect(hit['circle-radius']).toBeGreaterThan(Math.max(...radii));
     // 36 px de diàmetre és el mínim d'un objectiu tàctil.
     expect(hit['circle-radius'] * 2).toBeGreaterThanOrEqual(36);
     expect(hit['circle-opacity']).toBe(0);

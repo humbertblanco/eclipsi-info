@@ -45,9 +45,26 @@
  *
  * Tancar el full de compartir llança `AbortError`. Pintar-hi un error seria
  * renyar algú per haver canviat d'opinió; es distingeix i es calla.
+ *
+ * ── LA MESURA: QUIN ESGLAÓ GUANYA DE VERITAT ────────────────────────────────
+ *
+ * L'escala de sobre és una HIPÒTESI sobre què admeten els aparells de debò, i
+ * la targeta que dibuixa costa una simulació del cel de 1200×630 a cada gest.
+ * `share_done` diu per quin esglaó ha sortit: si al camp el que passa és
+ * `clipboard_link` i `native_link` —els esglaons on la targeta NO viatja—,
+ * l'esforç ha d'anar a l'`og:image` estàtica i no a dibuixar una imatge que no
+ * rep ningú. Només s'apunten els gestos que ACABEN: cancel·lar no és fallar i
+ * el vocabulari no té cap paraula per a les fallades, a posta.
+ *
+ * `surface` ÉS OPCIONAL I SENSE ELL NO S'APUNTA RES. Podria portar un valor per
+ * omissió, i llavors el botó del mapa comptaria com a portada mentre ningú no
+ * ho toqués: una fila equivocada a l'informe és pitjor que una fila que falta,
+ * perquè la primera es creu. Qui munta el botó diu des d'on es comparteix, i
+ * mentre no ho digui aquell camí no existeix per a la mesura.
  */
 
 import { useState } from 'react';
+import { track, type AnalyticsParams } from '../../core/analytics';
 import { Button } from '../../ui';
 import type { GeoLocation, LocalCircumstances } from '../../core/astro/types';
 import type { HorizonProfile } from '../../core/horizon/profile';
@@ -63,6 +80,9 @@ import {
 import { downloadBlob, isAbortError } from './shareFile';
 import { sh, type ShareStringKey } from './strings';
 
+/** Des d'on s'ha compartit, en la paraula que el vocabulari declara. */
+export type ShareSurface = AnalyticsParams<'share_done'>['surface'];
+
 export interface ShareButtonProps {
   eclipseId: string;
   locale: Locale;
@@ -72,6 +92,12 @@ export interface ShareButtonProps {
   circumstances: LocalCircumstances | null;
   profile: HorizonProfile | null;
   verdict: VisibilityVerdict | null;
+  /**
+   * Des d'on es comparteix. Sense això el gest no s'apunta enlloc: vegeu la
+   * capçalera. NO és el lloc de l'usuari —és quina pantalla porta el botó— i
+   * per això pot viatjar.
+   */
+  surface?: ShareSurface;
   className?: string;
 }
 
@@ -99,6 +125,7 @@ export function ShareButton({
   circumstances,
   profile,
   verdict,
+  surface,
   className,
 }: ShareButtonProps) {
   const [state, setState] = useState<State>('idle');
@@ -128,6 +155,12 @@ export function ShareButton({
   const settle = (outcome: State): void => {
     setState(outcome);
     window.setTimeout(() => setState('idle'), 2500);
+  };
+
+  /** Apunta per quin esglaó ha sortit el gest, si sabem des d'on es comparteix. */
+  const done = (channel: AnalyticsParams<'share_done'>['channel']): void => {
+    if (surface === undefined) return;
+    track('share_done', { surface, channel });
   };
 
   const share = async (): Promise<void> => {
@@ -169,12 +202,14 @@ export function ShareButton({
         // usuari que tanca el full.
         if (withFile && navigator.canShare?.(withFile)) {
           await navigator.share(withFile);
+          done('native_files');
         } else {
           await navigator.share({
             title: sh('share.title', locale),
             text: sh('share.text', locale, { place }),
             url,
           });
+          done('native_link');
         }
         setState('idle');
       } catch (error) {
@@ -210,6 +245,7 @@ export function ShareButton({
           }),
         ]);
         settle('copied-both');
+        done('clipboard_both');
         return;
       } catch {
         // Es baixa a copiar només l'enllaç: la imatge és un extra, l'adreça no.
@@ -220,6 +256,7 @@ export function ShareButton({
     try {
       await navigator.clipboard.writeText(url);
       settle('copied-link');
+      done('clipboard_link');
       return;
     } catch {
       // Ni el text pla no ha entrat (context insegur, permís denegat, focus
@@ -232,6 +269,7 @@ export function ShareButton({
       if (blob !== null) {
         downloadBlob(blob, cardFileName(label, location, locale));
         settle('downloaded');
+        done('download');
         return;
       }
     } catch {

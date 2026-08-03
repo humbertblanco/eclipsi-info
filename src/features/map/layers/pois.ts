@@ -275,7 +275,35 @@ export function applyPois(
         source: POI_SOURCE,
         paint: {
           'circle-color': palette.statusInfo,
-          'circle-radius': DOT_RADIUS_PX,
+          /*
+           * EL DISC ENCONGEIX QUAN EL MAPA S'ALLUNYA, i no és cosmètica.
+           *
+           * Amb 5,5 px fixos i els 274 punts del 2026, a escala de país —que
+           * és com s'obre el mapa i com es mira en un telèfon de 390 px— la
+           * Rioja i Burgos es converteixen en UNA TACA blava sòlida: no s'hi
+           * distingeix cap punt, no se'n pot tocar cap i el que hauria de ser
+           * contingut passa a ser soroll damunt de la franja, que és la
+           * resposta. Mesurat al navegador a 390 px, que és on es fa servir
+           * això de debò.
+           *
+           * A zoom 5 (península sencera) el disc fa 2,2 px i el conjunt es
+           * llegeix com una constel·lació: es veu ON hi ha convocatòries sense
+           * tapar res. A partir de zoom 9, on ja es tria un lloc concret, el
+           * disc torna a la mida de sempre. La capa de TOC no encongeix mai
+           * (vegeu `TOUCH_RADIUS_PX`): el dit necessita els seus 36 px de
+           * diana encara que el dibuix sigui petit.
+           */
+          'circle-radius': [
+            'interpolate',
+            ['exponential', 2],
+            ['zoom'],
+            5,
+            DOT_RADIUS_PX * 0.4,
+            7,
+            DOT_RADIUS_PX * 0.62,
+            9,
+            DOT_RADIUS_PX,
+          ],
           /*
            * La vora fosca no és decoració: sense ella el disc blau desapareix
            * sobre el mar de la cartografia fosca de CARTO, que és blau també.

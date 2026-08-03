@@ -22,7 +22,32 @@
  */
 
 import type { Locale } from '../i18n';
+import { PRIVACY_NOTE } from '../features/about/credits';
 import './screens.css';
+
+/*
+ * LA LLISTA DE FONTS JA NO S'ESCRIU AQUÍ, I ES REEXPORTA D'AQUÍ.
+ *
+ * Vivia en aquest fitxer i «Com funciona» en tenia una còpia declarada
+ * (`ABOUT_SOURCES`, amb la nota que era candidata a morir). La còpia va fer el
+ * que fan les còpies: el 3 d'agost de 2026 van entrar dues fonts noves —els
+ * miradors i cims d'OpenStreetMap, i la llicència CC BY d'Open-Meteo, que són
+ * obligacions i no cortesies— i cap de les dues llistes ho deia.
+ *
+ * Ara la font única és `features/about/credits.ts`. La REEXPORTACIÓ no és
+ * pereseja: el diàleg de crèdits del mapa importa `CREDITS`, `PRIVACY_NOTE` i
+ * `SOURCES_HEADING` d'aquest mòdul des que existeix, i moure l'escriptura no
+ * havia d'obligar a tocar-li ni una línia d'importació. Canvia on s'escriu, no
+ * d'on es llegeix.
+ */
+export {
+  CREDITS,
+  PRIVACY_NOTE,
+  SOURCES_HEADING,
+  OBSERVATION_SOURCES_HEADING,
+  OBSERVATION_SOURCES_NOTE,
+} from '../features/about/credits';
+export type { Credit } from '../features/about/credits';
 
 /**
  * Versió i moment de compilació, injectats per Vite.

@@ -57,4 +57,4 @@ export type { ShareStringKey } from './strings';
  * la barra d'adreces d'un navegador de mòbil, que la mig amaga.
  */
 export { ShareButton } from './ShareButton';
-export type { ShareButtonProps } from './ShareButton';
+export type { ShareButtonProps, ShareSurface } from './ShareButton';

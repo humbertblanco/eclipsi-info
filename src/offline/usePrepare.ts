@@ -3,9 +3,24 @@
  *
  * Tota la lògica de veritat és a `prepare.ts`; aquí només hi ha el pont amb
  * React i l'escanyament dels avisos de progrés.
+ *
+ * ── PER QUÈ `offline_ready` S'APUNTA AQUÍ I NO A `prepare.ts` ───────────────
+ *
+ * Perquè `prepareLocation()` és una funció que qualsevol pot cridar —un script,
+ * un test, una futura precàrrega en segon pla— i el que s'ha de mesurar és la
+ * PROMESA DE PRODUCTE: algú ha demanat de poder anar sense cobertura i ha
+ * arribat al final. Aquest hook és l'únic camí per on això passa avui (només
+ * `OfflinePanel` el munta), i és on la cancel·lació ja està separada de
+ * l'avaria. Posar-ho al motor mesuraria també les crides que no són ningú.
+ *
+ * `ok` I `partial` SURTEN DE `failedTiles`, que és la xifra que decideix: amb
+ * una sola tessel·la que falti, el perfil d'horitzó d'aquell rumb és una
+ * suposició i la promesa és a mitges. Cancel·lar no és cap dels dos i no
+ * s'apunta: qui atura la descàrrega no ha promès res.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { track } from '../core/analytics';
 import type { GeoLocation } from '../core/astro/types';
 import {
   isAbortError,
@@ -99,6 +114,9 @@ export function usePrepare(): UsePrepareResult {
         .then((result) => {
           if (!alive.current || ac.signal.aborted) return;
           setState((previous) => ({ ...previous, running: false, result }));
+          track('offline_ready', {
+            outcome: result.failedTiles === 0 ? 'ok' : 'partial',
+          });
         })
         .catch((error: unknown) => {
           if (!alive.current) return;
@@ -111,6 +129,7 @@ export function usePrepare(): UsePrepareResult {
             running: false,
             error: toPrepareFailure(error),
           }));
+          track('offline_ready', { outcome: 'failed' });
         });
     },
     [],

@@ -1,0 +1,56 @@
+/* ============================================================================
+   Bloc de qui publica els punts d'observació oficials.
+
+   PER QUÈ TÉ FULL PROPI I NO VIU A `about.css`: el component es munta a dos
+   llocs —«Com funciona» i el diàleg de crèdits del mapa— i el mapa no ha de
+   carregar les set-centes línies de la pàgina de premsa per pintar vuit
+   enllaços. És el mateix criteri que fa que els catàlegs de `public/data/` no
+   vagin al precache: es paga el que es fa servir.
+
+   LES CLASSES SÓN PRÒPIES (`obssources__*`) i no reutilitzen ni `.about__*` ni
+   `.screen__*` a posta: si el bloc heretés les d'una pantalla, muntar-lo a
+   l'altra el deixaria sense estil i ningú no ho veuria fins a obrir el diàleg.
+   La regla de l'overline és, literalment, la mateixa que `.about__overline` i
+   `.screen__overline` —que ja són idèntiques entre elles—, i és la manera que
+   el bloc es vegi natiu a les dues bandes.
+   ========================================================================== */
+
+.obssources {
+  margin-top: var(--sp-5);
+}
+
+.obssources__overline {
+  display: block;
+  margin: 0;
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.obssources__note {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--text-muted);
+}
+
+/* Columna d'enllaços, un per administració. Sense vora entre files: són vuit
+   noms curts i les línies d'un píxel els donarien un pes de taula que no els
+   toca — la taula de fonts de dalt sí que en porta, perquè hi ha dues
+   columnes que cal alinear. */
+.obssources__list {
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+}
+
+/* To d'enllaç del sistema, no el d'accent: un crèdit no és cap avís. */
+.obssources__list a {
+  color: var(--text-link);
+}

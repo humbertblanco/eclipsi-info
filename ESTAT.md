@@ -1,7 +1,11 @@
 # Estat del projecte
 
 Document de traspàs. Diu **on som, què s'ha comprovat, què queda obert i què
-no s'ha de tornar a trencar**. Actualitzat l'1 d'agost de 2026.
+no s'ha de tornar a trencar**. Actualitzat el 3 d'agost de 2026.
+
+> Si ets un agent o un model que arriba nou: llegeix primer `CLAUDE.md` (les
+> regles de com s'escriu aquí) i després aquest fitxer sencer. Els dos van
+> junts; aquest mana.
 
 ---
 
@@ -103,6 +107,19 @@ disseny. `src/screens` són les quatre pantalles.
 | `core/spots` | Cercador de llocs millors a prop |
 | `features/ar` | Càmera, fusió de sensors, **ancoratge al terreny** |
 | `offline` | Service worker i precàrrega per anar sense cobertura |
+| `core/heat` | Mapa de calor de visibilitat: graella, càlcul en dos nivells i memòria cau |
+| `core/timeline` | El rellotge de simulació, pur i sense navegador |
+| `core/analytics` | Vocabulari tancat d'esdeveniments i la porta de privadesa |
+| `core/geo` | Geometria esfèrica compartida (sectors, polilínies) |
+| `data/observation-points` | Catàleg curat de punts oficials, amb font i enllaç |
+| `features/map/layers` | Una capa de MapLibre per fitxer, totes idempotents |
+
+**Els generadors de dades i d'actius viuen a `scripts/`** i es corren a mà:
+`build-minimap.ts` (la imatge base de la portada), `build-og.ts` (la targeta
+social), `build-viewpoints.ts` (miradors i cims d'OSM via Overpass),
+`build-cloud-clim.ts` (la climatologia de núvols d'Open-Meteo, amb punt de
+control per poder-la reprendre entre finestres horàries). Cap d'ells no corre
+al build: el que es publica són els seus resultats, comitejats.
 
 ---
 
@@ -244,6 +261,26 @@ raster pla que no ho ensenyava. El que s'ha tancat:
 - **Rellotge de simulació** reutilitzable (`core/timeline`) amb el seu
   reproductor, que distingeix sempre simulació de temps real.
 
+**LA FAMÍLIA D'ERRORS DEL 3 D'AGOST, que val més que la llista de funcions.**
+Tot el que va sortir malament aquell dia tenia la mateixa forma: *una cosa
+construïda a sobre d'una altra que ningú no havia comparat mai amb res*. Val la
+pena tenir-la present abans d'afegir res:
+
+| Què semblava correcte | Què li faltava |
+|---|---|
+| La franja dibuixada al mapa | Ningú comparava **el dibuixat** amb **el calculat**. Deixava València fora amb 62 s de totalitat |
+| El text del catàleg i de la guia | Ningú comparava **el text** amb **el motor**. Anunciava «Galícia» d'una franja que no passa per Vigo ni Santiago |
+| La imatge base del mini-mapa | Ningú en mirava **un sol píxel**. Es va publicar transparent de dalt a baix |
+| El catàleg de miradors | Extret amb una màscara amb forat: no s'havia demanat mai res de Mallorca ni d'Eivissa |
+| La capa de vora d'incertesa | Escrita, provada i connectada… i el pare no li passava mai les dades |
+| El JSON dels miradors al servidor | Ni al precache ni a cap regla: al camp la capa no hi hauria estat, sense error |
+
+La conseqüència pràctica: **quan facis una cosa nova, pregunta't què la compara
+amb la realitat.** Si la resposta és «res», aquella és la feina que falta. Les
+proves noves que en van sortir són `band-agreement.test.ts`,
+`afirmacions-del-text.test.ts`, `actius-binaris.test.ts`,
+`minimap-asset.test.ts`, `terrain-agreement.test.ts` i `budget.test.ts`.
+
 ### Mitjà
 
 - **Cap component de React té cap test.** `vitest.config.ts` només inclou
@@ -256,6 +293,26 @@ raster pla que no ho ensenyava. El que s'ha tancat:
   codis): «Només s'han pogut baixar X de N tessel·les…» arriba tal qual a
   l'usuari ES. Mateix camí pendent per als canals de progrés de
   `core/spots/search.ts` i `offline/prepare.ts`.
+
+- **La climatologia de núvols està a mitges, i a posta.** El 2026 té 888
+  cel·les amb 12-13 anys (2011-2023): el sostre horari d'Open-Meteo va tallar
+  la sèrie i el fitxer ho diu ell mateix. Falten el 2024 i el 2025 (~1.130
+  crides, una finestra horària neta) i **els eclipsis del 2027 i del 2028 no
+  estan generats**: 5.280 i 8.863 crides, tres dies de pla gratuït. Es reprèn
+  amb `npx tsx scripts/build-cloud-clim.ts <eclipseId>` — el punt de control va
+  per casella de la malla i sobreviu als canvis de geometria de la franja.
+- **Els punts oficials del 2027 i del 2028 estan buits, i és la resposta
+  correcta.** Es va comprovar font per font el 3-8-2026: el portal de l'Estat
+  només enllaça portals autonòmics, tots del 2026; Andalusia (la franja del
+  2027) encara està DECIDINT els emplaçaments —la jornada del 2 d'agost va ser
+  l'assaig de camp per triar-los— i Múrcia diu que «estudia» els espais. Tot el
+  que hi ha publicat per al nord d'Àfrica són paquets d'agències. Inventar-se un
+  punt oficial és pitjor que no tenir-ne: algú hi conduiria.
+- **`nearestSeaLevelLimit` és inestable a l'últim minut de la trajectòria**, i
+  ja ho era abans de les tapes del terminador: salta 200 km entre segons
+  consecutius. Es va deixar sense tocar a posta perquè arreglar-ho demana
+  revalidar `uncertainty.ts` contra l'IGN, que és una feina amb el seu propi
+  daurat. Candidat clar per a la propera sessió.
 
 ### Baix
 
