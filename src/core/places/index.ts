@@ -75,6 +75,7 @@ export type {
   PlaceName,
   PlacePrecision,
   PlaceRequestOptions,
+  PlaceSubkind,
   PlaceSuggestion,
   Settlement,
   SettlementRank,

@@ -109,6 +109,33 @@ export interface PlaceName {
   cached: boolean;
 }
 
+/**
+ * Matís de què és exactament un resultat del cercador, més fi que `kind`.
+ *
+ * PER QUÈ CAL, si `kind` ja distingeix poble, cim i «altres»: perquè hi ha
+ * parelles de resultats que amb nom i context es pinten IGUALS i no ho són.
+ * Buscant «Burgos» arriben la ciutat (place=city) i el terme municipal
+ * (boundary=administrative), tots dos «Burgos — Castilla y León», i sense
+ * saber quin és quin no hi ha manera de triar. El matís el posa la font;
+ * les paraules per ensenyar-lo les posa la interfície quan li fan falta.
+ *
+ * Els quatre primers són els rangs de `place` d'OSM tal qual; els tres
+ * següents són les capes administratives (terme, comarca o província, regió);
+ * la resta, el relleu i els miradors que el cercador deixa passar.
+ */
+export type PlaceSubkind =
+  | 'city'
+  | 'town'
+  | 'village'
+  | 'hamlet'
+  | 'municipality'
+  | 'county'
+  | 'region'
+  | 'peak'
+  | 'saddle'
+  | 'pass'
+  | 'viewpoint';
+
 /** Un resultat del cercador de llocs (geocodificació directa). */
 export interface PlaceSuggestion {
   /** Nom del lloc. */
@@ -125,6 +152,8 @@ export interface PlaceSuggestion {
    * escriu "Puerto de San Isidro" o "Peña Ubiña", que són coll i cim.
    */
   kind: 'settlement' | 'peak' | 'other';
+  /** El mateix, amb el matís que desempata els que es veuen iguals. */
+  subkind: PlaceSubkind;
   /** Identificador OSM. Clau estable per a la llista. */
   osmId: string | null;
 }

@@ -63,6 +63,15 @@ export interface PlaceHit {
    * poble de la vall quan el que volies era el port.
    */
   kind: PlaceSuggestion['kind'];
+  /**
+   * Què és, amb el matís que `kind` no té: ciutat, terme municipal, comarca…
+   *
+   * NO ES PINTA MAI DIRECTAMENT. Serveix per quan dues files quedarien
+   * idèntiques a ull —«Burgos — Castilla y León» dues vegades, una la ciutat i
+   * l'altra el municipi— i llavors, i només llavors, el tipus s'afegeix al
+   * `detail` perquè es pugui triar.
+   */
+  subkind: PlaceSuggestion['subkind'];
 }
 
 export interface PlaceSearchOptions {
@@ -120,7 +129,82 @@ function toHit(suggestion: PlaceSuggestion): PlaceHit {
     lat: suggestion.lat,
     lon: suggestion.lon,
     kind: suggestion.kind,
+    subkind: suggestion.subkind,
   };
+}
+
+/* --- desempatar les files que es veurien iguals --------------------------- */
+
+/**
+ * El tipus de cada matís, curt i en les dues llengües alhora.
+ *
+ * PER QUÈ BILINGÜE I NO PER IDIOMA: el `detail` on s'afegeix és el mateix per
+ * a tots dos idiomes —ve d'OSM tal qual, «Castilla y León», «el Baix
+ * Maestrat»— i les files no es refan en canviar d'idioma. S'escriu compacte,
+ * «ciutat/ciudad», perquè dins d'una línia que ja separa amb « · » no es
+ * confongui amb un tros més de context. Les paraules iguals en català i
+ * castellà van soles.
+ */
+const SUBKIND_LABEL: Record<PlaceHit['subkind'], string> = {
+  city: 'ciutat/ciudad',
+  town: 'vila/villa',
+  village: 'poble/pueblo',
+  hamlet: 'llogaret/aldea',
+  municipality: 'municipi/municipio',
+  county: 'comarca',
+  region: 'regió/región',
+  peak: 'cim/cima',
+  saddle: 'coll/collado',
+  pass: 'port/puerto',
+  viewpoint: 'mirador',
+};
+
+/**
+ * El que la fila pinta de veritat: el nom, el detail i, si és un cim o un
+ * coll, el prefix «Cim o coll» que la interfície hi posa. Dos resultats amb la
+ * mateixa signatura són indistingibles a ull, encara que per dins no ho siguin.
+ */
+function signatureOf(hit: PlaceHit): string {
+  return `${hit.kind === 'peak' ? 'peak' : ''}|${hit.name}|${hit.detail ?? ''}`;
+}
+
+/**
+ * Que cap parell de files quedi idèntic a ull.
+ *
+ * EL CAS QUE HO VA DESTAPAR: buscant «Burgos» sortien dues files «Burgos —
+ * Castilla y León» sense manera de saber que una era la ciutat i l'altra el
+ * terme municipal. Aquí, quan dues files quedarien iguals, cadascuna diu què
+ * és; i si el que arriba repetit és el MATEIX objecte d'OSM, no es desempata
+ * res: es fusiona, perquè dues files del mateix lloc són una mentida de
+ * l'abundància. La resta de files no es toquen: el tipus només afegeix soroll
+ * quan no fa falta.
+ */
+function disambiguate(hits: readonly PlaceHit[]): readonly PlaceHit[] {
+  // 1. El mateix objecte dues vegades és UN resultat. L'identificador d'OSM
+  //    és estable; el de recanvi (les coordenades) també serveix d'igualtat.
+  const seenIds = new Set<string>();
+  const unique = hits.filter((hit) => {
+    if (seenIds.has(hit.id)) return false;
+    seenIds.add(hit.id);
+    return true;
+  });
+
+  // 2. Comptar quantes files es pintarien exactament igual.
+  const counts = new Map<string, number>();
+  for (const hit of unique) {
+    const signature = signatureOf(hit);
+    counts.set(signature, (counts.get(signature) ?? 0) + 1);
+  }
+
+  // 3. Només als empats se'ls afegeix el tipus al detail.
+  return unique.map((hit) => {
+    if ((counts.get(signatureOf(hit)) ?? 0) < 2) return hit;
+    const label = SUBKIND_LABEL[hit.subkind];
+    return {
+      ...hit,
+      detail: hit.detail === null ? label : `${hit.detail} · ${label}`,
+    };
+  });
 }
 
 let override: PlaceSearch | null = null;
@@ -154,8 +238,10 @@ export async function searchPlaces(
   const limit = options.limit ?? SEARCH_LIMIT;
 
   try {
+    // El desempat val per als dos camins, també per al client substituït:
+    // que les proves passin pel mateix embut que passa la realitat.
     if (override !== null) {
-      const hits = await override(trimmed, { ...options, limit });
+      const hits = disambiguate(await override(trimmed, { ...options, limit }));
       return hits.length === 0 ? { status: 'empty' } : { status: 'ok', hits };
     }
 
@@ -168,7 +254,7 @@ export async function searchPlaces(
     if (result === SUPERSEDED) return { status: 'superseded' };
     return result.length === 0
       ? { status: 'empty' }
-      : { status: 'ok', hits: result.map(toHit) };
+      : { status: 'ok', hits: disambiguate(result.map(toHit)) };
   } catch (err) {
     // Una cerca cancel·lada no és un error: és que l'usuari ha seguit escrivint.
     if (err instanceof DOMException && err.name === 'AbortError') {

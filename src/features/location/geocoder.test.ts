@@ -35,6 +35,7 @@ const hit: PlaceHit = {
   lat: 40.3578,
   lon: 0.4074,
   kind: 'settlement',
+  subkind: 'town',
 };
 
 describe('consultes massa curtes', () => {
@@ -83,6 +84,97 @@ describe('cerques que van bé', () => {
     // El biaix no és cosmètic: hi ha tres Cervera a la península.
     expect(opts.biasLat).toBe(42.3439);
     expect(opts.biasLon).toBe(-3.6969);
+  });
+});
+
+describe('resultats que es veurien iguals', () => {
+  // El cas que ho va destapar: buscant «Burgos», Photon torna la ciutat
+  // (place=city) i el terme municipal (boundary=administrative), tots dos
+  // «Burgos — Castilla y León». Sense dir què és cadascun, no es pot triar.
+  const city: PlaceHit = {
+    id: 'N166920565',
+    name: 'Burgos',
+    detail: 'Castilla y León',
+    lat: 42.3439,
+    lon: -3.6969,
+    kind: 'settlement',
+    subkind: 'city',
+  };
+  const municipality: PlaceHit = {
+    id: 'R344165',
+    name: 'Burgos',
+    detail: 'Castilla y León',
+    lat: 42.3506,
+    lon: -3.6893,
+    kind: 'other',
+    subkind: 'municipality',
+  };
+
+  it('dues files idèntiques a ull diuen què és cadascuna', async () => {
+    setPlaceSearch(async () => [city, municipality]);
+    const outcome = await searchPlaces('Burgos');
+    expect(outcome).toEqual({
+      status: 'ok',
+      hits: [
+        { ...city, detail: 'Castilla y León · ciutat/ciudad' },
+        { ...municipality, detail: 'Castilla y León · municipi/municipio' },
+      ],
+    });
+  });
+
+  it('sense context, el tipus és tot el detail', async () => {
+    setPlaceSearch(async () => [
+      { ...city, detail: null },
+      { ...municipality, detail: null },
+    ]);
+    const outcome = await searchPlaces('Burgos');
+    expect(outcome).toEqual({
+      status: 'ok',
+      hits: [
+        { ...city, detail: 'ciutat/ciudad' },
+        { ...municipality, detail: 'municipi/municipio' },
+      ],
+    });
+  });
+
+  it('el mateix objecte OSM repetit es fusiona, no es desempata', async () => {
+    // Dues files del mateix lloc són una mentida de l'abundància: si
+    // l'identificador coincideix, no hi ha res a distingir.
+    setPlaceSearch(async () => [city, { ...city }]);
+    expect(await searchPlaces('Burgos')).toEqual({ status: 'ok', hits: [city] });
+  });
+
+  it('les files que ja es distingeixen no carreguen el tipus', async () => {
+    // El tipus només afegeix soroll quan no fa falta: tres Cervera amb
+    // comarques diferents ja es distingeixen soles.
+    const cervera = { ...city, id: 'R343956', name: 'Cervera', detail: 'Segarra · Catalunya' };
+    const rioAlhama: PlaceHit = {
+      id: 'R339888',
+      name: 'Cervera',
+      detail: 'La Rioja',
+      lat: 41.9976,
+      lon: -1.9403,
+      kind: 'settlement',
+      subkind: 'village',
+    };
+    setPlaceSearch(async () => [cervera, rioAlhama]);
+    expect(await searchPlaces('Cervera')).toEqual({
+      status: 'ok',
+      hits: [cervera, rioAlhama],
+    });
+  });
+
+  it('un cim no empata amb un poble: la fila ja el marca com a cim', async () => {
+    // La interfície prefixa «Cim o coll» als cims; un cim i un poble amb el
+    // mateix nom i el mateix context ja es veuen diferents sense tocar res.
+    const peak: PlaceHit = {
+      ...city,
+      id: 'N1249818402',
+      kind: 'peak',
+      subkind: 'peak',
+    };
+    setPlaceSearch(async () => [city, peak]);
+    expect(await searchPlaces('Burgos')).toEqual({ status: 'ok', hits: [city, peak] });
   });
 });
 

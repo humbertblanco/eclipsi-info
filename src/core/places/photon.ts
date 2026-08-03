@@ -72,7 +72,12 @@
  * Cap dependència de DOM: aquest mòdul ha de poder córrer en Node.
  */
 
-import { PlaceLookupError, type PlaceSuggestion, type Settlement } from './types';
+import {
+  PlaceLookupError,
+  type PlaceSubkind,
+  type PlaceSuggestion,
+  type Settlement,
+} from './types';
 
 const BASE_URL = 'https://photon.komoot.io';
 
@@ -147,6 +152,15 @@ interface PhotonProperties {
   osm_type?: string;
   osm_key?: string;
   osm_value?: string;
+  /**
+   * El rang que Photon dona al resultat ("city", "county", "state"...).
+   * És l'únic camp que diu si un `boundary=administrative` és un terme
+   * municipal (type=city) o una comarca o província (type=county), perquè
+   * `osm_value` val "administrative" en tots dos casos. Comprovat amb
+   * respostes reals: Burgos R344165 (municipi) ve amb type=city i el Bages
+   * R2350331 (comarca) amb type=county.
+   */
+  type?: string;
   city?: string;
   county?: string;
   state?: string;
@@ -283,24 +297,40 @@ export async function fetchNearbySettlements(
 /* -------------------------------------------------------- directa: nom → coord */
 
 /**
- * Classes que val la pena ensenyar al cercador.
+ * Classes que val la pena ensenyar al cercador, i què és cada resultat.
  *
  * Fora queden botigues, parades d'autobús i cartells informatius, que la
  * resposta en va plena: buscant "Pola de Somiedo" el primer resultat és una
  * parada d'autobús. Dins hi entren els cims i els colls, perquè són el que la
  * gent escriu de veritat quan busca on plantar-se.
+ *
+ * A més de la classe gruixuda (`kind`) es torna el matís (`subkind`): la
+ * ciutat de Burgos i el seu terme municipal surten tots dos amb el mateix nom
+ * i el mateix context, i el matís és l'única cosa que en permet desempatar
+ * les files quan arriben a la llista.
  */
-function suggestionKind(props: PhotonProperties): PlaceSuggestion['kind'] | null {
+function classify(
+  props: PhotonProperties,
+): { kind: PlaceSuggestion['kind']; subkind: PlaceSubkind } | null {
   const key = props.osm_key;
   const value = props.osm_value;
 
-  if (key === 'place' && isSettlementRank(value)) return 'settlement';
-  // `boundary=administrative` és el municipi. Serveix, però el seu punt és el
-  // centroide del polígon, no el poble; queda com a "other" i baixa a la llista.
-  if (key === 'boundary' && value === 'administrative') return 'other';
-  if (key === 'natural' && (value === 'peak' || value === 'saddle')) return 'peak';
-  if (key === 'mountain_pass') return 'peak';
-  if (key === 'tourism' && value === 'viewpoint') return 'other';
+  if (key === 'place' && isSettlementRank(value)) {
+    return { kind: 'settlement', subkind: value };
+  }
+  // `boundary=administrative` pot ser el terme municipal, una comarca o una
+  // província: `osm_value` no ho distingeix i el `type` de Photon sí (vegeu
+  // `PhotonProperties.type`). Serveixen tots, però el seu punt és el centroide
+  // del polígon, no el poble; queden com a "other" i baixen a la llista.
+  if (key === 'boundary' && value === 'administrative') {
+    if (props.type === 'county') return { kind: 'other', subkind: 'county' };
+    if (props.type === 'state') return { kind: 'other', subkind: 'region' };
+    return { kind: 'other', subkind: 'municipality' };
+  }
+  if (key === 'natural' && value === 'peak') return { kind: 'peak', subkind: 'peak' };
+  if (key === 'natural' && value === 'saddle') return { kind: 'peak', subkind: 'saddle' };
+  if (key === 'mountain_pass') return { kind: 'peak', subkind: 'pass' };
+  if (key === 'tourism' && value === 'viewpoint') return { kind: 'other', subkind: 'viewpoint' };
   return null;
 }
 
@@ -352,12 +382,12 @@ export async function fetchPlaceSearch(
     const props = feature.properties ?? {};
     const coords = coordsOf(feature);
     const name = text(props.name);
-    const kind = suggestionKind(props);
-    if (!coords || !name || !kind) continue;
+    const what = classify(props);
+    if (!coords || !name || !what) continue;
 
     // La mateixa vila surt sovint dues vegades (el node del poble i el polígon
     // del municipi). Amb el nom i la comarca n'hi ha prou per adonar-se'n.
-    const dedupeKey = `${name}|${props.county ?? ''}|${kind}`;
+    const dedupeKey = `${name}|${props.county ?? ''}|${what.kind}`;
     if (seen.has(dedupeKey)) continue;
     seen.add(dedupeKey);
 
@@ -370,7 +400,8 @@ export async function fetchPlaceSearch(
       context,
       lat: coords.lat,
       lon: coords.lon,
-      kind,
+      kind: what.kind,
+      subkind: what.subkind,
       osmId: osmIdOf(props),
     });
   }
