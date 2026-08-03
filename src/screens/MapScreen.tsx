@@ -228,6 +228,8 @@ export function MapScreen({
 }: MapScreenProps) {
   const [view, setView] = useState<View>(initialView ?? 'band');
   const [creditsOpen, setCreditsOpen] = useState(false);
+  /** A mòbil el cercador comença plegat; a l'escriptori no es plega mai. */
+  const [searchOpen, setSearchOpen] = useState(false);
 
   /*
    * LES CAPES DEL MAPA (relleu, con de visió), a part del segmentat: el
@@ -714,6 +716,30 @@ export function MapScreen({
             perquè `App` importa la fulla estàticament: mateixa cerca, mateix
             aspecte, zero CSS duplicat.
           */}
+          {/*
+            EL CERCADOR, PLEGAT A MÒBIL.
+            Mesurat a 390 px: el camp obert costava 74 px permanents en una
+            pantalla on el mapa només en tenia 257. Cercar un topònim és un
+            gest ocasional —el gest normal d'aquesta pantalla és tocar el
+            mapa— i no pot pagar peatge a cada visita. A l'escriptori la fitxa
+            és una columna amb espai de sobres i el camp es queda obert.
+          */}
+          {!desktop && !searchOpen && (
+            <Button
+              variant="ghost"
+              size="sm"
+              icon="search"
+              onClick={() => setSearchOpen(true)}
+              className="mapscreen__searchopen"
+            >
+              {ls('search.label', locale)}
+            </Button>
+          )}
+
+          {/* Es desmunta, no s'amaga: `hidden` no pot amb el `display` que
+              porta la classe, i un camp amagat amb CSS segueix rebent el
+              focus del teclat. */}
+          {(desktop || searchOpen) && (
           <div className="mapscreen__search">
             <Input
               icon="search"
@@ -754,6 +780,7 @@ export function MapScreen({
               </>
             )}
           </div>
+          )}
 
           <SegmentedControl
             value={view}

@@ -824,13 +824,23 @@
      no es veu abans del primer desplaçament. */
   gap: var(--sp-4);
   /*
-   * EL MAPA MANA: la fitxa es queda per sota de mitja pantalla (45dvh, unitat
-   * dinàmica perquè les barres del navegador mòbil no la facin créixer) i la
-   * resta es llegeix desplaçant-s'hi per dins. Abans era un 62% i en un mòbil
-   * el mapa quedava reduït a una escletxa — i la fitxa ha guanyat blocs
-   * (cerca de topònims, miniatura de la trajectòria) que ho feien pitjor.
+   * EL MAPA MANA, I ARA MANA DE DEBÒ: 36dvh.
+   *
+   * Va ser 62 %, després 45dvh, i seguia sent massa. Mesurat a 390×844: el
+   * mapa es quedava amb 257 px dels 896 de pantalla —el 29 %— en una pestanya
+   * que es diu «Mapa», i dins de la fitxa hi havia 169 px de crom abans de dir
+   * res (74 el camp de cerca sempre obert, 95 el commutador partit en dues
+   * files). Amb el cercador plegat a un botó, el commutador en una sola fila
+   * que llisca i aquest sostre, el mapa passa de 257 a ~340 px: d'un terç a
+   * gairebé la meitat.
+   *
+   * QUÈ CAP EN 36dvh, que és el que decideix el número: el distintiu de
+   * franja, les tres xifres i l'inici de la línia de contactes. O sigui el
+   * veredicte sencer d'un cop d'ull, que és el compromís de sempre. La resta
+   * es llegeix desplaçant-s'hi per dins, i qui vulgui el detall té
+   * l'escriptori o el desplaçament.
    */
-  max-height: 45dvh;
+  max-height: 36dvh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -862,17 +872,80 @@
  * control: `SegmentedControl` amb `wrap` no posa cap columna en línia
  * justament perquè el full del panell pugui dir-hi la seva.
  */
+/* El botó que obre el cercador plegat: discret, alineat a l'esquerra. */
+.mapscreen__searchopen {
+  align-self: flex-start;
+}
+
+/*
+ * EL COMMUTADOR, EN UNA SOLA FILA QUE LLISCA (i abans en feia dues).
+ *
+ * Mesurat a 390 px: el mapa es quedava amb 257 px de 896 —el 29 % de la
+ * pantalla— i el crom de la fitxa se'n menjava 169 abans de dir res: 74 el
+ * camp de cerca i 95 aquest commutador partit en tres-més-dues. Més de la
+ * meitat del que tenia el mapa, en una pestanya que es diu «Mapa».
+ *
+ * Amb una fila que llisca, les cinc opcions ocupen 48 px en comptes de 95 i
+ * les dues últimes es descobreixen amb el gest que ja fa tothom en veure una
+ * fila tallada. La barra de desplaçament s'amaga: el tall de l'última opció
+ * ja diu que n'hi ha més, i una barra dins d'una fitxa de vidre és soroll.
+ */
 .mapscreen__sheet .mapscreen__views {
-  grid-template-columns: repeat(6, 1fr);
+  /*
+   * GRAELLA D'UNA SOLA FILA, no `flex`: `.ui-seg` és `inline-grid` i les seves
+   * opcions estan pensades per a cel·les de graella. Amb `display: flex` el
+   * control col·lapsava a un fil de dos píxels — provat al navegador. Amb
+   * `grid-auto-flow: column` es queden totes en una fila i el contenidor
+   * llisca.
+   */
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  grid-template-columns: none;
+  /*
+   * QUE NO S'AIXAFI. La fitxa és una columna flexible amb sostre de 45dvh, i
+   * un element flexible sense aquesta línia s'encongeix per fer lloc a la
+   * resta: mesurat al navegador, el control quedava a 5 px d'alçada amb les
+   * seves opcions de 44 sobresortint per fora. Amb dues files no es notava
+   * perquè hi havia més alçada per repartir; en passar a una, va cantar.
+   */
+  flex: 0 0 auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* El desplaçament s'atura sobre una opció sencera, mai a mitja paraula. */
+  scroll-snap-type: x proximity;
+}
+
+.mapscreen__sheet .mapscreen__views::-webkit-scrollbar {
+  display: none;
 }
 
 .mapscreen__sheet .mapscreen__views .ui-seg__opt {
-  grid-column: span 2;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  white-space: nowrap;
 }
 
-.mapscreen__sheet .mapscreen__views .ui-seg__opt:nth-child(4),
-.mapscreen__sheet .mapscreen__views .ui-seg__opt:nth-child(5) {
-  grid-column: span 3;
+/*
+ * A partir del punt on la fitxa és una columna i no una capa flotant, hi
+ * caben totes cinc: torna la graella de sis columnes de sempre.
+ */
+@media (min-width: 900px) and (min-height: 500px) {
+  .mapscreen__sheet .mapscreen__views {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    overflow-x: visible;
+  }
+
+  .mapscreen__sheet .mapscreen__views .ui-seg__opt {
+    grid-column: span 2;
+  }
+
+  .mapscreen__sheet .mapscreen__views .ui-seg__opt:nth-child(4),
+  .mapscreen__sheet .mapscreen__views .ui-seg__opt:nth-child(5) {
+    grid-column: span 3;
+  }
 }
 
 /* ============================================================================

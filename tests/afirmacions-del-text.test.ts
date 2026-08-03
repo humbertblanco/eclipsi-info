@@ -91,6 +91,13 @@ const PLACES = {
   illaAire: { ca: 'Illa de l’Aire', es: 'Isla del Aire', lat: 39.8003, lon: 4.2947, elevation: 5 },
   barcelona: { ca: 'Barcelona', es: 'Barcelona', lat: 41.3874, lon: 2.1686, elevation: 12 },
   madrid: { ca: 'Madrid', es: 'Madrid', lat: 40.4168, lon: -3.7038, elevation: 667 },
+  santiago: {
+    ca: 'Santiago',
+    es: 'Santiago',
+    lat: 42.8782,
+    lon: -8.5448,
+    elevation: 260,
+  },
   pamplona: { ca: 'Pamplona', es: 'Pamplona', lat: 42.8125, lon: -1.6458, elevation: 449 },
   vigo: { ca: 'Vigo', es: 'Vigo', lat: 42.2406, lon: -8.7207, elevation: 20 },
   girona: { ca: 'Girona', es: 'Girona', lat: 41.9794, lon: 2.8214, elevation: 70 },
@@ -191,7 +198,9 @@ const BAND_CLAIMS: Record<string, { inside: PlaceKey[]; outside: PlaceKey[] }> =
       'castello',
       'valencia',
     ],
-    outside: ['barcelona', 'madrid', 'pamplona', 'vigo'],
+    // Madrid NO hi és: el motor no el pot situar (marge +1,85″, `edgeUncertain`).
+    // Té clàusula pròpia al catàleg i prova pròpia més avall.
+    outside: ['barcelona', 'pamplona', 'vigo'],
   },
   '2027-08-02': {
     inside: ['cadis', 'malaga', 'ceuta', 'melilla'],
@@ -241,7 +250,25 @@ describe('la llista de llocs del catàleg', () => {
           for (const locale of LOCALES) {
             expect(spainText(eclipseId, locale)).toContain(PLACES[key][locale]);
           }
-          expect(central(eclipseId, key)).toBe(0);
+          const c = circ(eclipseId, key);
+          expect(c.centralDurationSec).toBe(0);
+          /*
+           * I EL MOTOR HO HA DE PODER DECIDIR, exactament com s'exigeix a la
+           * llista de DINS unes línies més amunt.
+           *
+           * AQUESTA LÍNIA NO HI ERA, i l'asimetria era la trampa: la prova
+           * exigia `edgeUncertain === false` per entrar a la llista de dins i
+           * no demanava res per entrar a la de fora. Amb això, el catàleg
+           * afirmava «Madrid en queda fora» quan el motor li dona marge
+           * +1,85″ i `edgeUncertain: true` —o sigui que NO ho sap—, i el
+           * producte es contradeia a si mateix: un madrileny llegia «queda
+           * fora» amb lletra impresa i, tocant el mapa al seu punt, la
+           * mateixa app li deia «just al caire, ves-hi amb marge».
+           *
+           * Un lloc que el càlcul no pot situar no va a cap de les dues
+           * llistes: va a la clàusula que diu que no se sap.
+           */
+          expect(c.edgeUncertain).toBe(false);
         });
       }
     });
@@ -262,6 +289,29 @@ describe('la llista de llocs del catàleg', () => {
    * desaparèixer d'aquesta frase mentre el motor li dona fase central, aquest
    * test ho diu abans que ho digui un valencià que s'ha quedat a casa.
    */
+  /**
+   * Els llocs que el càlcul NO pot situar no van a cap de les dues llistes.
+   *
+   * Madrid i Santiago tenen marges de +1,85″ i +1,67″ amb `edgeUncertain`:
+   * afirmar-ne res, ni dins ni fora, és vendre una moneda a l'aire com si fos
+   * una predicció. El catàleg els dona una clàusula pròpia i aquesta prova
+   * vigila que hi segueixin: si algun dia el motor els decideix, això es
+   * posarà vermell i algú haurà de moure'ls a la llista que toqui.
+   */
+  it('Madrid i Santiago es queden a la ratlla, i el text ho diu', () => {
+    for (const key of ['madrid', 'santiago'] as const) {
+      const c = circ('2026-08-12', key);
+      expect(c.edgeUncertain, `${key} ja no és al caire`).toBe(true);
+    }
+    expect(spainText('2026-08-12', 'ca')).toContain('a la ratlla mateixa');
+    expect(spainText('2026-08-12', 'es')).toContain('en la raya misma');
+    // I no poden sortir a cap de les dues enumeracions.
+    for (const claim of [BAND_CLAIMS['2026-08-12'].inside, BAND_CLAIMS['2026-08-12'].outside]) {
+      expect(claim).not.toContain('madrid');
+      expect(claim).not.toContain('santiago');
+    }
+  });
+
   it('València no pot tornar a caure de la llista del 2026', () => {
     const c = circ('2026-08-12', 'valencia');
     expect(c.kind).toBe('total');

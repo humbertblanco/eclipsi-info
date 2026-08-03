@@ -106,17 +106,30 @@ export const ECLIPSES: EclipseEntry[] = [
      * una llista publicada no és el lloc per jugar-se una moneda a l'aire.
      *
      * I S'HI DIU QUI EN QUEDA FORA PER POC, que és informació que ningú no
-     * dona: Barcelona es queda al 99,80 %, Madrid al 99,98 %. Sense dir-ho,
-     * un barceloní llegeix la llista, no s'hi troba, i no sap si és per 10 km
-     * o per 300.
+     * dona: Barcelona es queda al 99,80 %. Sense dir-ho, un barceloní llegeix
+     * la llista, no s'hi troba, i no sap si és per 10 km o per 300.
+     *
+     * MADRID I SANTIAGO TENEN CLÀUSULA PRÒPIA, i és una correcció d'aquest
+     * mateix text. Deia «Barcelona, Madrid, Pamplona i Vigo en queden fora» i
+     * afirmava de Madrid una cosa que el motor NO diu: marge +1,85″ i
+     * `edgeUncertain: true` (Santiago, +1,67″, igual). O sigui que el càlcul
+     * no els pot situar ni dins ni fora. Just tres línies més amunt, aquest
+     * mateix comentari es nega a posar Bilbao, Lleida i Zamora a la llista de
+     * DINS pel mateix motiu: l'asimetria era la trampa. I el producte es
+     * contradeia a si mateix — un madrileny llegia «queda fora» amb lletra
+     * impresa i, si tocava el mapa al seu punt, la mateixa app li deia «just
+     * al caire, ves-hi amb marge».
+     *
+     * Barcelona (+6,99″), Pamplona (+2,81″) i Vigo (+15,93″) sí que en queden
+     * fora amb el motor decidit, i per això es queden a l'enumeració.
      *
      * L'altura: dins de la franja i sobre terra el motor va de 12,3° (Malpica
      * de Bergantiños) i 12,0° (A Coruña) fins a 1,8° a Maó i 1,7° a l'Illa de
      * l'Aire. Deia «entre 12° i 1°»; el mínim real arrodoneix a 2°, no a 1°.
      */
     spain: {
-      ca: 'Franja de NO a SE: A Coruña, Oviedo i Gijón, Santander, Lleó, Burgos, Valladolid, Logronyo, Vitòria, Sòria, Saragossa, Tarragona, Castelló, València i les Balears. Al capvespre, amb el Sol de 12° a menys de 2° sobre l’horitzó. Barcelona, Madrid, Pamplona i Vigo en queden fora per poc: parcial del 99 %, que no és el mateix.',
-      es: 'Franja de NO a SE: A Coruña, Oviedo y Gijón, Santander, León, Burgos, Valladolid, Logroño, Vitoria, Soria, Zaragoza, Tarragona, Castellón, Valencia y Baleares. Al atardecer, con el Sol de 12° a menos de 2° sobre el horizonte. Barcelona, Madrid, Pamplona y Vigo se quedan fuera por poco: parcial del 99 %, que no es lo mismo.',
+      ca: 'Franja de NO a SE: A Coruña, Oviedo i Gijón, Santander, Lleó, Burgos, Valladolid, Logronyo, Vitòria, Sòria, Saragossa, Tarragona, Castelló, València i les Balears. Al capvespre, amb el Sol de 12° a menys de 2° sobre l’horitzó. Barcelona, Pamplona i Vigo en queden fora per poc: parcial del 99 %, que no és el mateix. Madrid i Santiago es queden a la ratlla mateixa: el càlcul no els pot situar ni dins ni fora.',
+      es: 'Franja de NO a SE: A Coruña, Oviedo y Gijón, Santander, León, Burgos, Valladolid, Logroño, Vitoria, Soria, Zaragoza, Tarragona, Castellón, Valencia y Baleares. Al atardecer, con el Sol de 12° a menos de 2° sobre el horizonte. Barcelona, Pamplona y Vigo se quedan fuera por poco: parcial del 99 %, que no es lo mismo. Madrid y Santiago se quedan en la raya misma: el cálculo no puede situarlos ni dentro ni fuera.',
     },
     saros: 126,
     lowSunOverSpain: true,
