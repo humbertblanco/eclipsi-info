@@ -46,6 +46,34 @@ de tipus i deixar el `dist/` anterior intacte. Si després corres el `rsync`, el
 que puges és la versió vella i sembla que el desplegament ha anat bé. Encadena
 les dues comandes amb `&&` o mira la sortida del build abans de pujar.
 
+**HI HA CLOUDFLARE AL DAVANT, I CACHEJA ELS 404 QUATRE HORES.** Això va tombar
+el lloc el 3-8-2026 i la causa era la comprovació mateixa: es va demanar
+`https://eclipsi.info/assets/index-XXXX.js` per curiositat ABANS de fer el
+`rsync`. Aquella petició va tornar 404 —encara no hi era—, Cloudflare se'l va
+desar amb `max-age=14400`, i quan el fitxer va arribar al servidor el CDN va
+seguir servint el 404 durant hores. El resultat per a l'usuari: `index.html`
+es serveix fresc (`cf-cache-status: DYNAMIC`), demana el seu paquet i rep un
+404. Pantalla blanca, sense cap error al servidor i amb el fitxer al disc amb
+el checksum correcte.
+
+Tres regles que en surten:
+
+1. **MAI demanis una URL d'actiu abans de pujar-la.** Ni per comprovar, ni per
+   curiositat. Si el nom encara no existeix, l'estàs enverinant.
+2. **La verificació per checksum va DESPRÉS del `rsync`, sempre**, i s'ha de
+   fer per la URL pública, no per `ssh`: el fitxer al disc pot ser perfecte
+   mentre el CDN serveix una altra cosa. `sha256sum` per `ssh` només serveix
+   per distingir un problema de pujada d'un problema de cau.
+3. **Si passa, la sortida ràpida és tornar a compilar.** El peu de l'app duu la
+   data i hora de compilació, o sigui que cada build canvia el contingut del
+   paquet i, amb ell, el seu nom amb hash. Un nom nou no té cap 404 desat i
+   entra net. Purgar la cau de Cloudflare demanaria credencials que aquest
+   projecte no té a mà.
+
+Per saber si el que serveix el CDN és el que hi ha al disc, `?cb=<a l'atzar>`
+salta la cau i respon amb l'origen: si amb el paràmetre el checksum quadra i
+sense no, el problema és de cau i no de desplegament.
+
 **El servidor és compartit.** `lacuinade.estic.online` allotja desenes de
 vhosts. Toca NOMÉS `httpdocs/eclipsi/`. Res de reiniciar serveis, tocar
 configuració global ni res que surti d'aquella carpeta.
