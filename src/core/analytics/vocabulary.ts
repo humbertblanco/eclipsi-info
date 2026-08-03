@@ -279,7 +279,22 @@ export const VOCABULARY = {
    * que es va endurir el 2-8 (la càmera que se't pren el sistema).
    */
   camera_session: {
-    anchor: ['sun', 'terrain', 'both', 'none'],
+    /**
+     * Amb què ha arribat a ancorar EN TOTA LA SESSIÓ, no a l'últim fotograma:
+     * el gest normal d'acabar és abaixar el braç, i llegir l'àncora vigent al
+     * tancament diria «cap» de gairebé totes. Ho acumula
+     * `features/ar/sessionAnchor.ts`, que és on viu també la precedència.
+     *
+     * `moon` NO ES POT PLEGAR DINS DE `sun`. Els assajos de nit (§6 d'ESTAT.md:
+     * «de nit, la Lluna») són l'única estona en què l'àncora d'astre s'exercita
+     * abans del dia de l'eclipsi, i comptar-los com a Sol faria que la columna
+     * afirmés que el camí solar funciona a ple dia quan no s'hi haurà provat
+     * mai. És el mateix codi amb condicions de llum oposades: una taca de Lluna
+     * sobre cel negre és el cas fàcil. `both` sí que els barreja, i és a posta
+     * — allà la pregunta és si les dues capes arriben a fusionar-se, i quin
+     * astre hi entra no canvia la resposta.
+     */
+    anchor: ['sun', 'moon', 'terrain', 'both', 'none'],
     ended: ['closed', 'track_lost', 'error'],
   },
 

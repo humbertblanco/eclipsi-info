@@ -256,7 +256,11 @@ export function useSpotSearch(params: UseSpotSearchParams): UseSpotSearchResult 
       options: opts,
     };
     worker.postMessage(request);
-  }, [ensureWorker]);
+    // `finish` hi és encara que avui sigui estable (`useCallback` amb la llista
+    // buida): és el que fa que el dia que li creixi una dependència, aquesta
+    // funció no es quedi cridant la versió vella i apuntant esperes d'una
+    // cerca que ja no existeix.
+  }, [ensureWorker, finish]);
 
   const cancel = useCallback(() => {
     const worker = workerRef.current;

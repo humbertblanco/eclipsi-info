@@ -91,6 +91,27 @@
 
 .about__sourcewhat { color: var(--text-muted); }
 
+/* Qui la fa i sota quina llicència, en un sol bloc: si el nom saltés de línia i
+   la llicència es quedés dalt, l'atribució quedaria partida just per la meitat
+   que la fa valer. `align-items: baseline` perquè la llicència és més petita i
+   ha de seure damunt la mateixa línia que el nom, no al mig de la seva alçada. */
+.about__sourcewho {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  flex-wrap: nowrap;
+}
+
+/* Un nom de llicència no és cap avís: ni accent, ni to d'enllaç. Mono i en cos
+   de nota, com les xifres del projecte — és una etiqueta exacta que s'ha de
+   poder copiar tal com sona («ODbL 1.0», «CC BY 4.0»), no una paraula. */
+.about__sourcelicence {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 /* El to d'enllaç del sistema, no el d'accent: un enllaç no és cap avís. */
 .about__sources a,
 .about__assetlist a,

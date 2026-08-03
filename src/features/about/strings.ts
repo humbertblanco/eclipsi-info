@@ -168,63 +168,28 @@ export function ab(
 }
 
 /* ---------------------------------------------------------------------------
- * D'on surt cada cosa.
+ * D'ON SURT CADA COSA JA NO S'ESCRIU AQUÍ.
  *
- * CÒPIA DELIBERADA de la llista canònica de `src/screens/SiteFooter.tsx`
- * (mateixes files, mateix ordre: primer el que decideix les xifres, després
- * el que decideix el que veus). Aquesta tasca no pot tocar fitxers existents;
- * quan l'orquestrador cabli la pàgina, la font única ha de ser una de sola i
- * aquesta constant és la candidata a morir.
+ * Hi va viure `ABOUT_SOURCES`, una CÒPIA DELIBERADA de la llista del peu, amb
+ * la nota al costat que era candidata a morir el dia que hi hagués cablatge.
+ * La còpia va fer el que fan les còpies: el 3 d'agost de 2026 van entrar dues
+ * fonts noves —els miradors i cims d'OpenStreetMap, i la llicència CC BY
+ * d'Open-Meteo— i cap de les dues llistes ho deia. Com que l'ODbL i la CC BY
+ * són obligacions de llicència i no cortesies, la còpia no era un deute
+ * d'ordre: era un incompliment amb la dada ja pintada al mapa.
+ *
+ * La llista canònica és `./credits.ts` i la pàgina la llegeix d'allà.
  * ------------------------------------------------------------------------- */
-
-export interface AboutSource {
-  what: Record<Locale, string>;
-  who: string;
-  url: string;
-}
-
-export const ABOUT_SOURCES: AboutSource[] = [
-  {
-    what: { ca: 'Efemèrides', es: 'Efemérides' },
-    who: 'astronomy-engine',
-    url: 'https://github.com/cosinekitty/astronomy',
-  },
-  {
-    what: { ca: 'Trajectòria de l’ombra', es: 'Trayectoria de la sombra' },
-    who: 'Fred Espenak, NASA/GSFC',
-    url: 'https://eclipse.gsfc.nasa.gov/',
-  },
-  {
-    what: { ca: 'Dades d’observació', es: 'Datos de observación' },
-    who: 'IGN',
-    url: 'https://eclipses.ign.es/',
-  },
-  {
-    what: { ca: 'Model del terreny', es: 'Modelo del terreno' },
-    who: 'AWS Terrain Tiles',
-    url: 'https://registry.opendata.aws/terrain-tiles/',
-  },
-  {
-    what: { ca: 'Cartografia i topònims', es: 'Cartografía y topónimos' },
-    who: 'OpenStreetMap · Photon · CARTO',
-    url: 'https://www.openstreetmap.org/copyright',
-  },
-  {
-    what: { ca: 'Meteorologia', es: 'Meteorología' },
-    who: 'Open-Meteo',
-    url: 'https://open-meteo.com/',
-  },
-  {
-    what: { ca: 'Seguretat ocular', es: 'Seguridad ocular' },
-    who: 'AAS · ISO 12312-2',
-    url: 'https://eclipse.aas.org/eye-safety',
-  },
-];
 
 /**
  * Qui ho signa, per al bloc de contacte de premsa. Els dos al mateix nivell,
  * com al peu: la persona al seu perfil i el despatx al seu domini.
- * (Còpia deliberada de `SiteFooter.tsx`, mateixa nota que `ABOUT_SOURCES`.)
+ *
+ * SEGUEIX SENT UNA CÒPIA de la del peu, i aquesta sí que s'hi queda de moment:
+ * una autoria no és cap font de dades ni porta cap llicència al darrere, i el
+ * dia que els dos noms divergeixin no s'incompleix res —es veu de seguida i es
+ * corregeix. La llista de FONTS era una altra cosa i per això ha marxat a
+ * `./credits.ts`.
  */
 export interface AboutAuthor {
   name: string;

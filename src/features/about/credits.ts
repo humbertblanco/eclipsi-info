@@ -27,11 +27,27 @@
  *    escrit a la fila) i de quins amfitrions baixa. Amb el camp opcional,
  *    afegir una fila incompleta compila; amb el camp obligatori, no.
  * 2. `hosts` és el que tanca l'inventari. `tests/credits-de-les-fonts.test.ts`
- *    recorre `src/**` buscant amfitrions externs dins del CODI (no dels
- *    comentaris) i exigeix que cadascun sigui d'alguna fila d'aquí o d'una
- *    llista declarada de coses que no són fonts. La pròxima font que s'afegeixi
- *    portarà un amfitrió nou i la prova la trobarà tota sola, sense que ningú
+ *    recorre el codi que es publica i els generadors de `scripts/` buscant
+ *    amfitrions externs dins del CODI (no dels comentaris) i exigeix que
+ *    cadascun sigui d'alguna fila d'aquí o d'una llista declarada de coses que
+ *    no són fonts. La pròxima font que s'afegeixi portarà un amfitrió nou —el
+ *    seu servidor si es demana en execució, el seu Overpass o el seu portal si
+ *    es cou en compilació— i la prova la trobarà tota sola, sense que ningú
  *    se'n recordi tres mesos després.
+ *
+ * ── PER QUÈ AQUEST FITXER NO IMPORTA RES DE `core` ──────────────────────────
+ *
+ * Perquè el peu el munta l'estructura de l'app i per tant aquesta llista és al
+ * PAQUET D'ARRENCADA. `OSM_COPYRIGHT_URL` viu a `core/places/viewpoints.ts`, que
+ * importa `core/eclipses/path.ts` per retallar els miradors a la franja: importar
+ * la constant hauria arrossegat els elements besselians sencers a la primera
+ * pintada per estalviar-se vint-i-nou caràcters. L'adreça s'escriu aquí i és
+ * `tests/credits-de-les-fonts.test.ts` qui exigeix que sigui la MATEIXA cadena
+ * que `OSM_COPYRIGHT_URL` i que `PLACES_ATTRIBUTION_URL`. No és cap excepció a
+ * la regla de no duplicar: és el mateix criteri que ja fa servir
+ * `offline/basemap-agreement.test.ts` amb la URL de les tessel·les, on dos
+ * mòduls que no s'han d'importar entre ells declaren la mateixa cadena i és una
+ * prova qui els lliga.
  *
  * ELS PUNTS D'OBSERVACIÓ OFICIALS NO SÓN UNA FILA D'AQUÍ, i és a posta: són
  * vuit administracions i la llista CANVIA per eclipsi (vuit el 2026, cap el
@@ -41,7 +57,15 @@
  */
 
 import type { Locale } from '../../i18n';
-import { OSM_COPYRIGHT_URL } from '../../core/places';
+
+/**
+ * On es llegeixen les condicions de l'ODbL.
+ *
+ * Cadena literal a posta (vegeu la capçalera): ha de ser idèntica a
+ * `OSM_COPYRIGHT_URL` de `core/places/viewpoints.ts` i a `PLACES_ATTRIBUTION_URL`
+ * de `core/places/photon.ts`, i qui ho vigila és la prova dels crèdits.
+ */
+const OSM_COPYRIGHT_URL = 'https://www.openstreetmap.org/copyright';
 
 /**
  * Una font de dades, tal com s'ha d'ensenyar.
@@ -89,10 +113,13 @@ export const CREDITS: readonly Credit[] = [
     what: { ca: 'Efemèrides', es: 'Efemérides' },
     who: 'astronomy-engine',
     url: 'https://github.com/cosinekitty/astronomy',
-    /* MIT. És una dependència que va compilada dins del paquet: no en baixem
-       cap dada en execució, i per això `hosts` és buit. */
+    /*
+     * MIT. És una dependència que va compilada dins del paquet: no se'n baixa
+     * cap dada en execució. L'únic amfitrió que ocupa és la seva pàgina, la que
+     * enllaça aquesta fila mateixa.
+     */
     licence: 'MIT',
-    hosts: [],
+    hosts: ['github.com'],
   },
   {
     what: { ca: 'Trajectòria de l’ombra', es: 'Trayectoria de la sombra' },
@@ -159,8 +186,14 @@ export const CREDITS: readonly Credit[] = [
     who: 'col·laboradors d’OpenStreetMap',
     url: OSM_COPYRIGHT_URL,
     licence: 'ODbL 1.0',
-    /* Cap amfitrió: el catàleg es cou en compilació i es publica amb l'app. */
-    hosts: [],
+    /*
+     * En execució no es demana res: el catàleg es cou en compilació i viatja
+     * amb l'app. Els amfitrions són els de l'extracció, `scripts/build-viewpoints.ts`
+     * —les dues rèpliques d'Overpass, la del recanvi inclosa—, i hi són
+     * declarats perquè una dada que entra al producte per la porta de la
+     * compilació no deixa de ser una dada del producte.
+     */
+    hosts: ['www.openstreetmap.org', 'overpass-api.de', 'overpass.openstreetmap.fr'],
   },
   {
     what: { ca: 'Meteorologia', es: 'Meteorología' },

@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Badge, Button, Card } from '../../ui';
 import type { Locale } from '../../i18n';
-import {
-  ab,
-  ABOUT_AUTHORS,
-  ABOUT_SOURCES,
-  type AboutStringKey,
-} from './strings';
+import { ab, ABOUT_AUTHORS, type AboutStringKey } from './strings';
+/*
+ * LA LLISTA DE FONTS NO ÉS D'AQUESTA PANTALLA. Aquí n'hi va viure una còpia
+ * (`ABOUT_SOURCES`) i la còpia va costar les dues llicències que faltaven:
+ * vegeu la capçalera de `credits.ts`. Ara la pàgina només la pinta.
+ */
+import { CREDITS } from './credits';
+import { ObservationSources } from './ObservationSources';
 import './about.css';
 
 /**
@@ -137,15 +139,35 @@ export function AboutScreen({ locale, onOpenGuideSafety }: AboutScreenProps) {
           <h3 className="about__blocktitle">{ab('sources.title', locale)}</h3>
           <p className="about__p">{ab('sources.p1', locale)}</p>
           <ul className="about__sources">
-            {ABOUT_SOURCES.map((source) => (
+            {CREDITS.map((source) => (
               <li key={source.url}>
                 <span className="about__sourcewhat">{source.what[locale]}</span>
-                <a href={source.url} target="_blank" rel="noreferrer noopener">
-                  {source.who}
-                </a>
+                {/*
+                  EL NOM I LA LLICÈNCIA VAN JUNTS I EN AQUEST ORDRE. «Open-Meteo
+                  (CC BY 4.0)» és l'atribució sencera; el nom sol no compleix res
+                  i la llicència sola no diu de qui. Les files sense llicència no
+                  pinten el parèntesi buit —cada `null` de `credits.ts` porta el
+                  motiu escrit— perquè un «(—)» es llegeix com una dada que falta
+                  quan el que passa és que aquella font no en té cap.
+                */}
+                <span className="about__sourcewho">
+                  <a href={source.url} target="_blank" rel="noreferrer noopener">
+                    {source.who}
+                  </a>
+                  {source.licence !== null && (
+                    <span className="about__sourcelicence">{source.licence}</span>
+                  )}
+                </span>
               </li>
             ))}
           </ul>
+
+          {/*
+            Sense `eclipseId`: aquesta pàgina explica l'app i no una data, i per
+            això llista les administracions de tot el catàleg. Si no n'hi hagués
+            cap, el bloc no es pinta —ni el títol.
+          */}
+          <ObservationSources locale={locale} />
         </Card>
 
         {/* 4 — Els límits, dits en positiu de privacitat i no de mancança. */}

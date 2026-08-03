@@ -2,12 +2,31 @@
 
 export { AboutScreen } from './AboutScreen';
 export type { AboutScreenProps } from './AboutScreen';
+
 /*
- * Els textos i les dades surten pel mateix motiu que a weather: la pantalla
- * que munti la pàgina n'ha de poder dir el títol —a una pestanya, a un menú—
- * sense reescriure'l, i les còpies de les fonts i dels autors (vegeu la nota
- * a strings.ts) han de ser visibles perquè l'orquestrador les unifiqui amb
- * les de SiteFooter quan cabli.
+ * ELS CRÈDITS SURTEN D'AQUÍ PERQUÈ NO SÓN D'AQUESTA PÀGINA: els pinten també
+ * el peu i el diàleg del mapa. Viuen a `features/about` perquè és aquí on la
+ * pàgina que té per feina publicar-los els llegeix, no perquè li pertanyin.
+ *
+ * `ObservationSources` s'exporta pel mateix motiu: el diàleg de crèdits del
+ * mapa l'ha de poder muntar sense saber res de la pàgina «Com funciona».
  */
-export { ab, ABOUT_AUTHORS, ABOUT_SOURCES } from './strings';
-export type { AboutAuthor, AboutSource, AboutStringKey } from './strings';
+export { ObservationSources } from './ObservationSources';
+export type { ObservationSourcesProps } from './ObservationSources';
+export {
+  CREDITS,
+  OBSERVATION_SOURCES_HEADING,
+  OBSERVATION_SOURCES_NOTE,
+  PRIVACY_NOTE,
+  SOURCES_HEADING,
+} from './credits';
+export type { Credit } from './credits';
+
+/*
+ * Els textos surten pel mateix motiu que a weather: la pantalla que munti la
+ * pàgina n'ha de poder dir el títol —a una pestanya, a un menú— sense
+ * reescriure'l. La còpia dels autors (vegeu la nota a strings.ts) segueix
+ * visible; la de les fonts ja no existeix.
+ */
+export { ab, ABOUT_AUTHORS } from './strings';
+export type { AboutAuthor, AboutStringKey } from './strings';

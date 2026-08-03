@@ -27,21 +27,40 @@
  * ES MUNTA A DOS LLOCS i per això no depèn de cap dels dos: la pàgina «Com
  * funciona» i el diàleg de crèdits del mapa. Porta el seu full d'estil, que és
  * curt a posta —no arrossega `about.css` cap al paquet del mapa.
+ *
+ * EL COST, DIT: importa el catàleg dels punts, que són 160 kB de JSON (14 kB
+ * comprimits). Els paga qui obre el mapa o «Com funciona», que són dues
+ * pantalles carregades amb `React.lazy`, i NO el paquet d'arrencada: el peu
+ * només toca `credits.ts`, que no importa res. Que la llista sigui derivada té
+ * aquest preu i s'ha triat pagar-lo — una constant de vuit noms no en costaria
+ * cap i mentiria el dia que el catàleg canviés.
  */
 
 import type { Locale } from '../../i18n';
-import { observationSourcesFor } from '../../data/observation-points/catalog';
+import {
+  allObservationSources,
+  observationSourcesFor,
+} from '../../data/observation-points/catalog';
 import { OBSERVATION_SOURCES_HEADING, OBSERVATION_SOURCES_NOTE } from './credits';
 import './credits.css';
 
 export interface ObservationSourcesProps {
-  /** L'eclipsi que s'està mirant, tal com el diu `core/eclipses/catalog.ts`. */
-  eclipseId: string;
+  /**
+   * L'eclipsi que s'està mirant, tal com el diu `core/eclipses/catalog.ts`.
+   *
+   * OPCIONAL, i les dues respostes són correctes: el diàleg del mapa SÍ que
+   * mira un eclipsi i ha de llistar les administracions d'aquell —ensenyar-hi
+   * les del 2028 mentre es mira el 2026 seria soroll—, i «Com funciona» no en
+   * mira cap, perquè explica l'app i no una data: sense identificador, surten
+   * totes les del catàleg.
+   */
+  eclipseId?: string;
   locale: Locale;
 }
 
 export function ObservationSources({ eclipseId, locale }: ObservationSourcesProps) {
-  const sources = observationSourcesFor(eclipseId);
+  const sources =
+    eclipseId === undefined ? allObservationSources() : observationSourcesFor(eclipseId);
   if (sources.length === 0) return null;
 
   return (

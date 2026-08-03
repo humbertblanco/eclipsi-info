@@ -91,6 +91,13 @@ import {
 } from './orientation';
 import { useDeviceOrientation } from './useDeviceOrientation';
 import { openRearCamera, watchLensChange, watchTrackLoss, type CameraOpenResult } from './camera';
+import { track, type AnalyticsParams } from '../../core/analytics';
+import {
+  foldAnchors,
+  sessionAnchor,
+  NO_ANCHORS_SEEN,
+  type AnchorsSeen,
+} from './sessionAnchor';
 import {
   VisualTracker,
   VideoFrameClock,
@@ -621,6 +628,19 @@ export function ARView({
   const sunFixRef = useRef<SkylineFix | null>(null);
   /** Qui ha posat l'àncora vigent: el Sol, el terreny, o tots dos fusionats. */
   const anchorSourceRef = useRef<'sun' | 'moon' | 'terrain' | 'both' | null>(null);
+  /**
+   * LA SESSIÓ DE CÀMERA, PER A LA MESURA. `null` vol dir que no n'hi ha cap
+   * oberta i que, per tant, no queda res per apuntar.
+   *
+   * La mateixa referència fa de bandera i d'acumulador a posta: així no hi ha
+   * cap manera d'apuntar dues vegades la mateixa sessió ni d'apuntar-ne una que
+   * no ha existit (el permís denegat, el `play()` que rebutja iOS, el
+   * desmuntatge d'una pantalla que no havia obert mai la càmera). Qui l'emet la
+   * buida; qui arribi segon es troba `null` i calla. És el mateix patró que el
+   * `finish()` de `features/spots/useSpotSearch.ts`, i pel mateix motiu: els
+   * camins de sortida són cinc i cap no pot quedar mut ni sonar dos cops.
+   */
+  const sessionRef = useRef<AnchorsSeen | null>(null);
   /** Refinador del centroide del Sol a resolució plena. Es reutilitza. */
   const sunRefinerRef = useRef<SunRefiner | null>(null);
   /** Quan l'àncora de Sol va passar a manar, per al pols de confirmació. */
@@ -827,9 +847,28 @@ export function ARView({
    * Un sol camí perquè el desmuntatge, l'error d'obertura i el cas de quedar-se
    * sense element de vídeo no puguin divergir: que la càmera quedi encesa és un
    * dels pocs errors que l'usuari nota al maquinari.
+   *
+   * I PER AIXÒ MATEIX ÉS AQUÍ ON S'APUNTA `camera_session`. Amb l'esdeveniment
+   * repartit pels quatre punts que apaguen la càmera, el dia que n'aparegués un
+   * cinquè aquella sortida no existiria a l'informe i res no es posaria
+   * vermell — que és exactament com la comporta de seguretat ocular ha estat
+   * codi mort dues vegades (ESTAT.md §3). El motiu és un PARÀMETRE OBLIGATORI i
+   * no una referència amb valor per omissió: així el compilador demana a cada
+   * camí nou que digui com acaba, en comptes de deixar-lo comptar com a
+   * «tancada» en silenci.
    */
-  const stopCamera = useCallback(() => {
-    streamRef.current?.getTracks().forEach((track) => track.stop());
+  const stopCamera = useCallback((ended: AnalyticsParams<'camera_session'>['ended']) => {
+    // Primer la mesura, mentre les referències encara descriuen la sessió.
+    const seen = sessionRef.current;
+    if (seen !== null) {
+      sessionRef.current = null;
+      track('camera_session', { anchor: sessionAnchor(seen), ended });
+    }
+
+    // `mediaTrack` i no `track`: dues línies més amunt hi ha la funció
+    // d'analítica amb aquest nom, i una pista de vídeo que sembli un
+    // esdeveniment és un malentès esperant el seu torn.
+    streamRef.current?.getTracks().forEach((mediaTrack) => mediaTrack.stop());
     streamRef.current = null;
     lensWatchRef.current?.();
     lensWatchRef.current = null;
@@ -890,12 +929,26 @@ export function ARView({
         // concedit: deixar el flux obert seria encendre la càmera per a res.
         // Es surt abans de registrar la vigilància d'objectiu, que si no
         // quedaria enganxada a un flux ja mort.
-        stopCamera();
+        stopCamera('error');
         return;
       }
 
       videoRef.current.srcObject = opened.stream;
       await videoRef.current.play();
+      /*
+       * LA SESSIÓ COMENÇA AQUÍ i no en prémer el botó: abans d'aquest punt hi
+       * ha el diàleg de permisos, el `getUserMedia` i el `play()` que iOS
+       * rebutja si la pestanya perd el focus a mig gest. Comptar aquells
+       * intents com a sessions ompliria `ended: error` de gent que ha dit que
+       * no a la càmera, i la pregunta que aquest esdeveniment ha de contestar
+       * —si l'ancoratge s'enganxa en aparells de debò— només la poden contestar
+       * les sessions que han arribat a veure fotogrames.
+       *
+       * I va ABANS d'`attach`, que és qui obre l'aixeta dels fotogrames: si
+       * anés després, el primer fotograma podria ancorar amb l'acumulador
+       * encara buit i aquella àncora no comptaria.
+       */
+      sessionRef.current = NO_ANCHORS_SEEN;
       frameClockRef.current.attach(videoRef.current);
       setCameraOn(true);
 
@@ -917,7 +970,7 @@ export function ARView({
         onEnded: () => {
           // Presa definitiva. S'apaga tot pel camí únic i es torna a la
           // invitació amb el motiu escrit: la represa és el botó de sempre.
-          stopCamera();
+          stopCamera('track_lost');
           setCameraLost(true);
         },
         onMute: () => {
@@ -937,12 +990,19 @@ export function ARView({
       // Si l'obertura ha arribat a donar flux i ha petat després —el `play()`
       // el rebutja iOS quan la pestanya perd el focus a mig gest—, la càmera es
       // quedaria encesa amb la pantalla ensenyant l'error.
-      stopCamera();
+      stopCamera('error');
       setCameraError(err instanceof Error ? err.message : String(err));
     }
   }, [orientation, stopCamera]);
 
-  useEffect(() => () => stopCamera(), [stopCamera]);
+  /*
+   * Marxar de la pantalla (o que l'ErrorBoundary se n'endugui aquesta vista)
+   * tanca la càmera, i per a la mesura això és una sessió tancada com una
+   * altra: cap dels dos casos és una avaria de la càmera, que és el que
+   * `error` ha de comptar. Si no s'apuntés aquí, tota sessió que acaba canviant
+   * de pestanya —el camí normal— desapareixeria de l'informe.
+   */
+  useEffect(() => () => stopCamera('closed'), [stopCamera]);
 
   // El filtre del vídeo va a part del canvas: el compon la GPU i surt gratis.
   // És el que enfosqueix TOTA l'escena, muntanyes incloses, que és el que
@@ -1278,14 +1338,28 @@ export function ARView({
               alt: sensorAtCapture.altitude,
               speedDegPerSec: trackSpeed,
             };
+            /*
+             * QUIN ASTRE HI HA ENTRAT, DECIDIT UN SOL COP. El diagnòstic de
+             * pantalla i l'acumulador de la sessió (`camera_session`) el
+             * necessiten tots dos, i amb la decisió escrita dues vegades es
+             * poden separar sense que res es posi vermell: el panell diria
+             * «Lluna» mentre l'informe compta un Sol.
+             */
+            const bodyKind = sunFix === null ? null : body?.kind === 'moon' ? 'moon' : 'sun';
             anchorSourceRef.current =
-              sunFix !== null && terrainFresh !== null
-                ? 'both'
-                : sunFix !== null
-                  ? body?.kind === 'moon'
-                    ? 'moon'
-                    : 'sun'
-                  : 'terrain';
+              bodyKind !== null && terrainFresh !== null ? 'both' : (bodyKind ?? 'terrain');
+            /*
+             * El màxim de la sessió, no l'últim fotograma: vegeu
+             * `sessionAnchor.ts`. Només s'acumula el que ha entrat DINS de la
+             * fusió — un fix de terreny caducat (`terrainFresh` a `null`) no
+             * ha ancorat res i no pot comptar com que sí.
+             */
+            if (sessionRef.current !== null) {
+              sessionRef.current = foldAnchors(sessionRef.current, {
+                body: bodyKind,
+                terrain: terrainFresh !== null,
+              });
+            }
           } else if (nowMs - anchorAtMsRef.current > ANCHOR_MAX_AGE_MS) {
             anchorSourceRef.current = null;
           }
@@ -1694,7 +1768,10 @@ export function ARView({
             icon="x"
             className="ui-iconbtn--over ar__close"
             label={s('camera.close', locale)}
-            onClick={stopCamera}
+            /* La lambda no és decoració: `stopCamera` demana com acaba la
+               sessió, i passar-li el gestor pelat li colaria l'esdeveniment
+               del ratolí com a motiu. */
+            onClick={() => stopCamera('closed')}
           />
         )}
       </div>

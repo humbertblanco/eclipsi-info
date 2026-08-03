@@ -221,15 +221,45 @@ export function pointsForEclipse(eclipseId: string): readonly ObservationPoint[]
 }
 
 /**
+ * Els identificadors que aquest catàleg coneix, en ordre de calendari.
+ *
+ * Es deriven de `BY_ECLIPSE` i no s'escriuen a part: una segona llista podria
+ * quedar-se sense el quart eclipsi el dia que n'hi hagi un, i llavors les seves
+ * administracions no sortirien al bloc de crèdits de «Com funciona» sense que
+ * res petés.
+ */
+export const OBSERVATION_ECLIPSE_IDS: readonly CatalogedEclipseId[] = Object.keys(
+  BY_ECLIPSE,
+) as CatalogedEclipseId[];
+
+/** Fonts d'una llista de punts, sense repetits i en ordre alfabètic. */
+function sourcesOf(points: readonly ObservationPoint[]): readonly ObservationSource[] {
+  const byUrl = new Map<string, ObservationSource>();
+  for (const point of points) {
+    if (!byUrl.has(point.source.url)) byUrl.set(point.source.url, point.source);
+  }
+  return [...byUrl.values()].sort((a, b) => a.who.localeCompare(b.who, 'ca'));
+}
+
+/**
  * Les fonts d'un eclipsi, sense repetits i en ordre alfabètic, per al panell de
  * crèdits. Vuit administracions per al 2026; cap per als altres dos.
  */
 export function observationSourcesFor(eclipseId: string): readonly ObservationSource[] {
-  const byUrl = new Map<string, ObservationSource>();
-  for (const point of pointsForEclipse(eclipseId)) {
-    if (!byUrl.has(point.source.url)) byUrl.set(point.source.url, point.source);
-  }
-  return [...byUrl.values()].sort((a, b) => a.who.localeCompare(b.who, 'ca'));
+  return sourcesOf(pointsForEclipse(eclipseId));
+}
+
+/**
+ * Totes les administracions del catàleg, de tots els eclipsis alhora.
+ *
+ * És el que necessita una pàgina que no mira cap eclipsi en concret —«Com
+ * funciona» explica l'app, no una data—, mentre que el diàleg del mapa vol les
+ * de l'eclipsi que s'està mirant i per això té la funció d'abans. Avui les dues
+ * responen el mateix, perquè només el 2026 té punts; el dia que el 2027 en
+ * tingui, la diferència es notarà i cadascuna seguirà dient la veritat.
+ */
+export function allObservationSources(): readonly ObservationSource[] {
+  return sourcesOf(OBSERVATION_ECLIPSE_IDS.flatMap((id) => [...pointsForEclipse(id)]));
 }
 
 /** Un punt concret, per resoldre un enllaç compartit. */
