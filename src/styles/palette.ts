@@ -58,6 +58,8 @@ export interface Palette {
   /* Tipografia per a `ctx.font` */
   fontMono: string;
   fontBody: string;
+  /** Titulars (Space Grotesk): la lletra de la marca a les targetes. */
+  fontDisplay: string;
 }
 
 /**
@@ -103,6 +105,7 @@ const FALLBACK: Palette = {
   // typography.css diu 'Helvetica Neue', no system-ui: la reserva ha de dir
   // el mateix perquè un canvas de test mesuri text amb la mateixa lletra.
   fontBody: "'IBM Plex Sans', 'Helvetica Neue', sans-serif",
+  fontDisplay: "'Space Grotesk', 'Helvetica Neue', sans-serif",
 };
 
 /** Correspondència entre els camps de la paleta i els tokens del sistema. */
@@ -133,6 +136,7 @@ const TOKENS: Record<keyof Palette, string> = {
 
   fontMono: '--font-mono',
   fontBody: '--font-body',
+  fontDisplay: '--font-display',
 };
 
 let cached: Palette | null = null;
@@ -204,8 +208,13 @@ export function withAlpha(color: string, alpha: number): string {
 export function canvasFont(
   palette: Palette,
   sizePx: number,
-  options: { weight?: number; mono?: boolean } = {},
+  options: { weight?: number; mono?: boolean; display?: boolean } = {},
 ): string {
-  const { weight = 400, mono = true } = options;
-  return `${weight} ${sizePx}px ${mono ? palette.fontMono : palette.fontBody}`;
+  const { weight = 400, mono = true, display = false } = options;
+  const family = display
+    ? palette.fontDisplay
+    : mono
+      ? palette.fontMono
+      : palette.fontBody;
+  return `${weight} ${sizePx}px ${family}`;
 }

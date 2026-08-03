@@ -184,7 +184,10 @@ export function cardText(input: CardTextInput): CardText {
   // teclejar d'una foto. L'eclipsi sí que hi va: sense `e`, qui tecleges
   // l'adreça d'una targeta del 2027 obriria l'app amb l'eclipsi per defecte i
   // miraria xifres d'un altre any sense que res ho digués.
-  const footer = `${sh('card.footer', locale)}/${buildShareLink({
+  // SENSE el domini davant: la marca «eclipsi.info» ja es pinta amb la mitja
+  // lluna al costat esquerre del peu, i repetir-la aquí seria dir-la dues
+  // vegades a un pam. El que queda és el camí: «/?p=…&e=…».
+  const footer = `/${buildShareLink({
     lat: place.lat,
     lon: place.lon,
     eclipseId: input.eclipseId,
@@ -393,15 +396,40 @@ export function drawShareCard(
 
   // El peu —l'adreça del punt— es pinta ABANS que l'avís i es mesura: els dos
   // comparteixen línia i el que no es pot retallar és l'adreça, que és el camí
-  // de tornada quan la imatge viatja sola. Va amb la mida i el to dels rètols
-  // de les xifres (15 px, mono, muted): prou discreta per no competir amb res
-  // i prou llegible per teclejar-la d'una foto.
+  // de tornada quan la imatge viatja sola. LA MARCA HI VA DAVANT, amb cara i
+  // ulls: la mitja lluna del logotip i «eclipsi.info» en lletra de titulars —
+  // des que el full de compartir només envia LA IMATGE (l'adreça al text feia
+  // que el destí pintés l'og com a segona foto), la targeta és l'única
+  // signatura que viatja, i una firma de 15 px muted no signava res.
+  const footerY = IMAGE_HEIGHT + 232;
+
+  // La mitja lluna: el disc de corona amb el mos del disc de fons, com al
+  // logotip. Geometria d'eclipsi de veritat, no una icona inventada.
+  const moonR = 11;
+  const moonX = margin + moonR;
+  ctx.beginPath();
+  ctx.arc(moonX, footerY - 7, moonR, 0, Math.PI * 2);
+  ctx.fillStyle = palette.accent;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(moonX + 7, footerY - 10, moonR, 0, Math.PI * 2);
+  ctx.fillStyle = palette.bgPage;
+  ctx.fill();
+
+  ctx.textAlign = 'left';
+  ctx.font = canvasFont(palette, 24, { weight: 700, display: true });
+  ctx.fillStyle = palette.textPrimary;
+  const brand = 'eclipsi.info';
+  ctx.fillText(brand, moonX + moonR + 12, footerY);
+  const brandEndX = moonX + moonR + 12 + ctx.measureText(brand).width;
+
+  // L'adreça del punt, a la dreta: mono, muted, teclejable d'una foto.
   ctx.textAlign = 'right';
   ctx.font = canvasFont(palette, 15, { weight: 500, mono: true });
   ctx.fillStyle = withAlpha(palette.textMuted, 0.9);
-  const footer = fitText(ctx, text.footer, maxTextWidth);
+  const footer = fitText(ctx, text.footer, CARD_WIDTH - margin - brandEndX - 32);
   const footerWidth = ctx.measureText(footer).width;
-  ctx.fillText(footer, CARD_WIDTH - margin, IMAGE_HEIGHT + 232);
+  ctx.fillText(footer, CARD_WIDTH - margin, footerY);
   ctx.textAlign = 'left';
 
   // L'avís del terreny sense calcular, si cal, retallat a l'espai que l'adreça
@@ -410,12 +438,15 @@ export function drawShareCard(
   // xifra per imatge i aquí la té la durada. Un avís de configuració no li pot
   // disputar el color.
   if (text.caveat) {
+    // L'avís comparteix línia amb la marca (esquerra) i l'adreça (dreta):
+    // comença DARRERE de la marca i es retalla a l'espai que l'adreça deixa.
     ctx.font = canvasFont(palette, 18, { weight: 400, mono: false });
     ctx.fillStyle = palette.statusInfo;
+    const caveatX = brandEndX + 32;
     ctx.fillText(
-      fitText(ctx, text.caveat, maxTextWidth - footerWidth - 48),
-      margin,
-      IMAGE_HEIGHT + 232,
+      fitText(ctx, text.caveat, CARD_WIDTH - margin - footerWidth - 48 - caveatX),
+      caveatX,
+      footerY,
     );
   }
 }

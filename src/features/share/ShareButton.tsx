@@ -155,11 +155,12 @@ export function ShareButton({
             ? null
             : {
                 title: sh('share.title', locale),
-                // L'URL va DINS del text, en línia pròpia perquè el destí el
-                // pinti com a enllaç. El camp `url` no hi és: amb fitxers al
-                // costat, WhatsApp i companyia el descarten i l'adreça es
-                // perdria pel camí.
-                text: `${sh('share.text', locale, { place })}\n${url}`,
+                // SENSE URL quan viatja la targeta: l'adreça dins del text
+                // feia que el destí pintés la previsualització de l'enllaç
+                // (l'og) com a SEGONA imatge al costat de la targeta — dues
+                // fotos al mateix missatge, report de camp del 3-8-2026. El
+                // camí de tornada ja va IMPRÈS a la targeta, amb la marca.
+                text: sh('share.text', locale, { place }),
                 files: [file],
               };
         // `canShare` s'ha de preguntar amb el fitxer a la mà: hi ha navegadors
