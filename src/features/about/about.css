@@ -1,0 +1,252 @@
+/**
+ * Estils de la pàgina «Com funciona» i del seu bloc de premsa.
+ *
+ * TOKENS. Tot surt de `src/styles/tokens/`: colors (`--surface-card-hover`,
+ * `--border-hairline`, `--text-*`), tipografia (`--fs-*`, `--lh-*`, `--fw-*`,
+ * `--text-overline`, `--ls-*`), espaiat (`--sp-*`, `--gutter-web`, `--maxw-*`)
+ * i elevació (`--r-*`, `--bw-hair`). Cap color, cap mida, cap radi a pèl —
+ * mateixa regla que guide.css.
+ *
+ * DISPOSICIÓ. Al mòbil, una sola pila: el `gap` el posa `.screen` entre
+ * `__main` i `__side`, i cada columna en posa el seu entre targetes. Les DUES
+ * consultes porten la guarda `(min-height: 500px)` de screens.css i pel
+ * mateix motiu: un mòbil girat passa el tall d'amplada però no ha de rebre
+ * mai la disposició d'escriptori.
+ */
+
+/* --------------------------------------------------------------- columnes */
+
+.about__main,
+.about__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------- capçalera */
+
+.about__title {
+  margin: 0;
+  font: var(--text-title-2);
+  letter-spacing: var(--ls-title);
+}
+
+.about__subtitle {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------------ blocs */
+
+/* Etiqueta en majúscules: l'overline del sistema (mono, 11 px, +0.14em),
+   la mateixa gramàtica que guide.css i screens.css. */
+.about__overline {
+  display: block;
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.about__blocktitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-body-lg);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+/* Mateixa lletra de lectura que `.guide__p`: cos petit, interlineat llarg. */
+.about__p {
+  margin: var(--sp-4) 0 0;
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-loose);
+}
+
+/* ------------------------------------------------------------------ fonts */
+
+/* Files terme + proveïdor, separades per una línia d'un píxel: la mateixa
+   forma que la llista del peu, perquè és la mateixa informació. */
+.about__sources {
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+}
+
+.about__sources li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  padding: var(--sp-3) 0;
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
+}
+
+.about__sources li:last-child { border-bottom: none; }
+
+.about__sourcewhat { color: var(--text-muted); }
+
+/* El to d'enllaç del sistema, no el d'accent: un enllaç no és cap avís. */
+.about__sources a,
+.about__assetlist a,
+.about__contact a,
+.about__guidelink {
+  color: var(--text-link);
+}
+
+/* ---------------------------------------------------------------- límits */
+
+.about__not {
+  margin: var(--sp-4) 0 0;
+  padding-left: var(--sp-6);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-loose);
+}
+
+.about__not li { margin-bottom: var(--sp-3); }
+.about__not li:last-child { margin-bottom: 0; }
+
+/* Pic neutre, com les llistes 'info' de la guia: són límits, no avisos. */
+.about__not li::marker { color: var(--text-muted); }
+
+/* ------------------------------------------------------- enllaç a la guia */
+
+.about__safetylink {
+  margin: 0;
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-normal);
+}
+
+/* El mateix enllaç tant si és <a> com si el cablatge el fa <button>: el botó
+   perd tota la caixa i queda text amb subratllat, que és el que promet el nom
+   «enllaç textual». */
+button.about__guidelink {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.about__guidelink { text-decoration: underline; }
+
+.about__guidelink:hover { color: var(--text-link-hover); }
+
+/* ---------------------------------------------------------------- premsa */
+
+.about__presshead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+/* Text per copiar: un esglaó de superfície per damunt de la targeta
+   (ink-700), com els requadres de la guia — és un objecte, no un paràgraf. */
+.about__copyblock {
+  margin-top: var(--sp-5);
+  padding: var(--sp-4);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-sm);
+  background: var(--surface-card-hover);
+}
+
+.about__copyhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.about__copytext {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-loose);
+  color: var(--text-secondary);
+  /* Un toc selecciona el text sencer: és el camí manual quan el porta-retalls
+     no hi és, i el que estalvia arrossegar el dit per quatre línies. */
+  user-select: all;
+  -webkit-user-select: all;
+}
+
+/* ----------------------------------------------------------------- actius */
+
+.about__assets { margin-top: var(--sp-6); }
+
+.about__assetsnote {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--text-muted);
+}
+
+.about__assetlist {
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+}
+
+.about__assetlist li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  padding: var(--sp-3) 0;
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
+}
+
+.about__assetlist li:last-child { border-bottom: none; }
+
+/* El nom de fitxer és una dada: mono del sistema, com totes les dades. */
+.about__assetlist a { font-family: var(--font-mono); }
+
+/* --------------------------------------------------------------- contacte */
+
+.about__contact {
+  margin: var(--sp-6) 0 0;
+  padding-top: var(--sp-4);
+  border-top: var(--bw-hair) solid var(--border-hairline);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-loose);
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------- escriptori: 900-1179 */
+
+@media (min-width: 900px) and (min-height: 500px) {
+  /* Encara una sola columna, però amb la mesura de lectura d'escriptori de la
+     guia: 5 × --sp-13 = 640 px de contingut més els dos guters, perquè a
+     partir d'aquí el límit ha de ser del text i no de la caixa. */
+  .screen.screen--about {
+    max-width: calc(var(--sp-13) * 5 + 2 * var(--gutter-web));
+  }
+}
+
+/* ------------------------------------------------- escriptori: >= 1180 */
+
+@media (min-width: 1180px) and (min-height: 500px) {
+  /* Dues columnes: la de lectura i el lateral de premsa. El repartiment
+     1.35fr/1fr és el de `.screen--split` i de la guia; el `minmax(0, …)`
+     deixa encongir la columna de lectura per sota del seu contingut mínim. */
+  .screen.screen--about {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) 1fr;
+    gap: var(--sp-5) var(--sp-8);
+    max-width: var(--maxw-web);
+    align-items: start;
+  }
+
+  .about__side {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
