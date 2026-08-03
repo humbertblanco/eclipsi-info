@@ -89,9 +89,16 @@ export const ECLIPSES: EclipseEntry[] = [
       ca: 'Eclipsi total del 2 d’agost de 2027',
       es: 'Eclipse total del 2 de agosto de 2027',
     },
+    /*
+     * LA DADA QUE FA AIXECAR CELLES, dita amb el matís exacte: el màxim de
+     * 6 min 23 s és al desert egipci, no aquí — des de l'Estret el motor
+     * dona ~4 min i mig (Tarifa 4 min 37 s), que ja dobla el 2026. La
+     * totalitat més llarga visible des de terra fins al 3 de juny de 2114
+     * és una afirmació de l'ECLIPSI sencer, i així s'escriu.
+     */
     spain: {
-      ca: 'Franja per l’estret de Gibraltar: Cadis, Màlaga, Ceuta i Melilla. Al matí i amb el Sol alt — l’eclipsi fàcil dels tres.',
-      es: 'Franja por el estrecho de Gibraltar: Cádiz, Málaga, Ceuta y Melilla. Por la mañana y con el Sol alto — el eclipse fácil de los tres.',
+      ca: 'Franja per l’estret de Gibraltar: Cadis, Màlaga, Ceuta i Melilla. Al matí i amb el Sol alt — l’eclipsi fàcil dels tres. I el gran: cap totalitat visible des de terra el superarà fins al 2114 (6 min 23 s al màxim, a Egipte; des de l’Estret, uns 4 min i mig).',
+      es: 'Franja por el estrecho de Gibraltar: Cádiz, Málaga, Ceuta y Melilla. Por la mañana y con el Sol alto — el eclipse fácil de los tres. Y el grande: ninguna totalidad visible desde tierra lo superará hasta 2114 (6 min 23 s en el máximo, en Egipto; desde el Estrecho, unos 4 min y medio).',
     },
     saros: 136,
     lowSunOverSpain: false,

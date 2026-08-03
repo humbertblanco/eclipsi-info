@@ -1017,7 +1017,10 @@ const HIGHLIGHTS: Record<string, Record<Locale, EclipseHighlight>> = {
     ca: {
       tone: 'good',
       title: 'Total, al matí i amb el Sol alt: el fàcil dels tres',
-      text: 'Sense problemes d’horitzó i amb la totalitat més llarga. Durant la totalitat, i només entre C2 i C3, treu-te el filtre i mira la corona. Torna-te’l a posar al primer punt de llum.',
+      // La totalitat més llarga visible des de terra fins al 2114: el màxim
+      // (6 min 23 s) cau a Egipte; des de l'Estret, uns 4 min i mig — el
+      // doble que el 2026. La xifra gran es diu amb el seu lloc, com sempre.
+      text: 'Sense problemes d’horitzó i amb la totalitat més llarga: cap altra de visible des de terra la superarà fins al 2114 (des de l’Estret, uns 4 min i mig). Durant la totalitat, i només entre C2 i C3, treu-te el filtre i mira la corona. Torna-te’l a posar al primer punt de llum.',
     },
     es: {
       tone: 'good',
