@@ -32,7 +32,12 @@ export type ElevationReader = (
   zoom: number,
 ) => number | undefined;
 
-/** Un punt de la graella, abans de saber-ne res. */
+/**
+ * Un punt de la graella, abans de saber-ne res. Quan el relleu ja s'ha pogut
+ * llegir, el punt no és el centre geomètric de la cel·la sinó el seu màxim
+ * local de terra (vegeu `findCellPeak` a `grid.ts`): el lloc que es recomana
+ * és el cim del turó, no el mig del quadrat.
+ */
 export interface SpotCandidate {
   lat: number;
   lon: number;
@@ -238,11 +243,16 @@ export interface SpotSearchOutcome {
   radiusKm: number;
   /** Candidats de la graella inicial. */
   candidates: number;
-  /** Millor durada teòrica de fase central trobada dins del radi, en segons. */
+  /**
+   * Millor durada teòrica de fase central trobada dins del radi, en segons.
+   * Només compta la TERRA FERMA: un rècord al mig del mar no és cap lloc, i
+   * normalitzar-hi les notes castigaria tots els llocs on sí que es pot anar.
+   */
   bestCentralSec: number;
   /**
-   * Fals quan dins del radi no hi arriba la franja de centralitat. Llavors la
-   * llista només ordena per horitzó i distància, i s'ha de dir clarament.
+   * Fals quan dins del radi no hi arriba la franja de centralitat — o quan
+   * només hi arriba a l'aigua. Llavors la llista només ordena per horitzó i
+   * distància, i s'ha de dir clarament.
    */
   centralReachable: boolean;
   /** Cert si la cerca s'ha aturat al garbell i els resultats són estimacions. */

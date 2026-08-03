@@ -185,3 +185,49 @@ describe('ordre de la llista', () => {
     expect(ordenada.map((s) => s.distanceKm)).toEqual([20, 1, 3]);
   });
 });
+
+describe('el desempat per altura', () => {
+  it('a nota igual i segons pràcticament iguals, guanya el lloc alt encara que sigui més lluny', () => {
+    // 100,2 i 99,8 són el mateix segon a efectes pràctics: el model barat del
+    // garbell té 0,36 s d'error mesurat i ordenar per dècimes seria ordenar
+    // pel soroll. Aquí el desempat és la cota: arran d'horitzó, la calitja fa
+    // la mateixa feina que una muntanya, i el lloc alt compra marge.
+    const cim = { score: 80, distanceKm: 12, centralVisibleSec: 100.2, elevation: 700 };
+    const vall = { score: 80, distanceKm: 2, centralVisibleSec: 99.8, elevation: 150 };
+    expect(compareSpots(cim, vall)).toBeLessThan(0);
+    expect(compareSpots(vall, cim)).toBeGreaterThan(0);
+  });
+
+  it('l’altura no usurpa mai el tron: qui té més segons guanya sempre', () => {
+    // La garantia del producte: un cim tapat perd contra una vall neta. Dos
+    // mil cinc-cents metres de cota no compren ni un segon de fase central.
+    const vallAmbSegons = {
+      score: 80,
+      distanceKm: 20,
+      centralVisibleSec: 90,
+      elevation: 100,
+    };
+    const cimTapat = {
+      score: 80,
+      distanceKm: 1,
+      centralVisibleSec: 80,
+      elevation: 2500,
+    };
+    expect(compareSpots(vallAmbSegons, cimTapat)).toBeLessThan(0);
+    expect(compareSpots(cimTapat, vallAmbSegons)).toBeGreaterThan(0);
+  });
+
+  it('amb segons i cota idèntics, decideix la distància, com sempre', () => {
+    const aProp = { score: 80, distanceKm: 2, centralVisibleSec: 100, elevation: 500 };
+    const lluny = { score: 80, distanceKm: 9, centralVisibleSec: 100, elevation: 500 };
+    expect(compareSpots(aProp, lluny)).toBeLessThan(0);
+  });
+
+  it('sense segons a la vista, la cota no decideix res: cap desempat cec', () => {
+    // Si no sabem els segons de tots dos, l'altura no pot manar: la promesa
+    // és que només desempata entre llocs PROVADAMENT iguals en segons.
+    const alt = { score: 80, distanceKm: 9, elevation: 900 };
+    const baix = { score: 80, distanceKm: 2, elevation: 100 };
+    expect(compareSpots(baix, alt)).toBeLessThan(0);
+  });
+});

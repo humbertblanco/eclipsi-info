@@ -154,15 +154,61 @@ export function scoreSpot(input: SpotScoreInput): SpotScore {
 }
 
 /**
+ * Un candidat tal com el veu l'ordenació. `centralVisibleSec` i `elevation`
+ * són opcionals perquè el comparador també serveix llistes que no els porten;
+ * quan hi són, afinen els desempats. `SpotResult` els porta tots dos.
+ */
+export interface SpotOrderKey {
+  score: number;
+  distanceKm: number;
+  /** Segons de fase central visibles. Per als desempats. */
+  centralVisibleSec?: number;
+  /** Cota del model, en metres. Per als desempats. */
+  elevation?: number;
+}
+
+/**
  * Ordre de la llista final.
  *
- * A igualtat de nota guanya el més a prop: el desempat ha de ser el criteri
- * que l'usuari pot comprovar tot sol i que no depèn de cap model.
+ * 1. LA NOTA. És el rànquing: 60 % segons visibles més les assegurances.
+ *
+ * 2. A NOTA IGUAL, ELS SEGONS. Mai cap desempat no pot passar per davant dels
+ *    segons de fase central visibles: són la promesa del producte, i un cim
+ *    tapat perd contra una vall neta. Es comparen ARRODONITS AL SEGON perquè
+ *    per sota d'això el motor no distingeix res de debò: el model barat del
+ *    garbell té 0,36 s d'error mesurat (`fastCentral.ts`), i ordenar per
+ *    dècimes seria ordenar pel soroll.
+ *
+ * 3. A SEGONS PRÀCTICAMENT IGUALS, AMUNT. La física de la casa la diu la guia
+ *    (`src/content/guide.ts`, secció «lowsun»): «Compte amb les boires i les
+ *    calitges: a poca altura mires a través de moltíssima atmosfera, i una
+ *    bruma que a 30° no es nota, a 2° tapa el Sol del tot.» Arran d'horitzó,
+ *    la calitja i els núvols baixos fan la mateixa feina que una muntanya, i
+ *    a igualtat de segons GEOMÈTRICS el lloc alt compra marge contra
+ *    l'atmosfera que el model del terreny no simula. La cota és absoluta i no
+ *    prominència local (cota menys la mitjana de l'entorn), que seria millor
+ *    criteri —un turó que sobresurt val més que un altiplà arran de boira—
+ *    però demanaria mostres dels veïns que en aquest punt ja no tenim a mà.
+ *
+ * 4. I ENCARA EMPATATS, EL MÉS A PROP: l'únic criteri que l'usuari pot
+ *    comprovar tot sol i que no depèn de cap model.
  */
-export function compareSpots(
-  a: { score: number; distanceKm: number },
-  b: { score: number; distanceKm: number },
-): number {
+export function compareSpots(a: SpotOrderKey, b: SpotOrderKey): number {
   if (b.score !== a.score) return b.score - a.score;
+
+  if (a.centralVisibleSec !== undefined && b.centralVisibleSec !== undefined) {
+    const secondsA = Math.round(a.centralVisibleSec);
+    const secondsB = Math.round(b.centralVisibleSec);
+    if (secondsA !== secondsB) return secondsB - secondsA;
+
+    if (
+      a.elevation !== undefined &&
+      b.elevation !== undefined &&
+      a.elevation !== b.elevation
+    ) {
+      return b.elevation - a.elevation;
+    }
+  }
+
   return a.distanceKm - b.distanceKm;
 }

@@ -15,8 +15,10 @@ import {
   buildCandidateGrid,
   candidateId,
   compassName,
+  findCellPeak,
   kmPerDegLon,
 } from './grid';
+import type { ElevationReader } from './types';
 
 const ORIGIN: GeoLocation = { lat: 41.7665, lon: -2.479, elevation: 1065 };
 
@@ -179,5 +181,134 @@ describe('la graella', () => {
       expect(c.bearingDeg).toBeGreaterThanOrEqual(0);
       expect(c.bearingDeg).toBeLessThan(360);
     }
+  });
+});
+
+describe('el punt que representa la cel·la', () => {
+  const opcions = (elevation: ElevationReader) => ({
+    spacingKm: 2,
+    elevation,
+    zoom: 11,
+  });
+
+  it('terreny pla: el punt es queda al centre exacte de la retícula', () => {
+    const peak = findCellPeak(ORIGIN.lat, ORIGIN.lon, opcions(() => 800));
+    expect(peak.kind).toBe('land');
+    if (peak.kind !== 'land') return;
+    expect(peak.lat).toBe(ORIGIN.lat);
+    expect(peak.lon).toBe(ORIGIN.lon);
+    expect(peak.elevation).toBe(800);
+  });
+
+  it('un turó dins de la cel·la atrau el punt', () => {
+    const hillLon = ORIGIN.lon + (0.2 * 2) / kmPerDegLon(ORIGIN.lat);
+    const turo: ElevationReader = (lon, lat) =>
+      approxDistanceKm(lat, lon, ORIGIN.lat, hillLon) < 0.25 ? 1200 : 1000;
+    const peak = findCellPeak(ORIGIN.lat, ORIGIN.lon, opcions(turo));
+    expect(peak.kind).toBe('land');
+    if (peak.kind !== 'land') return;
+    expect(peak.elevation).toBe(1200);
+    expect(approxDistanceKm(peak.lat, peak.lon, ORIGIN.lat, hillLon)).toBeLessThan(0.01);
+  });
+
+  it('el mar és aigua tant a 0 exacte com amb batimetria negativa', () => {
+    expect(findCellPeak(ORIGIN.lat, ORIGIN.lon, opcions(() => 0)).kind).toBe('water');
+    expect(findCellPeak(ORIGIN.lat, ORIGIN.lon, opcions(() => -30)).kind).toBe('water');
+  });
+
+  it('una platja a +1 m sobreviu: el llindar és estrictament ≤ 0, no «a prop de zero»', () => {
+    const peak = findCellPeak(ORIGIN.lat, ORIGIN.lon, opcions(() => 1));
+    expect(peak.kind).toBe('land');
+    if (peak.kind === 'land') expect(peak.elevation).toBe(1);
+  });
+
+  it('la cel·la mixta de costa es rescata: centre a l’aigua, platja a dins', () => {
+    // La costa passa 300 m a llevant del centre: el centre és mar (−2 m) però
+    // el submostreig arriba a la sorra (+2 m) i el candidat s'hi muda en
+    // comptes de perdre la cel·la sencera. És el que evita els forats vora
+    // la costa que un filtre pel centre geomètric deixaria.
+    const coastLon = ORIGIN.lon + 0.3 / kmPerDegLon(ORIGIN.lat);
+    const costa: ElevationReader = (lon) => (lon < coastLon ? -2 : 2);
+    const peak = findCellPeak(ORIGIN.lat, ORIGIN.lon, opcions(costa));
+    expect(peak.kind).toBe('land');
+    if (peak.kind !== 'land') return;
+    expect(peak.elevation).toBe(2);
+    expect(peak.lon).toBeGreaterThan(coastLon);
+  });
+
+  it('la mesura de Tarifa (−0,35 m) cau: el llindar no fa excepcions per poc', () => {
+    // Documentat a la capçalera de search.ts: l'illa de Tarifa dona −0,35 m a
+    // terrarium i aquest filtre se l'enduu. És el preu conegut del llindar
+    // fins que hi hagi una màscara de costa de veritat.
+    expect(findCellPeak(ORIGIN.lat, ORIGIN.lon, opcions(() => -0.35)).kind).toBe('water');
+  });
+
+  it('cap dada no és aigua: un forat del model no esborra un lloc del mapa', () => {
+    const peak = findCellPeak(ORIGIN.lat, ORIGIN.lon, opcions(() => undefined));
+    expect(peak.kind).toBe('unknown');
+    expect(peak.samples).toBeGreaterThan(0);
+  });
+
+  it('cap mostra no trepitja la cel·la del veí', () => {
+    // Un anell de terra altíssima just fora de la cel·la (a més de 0,45 pas
+    // del centre) no ha de temptar mai el submostreig: si ho fes, dos
+    // candidats veïns podrien acabar damunt del mateix cim.
+    const parany: ElevationReader = (lon, lat) =>
+      approxDistanceKm(lat, lon, ORIGIN.lat, ORIGIN.lon) > 0.92 ? 5000 : 100;
+    const peak = findCellPeak(ORIGIN.lat, ORIGIN.lon, opcions(parany));
+    expect(peak.kind).toBe('land');
+    if (peak.kind !== 'land') return;
+    expect(peak.elevation).toBe(100);
+    expect(peak.lat).toBe(ORIGIN.lat);
+    expect(peak.lon).toBe(ORIGIN.lon);
+  });
+});
+
+describe('la graella tria terra ferma i cims', () => {
+  it('amb lector de cotes, les cel·les d’aigua no entren però l’origen sí', () => {
+    // Mig disc a l'aigua: la costa passa exactament per l'origen. Terrarium
+    // codifica el mar com a 0 o negatiu, i el 0 exacte també és aigua.
+    const meitat: ElevationReader = (lon) => (lon < ORIGIN.lon ? 0 : 5);
+    const amb = buildCandidateGrid(ORIGIN, {
+      radiusKm: 10,
+      spacingKm: 2,
+      elevation: meitat,
+    });
+    const sense = buildCandidateGrid(ORIGIN, { radiusKm: 10, spacingKm: 2 });
+
+    // L'origen és on ets i no es filtra mai; la resta és tota terra ferma.
+    expect(amb[0].lat).toBe(ORIGIN.lat);
+    expect(amb[0].lon).toBe(ORIGIN.lon);
+    for (const c of amb.slice(1)) expect(c.elevation).toBeGreaterThan(0);
+
+    // I se n'ha descartat si fa no fa la meitat: el cost del filtre en una
+    // cerca costanera és aquest, mig disc que ja no pagarà cap més etapa.
+    expect(amb.length).toBeLessThan(sense.length * 0.7);
+    expect(amb.length).toBeGreaterThan(sense.length * 0.3);
+  });
+
+  it('cada cel·la posa el candidat al seu punt més alt, no al centre', () => {
+    const base = buildCandidateGrid(ORIGIN, { radiusKm: 6, spacingKm: 2 });
+    const cell = base.find((c) => c.distanceKm > 2.5 && c.distanceKm < 4.5);
+    expect(cell).toBeDefined();
+    if (!cell) return;
+
+    const hillLat = cell.lat;
+    const hillLon = cell.lon + (0.2 * 2) / kmPerDegLon(cell.lat);
+    const turo: ElevationReader = (lon, lat) =>
+      approxDistanceKm(lat, lon, hillLat, hillLon) < 0.25 ? 900 : 700;
+
+    const grid = buildCandidateGrid(ORIGIN, {
+      radiusKm: 6,
+      spacingKm: 2,
+      elevation: turo,
+    });
+    const alCim = grid.find(
+      (c) => approxDistanceKm(c.lat, c.lon, hillLat, hillLon) < 0.05,
+    );
+    expect(alCim).toBeDefined();
+    expect(alCim?.elevation).toBe(900);
+    // El punt de retícula original ja no hi és: s'ha mudat, no clonat.
+    expect(grid.some((c) => c.lat === cell.lat && c.lon === cell.lon)).toBe(false);
   });
 });

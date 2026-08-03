@@ -28,6 +28,11 @@
  *     de 87.885 tessel·les a 64. Tres ordres de magnitud, i surt de demanar-les
  *     totes de cop en comptes de per candidat.
  *
+ *  B′. TERRA O MAR, I EL CIM DE CADA CEL·LA — amb el disc de terra a memòria,
+ *     cada cel·la es descarta si és aigua (cota ≤ 0 a totes les mostres) o es
+ *     muda al seu màxim local de terra. Té secció pròpia més avall: és el que
+ *     evita recomanar el mar i el que fa que els candidats siguin cims.
+ *
  *  C. GARBELL D'HORITZÓ — només els azimuts on hi haurà el Sol, amb el terreny
  *     gruixut i l'abast que dicta l'altura solar (vegeu `window.ts`). Unes
  *     12.000 mostres per candidat en comptes de 2,6 milions: 220 vegades menys.
@@ -69,19 +74,38 @@
  * del camí ingenu. Si algú toca els paràmetres, aquesta taula es torna a fer en
  * una ordre.
  *
- * ── UN LÍMIT CONEGUT: LA GRAELLA NO SAP QUÈ ÉS AIGUA ────────────────────────
+ * ── B′. TERRA O MAR, I EL CIM DE CADA CEL·LA ────────────────────────────────
  *
- * A Barcelona 2028, tres dels cinc finalistes cauen al Mediterrani. La graella
- * és geomètrica i el model del terreny dona zero sobre l'aigua, que passa per
- * una plana perfecta amb l'horitzó lliure — o sigui, per un lloc excel·lent.
+ * A Barcelona 2028, tres dels cinc finalistes queien al Mediterrani: la
+ * graella és geomètrica i el model dona zero (o batimetria negativa) sobre
+ * l'aigua, que passa per una plana perfecta amb l'horitzó lliure — o sigui,
+ * per un lloc excel·lent on cap observador no es pot plantar.
  *
- * NO es filtra per cota, i és a posta: mesurat sobre terrarium, l'illa de
- * Tarifa —un dels millors llocs de la península per a l'eclipsi del 2027— dona
- * −0,35 m, i la punta del delta de l'Ebre en dona 0,02. Un tall a zero metres
- * se'ls enduria tots dos. Distingir aigua de terra necessita una màscara de
- * costa de veritat, no un llindar d'altura. Fins que no hi sigui, qui pinti
- * aquests resultats sobre un mapa ho veurà de seguida; qui només en llegeixi la
- * llista, no.
+ * Ara, entre baixar les tessel·les i pagar el garbell, cada cel·la passa per
+ * `findCellPeak`: es descarta si cap mostra no puja de 0 m (terrarium codifica
+ * el mar com a 0 o negatiu) i, si és terra, el candidat es muda al màxim local
+ * de la cel·la. El llindar és ESTRICTAMENT ≤ 0 — una platja a +1 m sobreviu —
+ * i les dues decisions surten de les mateixes 21 mostres. El salt al cim també
+ * rescata les cel·les mixtes de la costa: centre a l'aigua, platja a dins.
+ *
+ * QUÈ COSTA I QUÈ ESTALVIA. El filtre llegeix ≤ 21 mostres per candidat
+ * (~11.000 en una cerca de 567) sobre un grapat de tessel·les z11 que cobreixen
+ * el disc de cerca i que el garbell hauria baixat igualment: en total val menys
+ * que el garbell d'UN sol candidat (~12.000 mostres). En una cerca costanera
+ * típica —l'origen a la línia de costa, mig disc a l'aigua— descarta la meitat
+ * de les cel·les vives: a 25 km/2 km són ~280 candidats que ja no paguen ni
+ * garbell (~3,4 M mostres estalviades) ni les seves tessel·les de falca, perquè
+ * la unió de falques de l'etapa B es calcula DESPRÉS del filtre, només amb els
+ * supervivents. El descarte real de cada cerca es publica a
+ * `cost.tiles.entered − cost.tiles.survived`.
+ *
+ * LÍMITS CONEGUTS, DITS AQUÍ I NO AMAGATS. (1) El submostreig 5×5 té un gra de
+ * 0,2 × pas (400 m amb el pas per defecte): un illot o una barra de sorra més
+ * estrets que això poden no rebre cap mostra i la cel·la es perd — mesurat
+ * sobre terrarium, l'illa de Tarifa dona −0,35 m i cauria fins i tot mostrada,
+ * mentre que la punta del delta de l'Ebre (+0,02 m) sobreviu pels pèls. La
+ * solució de veritat segueix sent una màscara de costa. (2) Les tessel·les del
+ * disc z11 inclouen les de mar: fan falta justament per saber que és mar.
  *
  * Cap dependència de DOM: aquest mòdul ha de poder córrer en un Worker o en Node.
  */
@@ -102,7 +126,13 @@ import {
   type HorizonRing,
 } from '../horizon/raycast';
 import { computeVisibility } from '../visibility/verdict';
-import { buildCandidateGrid, candidateId } from './grid';
+import {
+  approxDistanceKm,
+  bearingDeg,
+  buildCandidateGrid,
+  candidateId,
+  findCellPeak,
+} from './grid';
 import { buildCentralSeed, fastCentralPhase, sunTrackAt } from './fastCentral';
 import type { CentralSeed, FastCentral } from './fastCentral';
 import { compareSpots, DEFAULT_SPOT_WEIGHTS, scoreSpot } from './score';
@@ -525,7 +555,9 @@ export async function searchSpots(
     });
   }
 
-  const centralReachable = bestCentralSec > 0;
+  // Es reavalua després del filtre de terra: la franja pot arribar al radi
+  // però només tocar-hi aigua, i llavors no és cap lloc on es pugui anar.
+  let centralReachable = bestCentralSec > 0;
   const centralFloor = centralReachable ? bestCentralSec * MIN_CENTRAL_FRACTION : 0;
 
   // El Sol sota l'horitzó astronòmic no el rescata cap turó: aquests candidats
@@ -585,12 +617,154 @@ export async function searchSpots(
   t0 = Date.now();
   cost.tiles.entered = alive.length;
 
+  const groundZoom = sieveRings[0]?.zoom ?? 11;
+
+  // B′ PRIMER: EL DISC DE TERRA. Abans de decidir quines falques de cel es
+  // baixen, es baixa el disc de cerca sencer al zoom de terra — un grapat de
+  // tessel·les z11 que la unió de falques hauria inclòs gairebé totes — per
+  // poder llegir la cota de cada cel·la. Amb això el filtre de mar i el salt
+  // al cim corren ABANS de la unió de falques, i les cel·les d'aigua no
+  // arrosseguen ni garbell ni tessel·les pròpies. El marge d'un pas de graella
+  // cobreix les cel·les que cavalquen la vora del radi.
+  const discTileList = ringTiles(origin.lat, origin.lon, {
+    zoom: groundZoom,
+    innerM: 0,
+    outerM: (radiusKm + spacingKm) * 1000,
+  }).filter((tile) => !downloaded.has(tileKey(tile)));
+
+  report(
+    'tiles',
+    0,
+    `Baixant el mapa de terra i mar (0 de ${discTileList.length} tessel·les)`,
+    0,
+    alive.length,
+  );
+
+  const discFetch = await prefetch(discTileList, {
+    signal,
+    onTileDone: (done, total) => {
+      report(
+        'tiles',
+        total === 0 ? 0.15 : 0.15 * (done / total),
+        `Baixant el mapa de terra i mar (${done} de ${total} tessel·les)`,
+        done,
+        alive.length,
+      );
+    },
+  });
+  abortIfNeeded(signal);
+  for (const tile of discTileList) downloaded.add(tileKey(tile));
+  cost.tiles.tiles += discTileList.length;
+
+  if (discTileList.length > 0 && discFetch.loaded === 0) {
+    throw new Error(
+      'No s’ha pogut baixar cap tessel·la del terreny. Comprova la connexió.',
+    );
+  }
+
+  // TERRA O MAR, I EL CIM DE CADA CEL·LA. Vegeu la capçalera (etapa B′) i
+  // `findCellPeak` per al perquè. L'origen queda exempt de tot: és on ets.
+  const landAlive: LiveCandidate[] = [];
+  for (let i = 0; i < alive.length; i++) {
+    if (i % YIELD_EVERY === 0) {
+      await yieldToEventLoop();
+      abortIfNeeded(signal);
+      report(
+        'tiles',
+        0.15 + 0.1 * (i / alive.length),
+        'Triant terra ferma i el punt alt de cada cel·la',
+        i,
+        landAlive.length,
+      );
+    }
+
+    const item = alive[i];
+    const { candidate } = item;
+
+    if (candidate.lat === origin.lat && candidate.lon === origin.lon) {
+      landAlive.push(item);
+      continue;
+    }
+
+    const peak = findCellPeak(candidate.lat, candidate.lon, {
+      spacingKm,
+      elevation,
+      zoom: groundZoom,
+    });
+    cost.tiles.terrainSamples += peak.samples;
+
+    // Aigua a totes les mostres: no és cap lloc. `unknown` (cap dada) es
+    // queda: un forat del model no pot esborrar un lloc del mapa.
+    if (peak.kind === 'water') continue;
+
+    if (peak.kind === 'land') {
+      const moved = peak.lat !== candidate.lat || peak.lon !== candidate.lon;
+      candidate.elevation = peak.elevation;
+      if (moved) {
+        candidate.lat = peak.lat;
+        candidate.lon = peak.lon;
+        candidate.distanceKm = approxDistanceKm(
+          origin.lat,
+          origin.lon,
+          peak.lat,
+          peak.lon,
+        );
+        candidate.bearingDeg = bearingDeg(origin.lat, origin.lon, peak.lat, peak.lon);
+
+        // El candidat ja no és on l'astronomia el va calcular. Prop de la vora
+        // de la franja, mig quilòmetre mou la durada uns quants segons, i el
+        // garbell integraria una trajectòria equivocada: es recalcula. Són 5
+        // crides a efemèrides per candidat mogut, 0,07 ms — res.
+        const fast = fastCentralPhase(
+          { lat: peak.lat, lon: peak.lon, elevation: peak.elevation },
+          seed,
+        );
+        cost.tiles.ephemerisCalls += fast.ephemerisCalls;
+        item.central = fast;
+        item.rangeKm = sieveRangeKm(fast.sunAltitudeApparentDeg);
+        item.rings = clipSieveRings(item.rangeKm, sieveRings);
+      }
+    }
+
+    landAlive.push(item);
+  }
+
+  // La millor durada de la zona es reavalua sobre el que ha quedat: si el
+  // rècord el tenia una cel·la d'aigua, normalitzar-hi les notes castigaria
+  // tots els llocs on SÍ que es pot anar contra un fantasma.
+  bestCentralSec = 0;
+  for (const item of landAlive) {
+    if (item.central.centralSec > bestCentralSec) {
+      bestCentralSec = item.central.centralSec;
+    }
+  }
+  centralReachable = bestCentralSec > 0;
+
+  if (landAlive.length === 0) {
+    cost.tiles.survived = 0;
+    cost.tiles.ms = Date.now() - t0;
+    cost.uniqueTiles = downloaded.size;
+    cost.totalMs = Date.now() - startedAt;
+    report('done', 1, 'Cap candidat en terra ferma dins del radi', alive.length, 0);
+    return {
+      results: [],
+      cost,
+      origin,
+      radiusKm,
+      candidates: candidates.length,
+      bestCentralSec,
+      centralReachable,
+      estimatedOnly: !refine,
+    };
+  }
+
   // NOMÉS EL TROS DE CEL QUE ES MIRARÀ. L'etapa C crida `sampleHorizonWindow`
   // amb una finestra de ±`sieveHalfWidthDeg` al voltant de l'azimut del Sol.
   // Baixar el disc sencer per llegir-ne aquella franja era pagar la resta amb
-  // la connexió de l'usuari; el sector es passa a `ringTiles` i prou.
+  // la connexió de l'usuari; el sector es passa a `ringTiles` i prou. La unió
+  // es fa sobre els supervivents de terra, des de la posició ja mudada al cim.
   const sieveTiles = new Map<string, TileId>();
-  for (const item of alive) {
+  for (const item of landAlive) {
     const wedge = {
       centreAzimuthDeg: item.central.sunAzimuthDeg,
       halfWidthDeg: sieveHalfWidthDeg,
@@ -615,10 +789,10 @@ export async function searchSpots(
   );
   report(
     'tiles',
-    0,
+    0.25,
     `Baixant el relleu (0 de ${sieveTileList.length} tessel·les)`,
     0,
-    alive.length,
+    landAlive.length,
   );
 
   const sieveFetch = await prefetch(sieveTileList, {
@@ -626,18 +800,18 @@ export async function searchSpots(
     onTileDone: (done, total) => {
       report(
         'tiles',
-        total === 0 ? 1 : done / total,
+        total === 0 ? 1 : 0.25 + 0.75 * (done / total),
         `Baixant el relleu (${done} de ${total} tessel·les)`,
         done,
-        alive.length,
+        landAlive.length,
       );
     },
   });
   abortIfNeeded(signal);
 
   for (const tile of sieveTileList) downloaded.add(tileKey(tile));
-  cost.tiles.tiles = sieveTileList.length;
-  cost.tiles.survived = alive.length;
+  cost.tiles.tiles += sieveTileList.length;
+  cost.tiles.survived = landAlive.length;
   cost.tiles.ms = Date.now() - t0;
 
   if (sieveTileList.length > 0 && sieveFetch.loaded === 0) {
@@ -649,30 +823,29 @@ export async function searchSpots(
   /* ---- etapa C: garbell d'horitzó ------------------------------------- */
 
   t0 = Date.now();
-  cost.sieve.entered = alive.length;
+  cost.sieve.entered = landAlive.length;
 
-  const groundZoom = sieveRings[0]?.zoom ?? 11;
-
-  for (let i = 0; i < alive.length; i++) {
+  for (let i = 0; i < landAlive.length; i++) {
     if (i % YIELD_EVERY === 0) {
       await yieldToEventLoop();
       abortIfNeeded(signal);
       report(
         'sieve',
-        i / alive.length,
-        `Mirant l’horitzó de ${alive.length} punts`,
+        i / landAlive.length,
+        `Mirant l’horitzó de ${landAlive.length} punts`,
         i,
-        alive.length,
+        landAlive.length,
       );
     }
 
-    const item = alive[i];
+    const item = landAlive[i];
     const { candidate } = item;
 
     // La cota surt del MODEL, mai del que ens hagin passat. Si h0 i el terreny
     // no venen del mateix model, la primera mostra del raig — a poques desenes
     // de metres — ja s'emporta el màxim de tots els azimuts i l'horitzó surt
-    // pla i altíssim.
+    // pla i altíssim. Els candidats mudats al cim ja la porten (és la mateixa
+    // lectura), però l'origen i les cel·les sense dades passen per aquí.
     const dem = elevation(candidate.lon, candidate.lat, groundZoom);
     if (dem !== undefined) candidate.elevation = dem;
     const observerElevationM = candidate.elevation + eyeHeightM;
@@ -711,20 +884,32 @@ export async function searchSpots(
     item.parts = scored.parts;
   }
 
-  cost.sieve.survived = alive.length;
+  cost.sieve.survived = landAlive.length;
   cost.sieve.ms = Date.now() - t0;
 
   // Aquí hi havia una crida a `suppressNearby` amb `minKm = 0`, que la funció
   // ignora i retorna l'entrada tal qual: codi mort que a més necessitava dues
   // conversions forçades per compilar. L'ordre real el fa el `sort` de sota.
-  const ranked = alive.slice();
+  const ranked = landAlive.slice();
 
   // L'ordre i la supressió es fan sobre el resultat del garbell, que és
-  // l'única informació disponible en aquest punt.
+  // l'única informació disponible en aquest punt. Els segons visibles i la
+  // cota viatgen amb la nota: són els desempats de `compareSpots`, que a
+  // igualtat pràctica de segons prefereix el lloc alt (vegeu `score.ts`).
   ranked.sort((a, b) =>
     compareSpots(
-      { score: a.score, distanceKm: a.candidate.distanceKm },
-      { score: b.score, distanceKm: b.candidate.distanceKm },
+      {
+        score: a.score,
+        distanceKm: a.candidate.distanceKm,
+        centralVisibleSec: a.centralVisibleSec,
+        elevation: a.candidate.elevation,
+      },
+      {
+        score: b.score,
+        distanceKm: b.candidate.distanceKm,
+        centralVisibleSec: b.centralVisibleSec,
+        elevation: b.candidate.elevation,
+      },
     ),
   );
 

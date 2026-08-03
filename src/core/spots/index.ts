@@ -18,9 +18,10 @@ export {
   bearingDeg,
   candidateId,
   compassName,
+  findCellPeak,
   kmPerDegLon,
 } from './grid';
-export type { CandidateGridOptions } from './grid';
+export type { CandidateGridOptions, CellPeak, CellPeakOptions } from './grid';
 
 export {
   buildCentralSeed,
@@ -37,7 +38,7 @@ export {
   ALTITUDE_FULL_M,
   ALTITUDE_ZERO_M,
 } from './score';
-export type { SpotScore, SpotScoreInput } from './score';
+export type { SpotOrderKey, SpotScore, SpotScoreInput } from './score';
 
 export {
   sampleHorizonWindow,

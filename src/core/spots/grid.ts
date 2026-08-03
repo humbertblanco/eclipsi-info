@@ -143,12 +143,126 @@ export function candidateId(lat: number, lon: number): string {
   return `${lat.toFixed(5)},${lon.toFixed(5)}`;
 }
 
+/* ------------------------------------------------ el punt que representa la cel·la */
+
+/**
+ * Fraccions del pas amb què se submostreja una cel·la, per eix.
+ *
+ * Cinc per costat i el CENTRE PRIMER: el centre és el punt de la retícula, i
+ * anar-hi primer fa que un empat exacte (terreny pla) no mogui mai el candidat.
+ * El pas entre mostres surt de 0,2 × pas de graella — 400 m amb el pas de 2 km
+ * per defecte — que és el gra del que aquest submostreig pot veure: un cim o
+ * una platja més estrets que això poden passar desapercebuts, i es diu al
+ * comentari de cost de `search.ts` en comptes d'amagar-ho.
+ */
+const CELL_FRACTIONS = [0, -0.4, -0.2, 0.2, 0.4] as const;
+
+/**
+ * Radi màxim del submostreig, en fraccions del pas.
+ *
+ * La cel·la de Voronoi d'una graella hexagonal de pas s té l'inradi a s/2:
+ * quedant-nos a 0,45·s cap mostra no trepitja la cel·la del veí, i per tant
+ * dos candidats no poden acabar mai damunt del mateix punt exacte.
+ */
+const CELL_MAX_FRACTION = 0.45;
+
+export interface CellPeakOptions {
+  /** Pas de la graella, en km. Defineix la mida de la cel·la a explorar. */
+  spacingKm: number;
+  elevation: ElevationReader;
+  zoom: number;
+}
+
+/**
+ * Veredicte d'una cel·la: el seu millor punt de terra, aigua pertot, o res.
+ *
+ * - `land`: hi ha terra (cota > 0). `lat`/`lon` són el màxim local trobat.
+ * - `water`: el model té dades i CAP mostra puja de 0 m. Mar o làmina d'aigua
+ *   al nivell del mar; no és cap lloc on plantar-se.
+ * - `unknown`: cap mostra amb dades. MAI s'interpreta com a aigua: un forat
+ *   del model no pot esborrar un lloc del mapa.
+ */
+export type CellPeak =
+  | { kind: 'land'; lat: number; lon: number; elevation: number; samples: number }
+  | { kind: 'water'; samples: number }
+  | { kind: 'unknown'; samples: number };
+
+/**
+ * Troba el punt que ha de representar una cel·la: el seu màxim local de cota.
+ *
+ * ── PER QUÈ EL CIM I NO EL CENTRE ───────────────────────────────────────────
+ *
+ * El centre geomètric d'una cel·la és un accident de la retícula. El cim del
+ * turó que hi hagi dins és el lloc amb l'horitzó geomètric més net — més
+ * segons de fase central, que és exactament el que el motor puntua — i és on
+ * un humà aniria de tota manera. Calcular el perfil al centre i recomanar «la
+ * zona» seria enviar la gent al mig del camp amb el mirador a 400 m.
+ *
+ * ── PER QUÈ TAMBÉ ÉS EL FILTRE DE MAR ───────────────────────────────────────
+ *
+ * Les mateixes mostres responen les dues preguntes alhora. Terrarium codifica
+ * el mar com a 0 o negatiu (porta batimetria), així que una cel·la on cap
+ * mostra puja de 0 m és aigua i es descarta. El llindar és ESTRICTAMENT ≤ 0:
+ * un sorral a +1 m amb ponent net és un lloc excel·lent per a aquests
+ * eclipsis, i un tall «a prop de zero» se l'enduria. I una cel·la mixta —el
+ * centre a l'aigua però la platja a dins— no es perd: el màxim local cau a la
+ * platja i el candidat s'hi muda. El cim rescata el que el filtre sol negaria.
+ *
+ * Cost: fins a 21 lectures del model per cel·la (5×5 retallat al disc), ja
+ * sense xarxa perquè les tessel·les del disc s'han baixat abans. Contra les
+ * ~12.000 mostres que costa el garbell d'horitzó d'un sol candidat, és soroll.
+ */
+export function findCellPeak(
+  lat: number,
+  lon: number,
+  options: CellPeakOptions,
+): CellPeak {
+  const { spacingKm, elevation, zoom } = options;
+
+  let samples = 0;
+  let best: { lat: number; lon: number; elevation: number } | null = null;
+  let hasData = false;
+
+  for (const fy of CELL_FRACTIONS) {
+    for (const fx of CELL_FRACTIONS) {
+      if (Math.hypot(fx, fy) > CELL_MAX_FRACTION + 1e-9) continue;
+      const sampleLat = lat + (fy * spacingKm) / KM_PER_DEG_LAT;
+      const sampleLon = lon + (fx * spacingKm) / kmPerDegLon(lat);
+
+      samples++;
+      const h = elevation(sampleLon, sampleLat, zoom);
+      if (h === undefined) continue;
+      hasData = true;
+
+      // Estrictament més alt: el terreny pla deixa el candidat al centre,
+      // que és el primer de la llista de fraccions.
+      if (h > 0 && (best === null || h > best.elevation)) {
+        best = { lat: sampleLat, lon: sampleLon, elevation: h };
+      }
+    }
+  }
+
+  if (best !== null) return { kind: 'land', ...best, samples };
+  return hasData ? { kind: 'water', samples } : { kind: 'unknown', samples };
+}
+
 /**
  * Candidats dins d'un radi al voltant d'un punt.
  *
  * L'origen s'inclou sempre com a primer candidat encara que no caigui damunt de
  * la retícula: el lloc on ja ets és el que has de poder comparar amb la resta,
- * i que no hi sortís seria absurd.
+ * i que no hi sortís seria absurd. Per això mateix l'origen NO passa ni pel
+ * filtre d'aigua ni pel salt al cim: és on ets, no on t'enviem.
+ *
+ * AMB LECTOR DE COTES, cada cel·la de retícula es representa pel seu màxim
+ * local de terra (`findCellPeak`): el candidat es muda al cim de la cel·la i
+ * les cel·les d'aigua (cota ≤ 0 a totes les mostres) no entren. Sense lector
+ * —el cas de la cerca real, que encara no té cap tessel·la— la graella és
+ * purament geomètrica i aquesta feina la fa `searchSpots` així que el relleu
+ * arriba. Un candidat mudat al cim pot quedar uns centenars de metres més
+ * enllà del radi si la seva cel·la cavalca la vora: es queda, perquè el que
+ * promet el radi és quines CEL·LES s'exploren, no on cau el millor punt de
+ * cada una.
  */
 export function buildCandidateGrid(
   origin: GeoLocation,
@@ -164,28 +278,49 @@ export function buildCandidateGrid(
   const anchorRow = Math.round((origin.lat * KM_PER_DEG_LAT) / rowKm);
   const rows = Math.ceil(radiusKm / rowKm);
 
-  const cota = (lat: number, lon: number): number =>
-    elevation?.(lon, lat, elevationZoom) ?? origin.elevation;
-
   const seen = new Set<string>();
   const candidates: SpotCandidate[] = [];
 
-  const push = (lat: number, lon: number) => {
+  const push = (lat: number, lon: number, isOrigin: boolean) => {
+    // La clau de duplicats és la del punt de RETÍCULA, abans de cap salt al
+    // cim: dues cel·les diferents no comparteixen mai retícula, i el salt no
+    // ha de poder fer aparèixer ni desaparèixer candidats per arrodoniment.
     const id = candidateId(lat, lon);
     if (seen.has(id)) return;
     const distanceKm = approxDistanceKm(origin.lat, origin.lon, lat, lon);
     if (distanceKm > radiusKm) return;
     seen.add(id);
+
+    let elevationM = origin.elevation;
+    if (elevation !== undefined) {
+      if (isOrigin) {
+        elevationM = elevation(lon, lat, elevationZoom) ?? origin.elevation;
+      } else {
+        const peak = findCellPeak(lat, lon, {
+          spacingKm,
+          elevation,
+          zoom: elevationZoom,
+        });
+        if (peak.kind === 'water') return;
+        if (peak.kind === 'land') {
+          lat = peak.lat;
+          lon = peak.lon;
+          elevationM = peak.elevation;
+        }
+        // `unknown`: es queda al centre amb la cota heretada, com sempre.
+      }
+    }
+
     candidates.push({
       lat,
       lon,
-      elevation: cota(lat, lon),
-      distanceKm,
+      elevation: elevationM,
+      distanceKm: approxDistanceKm(origin.lat, origin.lon, lat, lon),
       bearingDeg: bearingDeg(origin.lat, origin.lon, lat, lon),
     });
   };
 
-  push(origin.lat, origin.lon);
+  push(origin.lat, origin.lon, true);
 
   for (let r = -rows; r <= rows; r++) {
     const rowIndex = anchorRow + r;
@@ -211,7 +346,7 @@ export function buildCandidateGrid(
 
     for (let c = -cols; c <= cols; c++) {
       const xKm = (anchorCol + c) * spacingKm + offsetKm;
-      push(lat, xKm / degPerLonRow);
+      push(lat, xKm / degPerLonRow, false);
     }
   }
 

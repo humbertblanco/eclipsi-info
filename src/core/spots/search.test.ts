@@ -30,6 +30,7 @@ import {
   ELEVATION_MISMATCH_THRESHOLD_M,
   TERRESTRIAL_REFRACTION_K,
 } from '../horizon/raycast';
+import { approxDistanceKm, buildCandidateGrid, kmPerDegLon } from './grid';
 import { searchSpots, suppressNearby } from './search';
 import { sampleHorizonWindow } from './window';
 import type {
@@ -58,12 +59,19 @@ const ECLIPSE = '2026-08-12';
 const ALTIPLA: ElevationReader = () => 1000;
 
 /**
- * Paret nord-sud a ponent de Sòria, entre 6,6 i 8,3 km, 1.700 m per damunt de
- * l'altiplà. A aquesta distància es veu a 14°: es menja qualsevol Sol baix, i
- * es la menja a tots els candidats d'un radi petit alhora.
+ * Paret nord-sud a ponent de Sòria, entre 7,9 i 9,5 km, 2.000 m per damunt de
+ * l'altiplà. A 8 km es veu a 14°, i fins i tot des del racó més oriental del
+ * radi (uns 14 km de biaix) encara fa 8°: per damunt del Sol de tots els
+ * candidats. Se'ls menja la fase central a tots alhora.
+ *
+ * FORA DE L'ABAST DEL SALT AL CIM, a posta: amb 6 km de radi i cel·les de
+ * 2 km, cap mostra de cap cel·la passa dels 6,9 km (6 + 0,45 × 2). Si la paret
+ * comencés més a prop, els candidats de la vora s'hi enfilarien — que és
+ * exactament el que el motor ha de fer ara — i aquest escenari vol provar el
+ * cas contrari: el mur que NINGÚ del radi no pot escalar.
  */
 const PARET: ElevationReader = (lon) =>
-  lon < SORIA.lon - 0.08 && lon > SORIA.lon - 0.1 ? 2700 : 1000;
+  lon < SORIA.lon - 0.095 && lon > SORIA.lon - 0.115 ? 3000 : 1000;
 
 /* ------------------------------------------------------- dobles de la xarxa */
 
@@ -487,6 +495,78 @@ describe('supressió de veïns', () => {
   it('amb separació zero no toca res', () => {
     const punts = [{ km: 0 }, { km: 0 }];
     expect(suppressNearby(punts, 0, () => 0)).toHaveLength(2);
+  });
+});
+
+describe('el mar no és un lloc', () => {
+  /**
+   * Costa sintètica a ponent de Sòria: mar obert amb batimetria (−30 m), una
+   * plataforma arran d'aigua exactament a 0 m —terrarium codifica el mar així,
+   * amb zero o negatiu— i terra a 1.000 m. El Sol de l'eclipsi cau a ponent,
+   * o sigui que les cel·les de mar tenen l'horitzó més net de tots: sense
+   * filtre de terra, el motor les recomanava per damunt de la costa real.
+   */
+  const COSTA: ElevationReader = (lon) => {
+    if (lon < SORIA.lon - 0.05) return -30;
+    if (lon < SORIA.lon - 0.01) return 0;
+    return 1000;
+  };
+
+  it('cap resultat no cau a cota ≤ 0: en plena aigua no s’hi pot plantar ningú', async () => {
+    const { outcome } = await run(SORIA, COSTA, {
+      refine: false,
+      limit: 12,
+      minSeparationKm: 2,
+    });
+    expect(outcome.results.length).toBeGreaterThan(0);
+    for (const result of outcome.results) {
+      expect(result.elevation, `resultat ${result.id}`).toBeGreaterThan(0);
+    }
+  });
+
+  it('el descarte es publica al cost, i les cel·les de mar no paguen garbell', async () => {
+    const { outcome } = await run(SORIA, COSTA, { refine: false });
+    const cost = outcome.cost;
+    // El filtre viu a l'etapa de tessel·les: hi entren tots els vius de
+    // l'astronomia i només en surten els de terra ferma.
+    expect(cost.tiles.entered).toBe(cost.astro.survived);
+    expect(cost.tiles.survived).toBeLessThan(cost.tiles.entered);
+    // I el garbell —l'etapa cara— només mira els supervivents.
+    expect(cost.sieve.entered).toBe(cost.tiles.survived);
+  });
+});
+
+describe('el punt de cada cel·la és el seu cim', () => {
+  it('un turó dins d’una cel·la plana atrau el candidat', async () => {
+    // La graella és determinista (retícula global), així que podem saber on
+    // cauen els candidats abans de córrer la cerca i plantar el turó dins
+    // d'una cel·la concreta, a un dels punts del submostreig 5×5.
+    const reticle = buildCandidateGrid(SORIA, { radiusKm: 6, spacingKm: 2 });
+    const cell = reticle.find((c) => c.distanceKm > 2.5 && c.distanceKm < 4.5);
+    expect(cell).toBeDefined();
+    if (!cell) return;
+
+    const hillLat = cell.lat;
+    const hillLon = cell.lon + (0.2 * 2) / kmPerDegLon(cell.lat);
+    const TURO: ElevationReader = (lon, lat) =>
+      approxDistanceKm(lat, lon, hillLat, hillLon) < 0.25 ? 1200 : 1000;
+
+    const { outcome } = await run(SORIA, TURO, {
+      refine: false,
+      limit: 99,
+      minSeparationKm: 0,
+    });
+
+    // El candidat d'aquella cel·la ha de ser AL turó, no al centre geomètric.
+    const alCim = outcome.results.find(
+      (r) => approxDistanceKm(r.lat, r.lon, hillLat, hillLon) < 0.05,
+    );
+    expect(alCim).toBeDefined();
+    expect(alCim?.elevation).toBe(1200);
+    // I el punt de retícula original ja no surt: s'ha mogut ell, no s'ha clonat.
+    expect(
+      outcome.results.some((r) => r.lat === cell.lat && r.lon === cell.lon),
+    ).toBe(false);
   });
 });
 
