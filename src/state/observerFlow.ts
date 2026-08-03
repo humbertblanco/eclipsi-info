@@ -28,6 +28,20 @@ export interface PlacePick {
   origin: LocationOrigin;
   /** Nom, si qui el tria ja el sap (per exemple un resultat de la cerca). */
   label?: string | null;
+  /**
+   * Altitud ja sabuda D'AQUEST MATEIX PUNT, amb la seva font, si qui el tria
+   * la porta: una entrada de l'historial la té desada amb les seves pròpies
+   * coordenades, o sigui que és exacta i no una aproximació.
+   *
+   * EL CAS QUE HO VA DESTAPAR. Planifiques a casa, el refugi queda a
+   * l'historial amb els seus 1.520 m del model del terreny; puges, sense
+   * cobertura, i el repesques de la llista. Sense aquests camps, repescar-lo
+   * era un `pending` amb zero, la tessel·la no arribava mai, i el punt es
+   * quedava com a «altitud desconeguda: nivell del mar» — destruint una dada
+   * bona que l'app JA TENIA al disc, i just el dia que no es pot recuperar.
+   */
+  elevation?: number;
+  elevationSource?: ElevationSource;
 }
 
 /** El que torna el model del terreny, amb la seva procedència enganxada. */
@@ -47,12 +61,26 @@ export type FixPhase = 'placed' | 'elevation';
 
 /** El punt tal com queda a l'instant de triar-lo, amb l'altitud per resoldre. */
 export function fixFromPick(pick: PlacePick, atMs: number): FixedLocation {
+  /*
+   * NOMÉS S'APROFITA L'ALTITUD DEL MODEL DEL TERRENY. És l'única que no cal
+   * revisar (el terreny no es mou, i és la mateixa regla que `needsElevation`
+   * aplica en restaurar). Una de `gps` o `assumed` que vingués desada segueix
+   * el camí de sempre: `pending` i tornar-la a demanar, que potser avui hi ha
+   * xarxa i es pot arreglar.
+   */
+  const dem =
+    pick.elevationSource === 'dem' &&
+    pick.elevation !== undefined &&
+    Number.isFinite(pick.elevation)
+      ? pick.elevation
+      : null;
+
   return {
-    location: { lat: pick.lat, lon: pick.lon, elevation: 0 },
+    location: { lat: pick.lat, lon: pick.lon, elevation: dem ?? 0 },
     origin: pick.origin,
     label: pick.label ?? null,
     accuracyM: null,
-    elevationSource: 'pending',
+    elevationSource: dem === null ? 'pending' : 'dem',
     gpsElevationM: null,
     atMs,
     restored: false,

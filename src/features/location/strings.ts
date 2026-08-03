@@ -54,6 +54,13 @@ const STRINGS = {
   /* --- precisió i altitud ------------------------------------------------ */
   'accuracy.gps': { ca: '±{m} m', es: '±{m} m' },
   'elevation.dem': { ca: '{m} m del model del terreny', es: '{m} m del modelo del terreno' },
+  /* Mentre la tessel·la viatja, les xifres es calculen amb altitud zero. La
+     regla del fitxer mana dir-ho: és una finestra de segons amb xarxa bona,
+     però sense xarxa pot ser l'estat en què es queda tot. */
+  'elevation.pending': {
+    ca: 'Cercant l’altitud al model del terreny; mentre no arribi, es calcula al nivell del mar.',
+    es: 'Buscando la altitud en el modelo del terreno; hasta que llegue, se calcula al nivel del mar.',
+  },
   'elevation.assumed': {
     ca: 'Altitud desconeguda: es calcula com si fossis al nivell del mar.',
     es: 'Altitud desconocida: se calcula como si estuvieras al nivel del mar.',
@@ -83,6 +90,10 @@ const STRINGS = {
   },
   'sheet.forget': { ca: 'Treu-lo de la llista', es: 'Quítalo de la lista' },
   'sheet.compareWith': { ca: 'Compara', es: 'Compara' },
+  /* El camp dedicat viu plegat al final de la fulla: existeix per al flux de
+     camp amb un GPS de mà, però gairebé ningú no escriu coordenades, i el que
+     s'enganxa ja l'entén el cercador. */
+  'sheet.coordsToggle': { ca: 'Tinc coordenades exactes', es: 'Tengo coordenadas exactas' },
   'sheet.coords': { ca: 'Coordenades', es: 'Coordenadas' },
   'sheet.coordsHint': {
     ca: 'Latitud i longitud en graus decimals, separades per una coma.',
@@ -96,7 +107,15 @@ const STRINGS = {
 
   /* --- cerca per nom ----------------------------------------------------- */
   'search.label': { ca: 'Cerca un lloc', es: 'Busca un lugar' },
-  'search.placeholder': { ca: 'Poble, ciutat, port de muntanya', es: 'Pueblo, ciudad, puerto de montaña' },
+  /* El cercador és el camp universal: també entén un parell de coordenades
+     enganxades, i el placeholder ho diu perquè ningú no busqui un camp a part. */
+  'search.placeholder': {
+    ca: 'Poble, cim, port… o coordenades',
+    es: 'Pueblo, cima, puerto… o coordenadas',
+  },
+  /* La fila que surt quan el que hi ha escrit JA són unes coordenades: un
+     resultat local, immediat i sense xarxa. */
+  'search.exact': { ca: 'Punt exacte', es: 'Punto exacto' },
   'search.searching': { ca: 'Cercant…', es: 'Buscando…' },
   'search.empty': { ca: 'Cap resultat amb aquest nom.', es: 'Ningún resultado con ese nombre.' },
   'search.offline': {

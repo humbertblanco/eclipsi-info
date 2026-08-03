@@ -147,6 +147,45 @@ describe('triar un lloc', () => {
   });
 });
 
+describe('repescar un lloc de l’historial', () => {
+  const REFUGI = {
+    lat: 42.5,
+    lon: 0.75,
+    origin: 'recent' as const,
+    label: 'Refugi',
+    elevation: 1520,
+    elevationSource: 'dem' as const,
+  };
+
+  it('l’altitud del model que ja portava no es llença ni es torna a demanar', async () => {
+    const h = harness();
+    await fixAndResolve(fixFromPick(REFUGI, 2_000), h.flow);
+
+    // EL CAS DE CAMP: el refugi va quedar a l'historial amb els seus 1.520 m
+    // del model. Repescar-lo sense cobertura el convertia en un `pending` amb
+    // zero que cap tessel·la no arreglaria mai: l'app destruïa una dada bona
+    // que JA TENIA al disc, just el dia que no es pot recuperar.
+    expect(h.commits).toHaveLength(1);
+    expect(h.asked).toBe(0);
+    expect(h.commits[0].fix.location.elevation).toBe(1520);
+    expect(h.commits[0].fix.elevationSource).toBe('dem');
+    expect(h.commits[0].fix.label).toBe('Refugi');
+  });
+
+  it('una altitud desada que NO ve del model es torna a resoldre', () => {
+    // `assumed` vol dir «aquell dia no hi va haver tessel·la»: restaurar-la
+    // tal qual la faria eterna. Torna al camí de sempre, `pending` i demanar.
+    const fix = fixFromPick({ ...REFUGI, elevation: 0, elevationSource: 'assumed' }, 0);
+    expect(fix.elevationSource).toBe('pending');
+    expect(fix.location.elevation).toBe(0);
+  });
+
+  it('sense altitud declarada, com sempre: pendent i zero mentrestant', () => {
+    expect(fixFromPick(PICK, 0).elevationSource).toBe('pending');
+    expect(fixFromPick(PICK, 0).location.elevation).toBe(0);
+  });
+});
+
 describe('«on soc ara»', () => {
   const POS = { lat: 41.3851, lon: 2.1734, accuracyM: 8, gpsElevationM: 56 };
 

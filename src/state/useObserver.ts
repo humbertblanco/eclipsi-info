@@ -88,6 +88,33 @@ export type LocationErrorCode =
 /** Estat del permís de geolocalització, quan el navegador el sap dir. */
 export type PermissionState = 'granted' | 'denied' | 'prompt' | 'unknown';
 
+/**
+ * Temps màxim que es dona al navegador per trobar la posició, en ms.
+ *
+ * 15 s de marge: un GPS fred sota arbres o dins d'un cotxe en necessita deu
+ * llargs, i el cas documentat del dia de l'eclipsi va ser una resposta als
+ * 12 s. Retallar-ho a deu segons convertiria aquell fix legítim en un error de
+ * temps esgotat justament el dia que més importa.
+ */
+const GPS_TIMEOUT_MS = 15_000;
+
+/**
+ * El gos guardià del gest sencer, en ms. Una mica per damunt del temps del
+ * navegador, perquè el camí normal el resolgui sempre ell.
+ *
+ * PER QUÈ CAL SI JA HI HA `timeout`: el temps màxim de `getCurrentPosition`
+ * només compta quan el permís ja està resolt. Amb el diàleg de permís
+ * DESCARTAT sense respondre —Chrome ho permet amb la creu, i el torna a fer
+ * ell sol quan s'ha descartat massa cops— el navegador no crida MAI cap de
+ * les dues respostes, i «Cercant el senyal…» es quedava encès per sempre.
+ * És el report de camp exacte: «he premut Ubica'm i no ha ubicat». Passat
+ * aquest marge, el gest es tanca amb el codi de temps esgotat, que a la barra
+ * es tradueix en «torna-ho a provar o toca el mapa». I si la posició acaba
+ * arribant més tard igualment, s'aplica i l'avís marxa sol: el tiquet no ha
+ * canviat, o sigui que segueix essent el que l'usuari va demanar.
+ */
+const GPS_WATCHDOG_MS = 18_000;
+
 export interface ObserverApi {
   /** El punt actiu amb tot el seu context. `null` mentre no n'hi ha cap. */
   fix: FixedLocation | null;
@@ -334,8 +361,21 @@ export function useObserver(options?: ObserverOptions): ObserverApi {
     const mine = ++ticket.current;
     setState((s) => ({ ...s, loading: true, error: null }));
 
+    /*
+     * El gos guardià (vegeu GPS_WATCHDOG_MS): si el navegador no diu ni que sí
+     * ni que no, el gest s'acaba igualment. Només toca l'estat si la petició
+     * segueix essent l'actual i encara s'està esperant: qualsevol desenllaç de
+     * debò —posició, error, o un altre lloc triat mentrestant— ja l'haurà
+     * tancat abans.
+     */
+    const watchdog = window.setTimeout(() => {
+      if (ticket.current !== mine) return;
+      setState((s) => (s.loading ? { ...s, loading: false, error: 'timeout' } : s));
+    }, GPS_WATCHDOG_MS);
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        window.clearTimeout(watchdog);
         // El permís s'apunta encara que la resposta arribi tard i s'acabi
         // descartant: que l'usuari hagi dit que sí segueix essent cert.
         setPermission('granted');
@@ -356,15 +396,16 @@ export function useObserver(options?: ObserverOptions): ObserverApi {
         );
       },
       (err) => {
+        window.clearTimeout(watchdog);
         if (ticket.current !== mine) return;
         const code = errorCode(err);
         if (code === 'denied') setPermission('denied');
         setState((s) => ({ ...s, loading: false, error: code }));
       },
-      // 15 s de marge: un GPS fred sota arbres o dins d'un cotxe en necessita
-      // deu llargs. `maximumAge` a un minut evita tornar a encendre el xip si
-      // ja hi ha una posició fresca, que al camp val bateria de debò.
-      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 60_000 },
+      // El temps màxim és GPS_TIMEOUT_MS (vegeu-ne el perquè a dalt).
+      // `maximumAge` a un minut evita tornar a encendre el xip si ja hi ha
+      // una posició fresca, que al camp val bateria de debò.
+      { enableHighAccuracy: true, timeout: GPS_TIMEOUT_MS, maximumAge: 60_000 },
     );
   }, [flowFor]);
 

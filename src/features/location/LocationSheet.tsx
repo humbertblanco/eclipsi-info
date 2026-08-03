@@ -6,29 +6,31 @@
  *
  *   · ON SOC ARA (GPS). Serveix el dia de l'eclipsi, quan ja hi ets. No
  *     serveix per planificar, que és el 99 % del temps que es fa servir l'app.
- *   · CERCAR PEL NOM. És com la gent pensa un lloc («Peníscola»), i depèn de la
- *     xarxa. És la dependència de xarxa que el producte accepta a posta.
+ *   · CERCAR. És com la gent pensa un lloc («Peníscola»), i és EL CAMP
+ *     UNIVERSAL: si el que s'hi escriu o enganxa ja són unes coordenades, no
+ *     es pregunta res a la xarxa — surten com a resultat local a l'instant.
  *   · TOCAR EL MAPA. Funciona sense xarxa i és l'única manera d'arribar a un
  *     punt que no té nom: un mirador, un tros de carretera, un cim.
- *   · ESCRIURE LES COORDENADES. Per enganxar-hi un punt que ve d'una altra
- *     banda, i com a xarxa de seguretat de les altres tres.
+ *   · ESCRIURE LES COORDENADES en un camp propi. Viu PLEGAT al final: el flux
+ *     de camp amb un GPS de mà existeix i no es treu, però gairebé ningú no
+ *     escriu coordenades a mà i el camp pagava lloguer al mig de la fulla per
+ *     una feina que el cercador ja fa.
  *
  * PER QUÈ «ON SOC ARA» NO ÉS EL BOTÓ AMBRE. Perquè no és la resposta bona la
  * majoria de vegades. Tota aquesta app existeix per respondre «què veuràs des
- * d'on SERÀS», i pintar d'accent el botó del GPS diria el contrari. Les tres
+ * d'on SERÀS», i pintar d'accent el botó del GPS diria el contrari. Les
  * maneres hi van amb el mateix pes. L'únic accent de la fulla, quan hi és, és
  * la diferència de segons entre dos llocs, que és l'única xifra que decideix
  * alguna cosa.
  */
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button, Dialog, IconButton, Input } from '../../ui';
 import type { Locale } from '../../i18n';
 import { ECLIPSES } from '../../core/eclipses/catalog';
 import { PlaceThumbnail } from './PlaceThumbnail';
 import { formatCoords } from '../../screens/format';
-import type { ObserverApi } from '../../state/useObserver';
-import type { RecentPlace } from '../../state/recentPlaces';
+import type { ObserverApi, PlacePick } from '../../state/useObserver';
 import { isSamePlace } from '../../state/location';
 import { ComparePanel } from './ComparePanel';
 import { ORIGIN_KEY } from './origin';
@@ -73,18 +75,49 @@ export function LocationSheet({
     biasLat: observer.fix?.location.lat,
     biasLon: observer.fix?.location.lon,
   });
+
+  /*
+   * EL TEXT DEL CERCADOR ÉS NOSTRE, no del hook de cerca, perquè el camp és
+   * universal: quan el que hi ha escrit JA són unes coordenades, la consulta
+   * de topònims es buida (Photon amb «41,3851, 2,1734» torna soroll i gasta
+   * una petició d'un servei gratuït) i el resultat surt d'aquí mateix, sense
+   * xarxa. La detecció és el mateix parser del camp dedicat: una sola manera
+   * d'entendre coordenades a tota la fulla.
+   */
+  const [searchText, setSearchText] = useState('');
+  const exact = parseCoords(searchText);
+  const onSearchChange = (next: string) => {
+    setSearchText(next);
+    search.setQuery(parseCoords(next) === null ? next : '');
+  };
+
   const [coordText, setCoordText] = useState('');
   const [coordError, setCoordError] = useState(false);
 
-  const pick = (
-    lat: number,
-    lon: number,
-    origin: RecentPlace['origin'],
-    label: string | null,
-  ) => {
-    void observer.setPlace({ lat, lon, origin, label });
+  const pick = (place: PlacePick) => {
+    void observer.setPlace(place);
     onClose();
   };
+
+  /*
+   * EL GPS QUE ACABA BÉ TANCA LA FULLA. Les altres tres vies acaben amb un
+   * gest que ja tanca (`pick`); «On soc ara» acabava en silenci: el botó
+   * tornava a l'estat normal i prou, i al camp allò es llegeix com «no ha
+   * ubicat». El desenllaç bo ha de ser el mateix que a la resta de vies:
+   * la fulla marxa i la barra ensenya el lloc nou. El dolent es queda aquí,
+   * amb l'error a la vista i les alternatives a un dit.
+   *
+   * ES DETECTA LA TRANSICIÓ (cercant → quiet) i no l'estat, perquè obrir la
+   * fulla amb un punt del GPS ja actiu no l'ha de tancar de cop.
+   */
+  const wasLocating = useRef(false);
+  useEffect(() => {
+    const finished = wasLocating.current && !observer.loading;
+    wasLocating.current = observer.loading;
+    if (finished && observer.error === null && observer.fix?.origin === 'gps') {
+      onClose();
+    }
+  }, [observer.loading, observer.error, observer.fix, onClose]);
 
   const submitCoords = (event: FormEvent) => {
     event.preventDefault();
@@ -94,7 +127,7 @@ export function LocationSheet({
       return;
     }
     setCoordError(false);
-    pick(parsed.lat, parsed.lon, 'map', null);
+    pick({ lat: parsed.lat, lon: parsed.lon, origin: 'map', label: null });
   };
 
   const active = observer.fix?.location ?? null;
@@ -117,23 +150,58 @@ export function LocationSheet({
           {observer.loading ? ls('sheet.locating', locale) : ls('sheet.here', locale)}
         </Button>
         {observer.error !== null && (
-          <p className="loc__note">{ls(`error.${observer.error}`, locale)}</p>
+          <p className="loc__error" role="status">
+            {ls(`error.${observer.error}`, locale)}
+          </p>
+        )}
+        {/*
+          El permís ja denegat es diu ABANS de prémer, quan el navegador ho sap
+          dir (API de permisos). Sense això el botó era una loteria: en molts
+          navegadors una denegació antiga falla a l'acte i sense cap diàleg, i
+          la culpa semblava de l'app. Amb l'error ja a la vista no cal repetir-ho.
+        */}
+        {observer.error === null && observer.permission === 'denied' && (
+          <p className="loc__note">{ls('error.denied', locale)}</p>
         )}
 
-        {/* --- 2. el nom --- */}
+        {/* --- 2. la cerca, que ho entén tot --- */}
         <div className="loc-sheet__block">
           <Input
             icon="search"
             type="search"
             label={ls('search.label', locale)}
             placeholder={ls('search.placeholder', locale)}
-            value={search.query}
-            onChange={search.setQuery}
+            value={searchText}
+            onChange={onSearchChange}
           />
-          {searchNote(search, locale) !== null && (
+          {/*
+            Coordenades enganxades: resultat local, immediat i sense xarxa.
+            Va PRIMER i sol —quan el text és un parell de coordenades no hi ha
+            ambigüitat que valgui una petició—, i fa exactament el que fa el
+            camp dedicat del final: és la mateixa crida.
+          */}
+          {exact !== null && (
+            <ul className="loc-list">
+              <li className="loc-list__item">
+                <button
+                  type="button"
+                  className="loc-list__main"
+                  onClick={() =>
+                    pick({ lat: exact.lat, lon: exact.lon, origin: 'map', label: null })
+                  }
+                >
+                  <span className="loc-list__name">{ls('search.exact', locale)}</span>
+                  <span className="loc-list__meta">
+                    {formatCoords(exact.lat, exact.lon)} · {ls('sheet.use', locale)}
+                  </span>
+                </button>
+              </li>
+            </ul>
+          )}
+          {exact === null && searchNote(search, locale) !== null && (
             <p className="loc__note">{searchNote(search, locale)}</p>
           )}
-          {search.hits.length > 0 && (
+          {exact === null && search.hits.length > 0 && (
             <>
               <ul className="loc-list">
                 {search.hits.map((hit) => (
@@ -141,7 +209,9 @@ export function LocationSheet({
                     <button
                       type="button"
                       className="loc-list__main"
-                      onClick={() => pick(hit.lat, hit.lon, 'search', hit.name)}
+                      onClick={() =>
+                        pick({ lat: hit.lat, lon: hit.lon, origin: 'search', label: hit.name })
+                      }
                     >
                       <span className="loc-list__name">{hit.name}</span>
                       <span className="loc-list__meta">
@@ -181,26 +251,7 @@ export function LocationSheet({
           )}
         </div>
 
-        {/* --- 4. les coordenades --- */}
-        <form className="loc-sheet__block" onSubmit={submitCoords}>
-          <Input
-            icon="map-pin"
-            label={ls('sheet.coords', locale)}
-            placeholder="41.3851, 2.1734"
-            hint={ls('sheet.coordsHint', locale)}
-            error={coordError ? ls('sheet.coordsBad', locale) : undefined}
-            value={coordText}
-            onChange={(next) => {
-              setCoordText(next);
-              setCoordError(false);
-            }}
-          />
-          <Button type="submit" variant="ghost" size="sm">
-            {ls('sheet.use', locale)}
-          </Button>
-        </form>
-
-        {/* --- 5. l'historial --- */}
+        {/* --- 4. l'historial --- */}
         <div className="loc-sheet__block">
           <span className="loc-sheet__head">{ls('sheet.recents', locale)}</span>
           {observer.recents.length === 0 ? (
@@ -231,7 +282,23 @@ export function LocationSheet({
                     <button
                       type="button"
                       className="loc-list__main loc-list__main--thumb"
-                      onClick={() => pick(place.lat, place.lon, 'recent', place.label)}
+                      onClick={() =>
+                        /*
+                          L'ALTITUD DESADA VIATJA AMB LA REPESCA. L'entrada de
+                          l'historial la té amb les seves pròpies coordenades;
+                          sense passar-la, repescar el refugi sense cobertura
+                          convertia els seus 1.520 m del model en un zero
+                          «desconegut» (vegeu `PlacePick` a observerFlow.ts).
+                        */
+                        pick({
+                          lat: place.lat,
+                          lon: place.lon,
+                          origin: 'recent',
+                          label: place.label,
+                          elevation: place.elevation,
+                          elevationSource: place.elevationSource,
+                        })
+                      }
                     >
                       <PlaceThumbnail
                         place={{
@@ -284,7 +351,7 @@ export function LocationSheet({
           )}
         </div>
 
-        {/* --- 6. la comparació --- */}
+        {/* --- 5. la comparació --- */}
         {comparison.other !== null && comparison.result !== null && (
           <ComparePanel
             locale={locale}
@@ -295,7 +362,15 @@ export function LocationSheet({
               const other = comparison.other;
               if (other === null) return;
               comparison.clear();
-              pick(other.lat, other.lon, 'recent', other.label);
+              // També és una repesca de l'historial: l'altitud desada viatja.
+              pick({
+                lat: other.lat,
+                lon: other.lon,
+                origin: 'recent',
+                label: other.label,
+                elevation: other.elevation,
+                elevationSource: other.elevationSource,
+              });
             }}
             onClear={comparison.clear}
           />
@@ -303,6 +378,28 @@ export function LocationSheet({
         {comparison.other === null && observer.recents.length > 1 && (
           <p className="loc__note">{ls('compare.pick', locale)}</p>
         )}
+
+        {/* --- 6. les coordenades exactes, plegades --- */}
+        <details className="loc-sheet__more">
+          <summary>{ls('sheet.coordsToggle', locale)}</summary>
+          <form className="loc-sheet__block" onSubmit={submitCoords}>
+            <Input
+              icon="map-pin"
+              label={ls('sheet.coords', locale)}
+              placeholder="41.3851, 2.1734"
+              hint={ls('sheet.coordsHint', locale)}
+              error={coordError ? ls('sheet.coordsBad', locale) : undefined}
+              value={coordText}
+              onChange={(next) => {
+                setCoordText(next);
+                setCoordError(false);
+              }}
+            />
+            <Button type="submit" variant="ghost" size="sm">
+              {ls('sheet.use', locale)}
+            </Button>
+          </form>
+        </details>
       </div>
     </Dialog>
   );

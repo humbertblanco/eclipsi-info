@@ -160,6 +160,22 @@
   color: var(--text-muted);
 }
 
+/*
+ * L'error del GPS. Mateix tractament que `.shell__alert` i `.loc__warn` —color
+ * a tota la caixa, cap franja lateral— però en el to de perill, perquè és el
+ * desenllaç d'un gest que ha fallat i no un matís. Abans era un `loc__note`
+ * apagat i al camp passava desapercebut: «he premut Ubica'm i no ha ubicat».
+ */
+.loc__error {
+  margin: 0;
+  padding: var(--sp-4) var(--sp-5);
+  border: var(--bw-hair) solid var(--status-danger);
+  border-radius: var(--r-md);
+  background: var(--status-danger-quiet);
+  color: var(--text-body);
+  font: var(--text-body-sm);
+}
+
 /* --- La fulla de tria ---------------------------------------------------- */
 
 .loc-sheet {
@@ -307,6 +323,37 @@
   border-color: var(--border-hairline);
 }
 
+/* --- Coordenades exactes, plegades ---------------------------------------
+ *
+ * El camp dedicat de coordenades viu dins d'un <details> tancat per defecte:
+ * gairebé ningú no escriu coordenades a mà (el cercador ja entén les que
+ * s'enganxen), però el flux de camp amb un GPS de mà existeix i no es treu.
+ * És l'element nadiu i no un estat de React a posta: el navegador ja el fa
+ * accessible i l'obertura no ha de sobreviure a res.
+ */
+.loc-sheet__more {
+  width: 100%;
+}
+
+.loc-sheet__more > summary {
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-2);
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--r-sm);
+}
+
+.loc-sheet__more > summary:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+
+.loc-sheet__more[open] > summary {
+  color: var(--text-primary);
+  margin-bottom: var(--sp-3);
+}
+
 /* --- Comparació ---------------------------------------------------------- */
 
 .loc-cmp {
@@ -366,6 +413,14 @@
  * perquè «compacte» vulgui dir una sola cosa es miri d'on es miri. App no el
  * posa MAI quan toca l'avís de punt d'exemple (`isDefaultFix`): l'avís és
  * part de la dada i col·lapsar-lo seria amagar-la.
+ *
+ * QUÈ ES PLEGA I QUÈ NO, i la línia no és estètica: es pleguen les METADADES
+ * (la línia d'origen i precisió) i l'avís de punt d'exemple ja no pot ser-hi
+ * (la condició d'App). NO es pleguen mai les notes (`loc__note`) ni l'error
+ * del GPS (`loc__error`): són el desenllaç d'un gest o una condició del
+ * càlcul, i un desenllaç que no es veu és el bug de camp «he premut Ubica'm
+ * i no ha passat res». Si mai s'afegeix una regla aquí, que sigui de plegar
+ * crom, no informació.
  */
 .loc--compact .loc__meta {
   max-height: var(--sp-0);

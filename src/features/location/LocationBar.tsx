@@ -68,10 +68,17 @@ export function LocationBar({
   onOpen,
 }: LocationBarProps) {
   const isDefault = isDefaultFix(fix);
+  const precision = fix === null ? '' : precisionText(fix, locale);
 
   return (
     <div className={compact ? 'loc loc--compact' : 'loc'}>
-      <button type="button" className="loc__bar" onClick={onOpen}>
+      {/*
+        `aria-busy` mentre el GPS treballa: el text del botó ja canvia a
+        «Cercant el senyal…» (i el canvi es veu també en format compacte,
+        perquè `loc__cta` no es plega mai), però el lector de pantalla ha de
+        poder saber el mateix sense mirar.
+      */}
+      <button type="button" className="loc__bar" onClick={onOpen} aria-busy={loading}>
         <Icon name="map-pin" size={ICON_SM} aria-hidden />
         <span className="loc__where">
           <span className="loc__name">
@@ -88,12 +95,14 @@ export function LocationBar({
                     {formatCoords(fix.location.lat, fix.location.lon)}
                   </span>
                 )}
-                <span className="loc__coords">{precisionText(fix, locale)}</span>
+                {/* Sense text no hi ha element: un `span` buit igualment
+                    ocupava el seu forat al `gap` de la línia. */}
+                {precision !== '' && <span className="loc__coords">{precision}</span>}
               </>
             )}
           </span>
         </span>
-        <span className="loc__cta">
+        <span className="loc__cta" aria-live="polite">
           {loading ? ls('sheet.locating', locale) : ls('bar.change', locale)}
         </span>
       </button>
@@ -134,8 +143,31 @@ export function LocationBar({
       {fix !== null && fix.elevationSource === 'gps' && (
         <p className="loc__note">{ls('elevation.gps', locale)}</p>
       )}
+      {/*
+        La cota encara està de camí. Els altres tres orígens d'altitud ja es
+        deien i aquest no, i és justament la finestra en què les xifres es
+        calculen amb un zero: amb xarxa bona dura un parell de segons, sense
+        xarxa pot ser l'estat definitiu. La regla del mòdul és que no s'amaga
+        mai d'on surt una xifra, tampoc mentre s'espera la bona.
+      */}
+      {fix !== null && fix.elevationSource === 'pending' && (
+        <p className="loc__note">{ls('elevation.pending', locale)}</p>
+      )}
 
-      {error !== null && <p className="loc__note">{ls(`error.${error}`, locale)}</p>}
+      {/*
+        L'ERROR DEL GPS, A TOTA LA CAIXA. Era una línia apagada (`loc__note`) i
+        el report de camp va ser literal: «he premut Ubica'm i no ha ubicat».
+        Un gest que falla ha de tenir un desenllaç que es vegi d'una ullada,
+        amb el mateix tractament que els altres estats d'app (`.shell__alert`,
+        `.loc__warn`): color a tota la caixa, mai una franja lateral. I amb
+        `role="status"` perquè el lector de pantalla l'anunciï quan apareix.
+        El format compacte no el toca: plega metadades, mai desenllaços.
+      */}
+      {error !== null && (
+        <p className="loc__error" role="status">
+          {ls(`error.${error}`, locale)}
+        </p>
+      )}
     </div>
   );
 }
