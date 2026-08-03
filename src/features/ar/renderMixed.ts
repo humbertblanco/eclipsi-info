@@ -238,18 +238,58 @@ function drawSunGuide(
     p.y <= viewport.height - MARGIN;
 
   if (inFrame) {
-    // El pols de fixació, només mentre dura (1,2 s des de l'adquisició).
     if (guide.sunLockedAtMs !== null) {
+      const sunR = Math.max(4, Math.tan(sample.sun.angularRadius * DEG) * viewport.focalPx);
+
+      /*
+       * EL SEGUIDOR ES QUEDA MENTRE EL SISTEMA TÉ EL SOL, i abans no.
+       *
+       * Aquí només hi havia el pols d'adquisició: 1,2 segons i després RES.
+       * O sigui que l'única cosa que deia «t'he trobat el Sol i l'estic
+       * seguint» durava un segon i qui parpellejava se'l perdia. I és
+       * justament la informació que fa confiar en el que hi ha dibuixat:
+       * mentre l'àncora de Sol aguanta, l'azimut de la superposició no ve del
+       * magnetòmetre sinó de la TACA DE LLUM DE LA IMATGE contra les
+       * efemèrides de l'instant real — el calibratge automàtic del §6
+       * d'ESTAT.md, el que recupera deu graus d'error de brúixola.
+       *
+       * Un anell prim amb quatre marques als quadrants: es reconeix com un
+       * seguidor sense llegir res, no tapa el disc (que és el que s'ha de
+       * veure) i no és un segon ambre — és el MATEIX accent que ja porta el
+       * Sol, aquí en to de traç.
+       */
+      const ringR = Math.max(sunR * 2.4, 24);
+      ctx.save();
+      ctx.strokeStyle = withAlpha(palette.accent, 0.75);
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, ringR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Les quatre marques, cap endins: assenyalen el centre sense envair-lo.
+      const tick = Math.max(4, ringR * 0.22);
+      ctx.lineWidth = 2;
+      for (const angle of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
+        const dx = Math.cos(angle);
+        const dy = Math.sin(angle);
+        ctx.beginPath();
+        ctx.moveTo(p.x + dx * (ringR + tick * 0.6), p.y + dy * (ringR + tick * 0.6));
+        ctx.lineTo(p.x + dx * (ringR - tick * 0.4), p.y + dy * (ringR - tick * 0.4));
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // I el pols d'adquisició per damunt, que segueix dient EL MOMENT en què
+      // l'ha enganxat. 1,2 s des de la fixació.
       const t = (guide.nowMs - guide.sunLockedAtMs) / 1200;
       if (t >= 0 && t <= 1) {
-        const sunR = Math.max(4, Math.tan(sample.sun.angularRadius * DEG) * viewport.focalPx);
-        const alpha = 0.8 * (1 - t);
-        const radius = sunR * (1.6 + 0.9 * t);
         ctx.save();
-        ctx.strokeStyle = `rgba(255, 220, 150, ${alpha.toFixed(3)})`;
+        // Del sistema i no escrit a mà: aquí hi havia un `rgba(255,220,150)`
+        // que no era de cap token i que ningú no podia canviar des de la paleta.
+        ctx.strokeStyle = withAlpha(palette.sun200, 0.8 * (1 - t));
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, sunR * (1.6 + 0.9 * t), 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }
