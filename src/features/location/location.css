@@ -36,6 +36,13 @@
   background: var(--surface-glass);
   backdrop-filter: var(--blur-glass);
   -webkit-backdrop-filter: var(--blur-glass);
+  /*
+   * El col·lapse en scroll (App hi posa `compact` passats uns píxels) canvia
+   * el coixí: que llisqui en comptes de saltar. Corba i durada són les de les
+   * transicions veïnes (`--t-color` fa servir `--ease-standard`); el moviment
+   * reduït ja el resolen els tokens (--dur-fast hi baixa a 1 ms).
+   */
+  transition: padding var(--dur-fast) var(--ease-standard);
 }
 
 .loc__bar {
@@ -51,7 +58,8 @@
   color: var(--text-primary);
   text-align: left;
   cursor: pointer;
-  transition: var(--t-color);
+  /* El coixí també transiciona: és l'altra meitat del col·lapse en scroll. */
+  transition: var(--t-color), padding var(--dur-fast) var(--ease-standard);
 }
 
 .loc__bar:hover {
@@ -88,6 +96,17 @@
   gap: var(--sp-2);
   font: var(--text-body-sm);
   color: var(--text-muted);
+  /*
+   * L'alçada es tanca amb `max-height` i no amb `display: none` perquè el
+   * col·lapse en scroll es vegi lliscar, no petar. El sostre és --tap-min:
+   * una línia de metadades hi cap amb marge, i és un token que ja diu
+   * «alçada còmoda d'una línia tocable».
+   */
+  max-height: var(--tap-min);
+  overflow: hidden;
+  transition:
+    max-height var(--dur-fast) var(--ease-standard),
+    opacity var(--dur-fast) var(--ease-standard);
 }
 
 .loc__coords {
@@ -342,9 +361,24 @@
  * el botó de canviar-lo es queden, perquè saber des d'on es mira segueix sent
  * la meitat de la resposta.
  */
-.loc--compact .loc__meta,
+/*
+ * ARA TAMBÉ ÉS L'ESTAT COL·LAPSAT EN SCROLL (App): mateixa classe a posta,
+ * perquè «compacte» vulgui dir una sola cosa es miri d'on es miri. App no el
+ * posa MAI quan toca l'avís de punt d'exemple (`isDefaultFix`): l'avís és
+ * part de la dada i col·lapsar-lo seria amagar-la.
+ */
+.loc--compact .loc__meta {
+  max-height: var(--sp-0);
+  opacity: 0;
+}
+
 .loc--compact .loc__warn {
   display: none;
+}
+
+.loc--compact {
+  padding-top: var(--sp-2);
+  padding-bottom: var(--sp-2);
 }
 
 .loc--compact .loc__bar {

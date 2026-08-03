@@ -1,4 +1,5 @@
 import type { CSSProperties, HTMLAttributes } from 'react';
+import '../ui.css';
 
 export interface TimelineContact {
   /** Etiqueta curta: C1, C2, màxim, C3, C4. */
@@ -13,10 +14,18 @@ export interface TimelineTrackProps extends Omit<HTMLAttributes<HTMLDivElement>,
   style?: CSSProperties;
 }
 
-/** Línia de contactes C1 → C2 → màxim → C3 → C4 per a un lloc. */
+/**
+ * Línia de contactes C1 → C2 → màxim → C3 → C4 per a un lloc.
+ *
+ * Tota la maquetació viu a `ui.css` (bloc `.ui-timeline*`), com a la resta de
+ * components. Aquí només queden els DOS estils de debò dinàmics —l'amplada del
+ * tram recorregut i la posició de cada punt—, que són percentatges que surten
+ * de comptar contactes i no es poden escriure en cap regla estàtica.
+ */
 export function TimelineTrack({
   contacts = [],
   activeIndex = 0,
+  className,
   style,
   ...rest
 }: TimelineTrackProps) {
@@ -24,76 +33,46 @@ export function TimelineTrack({
 
   return (
     <div
-      style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)', ...style }}
+      className={['ui-timeline', className ?? ''].filter(Boolean).join(' ')}
+      style={style}
       {...rest}
     >
-      <div
-        style={{
-          position: 'relative',
-          height: 2,
-          background: 'var(--border-subtle)',
-          borderRadius: 1,
-        }}
-      >
+      <div className="ui-timeline__track">
         <div
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            height: 2,
-            borderRadius: 1,
-            background: 'var(--accent)',
-            width: contacts.length > 1 ? `${(activeIndex / last) * 100}%` : '0%',
-            transition: 'width var(--dur-slow) var(--ease-orbit)',
-          }}
+          className="ui-timeline__fill"
+          style={{ width: contacts.length > 1 ? `${(activeIndex / last) * 100}%` : '0%' }}
         />
         {contacts.map((c, i) => (
           <span
             key={c.label}
-            style={{
-              position: 'absolute',
-              top: -4,
-              left: `${contacts.length > 1 ? (i / last) * 100 : 0}%`,
-              transform: 'translateX(-50%)',
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              background: i <= activeIndex ? 'var(--accent)' : 'var(--ink-600)',
-              border: '2px solid var(--bg-page)',
-              boxShadow: i === activeIndex ? 'var(--glow-corona)' : 'none',
-            }}
+            className={[
+              'ui-timeline__dot',
+              i <= activeIndex ? 'ui-timeline__dot--past' : '',
+              i === activeIndex ? 'ui-timeline__dot--on' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            style={{ left: `${contacts.length > 1 ? (i / last) * 100 : 0}%` }}
           />
         ))}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--sp-3)' }}>
+      <div className="ui-timeline__labels">
         {contacts.map((c, i) => (
-          <span
-            key={c.label}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              alignItems: i === 0 ? 'flex-start' : i === last ? 'flex-end' : 'center',
-            }}
-          >
+          <span key={c.label} className="ui-timeline__contact">
             <span
-              style={{
-                font: 'var(--text-overline)',
-                letterSpacing: 'var(--ls-caps)',
-                textTransform: 'uppercase',
-                color: i === activeIndex ? 'var(--text-accent)' : 'var(--text-muted)',
-              }}
+              className={
+                i === activeIndex
+                  ? 'ui-timeline__label ui-timeline__label--on'
+                  : 'ui-timeline__label'
+              }
             >
               {c.label}
             </span>
             <span
-              style={{
-                font: 'var(--text-body-sm)',
-                fontFamily: 'var(--font-mono)',
-                color: i <= activeIndex ? 'var(--text-primary)' : 'var(--text-secondary)',
-                fontVariantNumeric: 'tabular-nums',
-              }}
+              className={
+                i <= activeIndex ? 'ui-timeline__time ui-timeline__time--past' : 'ui-timeline__time'
+              }
             >
               {c.time}
             </span>

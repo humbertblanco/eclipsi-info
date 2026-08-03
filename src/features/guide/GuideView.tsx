@@ -110,6 +110,10 @@ interface SectionProps {
 function Section({ section, critical, open, badge }: SectionProps) {
   return (
     <details
+      /* Àncora ESTABLE per a l'índex de la pantalla de la guia: surt de la
+         clau del contingut (`safety`, `phases`…), mai del títol traduït —
+         canviar d'idioma no pot trencar cap enllaç ni cap prova. */
+      id={`guia-${section.id}`}
       className={`guide__section${critical ? ' guide__section--critical' : ''}`}
       open={open}
     >

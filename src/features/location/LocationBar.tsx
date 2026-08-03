@@ -30,6 +30,19 @@ import { ORIGIN_KEY, placeTitle } from './origin';
 import { ls } from './strings';
 import './location.css';
 
+/**
+ * Cert quan les xifres surten del punt d'exemple i no d'un lloc triat.
+ *
+ * És la condició que fa sortir l'avís `loc__warn`, i S'EXPORTA a posta: qui
+ * decideix col·lapsar la barra (App, amb el `compact` en scroll) ha de saber
+ * quan el col·lapse taparia l'avís, perquè l'avís no és una notificació sinó
+ * part de la dada i no es pot amagar mai. Una còpia de la condició a App
+ * divergiria el dia que canviés aquí.
+ */
+export function isDefaultFix(fix: FixedLocation | null): boolean {
+  return fix === null || fix.origin === 'default';
+}
+
 export interface LocationBarProps {
   fix: FixedLocation | null;
   locale: Locale;
@@ -54,7 +67,7 @@ export function LocationBar({
   compact = false,
   onOpen,
 }: LocationBarProps) {
-  const isDefault = fix === null || fix.origin === 'default';
+  const isDefault = isDefaultFix(fix);
 
   return (
     <div className={compact ? 'loc loc--compact' : 'loc'}>

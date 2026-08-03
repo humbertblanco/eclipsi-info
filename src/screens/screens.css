@@ -109,8 +109,34 @@
 }
 
 .shell__main {
+  /*
+   * EL PEU RECOLZA AL FONS DE LA FINESTRA, no allà on s'acabi el contingut:
+   * a l'escriptori una portada curta deixava un pam de negre mort sota el peu.
+   * El mínim és 100dvh A SEQUES i no «100dvh menys les barres» perquè tot el
+   * projecte és `border-box` i --bar-top, --bar-dateline i el coixí de baix ja
+   * hi són com a encoixinat: el contingut rep exactament la finestra menys les
+   * barres sense tornar-les a restar. La columna flexible és el que deixa que
+   * la pantalla absorbeixi l'alçada sobrant (vegeu la regla de sota).
+   */
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
   padding-top: calc(var(--bar-top) + var(--bar-dateline));
   padding-bottom: var(--bar-bottom);
+}
+
+/*
+ * Qui absorbeix l'alçada sobrant és la PANTALLA, no un marge automàtic al peu:
+ * així el peu conserva el seu aire de sempre respecte del contingut i el buit
+ * queda dins de la pantalla, on és negre igualment. El `width: 100%` no és
+ * decoratiu: dins d'una columna flexible, el `margin: 0 auto` de `.screen`
+ * impedeix l'estirament transversal i sense amplada explícita la pantalla
+ * s'encongiria al seu contingut. Les pantalles fixes (mapa, càmera) en queden
+ * fora: ja omplen el marc i el seu `.screen--full` porta la seva flexibilitat.
+ */
+.shell__main:not(.shell__main--fixed) > .screen {
+  flex: 1 0 auto;
+  width: 100%;
 }
 
 /*
@@ -167,6 +193,10 @@
   padding: var(--sp-5) max(var(--gutter-app), env(safe-area-inset-right)) 0
     max(var(--gutter-app), env(safe-area-inset-left));
   margin: 0 auto;
+  /* Ara que el `main` és una columna flexible, el marge automàtic impedeix
+     l'estirament i sense amplada explícita la barra de progrés, que no té
+     amplada pròpia, es quedava en no res. */
+  width: 100%;
   max-width: var(--maxw-web);
 }
 
@@ -334,7 +364,21 @@
   padding: var(--sp-7) var(--sp-6) var(--sp-6);
   border: var(--bw-hair) solid var(--border-hairline);
   border-radius: var(--r-xl);
-  background: var(--bg-inset);
+  /*
+   * EL CEL DEL PUNT, COM A TINT DE BASE. `--home-sky` el posa CountdownScreen
+   * amb el color d'horitzó que el motor de llum calcula per al màxim des del
+   * punt triat. Va com a capa de `background` i no com a pseudoelement per
+   * quedar SEMPRE sota el contingut, i el fallback `transparent` fa que sense
+   * la variable (o amb el cel negre de la totalitat) el card sigui el de
+   * sempre. El 12% és un matís: es nota el caliu, no es llegeix com un dibuix.
+   */
+  background:
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--home-sky, transparent) 12%, transparent),
+      transparent 62%
+    ),
+    var(--bg-inset);
 }
 
 .home__hero::before {
@@ -431,6 +475,14 @@
 
 .ephemeris__clear--lost {
   color: var(--status-danger);
+}
+
+/* La targeta que embolcalla la taula a la portada només existeix a
+   l'escriptori: al mòbil la mateixa informació la dona la línia de contactes
+   de la columna principal, i una targeta amb la taula amagada a dins seria
+   una caixa buida sota el botó de compartir. */
+.home__ephemeriscard {
+  display: none;
 }
 
 /* ============================================================================
@@ -568,8 +620,16 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-5);
-  max-height: 62%;
+  /*
+   * EL MAPA MANA: la fitxa es queda per sota de mitja pantalla (45dvh, unitat
+   * dinàmica perquè les barres del navegador mòbil no la facin créixer) i la
+   * resta es llegeix desplaçant-s'hi per dins. Abans era un 62% i en un mòbil
+   * el mapa quedava reduït a una escletxa — i la fitxa ha guanyat blocs
+   * (cerca de topònims, miniatura de la trajectòria) que ho feien pitjor.
+   */
+  max-height: 45dvh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mapscreen__stats {
@@ -583,6 +643,33 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--sp-3);
+}
+
+/*
+ * EL COMMUTADOR DE LES CINC VISTES ES PARTEIX A POSTA: TRES I DUES.
+ *
+ * Dins la fitxa de 384 px de l'escriptori, l'`auto-fit` del mode `wrap` feia
+ * caure les cinc opcions en un quatre-més-una accidental que es llegia com un
+ * error de maquetació, amb «Enquadra» orfe a sota. Aquí el trencament es
+ * declara: la graella és de sis columnes perquè sis és divisible per tres i
+ * per dos alhora, les tres primeres opcions n'ocupen dues cadascuna i les
+ * dues d'abaix, tres — així la segona fila es reparteix l'amplada sencera.
+ *
+ * Viu aquí i no a `ui.css` perquè és una decisió d'aquesta fitxa, no del
+ * control: `SegmentedControl` amb `wrap` no posa cap columna en línia
+ * justament perquè el full del panell pugui dir-hi la seva.
+ */
+.mapscreen__sheet .mapscreen__views {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.mapscreen__sheet .mapscreen__views .ui-seg__opt {
+  grid-column: span 2;
+}
+
+.mapscreen__sheet .mapscreen__views .ui-seg__opt:nth-child(4),
+.mapscreen__sheet .mapscreen__views .ui-seg__opt:nth-child(5) {
+  grid-column: span 3;
 }
 
 /* ============================================================================
@@ -885,6 +972,11 @@
     overflow: hidden;
   }
 
+  /* Les xifres no es criden en majúscules: «0 s» no és «0 S». */
+  .shell__dateline-val {
+    text-transform: none;
+  }
+
   .shell__nav {
     top: var(--bar-top);
     right: auto;
@@ -1002,7 +1094,13 @@
      veure el veredicte i el mapa alhora, no recordar-ne un. */
   .screen__col--sticky {
     position: sticky;
-    top: calc(var(--bar-top) + var(--bar-dateline) + var(--sp-5));
+    /* El tercer terme és la barra de lloc compacta (--tap-min + --sp-3 de
+       coixins), sempre present a escriptori sota el Dateline: sense ell, la
+       fitxa quedava mig amagada sota la barra en començar a desplaçar. */
+    top: calc(
+      var(--bar-top) + var(--bar-dateline) + var(--tap-min) + var(--sp-3) +
+        var(--sp-5)
+    );
   }
 
   /*
@@ -1076,13 +1174,32 @@
    * l'escriptori hi ha espai i les xifres SÓN el contingut: amagar-les darrere
    * un «mostra'n més» seria amagar el producte. Al mòbil, en canvi, la mateixa
    * informació la dona `TimelineTrack`, que hi cap.
+   *
+   * PERÒ NOMÉS UNA CÒPIA PER PANTALLA. `EphemerisTable` viu a tres llocs: la
+   * targeta de la columna dreta de la portada, la fitxa del mapa i DINS del
+   * simulador (`.sim`). A --bp-split, la targeta de la dreta i la del
+   * simulador quedaven costat a costat amb les cinc files idèntiques — la del
+   * simulador es queda amagada, que per això la portada ja té la seva.
    */
-  .ephemeris {
+  .home__ephemeriscard .ephemeris,
+  .mapscreen__block .ephemeris {
     display: table;
   }
 
-  .home__timeline {
+  /*
+   * EL RELLEU DE TARGETES DE CONTACTES A LA PORTADA. La targeta de la línia
+   * s'amaga SENCERA —no només el traçat de dins, que deixava una caixa amb un
+   * overline sol— i surt la de la taula, que viu al final de la columna dreta.
+   * No és un caprici d'ordre: la taula és el que equilibra les dues columnes a
+   * --bp-split; a l'esquerra, la columna del compte enrere s'acabava a mig
+   * camí i deixava un buit negre sota l'última targeta.
+   */
+  .home__timelinecard {
     display: none;
+  }
+
+  .home__ephemeriscard {
+    display: block;
   }
 }
 
@@ -1096,6 +1213,13 @@
 /*
  * El coach de calibratge: una línia de vidre sota les insígnies quan la
  * brúixola balla. No bloqueja res i marxa sola quan el sensor es calma.
+ *
+ * LA VORA ÉS `--border-subtle`, un graó per sobre de la línia d'un píxel de la
+ * resta de píndoles de vidre: és un avís i s'ha de distingir del cromatge que
+ * l'envolta. L'ambre amb què `.shell__alert` marca els seus avisos aquí està
+ * vetat: l'únic ambre d'aquesta pantalla és el marcador del Sol a la brúixola.
+ * (Abans hi deia `--border-warning` amb reserva a `--border-default`, dos
+ * tokens que no existeixen, i la píndola es pintava sense cap vora.)
  */
 .skyscreen__coach {
   margin: var(--sp-2) var(--sp-4) 0;
@@ -1104,7 +1228,7 @@
   background: var(--surface-glass);
   backdrop-filter: var(--blur-glass);
   -webkit-backdrop-filter: var(--blur-glass);
-  border: var(--bw-hair) solid var(--border-warning, var(--border-default));
+  border: var(--bw-hair) solid var(--border-subtle);
   border-radius: var(--r-pill);
   color: var(--text-primary);
   font: var(--text-label);
@@ -1125,7 +1249,10 @@
   background: var(--surface-glass);
   backdrop-filter: var(--blur-glass);
   -webkit-backdrop-filter: var(--blur-glass);
-  border: var(--bw-hair) solid var(--border-default);
+  /* La vora per defecte del sistema és `--border-hairline` (`--border-default`
+     no existeix i deixava la píndola sense vora): és context, no un avís, i
+     per això va un graó per sota de la del coach. */
+  border: var(--bw-hair) solid var(--border-hairline);
   border-radius: var(--r-pill);
   color: var(--text-secondary);
   font: var(--text-label);
@@ -1243,12 +1370,26 @@
 .sitefoot {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  /* Un punt més d'aire que una llista corrent: el peu són cinc blocs de mena
+     diferent (signatura, privadesa, fonts, meta) i amb --sp-3 es llegien com
+     un sol paràgraf apilat. */
+  gap: var(--sp-4);
   margin-top: var(--sp-10);
-  padding-top: var(--sp-6);
+  padding-top: var(--sp-7);
   border-top: var(--bw-hair) solid var(--border-subtle);
   color: var(--text-secondary);
   font: var(--text-body-sm);
+}
+
+/* L'overline de les fonts obre secció: una mica més de coixí per sobre perquè
+   la llista no sembli continuació de la frase de privadesa. */
+.sitefoot .screen__overline {
+  margin-top: var(--sp-4);
+}
+
+/* La línia de meta tanca el peu: separada del bloc de fonts, com una firma. */
+.sitefoot__meta {
+  margin-top: var(--sp-3);
 }
 
 .sitefoot__what {
@@ -1353,9 +1494,12 @@
  * el peu ha de fer.
  *
  * El punt de tall és el mateix que fa servir la resta de l'estructura per
- * passar a dues coses de costat.
+ * passar a dues coses de costat, I AMB LA MATEIXA GUARDA D'ALÇADA: un mòbil
+ * girat també passa el tall dels 900 (vegeu el bloc de l'ESCRIPTORI, més
+ * amunt) i sense la guarda rebia el peu a dues columnes amb la disposició de
+ * mòbil a tota la resta.
  */
-@media (min-width: 900px) {
+@media (min-width: 900px) and (min-height: 500px) {
   .sitefoot__list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1366,6 +1510,24 @@
   .sitefoot__by,
   .sitefoot__what {
     max-width: 60ch;
+  }
+}
+
+/*
+ * A --bp-split EL PEU AGAFA L'AMPLADA DEL CONTENIDOR DE CONTINGUT.
+ *
+ * El peu és germà de la pantalla, no fill: sense sostre propi quedava alineat
+ * amb el `main` mentre el contingut viu centrat a --maxw-web amb els gutters
+ * del web, i les dues vores esquerres no coincidien. Mateixa recepta que
+ * `.screen` als 900 i `.screen--split` als 1180 —sostre, centrat i gutters—
+ * perquè el text del peu comenci exactament on comença el de la pantalla.
+ */
+@media (min-width: 1180px) and (min-height: 500px) {
+  .sitefoot {
+    width: 100%;
+    max-width: var(--maxw-web);
+    margin-inline: auto;
+    padding-inline: var(--gutter-web);
   }
 }
 

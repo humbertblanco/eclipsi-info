@@ -29,7 +29,7 @@
  * `screens.css`: aquí només es marca quina pantalla és quina.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { formatObscurationPercent } from './core/astro/obscuration';
 import {
   BackTopBar,
@@ -65,6 +65,9 @@ const MapScreen = lazy(() =>
 const SkyScreen = lazy(() =>
   import('./screens/SkyScreen').then((m) => ({ default: m.SkyScreen })),
 );
+const AboutScreen = lazy(() =>
+  import('./features/about').then((m) => ({ default: m.AboutScreen })),
+);
 const GuideScreen = lazy(() =>
   import('./screens/GuideScreen').then((m) => ({ default: m.GuideScreen })),
 );
@@ -72,6 +75,7 @@ import type { EclipseContext } from './screens/context';
 import { s } from './screens/strings';
 import { formatCoords, formatDuration, NO_DATA } from './screens/format';
 import { useHorizon } from './features/sim/useHorizon';
+import { horizonProgressText } from './features/sim/strings';
 import {
   LocationBar,
   LocationGate,
@@ -80,6 +84,12 @@ import {
   useComparison,
   usePlaceName,
 } from './features/location';
+/*
+ * S'importa del fitxer i no del barril a posta: és la condició interna de
+ * l'avís de punt d'exemple, no una peça pública del selector. Vegeu el
+ * comentari del col·lapse en scroll, més avall.
+ */
+import { isDefaultFix } from './features/location/LocationBar';
 import { computeLocalCircumstances } from './core/astro/contacts';
 import { computeVisibility } from './core/visibility/verdict';
 import { ECLIPSES } from './core/eclipses/catalog';
@@ -94,7 +104,14 @@ import { useCameraSupport } from './features/ar/useCameraSupport';
 import { LocaleProvider, useTranslation } from './i18n';
 import './screens/screens.css';
 
-type Tab = 'countdown' | 'map' | 'sky' | 'guide';
+/*
+ * `about` és una pestanya SENSE lloc a la barra: la pantalla «Com funciona»
+ * hi arriba pel peu, pel diàleg de crèdits o per l'adreça #/com-funciona.
+ * Passar-la pel mateix tipus que la resta és el que fa que l'historial, la
+ * capçalera i el peu la tractin com qualsevol altra pantalla sense cap cas
+ * especial.
+ */
+type Tab = 'countdown' | 'map' | 'sky' | 'guide' | 'about';
 
 /**
  * Logotip. La ruta es compon amb `BASE_URL` perquè l'app viu en un subdirectori
@@ -129,6 +146,43 @@ function shortDate(id: string): string {
  * de trencar-se: a 430 ja hi ha frec.
  */
 const NARROW_HEADER = '(max-width: 480px)';
+
+/**
+ * Quan la franja de dades (Dateline) és visible i ja porta les coordenades:
+ * repetir-les al subtítol de la capçalera seria dir el mateix número dues
+ * vegades a un pam de distància.
+ *
+ * LA GUARDA D'ALÇADA NO ÉS OPCIONAL: és la MATEIXA consulta que fa aparèixer
+ * la franja a `screens.css` (un mòbil apaïsat passa els 900 d'amplada però no
+ * té franja), i si les dues consultes divergissin hi hauria una finestra on
+ * les coordenades no serien enlloc.
+ */
+const DATELINE_VISIBLE = '(min-width: 900px) and (min-height: 500px)';
+
+/**
+ * Amplada a partir de la qual la barra d'ubicació va SEMPRE compacta: a
+ * l'escriptori el Dateline ja diu les coordenades i la barra sencera només
+ * repetiria metadades que ja són a la vista. Mateixa guarda d'alçada que
+ * DATELINE_VISIBLE i pel mateix motiu: sense franja, res no repeteix res.
+ */
+const DESKTOP_WIDE = '(min-width: 1180px) and (min-height: 500px)';
+
+/*
+ * LLINDARS DEL COL·LAPSE EN SCROLL DE LA BARRA D'UBICACIÓ.
+ *
+ * La barra és sticky i, sencera, són dues línies i mitja de crom permanent en
+ * un mòbil de vuit: qui llegeix la guia o el compte enrere es passeja amb un
+ * quart de pantalla ocupat per una dada que ja ha llegit. Passats uns píxels
+ * de desplaçament es plega al format compacte (una línia, el nom i el botó),
+ * i tocar-la segueix obrint la fulla de tria.
+ *
+ * DOS LLINDARS I NO UN, A POSTA (histèresi): amb un de sol, qui s'atura just
+ * a sobre veu la barra obrir-se i tancar-se a cada píxel de rebot del dit.
+ * Es col·lapsa passats 48 px i no es torna a obrir fins a tornar gairebé a
+ * dalt de tot: entre l'un i l'altre, l'estat que hi hagi es queda.
+ */
+const LOC_COLLAPSE_Y = 48;
+const LOC_EXPAND_Y = 8;
 
 /**
  * L'any, quan la data sencera no hi cap.
@@ -169,6 +223,63 @@ function readSharedPoint(): SharedPoint | null {
   return parseShareLink(window.location.search);
 }
 
+/*
+ * LA PESTANYA, AL FRAGMENT DE L'ADREÇA.
+ *
+ * Fins ara l'URL deia ON (el punt, a la consulta ?p=...) però no QUÈ s'estava
+ * mirant: la pestanya no es podia enllaçar i el botó d'enrere del navegador
+ * sortia de l'app sencera. El fragment és el lloc natural per a això: no
+ * viatja al servidor (l'app viu darrere d'un start_url net, vegeu el
+ * manifest), i conviu amb la consulta del punt sense tocar-la.
+ *
+ * LA PORTADA NO TÉ FRAGMENT, a posta: l'arrel neta és l'adreça canònica que
+ * surt impresa i compartida, i «#/compte-enrere» seria un segon nom per a la
+ * mateixa porta d'entrada.
+ */
+const HASH_BY_TAB: Record<Tab, string> = {
+  countdown: '',
+  map: '#/mapa',
+  sky: '#/cel',
+  guide: '#/guia',
+  about: '#/com-funciona',
+};
+
+/** El que diu el fragment: quina pestanya i, si és la guia, quina secció. */
+interface HashRoute {
+  tab: Tab;
+  /** Clau de contingut de la guia (`safety`, `phases`…), o `null`. */
+  section: string | null;
+}
+
+/*
+ * Llegeix el fragment amb la mateixa desconfiança que `parseShareLink` llegeix
+ * la consulta: el fragment l'escriu qualsevol. Una ruta desconeguda no és un
+ * error a ensenyar, és la portada: l'enllaç d'una versió futura amb una
+ * pantalla que aquesta versió no té ha d'obrir l'app, no una pàgina d'error.
+ */
+function parseHashRoute(hash: string): HashRoute {
+  if (hash === HASH_BY_TAB.map) return { tab: 'map', section: null };
+  if (hash === HASH_BY_TAB.sky) return { tab: 'sky', section: null };
+  if (hash === HASH_BY_TAB.about) return { tab: 'about', section: null };
+  if (hash === HASH_BY_TAB.guide) return { tab: 'guide', section: null };
+  // La secció viatja SENSE el prefix «guia-» de l'àncora del DOM: el fragment
+  // és una adreça pública i el prefix és un detall del marcatge. Si la clau no
+  // existeix a la guia, la pantalla l'ignora en silenci (getElementById nul).
+  const guideSection = /^#\/guia\/([\w-]+)$/.exec(hash);
+  if (guideSection !== null) return { tab: 'guide', section: guideSection[1] };
+  return { tab: 'countdown', section: null };
+}
+
+/**
+ * La ruta amb què arrenca l'app, llegida UN SOL COP al costat de
+ * `readSharedPoint` i pel mateix motiu: després de la primera pintada, el
+ * fragment és el reflex del que l'usuari navega, no la font.
+ */
+function readInitialRoute(): HashRoute {
+  if (typeof window === 'undefined') return { tab: 'countdown', section: null };
+  return parseHashRoute(window.location.hash);
+}
+
 export default function App() {
   return (
     <LocaleProvider>
@@ -180,11 +291,64 @@ export default function App() {
 function Shell() {
   const { locale, setLocale, t } = useTranslation();
   const narrowHeader = useMediaQuery(NARROW_HEADER);
+  const datelineVisible = useMediaQuery(DATELINE_VISIBLE);
+  const desktopWide = useMediaQuery(DESKTOP_WIDE);
+
+  /*
+   * EL COL·LAPSE EN SCROLL. Escoltador passiu + requestAnimationFrame: llegir
+   * `scrollY` a cada esdeveniment de scroll és exactament la feina que fa
+   * saltar fotogrames, o sigui que es llegeix un cop per fotograma i prou.
+   * La histèresi és als llindars (vegeu LOC_COLLAPSE_Y / LOC_EXPAND_Y).
+   */
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    let frame = 0;
+    const onScroll = () => {
+      if (frame !== 0) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const y = window.scrollY;
+        setScrolled((prev) => (prev ? y > LOC_EXPAND_Y : y > LOC_COLLAPSE_Y));
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    // La primera lectura, ara mateix: una pàgina restaurada a mig desplaçament
+    // no ha d'esperar el primer gest per plegar la barra.
+    onScroll();
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (frame !== 0) cancelAnimationFrame(frame);
+    };
+  }, []);
   const camera = useCameraSupport();
   const { online } = useOnlineStatus();
   const [shared] = useState(readSharedPoint);
   const observer = useObserver({ shared });
-  const [tab, setTab] = useState<Tab>('countdown');
+  /*
+   * LA PESTANYA ARRENCA DEL FRAGMENT: obrir `?p=...#/mapa` ha d'aterrar al
+   * mapa amb el punt carregat, que és la forma que té un enllaç de dir «mira
+   * AIXÒ des d'AQUÍ». Si el fragment demana el cel i aquest aparell no en té
+   * (useCameraSupport), la guarda de més avall el torna a la portada — sense
+   * apilar res a l'historial, perquè l'usuari no hi ha navegat: hi ha caigut.
+   */
+  const [route] = useState(readInitialRoute);
+  const [tab, setTab] = useState<Tab>(route.tab);
+  /*
+   * La secció de guia demanada pel fragment (`#/guia/safety`). És un encàrrec
+   * d'ATERRATGE, no l'estat dels <details> —d'aquell n'és amo el navegador
+   * (vegeu GuideView)—: la pantalla de la guia el rep, obre la secció, hi fa
+   * scroll, i a partir d'aquí qui mana és el dit de l'usuari.
+   */
+  const [guideSection, setGuideSection] = useState<string | null>(route.section);
+  /*
+   * QUANTES ENTRADES D'HISTORIAL HA APILAT L'APP en aquesta sessió. La fletxa
+   * d'enrere de la capçalera només pot fer `history.back()` si darrere hi ha
+   * una entrada NOSTRA: si l'usuari ha aterrat directament a `#/mapa` des d'un
+   * missatge, darrere hi ha el WhatsApp d'on venia, i «enrere» l'expulsaria de
+   * l'app pel gest que dins de l'app vol dir «torna a la portada». És un ref i
+   * no estat perquè comptar navegacions no ha de repintar res.
+   */
+  const appPushes = useRef(0);
   /*
    * MODE IMMERSIU: la pantalla del cel amb la càmera oberta demana la
    * pantalla sencera i el marc s'aparta — capçalera, barra d'ubicació i
@@ -302,16 +466,91 @@ function Shell() {
     map: s('title.map', locale),
     sky: s('title.sky', locale),
     guide: s('title.guide', locale),
+    about: s('title.about', locale),
   };
+
+  /*
+   * NAVEGAR DE PESTANYA APILA UNA ENTRADA (`pushState`), i és el contrari
+   * exacte del `replaceState` del punt de més avall: moure el punt no és
+   * navegar, però canviar de pantalla SÍ. Amb l'entrada apilada, el botó
+   * d'enrere del navegador torna a la pantalla anterior en comptes de sortir
+   * de l'app, que és el que fa a qualsevol web.
+   *
+   * LA CONSULTA ES CONSERVA INTACTA: el punt (?p&e&n) és ortogonal a la
+   * pestanya i canviar de pantalla no ha de fer perdre el lloc de l'enllaç.
+   */
+  const navigateTab = useCallback((next: Tab) => {
+    setTab(next);
+    // Navegació nova de la barra: sense secció encarregada. Si no es netegés,
+    // sortir de la guia i tornar-hi repetiria l'scroll a la secció de l'enllaç.
+    setGuideSection(null);
+    const target = `${window.location.pathname}${window.location.search}${HASH_BY_TAB[next]}`;
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    // Tocar la pestanya on ja s'és no és anar enlloc: sense la guarda,
+    // cada toc redundant apilaria una entrada que fa l'enrere més llarg.
+    if (target === current) return;
+    window.history.pushState(null, '', target);
+    appPushes.current += 1;
+  }, []);
+
+  /*
+   * Tornada a la portada SENSE apilar res: és el destí de les caigudes (el cel
+   * que desapareix, la fletxa quan no hi ha historial nostre), no d'una
+   * navegació. El fragment que quedi es neteja amb `replaceState` perquè
+   * l'adreça no digui una pantalla que ja no s'està mirant.
+   */
+  const resetToCountdown = useCallback(() => {
+    setTab('countdown');
+    setGuideSection(null);
+    if (window.location.hash !== '') {
+      window.history.replaceState(
+        // L'estat que hi hagi es conserva: no és nostre.
+        window.history.state,
+        '',
+        `${window.location.pathname}${window.location.search}`,
+      );
+    }
+  }, []);
+
+  /*
+   * EL BOTÓ D'ENRERE DEL NAVEGADOR, ESCOLTAT. Quan l'historial es mou
+   * (enrere o endavant), el fragment ja ha canviat: aquí només es llegeix i
+   * s'hi posa la pantalla a joc, SENSE tornar a apilar res — apilar dins de
+   * `popstate` és la recepta clàssica de l'historial que no es buida mai.
+   *
+   * El comptador d'entrades nostres baixa aquí i no distingeix enrere
+   * d'endavant (l'API no ho diu): és una fita conservadora — com a molt fa que
+   * la fletxa de la capçalera caigui al camí segur (portada directa) un cop
+   * de més, mai que expulsi ningú de l'app.
+   */
+  useEffect(() => {
+    const onPopState = () => {
+      appPushes.current = Math.max(0, appPushes.current - 1);
+      const next = parseHashRoute(window.location.hash);
+      // El cel d'un historial vell en un aparell sense càmera: mateixa regla
+      // que la guarda de sota, la portada i sense tocar l'historial.
+      if (next.tab === 'sky' && !camera.unknown && !camera.supported) {
+        setTab('countdown');
+        setGuideSection(null);
+        return;
+      }
+      setTab(next.tab);
+      setGuideSection(next.tab === 'guide' ? next.section : null);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [camera.unknown, camera.supported]);
 
   /*
    * Si la pestanya del cel desapareix mentre s'hi és —una sessió restaurada en
    * un altre aparell, o el navegador que canvia de resposta— no s'hi pot quedar
-   * ningú mirant una pantalla que ja no és a la barra.
+   * ningú mirant una pantalla que ja no és a la barra. També és el camí de
+   * l'aterratge a `#/cel` des d'un aparell sense càmera: caiguda, no navegació,
+   * o sigui `resetToCountdown` i cap `pushState`.
    */
   useEffect(() => {
-    if (!camera.unknown && !camera.supported && tab === 'sky') setTab('countdown');
-  }, [camera.unknown, camera.supported, tab]);
+    if (!camera.unknown && !camera.supported && tab === 'sky') resetToCountdown();
+  }, [camera.unknown, camera.supported, tab, resetToCountdown]);
 
   /*
     L'ADREÇA SEGUEIX EL PUNT.
@@ -465,9 +704,26 @@ function Shell() {
           <BackTopBar
             title={titles[tab]}
             backLabel={s('nav.countdown', locale)}
-            onBack={() => setTab('countdown')}
+            /*
+              LA FLETXA DESFÀ EL CAMÍ DE VERITAT quan n'hi ha: si l'app ha
+              apilat entrades en aquesta sessió, `history.back()` fa que la
+              fletxa i el gest d'enrere del sistema siguin EL MATEIX moviment
+              (el popstate de dalt farà el canvi de pantalla). Si no n'hi ha
+              cap —aterratge directe a `#/mapa`—, darrere hi ha la pàgina d'on
+              venia l'usuari i la fletxa cau al camí segur: la portada.
+            */
+            onBack={() => {
+              if (appPushes.current > 0) window.history.back();
+              else resetToCountdown();
+            }}
+            /*
+              Les coordenades, només mentre el Dateline no les diu: a partir
+              de --bp-rail la franja de dades és visible i les porta, i el
+              mateix número dues vegades a un pam fa dubtar de si són el
+              mateix número.
+            */
             subtitle={
-              observer.location === null
+              datelineVisible || observer.location === null
                 ? undefined
                 : formatCoords(observer.location.lat, observer.location.lon)
             }
@@ -523,12 +779,25 @@ function Shell() {
           </div>
         )}
 
+        {/*
+          QUAN VA COMPACTA: a la pantalla de la càmera (el cel mana), passats
+          uns píxels de scroll (vegeu LOC_COLLAPSE_Y) i a l'escriptori ample,
+          on el Dateline ja diu les coordenades.
+
+          L'EXCEPCIÓ ÉS OBLIGADA: mentre les xifres surten del punt d'exemple,
+          la barra porta l'avís `loc__warn`, que és PART DE LA DADA — i el
+          format compacte l'amaga. `isDefaultFix` és exactament la condició
+          que fa sortir l'avís (exportada de LocationBar perquè no divergeixi):
+          quan és certa, la barra no es plega mai, es miri des d'on es miri.
+        */}
         <LocationBar
           fix={observer.fix}
           locale={locale}
           loading={observer.loading}
           error={observer.error}
-          compact={tab === 'sky'}
+          compact={
+            !isDefaultFix(observer.fix) && (tab === 'sky' || scrolled || desktopWide)
+          }
           onOpen={() => setSheetOpen(true)}
         />
 
@@ -559,13 +828,28 @@ function Shell() {
                   />
                 </div>
                 <span className="screen__note">
-                  {horizon.progressMessage || s('horizon.computing', locale)}
+                  {/*
+                    El progrés arriba com a CODI (el nucli no sap idiomes) i
+                    la frase es compon aquí, en l'idioma de l'usuari.
+                  */}
+                  {horizon.progressCode
+                    ? horizonProgressText(horizon.progressCode, locale)
+                    : s('horizon.computing', locale)}
                 </span>
               </div>
             )}
             {horizon.error && (
               <div className="shell__alert">
-                <span>{s('horizon.failed', locale)}</span>
+                {/*
+                  Si el càlcul ha dit PER QUÈ ha fallat (tessel·les que no han
+                  baixat, per exemple), el motiu s'ensenya: «comprova la
+                  connexió» és accionable i el genèric no ho era.
+                */}
+                <span>
+                  {horizon.error.detail
+                    ? s('horizon.failedDetail', locale, { error: horizon.error.detail })
+                    : s('horizon.failed', locale)}
+                </span>
                 <Button variant="ghost" size="sm" onClick={horizon.reload}>
                   {s('horizon.retry', locale)}
                 </Button>
@@ -601,8 +885,14 @@ function Shell() {
                 sap: val més ensenyar el mapa un moment que un botó que potser
                 és mort.
               */
-              onOpenCamera={camera.supported ? () => setTab('sky') : undefined}
-              onOpenMap={() => setTab('map')}
+              /*
+                Les crides a l'acció naveguen pel MATEIX camí que la barra de
+                pestanyes: si el botó gran canviés la pantalla sense apilar
+                entrada, l'enrere del navegador es comportaria diferent segons
+                per on s'hagués entrat al mapa, i això no ho pot explicar ningú.
+              */
+              onOpenCamera={camera.supported ? () => navigateTab('sky') : undefined}
+              onOpenMap={() => navigateTab('map')}
             />
           )}
           {/*
@@ -612,7 +902,11 @@ function Shell() {
           */}
           {tab === 'map' && (
             <Suspense fallback={<div className="screen screen--full" />}>
-              <MapScreen {...context} onPickLocation={observer.setManual} />
+              <MapScreen
+                {...context}
+                onPickLocation={observer.setManual}
+                onOpenCountdown={() => navigateTab('countdown')}
+              />
             </Suspense>
           )}
           {tab === 'sky' && (
@@ -629,7 +923,32 @@ function Shell() {
           )}
           {tab === 'guide' && (
             <Suspense fallback={<div className="screen screen--full" />}>
-              <GuideScreen {...context} onOpenCountdown={() => setTab('countdown')} />
+              <GuideScreen
+                {...context}
+                /*
+                  La secció que el fragment ha encarregat d'obrir, si n'hi ha:
+                  la pantalla la desplega i hi fa scroll en aterrar-hi.
+                */
+                initialSection={guideSection}
+                onOpenCountdown={() => navigateTab('countdown')}
+              />
+            </Suspense>
+          )}
+          {tab === 'about' && (
+            <Suspense fallback={<div className="screen screen--full" />}>
+              <AboutScreen
+                locale={locale}
+                /*
+                  L'enllaç de seguretat de la pàgina porta a la SECCIÓ de la
+                  guia, no a la pestanya a seques: aterrar al principi d'una
+                  pàgina llarga i haver de buscar «seguretat» seria perdre el
+                  lector just on més importa no perdre'l.
+                */
+                onOpenGuideSafety={() => {
+                  setGuideSection('safety');
+                  navigateTab('guide');
+                }}
+              />
             </Suspense>
           )}
         </ErrorBoundary>
@@ -681,14 +1000,14 @@ function Shell() {
           observer={observer}
           comparison={comparison}
           onClose={() => setSheetOpen(false)}
-          onGoToMap={() => setTab('map')}
+          onGoToMap={() => navigateTab('map')}
         />
       )}
 
       <div className="shell__nav">
         <TabBar
           value={tab}
-          onChange={setTab}
+          onChange={navigateTab}
           items={tabs}
           label={s('nav.label', locale)}
         />
@@ -733,11 +1052,14 @@ function Dateline({
         {location ? formatCoords(location.lat, location.lon) : s('common.unknownPlace', locale)}
       </span>
       <span className="shell__dateline-accent">
-        {central
-          ? formatDuration(durationSec)
-          : circumstances
-            ? formatObscurationPercent(circumstances.contacts.max.obscuration, central)
-            : NO_DATA}
+        {/* El valor de la durada, amb classe pròpia: `screens.css` l'estila. */}
+        {central ? (
+          <span className="shell__dateline-val">{formatDuration(durationSec)}</span>
+        ) : circumstances ? (
+          formatObscurationPercent(circumstances.contacts.max.obscuration, central)
+        ) : (
+          NO_DATA
+        )}
       </span>
       <span>{s('shell.open', locale)}</span>
     </div>

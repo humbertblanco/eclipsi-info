@@ -287,8 +287,14 @@
   background: var(--status-partial-quiet);
 }
 
+/* El text NO porta --status-cloudy: aquell gris (--slate-400) és un color de
+   DADES per a barres i gràfics, i sobre el fons apagat compost amb la targeta
+   (~#232937) mesura 3,38:1 — massa poc per a text d'11 px en majúscules
+   (AA en demana 4,5). --slate-300 és el mateix to de la mateixa escala, dos
+   passos més clar: 5,87:1 sobre el compost. El punt (currentColor) hi guanya
+   de retruc. */
 .ui-badge--cloudy {
-  color: var(--status-cloudy);
+  color: var(--slate-300);
   background: var(--status-cloudy-quiet);
 }
 
@@ -1384,6 +1390,26 @@
   flex: none;
 }
 
+/*
+ * A L'ESCRIPTORI EL TÍTOL SURT SENCER.
+ *
+ * Amb `flex: 1` la base del text és zero i la seva amplada surt del repartiment
+ * de l'espai lliure, no del que el títol mesura: quan les accions demanen el
+ * seu tros, «Mapa de la franja» i «Guia de l'eclipsi» podien acabar amb punts
+ * suspensius en una barra de 1.440 px amb espai de sobres. Amb base `auto` el
+ * text PARTEIX del seu contingut i creix des d'allà, o sigui que el títol només
+ * cediria si la barra sencera desbordés — i per a llavors es queda el
+ * `min-width: 0`, que és el que li permet encongir-se sense desbordar la barra.
+ * Només a partir dels 900: al mòbil el repartiment actual és el bo, perquè allà
+ * sí que cada píxel del text es baralla amb els desplegables.
+ */
+@media (min-width: 900px) {
+  .ui-topbar__text {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
 /* ----------------------------------------------------------------- SiteHeader
 
    Capçalera de la pàgina pública. Enganxosa i de vidre, amb els gutters amples
@@ -1630,6 +1656,15 @@
   color: var(--status-cloudy);
 }
 
+/* La xifra hereta el color del modificador, però és text de 18 px medium —
+   petit segons WCAG — i --status-cloudy sobre la targeta queda a 4,18:1
+   (i a 3,72:1 sobre --surface-card-hover): per sota del 4,5 d'AA. Es puja
+   NOMÉS el text a --slate-300 (7,28:1 i 6,47:1 mesurats); la barra i el glif
+   segueixen amb el gris de dades, que com a no-text en té prou amb 3:1. */
+.ui-vis--cloudy .ui-vis__value {
+  color: var(--slate-300);
+}
+
 .ui-vis--unknown {
   color: var(--text-muted);
 }
@@ -1714,4 +1749,119 @@
   text-transform: uppercase;
   color: var(--text-muted);
   white-space: nowrap;
+}
+
+/* -------------------------------------------------------------- TimelineTrack
+
+   La línia de contactes C1 → C2 → màxim → C3 → C4 d'un lloc. Era l'últim
+   component del sistema amb la maquetació escrita en línia al TSX; ara tota
+   viu aquí, i al component només hi queden els percentatges calculats —
+   l'amplada del tram recorregut i la posició de cada punt—, que surten de
+   comptar contactes i no es poden escriure en cap regla estàtica.
+   ---------------------------------------------------------------------------- */
+.ui-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* La via fa --bw-thick (2 px), el mateix gruix que el subratllat de les
+   pestanyes: és una línia de referència per situar-hi punts, no una barra de
+   dades com `.ui-vis__track`. El radi de pastilla n'arrodoneix els extrems
+   sense inventar cap mesura nova. */
+.ui-timeline__track {
+  position: relative;
+  height: var(--bw-thick);
+  border-radius: var(--r-pill);
+  background: var(--border-subtle);
+}
+
+/* El tram ja recorregut, en ambre damunt de la via. L'amplada la posa el TSX
+   perquè és el percentatge que surt de l'índex actiu. */
+.ui-timeline__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: var(--bw-thick);
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  transition: width var(--dur-slow) var(--ease-orbit);
+}
+
+/* Els punts fan 10 px amb el mateix truc de suma que el punt de la insígnia
+   (que fa 6 = 4 + 2): entre --sp-3 (8) i --sp-4 (12) no hi ha cap pas. El
+   `top` negatiu els centra sobre la via —(10 − 2) / 2 = 4, que és --sp-2— i
+   l'anell del color del fons els separa del tram ambre quan hi cauen a sobre.
+   La posició horitzontal (`left`) és l'altre percentatge que queda al TSX. */
+.ui-timeline__dot {
+  position: absolute;
+  top: calc(-1 * var(--sp-2));
+  transform: translateX(-50%);
+  width: calc(var(--sp-3) + var(--sp-1));
+  height: calc(var(--sp-3) + var(--sp-1));
+  border-radius: 50%;
+  background: var(--ink-600);
+  border: var(--bw-thick) solid var(--bg-page);
+}
+
+/* Contacte ja passat (o l'actual): el punt s'omple d'ambre, com el tram. */
+.ui-timeline__dot--past {
+  background: var(--accent);
+}
+
+/* La corona només al contacte ACTUAL: dos punts brillant alhora ja no diuen
+   «som aquí». */
+.ui-timeline__dot--on {
+  box-shadow: var(--glow-corona);
+}
+
+.ui-timeline__labels {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+/* Cada contacte apila etiqueta i hora. Els extrems s'alineen arran de la via:
+   el primer a l'esquerra i l'últim a la dreta, i ho diuen :first-child i
+   :last-child sols, sense que el TSX hagi de comptar índexs. L'ORDRE de les
+   dues regles importa: si mai només hi ha un contacte, és alhora primer i
+   últim, i ha de guanyar `flex-start` — per això :first-child va DESPRÉS. */
+.ui-timeline__contact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  align-items: center;
+}
+
+.ui-timeline__contact:last-child {
+  align-items: flex-end;
+}
+
+.ui-timeline__contact:first-child {
+  align-items: flex-start;
+}
+
+.ui-timeline__label {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ui-timeline__label--on {
+  color: var(--text-accent);
+}
+
+/* L'hora en mono TABULAR, com tota xifra de l'app: els dígits no ballen. */
+.ui-timeline__time {
+  font: var(--text-body-sm);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+/* L'hora d'un contacte ja passat puja a text primari: el que ja ha succeït
+   es llegeix més fort que el que encara ha de venir. */
+.ui-timeline__time--past {
+  color: var(--text-primary);
 }

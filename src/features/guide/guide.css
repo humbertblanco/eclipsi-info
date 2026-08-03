@@ -13,7 +13,8 @@
  * sistema imaginari. Els noms bons són els de dalt.
  *
  * Les úniques classes de fora que toca són `.btn` (definida a `src/index.css`)
- * i sempre per sota de la seva pròpia arrel `.guide__*`.
+ * i sempre per sota de la seva pròpia arrel `.guide__*` o `.guidescreen__*`
+ * (la disposició de la pantalla, al final del fitxer).
  */
 
 /* -------------------------------------------------------------------- guia */
@@ -60,6 +61,11 @@
   border: var(--bw-hair) solid var(--border-hairline);
   border-radius: var(--r-md);
   overflow: hidden;
+  /* Quan l'índex hi desplaça, la secció no ha de quedar sota la capçalera
+     fixa: el marge de desplaçament és l'alçada de les barres més l'aire de la
+     pantalla — la mateixa fórmula que fa servir la columna enganxada de
+     screens.css. Al mòbil `--bar-dateline` val 0px i la fórmula és la mateixa. */
+  scroll-margin-top: calc(var(--bar-top) + var(--bar-dateline) + var(--sp-5));
 }
 
 /* L'ÚNIC contorn ambre de la pantalla: la secció de seguretat ocular. El
@@ -330,3 +336,173 @@
 
 /* El testimoni del to d'enllaç, no el d'accent: un enllaç no és cap avís. */
 .guide__sources a { color: var(--text-link); }
+
+/* ============================================================================
+   Disposició de la pantalla de la guia (`GuideScreen`).
+
+   Viu aquí i no a screens.css perquè és la disposició D'AQUESTA pantalla i de
+   cap altra, i perquè la tasca de la guia no toca fitxers compartits.
+
+   AL MÒBIL NO CANVIA RES: els dos embolcalls (`__main` i `__side`) són
+   `display: contents` —el mateix truc que `.screen__col` de screens.css— i per
+   tant l'ordre del marcatge és, literalment, l'ordre de lectura de sempre.
+   L'única peça nova visible és la fila de xips de l'índex, damunt de la guia.
+
+   Les DUES consultes porten la MATEIXA guarda `(min-height: 500px)` que les de
+   screens.css, i pel mateix motiu (vegeu-hi el bloc «ESCRIPTORI»): un mòbil
+   girat passa el tall d'amplada però no ha de rebre mai la disposició
+   d'escriptori, i cap mòbil girat arriba als 500 px d'alçada.
+   ========================================================================== */
+
+.guidescreen__main,
+.guidescreen__side {
+  display: contents;
+}
+
+/* --------------------------------------------------------------- índex */
+
+/* La llista vertical és exclusiva del lateral d'escriptori. */
+.guidescreen__toc--list { display: none; }
+
+.guidescreen__toclist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: var(--sp-3);
+}
+
+/* Al mòbil, una sola fila que es desplaça de costat: sis títols no caben a
+   390 px i partir-los en dues files empenyeria la guia mitja pantalla avall. */
+.guidescreen__toc--chips .guidescreen__toclist {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.guidescreen__toc--chips li { flex: 0 0 auto; }
+
+/* Els xips SÓN `.btn` (píndola, alçada tàctil de 44 px, superfície de
+   targeta): un índex no mereix un llenguatge de botó propi. Com fa la barra
+   d'eines de la guia, aquí només s'ajusten lletra i farciment. */
+.guidescreen__toc .btn {
+  font-size: var(--fs-caption);
+  padding: var(--sp-3) var(--sp-4);
+  white-space: nowrap;
+}
+
+/* La capçalera «Índex» només existeix a la variant de llista. */
+.guidescreen__tochead {
+  display: block;
+  margin-bottom: var(--sp-3);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------- escriptori: 900-1179 */
+
+@media (min-width: 900px) and (min-height: 500px) {
+  /*
+   * Encara una sola columna, però amb mesura de lectura d'escriptori en
+   * comptes del full de mòbil: 5 × --sp-13 = 640 px de contingut, que amb la
+   * lletra del cos de la guia queda vora els 75 caràcters per línia. Els dos
+   * guters se sumen perquè a partir d'aquí el `.screen` encoixina amb
+   * `--gutter-web` i el límit ha de ser del contingut, no de la caixa.
+   */
+  .screen.screen--guide {
+    max-width: calc(var(--sp-13) * 5 + 2 * var(--gutter-web));
+  }
+}
+
+/* ------------------------------------------------- escriptori: >= 1180 */
+
+@media (min-width: 1180px) and (min-height: 500px) {
+  /*
+   * Dues columnes: la de lectura (avís de seguretat + guia) i el lateral
+   * (índex, avís dels 30 min, els tres eclipsis, preparació offline). El
+   * repartiment 1.35fr/1fr és el mateix que `.screen--split` de screens.css;
+   * el `minmax(0, …)` deixa encongir la columna de lectura per sota del seu
+   * contingut mínim (la taula d'exposicions, que ja porta scroll propi).
+   *
+   * El `gap` de columna és --sp-8; el de fila es queda a --sp-5, que és el
+   * ritme vertical que `.screen` posa entre l'avís de seguretat i la guia al
+   * mòbil — la partició en columnes no és cap motiu per estirar-lo.
+   */
+  .screen.screen--guide {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) 1fr;
+    gap: var(--sp-5) var(--sp-8);
+    max-width: var(--maxw-web);
+  }
+
+  /*
+   * El lateral ocupa la segona columna DE DALT A BAIX (l'avís de seguretat és
+   * a la fila 1 i la guia a la 2, tots dos col·locats sols per l'autoflux).
+   * S'estira tota l'alçada de la graella a posta: és el que dona recorregut a
+   * l'índex enganxat de sota. NO és tot ell enganxat — ThreeEclipses és massa
+   * alt i un lateral sticky sencer taparia mitja columna sense desplaçar-se.
+   */
+  .guidescreen__side {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .guidescreen__main,
+  .guidescreen__side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-5);
+    min-width: 0;
+  }
+
+  /* A escriptori l'índex és la llista del lateral; els xips es queden al mòbil. */
+  .guidescreen__toc--chips { display: none; }
+
+  /*
+   * L'índex s'enganxa sota les barres fixes —la mateixa fórmula que
+   * `.screen__col--sticky` de screens.css— i la resta del lateral flueix per
+   * sota. Com que la seva posició natural ja és exactament l'offset, el que
+   * es veu és que l'índex es queda i les targetes passen per darrere seu:
+   * per això el fons opac de pàgina, el z-index i la línia de peu, que és la
+   * mateixa gramàtica que la capçalera fixa de l'app.
+   */
+  .guidescreen__toc--list {
+    display: block;
+    position: sticky;
+    /* L'offset compta TAMBÉ la barra de lloc compacta (--tap-min de botó més
+       --sp-3 de coixins), que a escriptori sempre és allà, enganxada sota el
+       Dateline: sense aquest terme, l'índex s'aturava 36 px per sota d'on
+       comença la barra i les dues capes es llegien barrejades. */
+    top: calc(
+      var(--bar-top) + var(--bar-dateline) + var(--tap-min) + var(--sp-3) +
+        var(--sp-5)
+    );
+    z-index: 1;
+    background: var(--bg-page);
+    padding-bottom: var(--sp-3);
+    border-bottom: var(--bw-hair) solid var(--border-hairline);
+  }
+
+  .guidescreen__toc--list .guidescreen__toclist {
+    flex-direction: column;
+    gap: var(--sp-1);
+  }
+
+  /* A la llista el botó perd la píndola i es fa fila: text alineat a
+     l'esquerra, tota l'amplada, i la superfície només apareix en passar-hi. */
+  .guidescreen__toc--list .btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border-color: transparent;
+    border-radius: var(--r-sm);
+    color: var(--text-muted);
+  }
+
+  .guidescreen__toc--list .btn:hover {
+    color: var(--text-primary);
+    background: var(--surface-card);
+  }
+}

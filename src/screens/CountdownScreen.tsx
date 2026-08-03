@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 import { formatObscurationPercent } from '../core/astro/obscuration';
 import {
   Badge,
@@ -17,6 +17,7 @@ import { ShareButton } from '../features/share';
 import { CountdownView } from '../features/countdown';
 import { useCloudOutlook } from '../features/weather';
 import { Countdown } from '../ui/eclipse/Countdown';
+import { skyStateFromSample, toCss } from '../core/sky';
 import { getEclipse } from '../core/eclipses/catalog';
 import type { EclipseSample } from '../core/astro/types';
 import type { EclipseContext } from './context';
@@ -142,6 +143,27 @@ export function CountdownScreen({
       }));
   }, [contacts, locale]);
 
+  /*
+   * EL CEL DEL TEU PUNT, AL FONS DEL CARD DEL COMPTE ENRERE.
+   *
+   * El motor de llum (core/sky) ja sap de quin color serà l'horitzó mirant el
+   * Sol al màxim DES D'AQUEST PUNT: el capvespre daurat del 2026, el matí alt
+   * del 2027. El card l'insinua com a tint, no com a il·lustració — el sistema
+   * és fosc i l'única llicència és un matís a la base. A la totalitat profunda
+   * el color és negre de debò i el tint desapareix: aquell cel JA és el card.
+   *
+   * VIU AQUÍ DALT, AMB ELS ALTRES GANXOS: més avall hi ha un retorn anticipat
+   * (sense lloc no hi ha pantalla) i un ganxo després d'un retorn condicional
+   * és exactament el «Rendered more hooks» que va tombar la pantalla.
+   */
+  const skyTint = useMemo(() => {
+    if (!contacts) return null;
+    const sky = skyStateFromSample(contacts.max);
+    const horizon = sky.palette.horizonSunward;
+    if (Math.max(horizon.r, horizon.g, horizon.b) < 24) return null;
+    return toCss(horizon);
+  }, [contacts]);
+
   if (!location || !circumstances || !contacts) {
     return (
       <div className="screen">
@@ -165,7 +187,14 @@ export function CountdownScreen({
   return (
     <div className="screen screen--split">
       <div className="screen__col screen__col--main">
-        <section className="home__hero">
+        <section
+          className="home__hero"
+          style={
+            skyTint !== null
+              ? ({ '--home-sky': skyTint } as CSSProperties)
+              : undefined
+          }
+        >
           <div className="home__herohead">
             <span className="screen__overline">
               {formatStamp(contacts.max.time, locale)}
@@ -208,25 +237,20 @@ export function CountdownScreen({
         {verdict && <p className="screen__note">{verdictSummary(verdict, locale)}</p>}
 
         {/*
-          Els cinc contactes. Al mòbil, la línia horitzontal; a l'escriptori, la
-          taula sencera amb el marge sobre el terreny a cada instant. No és el
-          mateix component perquè no és la mateixa lectura: la línia diu «per on
-          anem», la taula diu «a quina hora i si ho veuràs». Qui decideix quina
-          es pinta és `screens.css` a --bp-split.
+          Els cinc contactes, al mòbil: la línia horitzontal que diu «per on
+          anem». La taula amb les hores i el marge sobre el terreny —la lectura
+          d'escriptori de la mateixa informació— viu al final de la columna
+          dreta, on equilibra les dues columnes; aquesta targeta s'hi amaga
+          sencera. Qui decideix quina de les dues es pinta és `screens.css` a
+          --bp-split, i com que la taula al mòbil no es pinta mai, separar-les
+          no canvia l'ordre de lectura de la pila.
         */}
-        <Card>
+        <Card className="home__timelinecard">
           <span className="screen__overline">{s('home.contacts', locale)}</span>
-          <div className="home__timeline">
-            <TimelineTrack
-              style={{ marginTop: 'var(--sp-6)' }}
-              contacts={timeline}
-              activeIndex={timeline.findIndex((c) => c.label === 'Màx')}
-            />
-          </div>
-          <EphemerisTable
-            circumstances={circumstances}
-            horizon={horizon}
-            locale={locale}
+          <TimelineTrack
+            style={{ marginTop: 'var(--sp-6)' }}
+            contacts={timeline}
+            activeIndex={timeline.findIndex((c) => c.label === 'Màx')}
           />
         </Card>
 
@@ -306,6 +330,25 @@ export function CountdownScreen({
           profile={horizon}
           verdict={verdict}
         />
+
+        {/*
+          LA TAULA DELS CONTACTES, NOMÉS A L'ESCRIPTORI I AL FINAL D'AQUESTA
+          COLUMNA. És la parella de la targeta de la línia de la columna
+          principal: la mateixa pregunta amb la lectura d'escriptori. Va aquí i
+          no al costat de la línia perquè és el que equilibra les dues columnes
+          a --bp-split — sense ella, la columna del compte enrere s'acabava a
+          mig camí i deixava un buit negre fins al peu. Al mòbil aquesta
+          targeta no existeix (`screens.css` l'amaga), o sigui que la pila no
+          guanya cap bloc repetit.
+        */}
+        <Card className="home__ephemeriscard">
+          <span className="screen__overline">{s('home.contacts', locale)}</span>
+          <EphemerisTable
+            circumstances={circumstances}
+            horizon={horizon}
+            locale={locale}
+          />
+        </Card>
 
         <p className="screen__note">
           {formatCoords(location.lat, location.lon)} ·{' '}
