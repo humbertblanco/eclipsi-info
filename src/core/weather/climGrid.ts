@@ -132,13 +132,13 @@ export interface CloudClimGrid {
   lastYear: number;
   /** Dies a banda i banda de la data que entren a la finestra. */
   windowDays: number;
-  /** Pas de la malla, en graus. Ha de ser el d'ERA5. */
+  /** Pas de la malla, en graus. Vegeu la capçalera: no és el límit de la font. */
   stepDeg: number;
   /**
    * Instants del màxim local més primerenc i més tardà de la graella, en ms
    * d'època. Cada cel·la s'ha consultat a la SEVA hora, no a una hora comuna;
-   * aquests dos valors diuen quant s'obre aquell ventall. Per al 2026 són cinc
-   * minuts i quart de punta a punta —de la Corunya a Maó—, cosa que amb dades
+   * aquests dos valors diuen quant s'obre aquell ventall. Per al 2026 són set
+   * minuts i mig de punta a punta (18:24:49 a 18:32:09 UT), cosa que amb dades
    * horàries vol dir que totes les cel·les acaben mirant les mateixes hores.
    */
   firstTargetMs: number;

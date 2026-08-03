@@ -34,6 +34,9 @@ import { heatLegendGradient } from '../features/map/layers/heatmap';
 import { moveArrowFrom } from '../features/map/layers/moveArrow';
 import { pointsForEclipse } from '../data/observation-points/catalog';
 import { loadViewpoints } from '../features/map/layers/viewpoints';
+import { loadCloudClimGrid } from '../features/map/layers/clouds';
+import { allClimCells, type CloudClimGrid } from '../core/weather/climGrid';
+import { planCloudMap } from '../core/weather/mapMode';
 import type { Viewpoint } from '../core/places/viewpoints';
 import { readPalette } from '../styles/palette';
 import { horizonDistanceAt } from '../core/horizon/profile';
@@ -265,6 +268,55 @@ export function MapScreen({
   const pois = useMemo(
     () => (layers.official ? pointsForEclipse(eclipseId) : null),
     [layers.official, eclipseId],
+  );
+
+  /*
+   * LA GRAELLA DE NÚVOLS, i els anys que porta de debò.
+   *
+   * Es baixa només a la vista «Núvols»: són 36 kB, però són 36 kB que no
+   * necessita ningú que estigui mirant la franja. I el nombre d'anys NO és el
+   * de la constant: la graella publicada en porta 12 o 13 segons la cel·la
+   * —Open-Meteo té sostre horari i la sèrie es va haver de tancar el 2023— i
+   * `planCloudMap` ha de rebre el mínim real, no el que voldríem. Amb 15 la
+   * llegenda diria una fiabilitat que les dades no aguanten;
+   * `confidenceForYears` ja baixa sola per sota de dotze.
+   */
+  const [cloudGrid, setCloudGrid] = useState<CloudClimGrid | null>(null);
+  useEffect(() => {
+    if (view !== 'clouds') return;
+    let alive = true;
+    void loadCloudClimGrid(eclipseId, { baseUrl: import.meta.env.BASE_URL })
+      .then((grid) => {
+        if (alive) setCloudGrid(grid);
+      })
+      .catch(() => {
+        // Sense graella la capa no pinta res i la fitxa ja ho diu.
+        if (alive) setCloudGrid(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [view, eclipseId]);
+
+  const cloudPlan = useMemo(() => {
+    if (cloudGrid === null) return null;
+    const minYears = cloudGrid.cells.years.reduce(
+      (least, y) => (y < least ? y : least),
+      Number.POSITIVE_INFINITY,
+    );
+    // `circumstances` i no `contacts`: aquell es declara més avall i aquí
+    // només en cal l'instant del màxim, que és el que decideix si toca
+    // climatologia o previsió.
+    return planCloudMap(
+      circumstances?.contacts.max.time.getTime() ?? Date.now(),
+      Date.now(),
+      { years: Number.isFinite(minYears) ? minYears : undefined },
+    );
+  }, [cloudGrid, circumstances]);
+
+  const cloudCells = useMemo(
+    () => (view === 'clouds' && cloudGrid !== null ? allClimCells(cloudGrid) : null),
+    [view, cloudGrid],
   );
 
   const [viewpoints, setViewpoints] = useState<readonly Viewpoint[] | null>(null);
@@ -511,6 +563,8 @@ export function MapScreen({
               setFocus(null);
               onPickLocation(spot.lat, spot.lon);
             }}
+            cloudCells={cloudCells}
+            {...(cloudPlan !== null ? { cloudTexture: cloudPlan.texture } : {})}
             {...(view === 'move'
               ? { moveArrow: moveArrowFrom(location, gradient, arrowLabel) }
               : {})}
@@ -941,6 +995,19 @@ export function MapScreen({
                 mateix número dos cops, i dues edats de dada que es podrien
                 contradir a la mateixa targeta.
               */}
+              {/*
+                QUÈ HI HA PINTAT AL MAPA, dit al costat del mesurador. La
+                capa de núvols no és el pronòstic del teu punt: és una malla
+                grollera i d'una sèrie que no arriba on voldríem, i les dues
+                coses s'han de poder llegir sense obrir res.
+              */}
+              {cloudPlan !== null && cloudCells !== null && (
+                <p className="screen__note">
+                  {cloudPlan.label[locale]} · {cloudPlan.caption[locale]} ·{' '}
+                  {s('map.clouds.grain', locale)}
+                </p>
+              )}
+
               <Suspense fallback={null}>
                 <CloudPanel
                   locale={locale}

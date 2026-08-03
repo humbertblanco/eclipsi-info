@@ -35,6 +35,7 @@ import {
   parseCloudClimGrid,
 } from './climGrid';
 import { BAND_CLEAR_MIN, BAND_PARTIAL_MIN, SCORING_VERSION } from './layers';
+import { CLIMATOLOGY_MIN_YEARS, CLIMATOLOGY_YEARS } from './outlook';
 
 /**
  * Quatre cel·les de 0,25° al voltant de Sòria, amb índexs absoluts sobre la
@@ -305,8 +306,28 @@ describe.skipIf(published.length === 0)('les graelles publicades', () => {
       expect(grid.eclipseId).toBe(entry.id);
       expect(grid.stepDeg).toBe(0.25);
       expect(grid.cells.ix.length).toBeGreaterThan(50);
-      expect(grid.lastYear - grid.firstYear).toBe(14);
       expect(grid.attribution).toContain('Open-Meteo');
+
+      /*
+       * EL RANG NO ES CLAVA A QUINZE ANYS, i el canvi val la pena explicar-lo
+       * perquè abans hi estava (`lastYear - firstYear === 14`).
+       *
+       * Generar una graella són milers de crides a una API gratuïta amb sostres
+       * per minut, per hora i per dia, i la que es va publicar el 3-8-2026 es va
+       * quedar a 12-13 anys perquè el sostre horari va tallar a mig 2023.
+       * Aquella graella és perfectament utilitzable —`CLIMATOLOGY_MIN_YEARS` són
+       * sis— i està etiquetada com el que és. Amb l'assercció clavada a quinze,
+       * l'única manera de tenir la prova verda hauria estat no publicar res o,
+       * pitjor, escriure 2011-2025 al capçal d'unes dades que arriben al 2023.
+       *
+       * O sigui que aquí es comprova el que de debò no pot passar: menys anys
+       * dels que fan una climatologia, o més dels que existeixen. Que el nombre
+       * DECLARAT i el que hi ha a dins coincideixin ho vigila la prova
+       * «no anuncia més anys dels que té», que és la que no es pot relaxar mai.
+       */
+      const declared = grid.lastYear - grid.firstYear + 1;
+      expect(declared).toBeGreaterThanOrEqual(CLIMATOLOGY_MIN_YEARS);
+      expect(declared).toBeLessThanOrEqual(CLIMATOLOGY_YEARS);
 
       // Les hores consultades han de caure el dia de l'eclipsi: si algú toca la
       // manera de treure el màxim local, això ho canta abans que un mapa amb la
@@ -316,7 +337,7 @@ describe.skipIf(published.length === 0)('les graelles publicades', () => {
       expect(new Date(grid.lastTargetMs).toISOString().slice(0, 10)).toBe(entry.id);
 
       // Cap cel·la no es publica amb menys anys dels que la fan honesta.
-      expect(Math.min(...grid.cells.years)).toBeGreaterThanOrEqual(6);
+      expect(Math.min(...grid.cells.years)).toBeGreaterThanOrEqual(CLIMATOLOGY_MIN_YEARS);
 
       // I la graella ha de tenir varietat: si totes les cel·les tinguessin la
       // mateixa puntuació, el que hi hauria darrere seria un error, no un cel.

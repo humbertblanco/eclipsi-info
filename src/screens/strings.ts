@@ -273,6 +273,10 @@ const STRINGS = {
     ca: 'El sector que tindràs davant, del primer contacte a l’últim.',
     es: 'El sector que tendrás delante, del primer contacto al último.',
   },
+  'map.clouds.grain': {
+    ca: 'Cada quadre fa 25 km i té un sol valor: el del seu centre.',
+    es: 'Cada cuadro mide 25 km y tiene un solo valor: el de su centro.',
+  },
   'map.layers.byView': {
     ca: 'La nuvolositat, la fletxa de durada i el caire de la franja s’encenen amb la seva pestanya.',
     es: 'La nubosidad, la flecha de duración y el borde de la franja se encienden con su pestaña.',

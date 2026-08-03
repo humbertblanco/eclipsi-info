@@ -8,7 +8,10 @@
  *
  * Opcions: `--dry-run` (compta el cost i no toca la xarxa), `--fresh` (ignora
  * el punt de control), `--batch=N`, `--concurrency=N`, `--partial` (escriu el
- * JSON encara que hi falti feina; vegeu més avall per què no és el defecte).
+ * JSON encara que hi falti feina; vegeu més avall per què no és el defecte) i
+ * `--write-only` (escriu amb el que ja hi ha al punt de control, sense demanar
+ * res: és el que vols quan un sostre d'Open-Meteo t'ha aturat i no penses
+ * esperar-te l'hora que falta per publicar el mateix fitxer).
  *
  * ATENCIÓ: NO ACABA EN UNA ESTONA, I POT NO ACABAR AVUI. La graella del 2026
  * val unes 8.486 crides d'API i el pla gratuït en deixa 5.000 per hora i 10.000
@@ -316,8 +319,9 @@ interface Cell {
    *
    * I VAL LA PENA DEIXAR ESCRIT EL NÚMERO, perquè contradiu el que semblava.
    * S'esperava que l'hora canviés molt de punta a punta —«l'ombra triga mitja
-   * hora a travessar Espanya»— i s'ha mesurat: de la Corunya (18:26:49 UT) a
-   * Maó (18:32:04 UT) hi ha cinc minuts i quart. Cinc. Amb la finestra de ±1 h
+   * hora a travessar Espanya»— i s'ha mesurat sobre la graella publicada: de
+   * 18:24:49 a 18:32:09 UT, set minuts i mig de punta a punta de les 888
+   * cel·les. Set. Amb la finestra de ±1 h
    * amb què `buildClimatology` tria les mostres, això vol dir que el 2026 TOTES
    * les cel·les acaben mirant les mateixes hores del dia. L'hora per cel·la es
    * calcula igualment, perquè és el que és correcte i no costa res, però que
@@ -1172,6 +1176,16 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const eclipseId = args.find((a) => !a.startsWith('--')) ?? '2026-08-12';
   const dryRun = args.includes('--dry-run');
+  /*
+   * ESCRIU EL QUE JA HI HA I NO TOCA LA XARXA.
+   *
+   * `--partial` diu «publica encara que falti feina», però abans d'arribar-hi
+   * l'script intenta baixar el que falta, i si el que t'ha aturat és un sostre
+   * d'Open-Meteo et quedes esperant mitja hora per acabar escrivint exactament
+   * el mateix fitxer. Va passar. Són dues decisions diferents —quanta feina
+   * s'intenta i què es publica— i ara tenen dues banderes.
+   */
+  const writeOnly = args.includes('--write-only');
   const fresh = args.includes('--fresh');
   const batchSize = Number(
     args.find((a) => a.startsWith('--batch='))?.slice(8) ?? DEFAULT_BATCH,
@@ -1289,7 +1303,7 @@ async function main(): Promise<void> {
     });
   };
 
-  for (let year = firstYear; year <= lastYear; year++) {
+  for (let year = firstYear; year <= lastYear && !writeOnly; year++) {
     /*
      * Un lot es demana si li falta aquest any a ALGUNA de les seves cel·les.
      * Les que ja el tenen el rebran igualment dins de la resposta i no
@@ -1377,7 +1391,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (missing > 0 && !args.includes('--partial')) {
+  if (missing > 0 && !args.includes('--partial') && !writeOnly) {
     process.stdout.write(
       `\nFALTEN ${num.format(missing)} PUNT-ANY de ${num.format(totalCellYears)}.\n` +
         '  NO s’escriu el JSON. Una climatologia a mitges publicada com a definitiva\n' +
