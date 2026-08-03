@@ -105,6 +105,14 @@ export const SOURCES_HEADING: Record<Locale, string> = {
 
 const TEXT = {
   what: PRIVACY_NOTE,
+  /*
+   * La condició del projecte, dita en veu alta (petició directa de
+   * l'usuari): que quedi clar que això no ven res ni vol res de ningú.
+   */
+  free: {
+    ca: 'Gratuït, per a tothom i sense ànim de lucre.',
+    es: 'Gratuito, para todo el mundo y sin ánimo de lucro.',
+  },
   code: { ca: 'Codi obert', es: 'Código abierto' },
   version: { ca: 'Versió', es: 'Versión' },
   by: { ca: 'Fet per', es: 'Hecho por' },
@@ -174,7 +182,9 @@ export function SiteFooter({ locale }: { locale: Locale }) {
       {/* La frase de privadesa es queda, en segon pla: és decisió de producte
           dir-la aquí (vegeu LocationGate.tsx per què es diu on es demana la
           ubicació, i aquí per a qui no hi ha passat). */}
-      <p className="sitefoot__what">{TEXT.what[locale]}</p>
+      <p className="sitefoot__what">
+        {TEXT.free[locale]} {TEXT.what[locale]}
+      </p>
 
       <p className="sitefoot__meta eclipsi-data">
         {/*

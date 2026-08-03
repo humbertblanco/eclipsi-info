@@ -25,8 +25,8 @@ const STRINGS = {
   /* --- capçalera ---------------------------------------------------------- */
   title: { ca: 'Com funciona', es: 'Cómo funciona' },
   subtitle: {
-    ca: 'Què calcula, d’on surt cada dada, i què no fa.',
-    es: 'Qué calcula, de dónde sale cada dato, y qué no hace.',
+    ca: 'Què calcula, d’on surt cada dada, i què no fa. Gratuït, per a tothom i sense ànim de lucre.',
+    es: 'Qué calcula, de dónde sale cada dato, y qué no hace. Gratuito, para todo el mundo y sin ánimo de lucro.',
   },
 
   /* --- bloc 1: el càlcul es fa al dispositiu ------------------------------ */

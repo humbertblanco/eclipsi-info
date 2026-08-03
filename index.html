@@ -162,6 +162,49 @@
         ]
       }
     </script>
+
+    <!-- Google Analytics (gtag.js), amb DUES defenses que aquest producte
+         exigeix i que NO s'han de treure a la lleugera:
+
+         1) MAI LA UBICACIÓ. L'adreça de l'app porta les coordenades de
+            l'usuari (?p=lat,lon): enviar page_location tal qual regalaria a
+            Google la posició exacta de cada visitant, i la promesa del peu
+            —«la teva ubicació no surt d'aquí»— es tornaria mentida. Es
+            retalla la consulta sencera i només viatgen origen, camí i
+            fragment (#/mapa…), que és el que de debò diu quina pantalla es
+            mira.
+
+         2) SENSE COOKIES NI SENYALS PUBLICITARIS. Consentiment denegat per
+            defecte (Consent Mode: pings sense cookie) i google_signals
+            fora: audiència agregada sense bàner de cookies ni perfilat.
+
+         El script extern no és al precache: sense xarxa simplement no
+         carrega i l'app no se n'assabenta. -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1KCV75E6K8"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('consent', 'default', {
+        analytics_storage: 'denied',
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied'
+      });
+      gtag('js', new Date());
+      function eclipsiPage() {
+        return location.origin + location.pathname + location.hash;
+      }
+      gtag('config', 'G-1KCV75E6K8', {
+        page_location: eclipsiPage(),
+        allow_google_signals: false,
+        allow_ad_personalization_signals: false
+      });
+      // Les pestanyes són rutes hash: cada canvi és una vista de pàgina,
+      // sempre amb l'adreça retallada.
+      addEventListener('hashchange', function () {
+        gtag('event', 'page_view', { page_location: eclipsiPage() });
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
