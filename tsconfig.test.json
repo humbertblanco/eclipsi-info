@@ -18,7 +18,19 @@
      * cridar res.
      */
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "types": ["node"],
+    /*
+     * `vite/client` hi és pels tests de `src/`: el codi que proven fa servir
+     * `import.meta.env` (la base de l'adreça) i importacions amb sufix `?raw`
+     * —el test d'acord de tessel·les llegeix `vite.config.ts` com a text per
+     * comparar-lo amb la plantilla d'URL—, i tots dos són contractes de Vite,
+     * no de Node. Sense això, els tests que viuen a `src/` es comprovarien
+     * contra un llenguatge diferent del de l'app que proven.
+     */
+    "types": ["node", "vite/client"],
+    /* Hi ha tests que importen components per llegir-ne constants exportades
+       (`ThreeEclipses`, `ARView`). Sense `jsx`, TypeScript ni pot obrir el
+       fitxer i els errors que en surten no parlen del problema real. */
+    "jsx": "react-jsx",
     "skipLibCheck": true,
 
     /* Els tests i els scripts els executen Vitest i tsx, que resolen els
@@ -38,5 +50,9 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["tests", "scripts", "vitest.config.ts"]
+  /*
+   * Els tests de `src/` també són d'aquí, no de `tsconfig.app.json`: vegeu-hi
+   * el perquè. Corren amb Vitest en entorn Node i poden llegir del disc.
+   */
+  "include": ["tests", "scripts", "vitest.config.ts", "src/**/*.test.ts"]
 }

@@ -10,11 +10,22 @@
  * zero xarxa en obrir, zero MapLibre al paquet inicial, i offline sencer —
  * la imatge va al precache del service worker com qualsevol altre actiu.
  *
- * ELS LÍMITS DE LA IMATGE SÓN CONSTANTS DE LA IMATGE. Surten del
- * `map.getBounds()` exacte del render que la va generar (fitBounds
- * [[-10,35],[5,44.5]] sobre un llenç 1440×1120): si mai es regenera la
- * imatge amb un altre enquadrament, aquests quatre números s'han de
- * regenerar amb ella o tot el que s'hi dibuixi quedarà desplaçat.
+ * ELS LÍMITS DE LA IMATGE SÓN CONSTANTS DE LA IMATGE, i viuen a
+ * `minimapFrame.ts` perquè el generador (`scripts/build-minimap.ts`) i aquest
+ * component els comparteixin en comptes de copiar-se'ls.
+ *
+ * DUES COSES QUE VAN FALLAR AQUÍ, i que expliquen per què el dibuix passa per
+ * `coverTransform` i per què hi ha una prova que mira els píxels de l'actiu:
+ *
+ *  1. LA IMATGE PUBLICADA ERA TRANSPARENT SENCERA. 1296×1008 píxels a
+ *     (0,0,0,0): es va coure en un navegador que encara no havia rebut cap
+ *     tessel·la, ningú no en va mirar els píxels i el que va arribar al camp
+ *     va ser un widget amb la franja surant damunt del no-res. El
+ *     `filter: brightness(1.9)` que hi havia per «il·luminar el CARTO fosc»
+ *     no podia fer res: 1,9 × 0 segueix sent 0.
+ *  2. LA BASE I ELS VECTORS NO S'HAURIEN ALINEAT MAI. El CSS pinta amb
+ *     `cover` (manté proporció i retalla) i el canvas estirava la caixa
+ *     geogràfica sencera contra l'element. Vegeu `minimapFrame.ts`.
  */
 
 import { useEffect, useMemo, useRef } from 'react';
@@ -22,23 +33,9 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { GeoLocation } from '../../core/astro/types';
 import { computeEclipsePath, type PathPoint } from '../../core/eclipses/path';
 import { readPalette, withAlpha } from '../../styles/palette';
-
-/** Límits Mercator de la imatge base. Provenança: vegeu la capçalera. */
-const WEST = -10.465101458180015;
-const EAST = 5.465101458177742;
-const SOUTH = 35;
-const NORTH = 44.5;
+import { coverTransform, minimapXY } from './minimapFrame';
 
 const BASE_SRC = `${import.meta.env.BASE_URL}brand/minimapa-iberia.png`;
-
-/** Projecció Y de Mercator (la X és lineal en longitud). */
-function mercY(latDeg: number): number {
-  const rad = (latDeg * Math.PI) / 180;
-  return Math.log(Math.tan(Math.PI / 4 + rad / 2));
-}
-
-const MERC_TOP = mercY(NORTH);
-const MERC_SPAN = MERC_TOP - mercY(SOUTH);
 
 /*
  * La franja de cada eclipsi, calculada UN COP per mòdul. El càlcul val
@@ -87,10 +84,11 @@ export function MiniMap({ eclipseId, location, label, onOpen }: Props) {
       ctx.clearRect(0, 0, width, height);
 
       const palette = readPalette();
-      const toXY = (pt: { lat: number; lon: number }): [number, number] => [
-        ((pt.lon - WEST) / (EAST - WEST)) * width,
-        ((MERC_TOP - mercY(pt.lat)) / MERC_SPAN) * height,
-      ];
+      // La MATEIXA geometria que el `cover` del CSS de sota: si no, la franja
+      // no cau damunt del mapa que ensenya la imatge.
+      const cover = coverTransform(width, height);
+      const toXY = (pt: { lat: number; lon: number }): [number, number] =>
+        minimapXY(pt, cover);
 
       const trace = (points: PathPoint[]) => {
         ctx.beginPath();

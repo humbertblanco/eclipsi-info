@@ -434,12 +434,24 @@
 /* La base, en capa pròpia per poder-la il·luminar amb `filter` sense tocar
    els vectors de sobre: el CARTO fosc encabit en 190 px era perceptualment
    negre i el widget semblava no dur mapa. */
+/*
+ * EL COP DE LLUM JA VE CUIT A LA IMATGE (scripts/build-minimap.ts).
+ *
+ * Aquí hi havia `filter: brightness(1.9) saturate(1.1)` per treure el CARTO
+ * fosc de la penombra a 190 px. Costava una capa de composició a cada pintada
+ * i, pitjor, amagava l'estat real de l'actiu: amb la imatge publicada
+ * transparent de dalt a baix, el filtre feia exactament el mateix que sense i
+ * ningú no va poder distingir «imatge fosca» de «imatge que no hi és».
+ *
+ * `cover` es queda, i el canvas de sobre hi dibuixa amb la mateixa geometria
+ * (vegeu `minimapFrame.ts`): és el que fa que la franja caigui damunt del
+ * mapa i no damunt d'una versió estirada seva.
+ */
 .home__minimapbase {
   position: absolute;
   inset: 0;
   background-size: cover;
   background-position: center;
-  filter: brightness(1.9) saturate(1.1);
 }
 
 .home__minimapcanvas {

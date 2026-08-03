@@ -23,5 +23,20 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  /*
+   * ELS TESTS NO SÓN CODI D'APLICACIÓ, i per això no es comproven aquí.
+   *
+   * Aquesta configuració declara `types: ["vite/client"]` i prou, que és el
+   * que ha de veure el codi que arriba al navegador: sense els tipus de Node,
+   * ningú no pot importar `node:fs` en un mòdul que s'empaqueta. El preu era
+   * que un test de `src/` que legítimament llegeix un fitxer del disc —el que
+   * mira els píxels de la imatge base del mini-mapa, per exemple— feia petar
+   * la comprovació de tipus de l'app encara que passés perfectament.
+   *
+   * Van a `tsconfig.test.json`, que ja té `types: ["node"]` i és on viuen els
+   * tests de `tests/` i els scripts. Se segueixen comprovant tots amb
+   * `tsc -b`: canvien de projecte, no desapareixen.
+   */
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }
