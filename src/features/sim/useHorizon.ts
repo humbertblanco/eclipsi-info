@@ -27,6 +27,7 @@ import {
   DEFAULT_RINGS,
   ringSignature,
   TERRESTRIAL_REFRACTION_K,
+  type HorizonProgressStatus,
 } from '../../core/horizon/raycast';
 import type {
   HorizonWorkerRequest,
@@ -50,14 +51,40 @@ export interface UseHorizonOptions {
   enabled?: boolean;
 }
 
+/**
+ * El canal de progrés parla amb CODIS, no amb frases fetes.
+ *
+ * Els tres primers estats vénen del nucli tal qual (`HorizonProgressStatus`);
+ * els altres dos són propis del hook: el perfil rescatat de la memòria cau i
+ * l'instant abans d'arrencar el Worker. Les paraules —en l'idioma de
+ * l'usuari— les posa `features/sim/strings.ts`, que és qui pinta.
+ */
+export type HorizonProgressCode =
+  | HorizonProgressStatus
+  | { stage: 'cache' }
+  | { stage: 'preparing' };
+
+/**
+ * La fallada, també com a codi més la causa.
+ *
+ * `detail` és el missatge tal com l'ha dit qui ha fallat (l'excepció del
+ * càlcul o l'ErrorEvent del Worker): la pantalla l'interpola dins d'una frase
+ * bilingüe en comptes d'ensenyar un genèric que amaga el motiu real.
+ */
+export interface HorizonError {
+  /** `compute`: el càlcul ha llançat. `worker`: el Worker ha petat sencer. */
+  code: 'compute' | 'worker';
+  detail: string | null;
+}
+
 export interface UseHorizonResult {
   profile: HorizonProfile | null;
   /** Progrés de 0 a 1. */
   progress: number;
-  /** Text de progrés en català, llest per ensenyar. */
-  progressMessage: string;
+  /** Codi de progrés; el text el posa `features/sim/strings.ts`. */
+  progressCode: HorizonProgressCode | null;
   loading: boolean;
-  error: string | null;
+  error: HorizonError | null;
   /** Cert si el perfil ha sortit de la memòria cau i no s'ha recalculat. */
   fromCache: boolean;
   /** Força el recàlcul ignorant la memòria cau. */
@@ -67,16 +94,16 @@ export interface UseHorizonResult {
 interface State {
   profile: HorizonProfile | null;
   progress: number;
-  progressMessage: string;
+  progressCode: HorizonProgressCode | null;
   loading: boolean;
-  error: string | null;
+  error: HorizonError | null;
   fromCache: boolean;
 }
 
 const IDLE: State = {
   profile: null,
   progress: 0,
-  progressMessage: '',
+  progressCode: null,
   loading: false,
   error: null,
   fromCache: false,
@@ -169,7 +196,7 @@ export function useHorizon(
           setState({
             profile: cached,
             progress: 1,
-            progressMessage: 'Horitzó recuperat de la memòria',
+            progressCode: { stage: 'cache' },
             loading: false,
             error: null,
             fromCache: true,
@@ -181,7 +208,7 @@ export function useHorizon(
       setState({
         profile: null,
         progress: 0,
-        progressMessage: 'Preparant el càlcul de l’horitzó…',
+        progressCode: { stage: 'preparing' },
         loading: true,
         error: null,
         fromCache: false,
@@ -192,20 +219,20 @@ export function useHorizon(
         setState({
           profile,
           progress: 1,
-          progressMessage: 'Horitzó llest',
+          progressCode: { stage: 'done' },
           loading: false,
           error: null,
           fromCache: false,
         });
       };
 
-      const fail = (message: string) => {
+      const fail = (code: HorizonError['code'], detail: string | null) => {
         setState({
           profile: null,
           progress: 0,
-          progressMessage: '',
+          progressCode: null,
           loading: false,
-          error: message,
+          error: { code, detail },
           fromCache: false,
         });
       };
@@ -221,7 +248,7 @@ export function useHorizon(
             rings: maxRangeKm === undefined ? undefined : clipRings(maxRangeKm),
             onProgress: (p) => {
               if (!cancelled && id === requestId.current) {
-                setState((s) => ({ ...s, progress: p.ratio, progressMessage: p.message }));
+                setState((s) => ({ ...s, progress: p.ratio, progressCode: p.status }));
               }
             },
           });
@@ -229,7 +256,7 @@ export function useHorizon(
           finish(profile);
         } catch (error) {
           if (cancelled || id !== requestId.current) return;
-          fail(error instanceof Error ? error.message : String(error));
+          fail('compute', error instanceof Error ? error.message : String(error));
         }
         return;
       }
@@ -253,22 +280,25 @@ export function useHorizon(
           setState((s) => ({
             ...s,
             progress: message.progress.ratio,
-            progressMessage: message.progress.message,
+            progressCode: message.progress.status,
           }));
         } else if (message.type === 'done') {
           finish(message.profile);
           worker?.terminate();
           worker = null;
         } else {
-          fail(message.message);
+          fail('compute', message.message);
           worker?.terminate();
           worker = null;
         }
       });
 
-      worker.addEventListener('error', () => {
+      worker.addEventListener('error', (event) => {
         if (cancelled || id !== requestId.current) return;
-        fail('El càlcul de l’horitzó ha fallat dins del worker.');
+        // Abans aquí hi havia una frase en català clavada al hook; ara el codi
+        // diu QUÈ ha passat (el Worker ha petat) i el detall, si el navegador
+        // el dona, viatja tal qual perquè la pantalla el pugui ensenyar.
+        fail('worker', event.message || null);
       });
 
       const request: HorizonWorkerRequest = {

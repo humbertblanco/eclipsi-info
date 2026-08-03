@@ -37,6 +37,17 @@ const STRINGS = {
     ca: 'El càlcul de l’alineació ha fallat.',
     es: 'El cálculo de la alineación ha fallado.',
   },
+  /*
+   * EL DETALL DE L'ERROR. Mateix patró que `src/offline/strings.ts`
+   * (`note.error`) i que el cercador de llocs: frase traduïda i la causa crua
+   * interpolada, perquè un «ha fallat» pelat no deixa distingir una xarxa
+   * caiguda d'un relleu corrupte. El text del worker és tècnic i pot arribar
+   * en català a una pantalla en castellà; val més això que cap pista.
+   */
+  'panel.failedDetail': {
+    ca: 'L’alineació ha fallat: {error}',
+    es: 'La alineación ha fallado: {error}',
+  },
   'panel.progressLabel': { ca: 'Progrés del càlcul', es: 'Progreso del cálculo' },
 
   /* --- etapes ------------------------------------------------------------ */

@@ -13,7 +13,7 @@
  * sentits:
  *
  *     hi ha avís de treure's el filtre  ⟺  kind = total
- *                                          i durada ≥ 20 s
+ *                                          i durada ≥ 40 s
  *                                          i el terreny no la tapa
  *
  * L'equivalència, i no la implicació, és el que importa: la implicació cap a
@@ -37,8 +37,25 @@ const C1 = Date.UTC(2026, 7, 12, 18, 30, 0);
 const C2 = Date.UTC(2026, 7, 12, 19, 30, 0);
 
 const KINDS: EclipseKind[] = ['none', 'partial', 'annular', 'total'];
-/** Zero vol dir sense C2 ni C3. La resta envolta el llindar dels vint segons. */
-const CENTRAL_SEC = [0, 1, 19, 20, 21, 100, 240];
+/**
+ * Zero vol dir sense C2 ni C3. La resta envolta el llindar real —un per sota,
+ * l'exacte, un per sobre— derivat de la constant mateixa, perquè si el llindar
+ * torna a moure's (ja va pujar de 20 a 40) la graella el segueixi sola en lloc
+ * de quedar-se provant un número que ja no decideix res. El 20 hi és a
+ * propòsit: era el llindar antic, i ha de continuar deixant la porta tancada
+ * per sempre; si mai la tornés a obrir, algú hauria desfet la pujada sense
+ * tocar aquest fitxer.
+ */
+const CENTRAL_SEC = [
+  0,
+  1,
+  20,
+  MIN_TOTALITY_FOR_FILTER_OFF_SEC - 1,
+  MIN_TOTALITY_FOR_FILTER_OFF_SEC,
+  MIN_TOTALITY_FOR_FILTER_OFF_SEC + 1,
+  100,
+  240,
+];
 const TERRAIN: (boolean | undefined)[] = [undefined, true, false];
 
 function contactsOf(centralSec: number): ContactTimesMs {

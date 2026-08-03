@@ -113,14 +113,33 @@ export function minSampleDistanceM(
  */
 export const ELEVATION_MISMATCH_THRESHOLD_M = 15;
 
+/**
+ * Codi d'estat del progrés, sense cap frase feta.
+ *
+ * Abans aquí viatjava un text en català ja compost («Baixant el relleu…»), i
+ * era un defecte doble: el nucli no toca el DOM i no li toca saber idiomes, i
+ * l'usuari que té l'app en castellà veia el progrés en català igualment. El
+ * codi és la dada —quina fase i quant en queda— i les paraules les posa qui
+ * pinta (`features/sim/strings.ts`, bilingüe).
+ */
+export interface HorizonProgressStatus {
+  stage: 'tiles' | 'trace' | 'done';
+  /** Tessel·les baixades, quan `stage` és `tiles`. */
+  done?: number;
+  /** Tessel·les totals, quan `stage` és `tiles`. */
+  total?: number;
+  /** Percentatge del traçat (0–100, sencer), quan `stage` és `trace`. */
+  pct?: number;
+}
+
 export interface HorizonProgress {
   phase: 'tiles' | 'raycast';
   /** Progrés global de 0 a 1. */
   ratio: number;
   loadedTiles: number;
   totalTiles: number;
-  /** Text llest per ensenyar a la interfície, en català. */
-  message: string;
+  /** Codi d'estat per a la interfície; el text el posa qui pinta. */
+  status: HorizonProgressStatus;
 }
 
 export interface RaycastOptions {
@@ -534,7 +553,7 @@ export async function computeHorizonProfile(
     ratio: 0,
     loadedTiles: 0,
     totalTiles: tiles.length,
-    message: `Baixant el relleu (0 de ${tiles.length} tessel·les)`,
+    status: { stage: 'tiles', done: 0, total: tiles.length },
   });
 
   // El pes de 0,9 no és arbitrari: la baixada domina el temps total (desenes de
@@ -549,7 +568,7 @@ export async function computeHorizonProfile(
         ratio: total === 0 ? TILE_PHASE_WEIGHT : (done / total) * TILE_PHASE_WEIGHT,
         loadedTiles: done,
         totalTiles: total,
-        message: `Baixant el relleu (${done} de ${total} tessel·les)`,
+        status: { stage: 'tiles', done, total },
       });
     },
   });
@@ -640,7 +659,7 @@ export async function computeHorizonProfile(
         ratio: TILE_PHASE_WEIGHT + (i / rays) * (1 - TILE_PHASE_WEIGHT),
         loadedTiles: result.loaded,
         totalTiles: tiles.length,
-        message: `Traçant l'horitzó (${Math.round((i / rays) * 100)} %)`,
+        status: { stage: 'trace', pct: Math.round((i / rays) * 100) },
       });
     }
 
@@ -697,7 +716,7 @@ export async function computeHorizonProfile(
     ratio: 1,
     loadedTiles: result.loaded,
     totalTiles: tiles.length,
-    message: 'Horitzó llest',
+    status: { stage: 'done' },
   });
 
   return {

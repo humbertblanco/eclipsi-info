@@ -62,9 +62,12 @@ export function SpotSearchPanel({
   showCost = import.meta.env.DEV,
   className,
 }: SpotSearchPanelProps) {
-  // `error` no es llegeix a posta: el que en surt és text del motor, en català
-  // i tècnic. A la pantalla hi va la frase traduïda de `panel.failed`.
-  const { status, progress, outcome, canSearch, search, cancel } = useSpotSearch({
+  // `error` porta el text cru del motor: tècnic i sovint en català. Durant un
+  // temps no es llegia a posta per no barrejar idiomes, però un «ha fallat»
+  // pelat no deixa distingir una xarxa caiguda d'un relleu corrupte. Es fa com
+  // a `OfflinePanel`: el títol traduït a dalt i la causa crua a sota, que val
+  // més una pista en l'idioma equivocat que cap pista.
+  const { status, progress, outcome, error, canSearch, search, cancel } = useSpotSearch({
     eclipseId,
     origin,
     options,
@@ -139,7 +142,16 @@ export function SpotSearchPanel({
         <p className="spotpanel__wait">{sp('panel.cancelled', locale)}</p>
       )}
 
-      {status === 'error' && <p className="spotpanel__error">{sp('panel.failed', locale)}</p>}
+      {status === 'error' && (
+        <>
+          <p className="spotpanel__error">{sp('panel.failed', locale)}</p>
+          {error !== null && (
+            <p className="spotpanel__error">
+              {sp('panel.failedDetail', locale, { error })}
+            </p>
+          )}
+        </>
+      )}
 
       {outcome && <SpotList outcome={outcome} locale={locale} onSelect={onSelect} />}
 

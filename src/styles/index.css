@@ -27,11 +27,28 @@
    dist/assets/ i queden servits pel mateix origen → funcionen offline i són
    cacheables per un service worker sense CORS ni cross-origin.
 
-   PER QUÈ IMPORTS PER SUBCONJUNT (`latin-*` / `latin-ext-*`) i no `400.css`:
-   els fitxers de nivell superior arrosseguen TOTS els subconjunts (ciríl·lic,
-   grec, vietnamita...). Amb `latin` + `latin-ext` cobrim el català complet
-   (à è é í ï ò ó ú ü ç, i el punt volat ·), el castellà i els topònims, i
-   evitem ~15 .woff2 que mai es faran servir dins el bundle offline.
+   PER QUÈ SUBCONJUNTS `latin` + `latin-ext` i no el paquet sencer:
+   els fitxers de nivell superior de fontsource arrosseguen TOTS els
+   subconjunts (ciríl·lic, grec, vietnamita...). Amb `latin` + `latin-ext`
+   cobrim el català complet (à è é í ï ò ó ú ü ç, i el punt volat ·), el
+   castellà i els topònims, i evitem ~15 fitxers que mai es faran servir
+   dins el bundle offline.
+
+   PER QUÈ @font-face A MÀ i no `@import '@fontsource/...css'`:
+   els CSS de fontsource (v5.3.0) declaren cada font amb DOS formats,
+   `woff2` + `woff`, com a xarxa de seguretat per a navegadors d'abans de
+   2016. Cap navegador que pugui executar aquesta app (React 19, service
+   worker) demanarà mai el woff: tots trien el woff2, que va primer a la
+   llista `src`. Però Vite no ho sap, veu els dos url() i copia els dos
+   fitxers a dist/assets/ → 336 kB de .woff morts que inflen la descàrrega
+   inicial del bundle offline. Com que fontsource no publica cap variant
+   CSS només-woff2, dupliquem aquí les seves declaracions —idèntiques
+   fil per randa (família, pes, estil, `font-display: swap`, mateix ordre
+   latin → latin-ext)— retallant només el fallback woff del `src`.
+
+   SI S'ACTUALITZA @fontsource: reviseu que els noms de fitxer dins
+   `files/` no hagin canviat; el build petarà amb "Rollup failed to
+   resolve" si es trenquen, o sigui que no pot fallar en silenci.
 
    PESOS: exactament els que declarava l'original —
    Space Grotesk 400/500/700 · IBM Plex Sans 400/500/600 + itàlica 400 ·
@@ -39,32 +56,14 @@
    cal afegir-lo aquí o el navegador el sintetitzarà (fals bold, lleig).
    --------------------------------------------------------------------------- */
 
-/* Space Grotesk — display / titulars (--font-display) */
-@import '@fontsource/space-grotesk/latin-400.css';
-@import '@fontsource/space-grotesk/latin-500.css';
-@import '@fontsource/space-grotesk/latin-700.css';
-@import '@fontsource/space-grotesk/latin-ext-400.css';
-@import '@fontsource/space-grotesk/latin-ext-500.css';
-@import '@fontsource/space-grotesk/latin-ext-700.css';
-
-/* IBM Plex Sans — text corregut (--font-body) */
-@import '@fontsource/ibm-plex-sans/latin-400.css';
-@import '@fontsource/ibm-plex-sans/latin-500.css';
-@import '@fontsource/ibm-plex-sans/latin-600.css';
-@import '@fontsource/ibm-plex-sans/latin-400-italic.css';
-@import '@fontsource/ibm-plex-sans/latin-ext-400.css';
-@import '@fontsource/ibm-plex-sans/latin-ext-500.css';
-@import '@fontsource/ibm-plex-sans/latin-ext-600.css';
-@import '@fontsource/ibm-plex-sans/latin-ext-400-italic.css';
-
-/* IBM Plex Mono — dades, comptes enrere, coordenades (--font-mono) */
-@import '@fontsource/ibm-plex-mono/latin-400.css';
-@import '@fontsource/ibm-plex-mono/latin-500.css';
-@import '@fontsource/ibm-plex-mono/latin-ext-400.css';
-@import '@fontsource/ibm-plex-mono/latin-ext-500.css';
-
 /* --------------------------------------------------------------------------
    TOKENS — ordre de cascada obligatori (vegeu la capçalera).
+
+   ELS @import VAN AQUÍ DALT, ABANS DE QUALSEVOL ALTRA REGLA. No és estil:
+   l'especificació de CSS descarta en silenci tot @import que vingui després
+   d'una regla qualsevol (un @font-face ja compta), i quan els imports dels
+   tokens van quedar per sota de les fonts, l'app SENCERA es va quedar sense
+   variables — pàgina en Times i sense un sol color. El navegador no avisa.
    -------------------------------------------------------------------------- */
 @import './tokens/colors.css';
 @import './tokens/typography.css';
@@ -72,3 +71,136 @@
 @import './tokens/elevation.css';
 @import './tokens/motion.css';
 @import './tokens/base.css';
+
+/* Space Grotesk — display / titulars (--font-display) */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('@fontsource/space-grotesk/files/space-grotesk-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('@fontsource/space-grotesk/files/space-grotesk-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('@fontsource/space-grotesk/files/space-grotesk-latin-700-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('@fontsource/space-grotesk/files/space-grotesk-latin-ext-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('@fontsource/space-grotesk/files/space-grotesk-latin-ext-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('@fontsource/space-grotesk/files/space-grotesk-latin-ext-700-normal.woff2') format('woff2');
+}
+
+/* IBM Plex Sans — text corregut (--font-body) */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url('@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400;
+  src: url('@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-400-italic.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-ext-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-ext-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url('@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-ext-600-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400;
+  src: url('@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-ext-400-italic.woff2') format('woff2');
+}
+
+/* IBM Plex Mono — dades, comptes enrere, coordenades (--font-mono) */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-ext-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-ext-500-normal.woff2') format('woff2');
+}
+

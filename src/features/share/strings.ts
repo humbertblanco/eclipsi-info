@@ -79,6 +79,15 @@ const STRINGS = {
     es: 'No se ha podido compartir. La dirección de la barra ya lleva el punto: cópiala.',
   },
   /*
+   * Quan encara no hi ha lloc triat, el botó no desapareix: es queda adormit
+   * amb aquesta frase al costat. Diu què falta i no pas què s'ha espatllat,
+   * perquè no s'ha espatllat res: només falta el lloc.
+   */
+  'button.unavailable': {
+    ca: 'Tria un lloc per poder compartir-lo',
+    es: 'Elige un lugar para poder compartirlo',
+  },
+  /*
    * El text que acompanya l'enllaç. Porta el nom del lloc perquè, a una
    * conversa de grup, un enllaç sol no diu on has quedat amb ningú.
    */

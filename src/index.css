@@ -42,11 +42,6 @@ body {
   margin-bottom: var(--sp-4);
 }
 
-.topbar__tabs {
-  display: flex;
-  gap: var(--sp-2);
-}
-
 .tab,
 .btn {
   min-height: var(--tap-min);
@@ -70,32 +65,8 @@ body {
   color: var(--text-accent);
 }
 
-.btn--primary {
-  background: var(--accent);
-  color: var(--on-accent);
-  border-color: transparent;
-  font-weight: var(--fw-semibold);
-}
-
-.btn--primary:hover {
-  background: var(--accent-hover);
-  box-shadow: var(--glow-corona);
-}
-
 .btn:disabled {
   opacity: 0.42;
-}
-
-.picker {
-  width: 100%;
-  min-height: var(--tap-min);
-  background: var(--bg-inset);
-  color: var(--text-primary);
-  border: var(--bw-hair) solid var(--border-hairline);
-  border-radius: var(--r-md);
-  padding: var(--sp-4);
-  font: var(--text-body-sm);
-  margin-bottom: var(--sp-5);
 }
 
 /* --- Text ---------------------------------------------------------------- */
@@ -222,45 +193,6 @@ body {
   color: var(--text-primary);
   font-size: var(--fs-data);
   font-weight: var(--fw-medium);
-}
-
-/* --- Taula de contactes -------------------------------------------------- */
-
-.contacts {
-  width: 100%;
-  margin-top: var(--sp-5);
-  border-collapse: collapse;
-  font: var(--text-body-sm);
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-.contacts td {
-  padding: var(--sp-3) var(--sp-2);
-  border-bottom: var(--bw-hair) solid var(--border-hairline);
-}
-
-.contacts__label {
-  color: var(--text-muted);
-  /* Amplada de la columna de noms de contacte (C1…C4), composta amb l'escala
-     perquè no hi hagi cap número solt: 64 + 8. */
-  width: calc(var(--sp-11) + var(--sp-3));
-  font-family: var(--font-body);
-}
-
-.contacts__time {
-  color: var(--text-primary);
-  font-weight: var(--fw-medium);
-}
-
-.contacts__alt,
-.contacts__az {
-  color: var(--text-secondary);
-  text-align: right;
-}
-
-.contacts--sunset td {
-  color: var(--status-partial);
 }
 
 /* --- Càmera -------------------------------------------------------------- */
@@ -410,36 +342,6 @@ body {
   width: 100%;
   accent-color: var(--accent);
   margin-top: var(--sp-2);
-}
-
-/* --- Progrés del càlcul del terreny -------------------------------------- */
-
-.horizonload {
-  margin: var(--sp-4) 0;
-}
-
-.horizonload__bar {
-  height: var(--sp-2);
-  background: var(--bg-inset);
-  border: var(--bw-hair) solid var(--border-hairline);
-  border-radius: var(--r-pill);
-  overflow: hidden;
-}
-
-.horizonload__fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: var(--r-pill);
-  transition: width var(--dur-base) var(--ease-standard);
-}
-
-.horizonload__msg {
-  display: block;
-  margin-top: var(--sp-2);
-  font: var(--text-overline);
-  letter-spacing: var(--ls-caps);
-  text-transform: uppercase;
-  color: var(--text-muted);
 }
 
 /* Text que actua com a botó sense semblar-ho: la ubicació a la vista de

@@ -43,7 +43,7 @@ import { parseCoords } from '../location/coords';
 import { usePlaceSearch } from '../location/usePlaceSearch';
 import type { Locale } from '../../i18n';
 import { al } from './strings';
-import { useAlignment } from './useAlignment';
+import { useAlignment, type UseAlignmentResult } from './useAlignment';
 import './align.css';
 
 /**
@@ -100,16 +100,28 @@ export function AlignPanel({
     };
   }, [target, summitText, aboveText]);
 
-  const { status, progress, outcome, terrainChecked, canSolve, solve, cancel } =
-    useAlignment({
-      eclipseId,
-      target: solvedTarget,
-      origin,
-      options: {
-        moment,
-        sunAboveTargetDeg: framing === 'resting' ? SUN_ANGULAR_RADIUS_DEG : 0,
-      },
-    });
+  /*
+    EL DETALL DE L'ERROR, PREPARAT PERÒ ENCARA ORFE.
+
+    El worker envia el missatge real de cada fallada (`alignment.worker.ts` el
+    posa a `message`), però `useAlignment` se'l calla: fixa l'estat a `error` i
+    llença el text — a diferència d'`useSpotSearch`, que el guarda. El hook no
+    es toca en aquesta tanda; el tipus s'eixampla amb un `error` opcional
+    perquè el dia que l'exposi, el detall surti a la pantalla sense tocar el
+    panell. Mentrestant `errorDetail` és sempre `null` i només es veu el títol
+    traduït.
+  */
+  const alignment: UseAlignmentResult & { error?: string | null } = useAlignment({
+    eclipseId,
+    target: solvedTarget,
+    origin,
+    options: {
+      moment,
+      sunAboveTargetDeg: framing === 'resting' ? SUN_ANGULAR_RADIUS_DEG : 0,
+    },
+  });
+  const { status, progress, outcome, terrainChecked, canSolve, solve, cancel } = alignment;
+  const errorDetail = alignment.error ?? null;
 
   const running = status === 'running';
   const text = outcome === null ? null : describeAlignment(outcome, locale);
@@ -244,7 +256,16 @@ export function AlignPanel({
       {status === 'cancelled' && (
         <p className="alignpanel__note">{al('panel.cancelled', locale)}</p>
       )}
-      {status === 'error' && <p className="alignpanel__error">{al('panel.failed', locale)}</p>}
+      {status === 'error' && (
+        <>
+          <p className="alignpanel__error">{al('panel.failed', locale)}</p>
+          {errorDetail !== null && (
+            <p className="alignpanel__error">
+              {al('panel.failedDetail', locale, { error: errorDetail })}
+            </p>
+          )}
+        </>
+      )}
 
       {text !== null && (
         <Card tone="inset" padding="var(--sp-4)" className="alignresult">

@@ -153,9 +153,15 @@ export function LocaleProvider({
   children,
   initialLocale,
 }: LocaleProviderProps): ReactElement {
-  const [locale, setLocaleState] = useState<Locale>(
-    () => initialLocale ?? detectLocale(),
-  );
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    const initial = initialLocale ?? detectLocale();
+    // El mateix gest que fa `setLocale`, però a l'arrencada: sense això, qui
+    // havia triat castellà tornava amb <html lang="ca"> fins que tocava el
+    // selector, i els lectors de pantalla pronunciaven el castellà en català.
+    // La guarda hi és perquè aquest mòdul també corre en tests sense DOM.
+    if (typeof document !== 'undefined') document.documentElement.lang = initial;
+    return initial;
+  });
 
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);

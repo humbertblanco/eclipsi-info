@@ -44,6 +44,10 @@ export interface Palette {
   sun200: string;
   sun400: string;
 
+  /* Corona — la llum. No és accent: és el to dels traços que assenyalen sense
+     cridar (la línia central del mapa, per exemple). */
+  corona100: string;
+
   /* Semàntics de visibilitat: la dada central del producte */
   statusClear: string;
   statusPartial: string;
@@ -59,9 +63,13 @@ export interface Palette {
 /**
  * Valors de reserva.
  *
- * Han de coincidir amb `src/styles/tokens/colors.css`. Només s'usen fora del
- * navegador —tests i workers—, on no hi ha document del qual llegir. Si algun
- * dia divergeixen, el que mana és el CSS: aquí no es decideix res.
+ * Han de CALCAR els tokens de `src/styles/tokens/` (colors.css i
+ * typography.css), valor per valor. Només s'usen fora del navegador —tests i
+ * workers—, on no hi ha document del qual llegir; si divergeixen, els tests
+ * validen colors que al producte ja no existeixen i les regressions passen de
+ * llarg. Ja va passar: `--text-muted` va pujar de --slate-400 a --slate-350
+ * per contrast AA i aquest fitxer es va quedar enrere. El que mana és el CSS:
+ * aquí no es decideix res, només s'hi copia.
  */
 const FALLBACK: Palette = {
   bgPage: '#05060B',
@@ -73,12 +81,17 @@ const FALLBACK: Palette = {
   textPrimary: '#FBF8F1',
   textBody: '#C9D1E2',
   textSecondary: '#9AA5BC',
-  textMuted: '#6E7A94',
+  // --slate-350: mig pas afegit a colors.css perquè el text apagat passi AA
+  // sobre targeta. NO és --slate-400 (aquell viu a statusCloudy, que és color
+  // de dada, no de text).
+  textMuted: '#7D89A2',
 
   accent: '#FFA51F',
   accentHover: '#FFC257',
   sun200: '#FFE0A8',
   sun400: '#FFC257',
+
+  corona100: '#F5F0E4',
 
   statusClear: '#2FD3A3',
   statusPartial: '#FFA51F',
@@ -87,7 +100,9 @@ const FALLBACK: Palette = {
   statusInfo: '#4FA8E8',
 
   fontMono: "'IBM Plex Mono', ui-monospace, monospace",
-  fontBody: "'IBM Plex Sans', system-ui, sans-serif",
+  // typography.css diu 'Helvetica Neue', no system-ui: la reserva ha de dir
+  // el mateix perquè un canvas de test mesuri text amb la mateixa lletra.
+  fontBody: "'IBM Plex Sans', 'Helvetica Neue', sans-serif",
 };
 
 /** Correspondència entre els camps de la paleta i els tokens del sistema. */
@@ -107,6 +122,8 @@ const TOKENS: Record<keyof Palette, string> = {
   accentHover: '--accent-hover',
   sun200: '--sun-200',
   sun400: '--sun-400',
+
+  corona100: '--corona-100',
 
   statusClear: '--status-clear',
   statusPartial: '--status-partial',

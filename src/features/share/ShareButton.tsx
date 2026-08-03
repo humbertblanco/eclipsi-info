@@ -66,7 +66,21 @@ export function ShareButton({
 }: ShareButtonProps) {
   const [state, setState] = useState<State>('idle');
 
-  if (location === null || circumstances === null) return null;
+  // Sense lloc ni circumstàncies no hi ha res a compartir, però desaparèixer
+  // en silenci feia semblar que el botó no existia o que s'havia perdut. Es
+  // deixa a la vista, deshabilitat de veritat (l'atribut arriba al <button>
+  // natiu), i el text del costat diu què falta perquè torni a viure. Sense
+  // `onClick`: el flux de compartir no es pot disparar ni per accident.
+  if (location === null || circumstances === null) {
+    return (
+      <div className={className}>
+        <Button variant="ghost" icon="share-2" disabled>
+          {sh('button.share', locale)}
+        </Button>
+        <p className="screen__note">{sh('button.unavailable', locale)}</p>
+      </div>
+    );
+  }
 
   const url = new URL(
     buildShareLink({ lat: location.lat, lon: location.lon, eclipseId, label }),

@@ -42,6 +42,18 @@ const STRINGS = {
     ca: 'El càlcul dels llocs ha fallat.',
     es: 'El cálculo de los sitios ha fallado.',
   },
+  /*
+   * EL DETALL DE L'ERROR. Un «ha fallat» pelat no deixa distingir una xarxa
+   * caiguda d'un relleu corrupte, i el missatge real ja el guarda
+   * `useSpotSearch`. El patró és el d'`src/offline/strings.ts` (`note.error`):
+   * frase traduïda i la causa crua interpolada. El text del motor pot arribar
+   * en català a una pantalla en castellà; és tècnic, i val més una pista en
+   * l'idioma equivocat que cap pista.
+   */
+  'panel.failedDetail': {
+    ca: 'El cercador ha fallat: {error}',
+    es: 'El buscador ha fallado: {error}',
+  },
   'panel.progressLabel': { ca: 'Progrés de la cerca', es: 'Progreso de la búsqueda' },
   /*
    * AVÍS DE DADES. La cerca baixa desenes de megabytes de relleu i al camp

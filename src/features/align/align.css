@@ -26,27 +26,27 @@
 
 .alignpanel__title {
   margin: 0;
-  font: var(--type-title-sm);
-  color: var(--text-strong);
+  font: var(--text-title-3);
+  color: var(--text-primary);
 }
 
 .alignpanel__lead {
   margin: var(--sp-2) 0 0;
   color: var(--text-muted);
-  font: var(--type-body-sm);
+  font: var(--text-body-sm);
   max-width: 46ch;
 }
 
 .alignpanel__note {
   margin: 0;
   color: var(--text-muted);
-  font: var(--type-body-sm);
+  font: var(--text-body-sm);
 }
 
 .alignpanel__error {
   margin: 0;
   color: var(--status-danger);
-  font: var(--type-body-sm);
+  font: var(--text-body-sm);
 }
 
 /* ------------------------------------------------------------- formulari */
@@ -71,13 +71,13 @@
   gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-4);
   border: var(--bw-hair) solid var(--border-hairline);
-  border-radius: var(--radius-md);
-  background: var(--surface-inset);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
 }
 
 .alignpanel__chosenname {
   margin: 0;
-  color: var(--text-strong);
+  color: var(--text-primary);
 }
 
 /* ------------------------------------------------------------ tria del cim */
@@ -104,12 +104,12 @@
 .alignpicker__hit {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--sp-1);
   width: 100%;
   min-height: var(--tap-min);
   padding: var(--sp-2) var(--sp-3);
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-sm);
   background: transparent;
   color: var(--text-body);
   text-align: left;
@@ -118,16 +118,16 @@
 
 .alignpicker__hit:hover,
 .alignpicker__hit:focus-visible {
-  background: var(--surface-inset);
+  background: var(--bg-inset);
 }
 
 .alignpicker__hitname {
-  color: var(--text-strong);
+  color: var(--text-primary);
 }
 
 .alignpicker__hitdetail {
   color: var(--text-muted);
-  font: var(--type-body-sm);
+  font: var(--text-body-sm);
 }
 
 .alignpicker__coords {
@@ -151,9 +151,9 @@
  * del cercador de llocs: informa, no és ni una acció ni un veredicte.
  */
 .alignprogress {
-  height: 4px;
-  border-radius: 2px;
-  background: var(--surface-inset);
+  height: var(--sp-2);
+  border-radius: var(--r-pill);
+  background: var(--bg-inset);
   overflow: hidden;
 }
 
@@ -161,7 +161,7 @@
   display: block;
   height: 100%;
   background: var(--status-info);
-  transition: width var(--motion-fast) linear;
+  transition: width var(--dur-fast) linear;
 }
 
 /* -------------------------------------------------------------- resultat */
@@ -174,13 +174,13 @@
 
 .alignresult__headline {
   margin: 0;
-  color: var(--text-strong);
+  color: var(--text-primary);
 }
 
 .alignresult__line {
   margin: 0;
   color: var(--text-body);
-  font: var(--type-body-sm);
+  font: var(--text-body-sm);
 }
 
 .alignresult__meta {
@@ -192,12 +192,12 @@
 
 .alignresult__meta dt {
   color: var(--text-muted);
-  font: var(--type-body-sm);
+  font: var(--text-body-sm);
 }
 
 .alignresult__meta dd {
   margin: 0;
-  color: var(--text-strong);
+  color: var(--text-primary);
 }
 
 /*
@@ -211,7 +211,7 @@
   margin: 0;
   padding-left: var(--sp-4);
   color: var(--text-muted);
-  font: var(--type-body-sm);
+  font: var(--text-body-sm);
 }
 
 .alignresult__actions {
@@ -223,5 +223,5 @@
 
 .alignresult__map {
   color: var(--text-muted);
-  font: var(--type-body-sm);
+  font: var(--text-body-sm);
 }
