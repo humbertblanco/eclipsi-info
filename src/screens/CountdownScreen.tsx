@@ -12,6 +12,7 @@ import {
   type Tone,
 } from '../ui';
 import { SimulationView } from '../features/sim/SimulationView';
+import { MiniMap } from '../features/map/MiniMap';
 import { ClockDriftNotice } from '../features/clock';
 import { ShareButton } from '../features/share';
 import { CountdownView } from '../features/countdown';
@@ -376,6 +377,18 @@ export function CountdownScreen({
           circumstances={circumstances}
           profile={horizon}
           verdict={verdict}
+        />
+
+        {/*
+          EL MINI-MAPA: on és la franja i on ets tu, d'un cop d'ull i sense
+          MapLibre — imatge base cuita + canvas (vegeu MiniMap.tsx). És una
+          porta al mapa de debò, no un mapa: per això és un botó.
+        */}
+        <MiniMap
+          eclipseId={eclipseId}
+          location={location}
+          label={s('home.minimap', locale)}
+          onOpen={onOpenMap}
         />
 
         {/*

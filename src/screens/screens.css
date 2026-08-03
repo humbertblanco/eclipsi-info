@@ -406,6 +406,51 @@
   position: relative;
 }
 
+/* --- El mini-mapa de la portada ------------------------------------------
+   Imatge base cuita + canvas per sobre (MiniMap.tsx). És un BOTÓ que obre el
+   mapa: cursor, focus del sistema i res d'arrossegar — un mapa que llisca
+   dins d'una pàgina que llisca és el problema que la pestanya del mapa ja
+   va resoldre quedant-se fixa. L'alçada és constant de composició, com les
+   dels llenços del cel. */
+.home__minimap {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: calc(var(--sp-13) + var(--sp-11));
+  padding: 0;
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-lg);
+  background-color: var(--bg-inset);
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.home__minimap:hover {
+  border-color: var(--border-subtle);
+}
+
+.home__minimapcanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.home__minimapcredit {
+  position: absolute;
+  right: var(--sp-3);
+  bottom: var(--sp-2);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-body);
+  text-transform: none;
+  color: var(--text-muted);
+  background: var(--bg-scrim);
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-xs);
+}
+
 /* L'aparador de la càmera: la frase que ven el botó primari de sota. Curta,
    secundària i enganxada a l'acció — no és un avís, és un argument. */
 .home__camerapitch {

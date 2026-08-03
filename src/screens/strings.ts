@@ -136,6 +136,10 @@ const STRINGS = {
    * fantasma i no en ambre — l'accent del compte enrere ja el té la durada
    * visible — i només surt quan hi ha segons a recuperar de debò.
    */
+  'home.minimap': {
+    ca: 'Obre el mapa de la franja',
+    es: 'Abre el mapa de la franja',
+  },
   'home.findSpot': {
     ca: 'Busca un lloc millor a prop',
     es: 'Busca un sitio mejor cerca',
