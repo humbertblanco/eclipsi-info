@@ -20,7 +20,7 @@ import { ConnectionBadge } from './ConnectionBadge';
 import { installHint } from './ios';
 import { formatBytes, planPrepare } from './plan';
 import { defaultPlaceLabel, type PreparePhase } from './prepare';
-import { os, type OfflineStringKey } from './strings';
+import { os, prepareFailureText, type OfflineStringKey } from './strings';
 import { useOfflineInventory } from './useOfflineInventory';
 import { useOnlineStatus } from './useOnlineStatus';
 import { usePrepare } from './usePrepare';
@@ -222,9 +222,16 @@ export function OfflinePanel({
             </div>
           )}
 
+          {/*
+            EL MOTIU, TRADUÏT. Abans s'hi interpolava el `message` cru de
+            `prepare.ts`, que era català: la frase de fora sortia en castellà i
+            el motiu de dins —«Comprova la connexió», l'única part
+            accionable— en català. Ara és un codi i el text surt de
+            `strings.ts`, com les fases del progrés.
+          */}
           {prepare.error && (
             <p className="off-note off-note--danger">
-              {os('note.error', locale, { error: prepare.error })}
+              {prepareFailureText(prepare.error, locale)}
             </p>
           )}
 

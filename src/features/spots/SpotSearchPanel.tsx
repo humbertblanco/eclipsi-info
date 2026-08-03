@@ -30,7 +30,7 @@ import { Button, Card } from '../../ui';
 import { SpotFunnelCost } from './SpotFunnelCost';
 import { SpotList } from './SpotList';
 import { formatPercent } from './format';
-import { sp } from './strings';
+import { sp, spotSearchFailureText } from './strings';
 import { useSpotSearch } from './useSpotSearch';
 import './spots.css';
 
@@ -172,10 +172,17 @@ export function SpotSearchPanel({
       {status === 'error' && (
         <>
           <p className="spotpanel__error">{sp('panel.failed', locale)}</p>
+          {/*
+            EL MOTIU, TRADUÏT.
+
+            Abans aquí s'hi interpolava el `message` cru del motor, escrit en
+            català dins de `core/spots/search.ts`: la frase de fora sortia en
+            castellà i el motiu —«Comprova la connexió», l'única part
+            accionable— en català. Ara el motiu és un codi i el text surt de
+            `strings.ts`, com l'etapa del progrés.
+          */}
           {error !== null && (
-            <p className="spotpanel__error">
-              {sp('panel.failedDetail', locale, { error })}
-            </p>
+            <p className="spotpanel__error">{spotSearchFailureText(error, locale)}</p>
           )}
         </>
       )}

@@ -1,0 +1,216 @@
+/* ============================================================================
+   Els controls de la línia de temps.
+
+   Només tokens de `src/styles/tokens/`: cap hexadecimal, cap píxel escrit a mà
+   fora dels dos casos comentats. L'ambre no surt d'aquí enlloc — el porta la
+   via de `RangeSlider`, que és qui té dret a dir «temps transcorregut», i el
+   raonament sencer és a la capçalera de `TimelineControls.tsx`.
+
+   L'AMPLADA DE REFERÈNCIA SÓN 390 px, que és l'iPhone estret amb què es mira
+   aquesta app a fora. Res d'aquí no té amplada mínima: les cinc files són
+   columnes que s'estiren, i l'única que podria no cabre —les pastilles de
+   contacte— baixa de línia en comptes d'escurçar-se. Una pastilla que digués
+   «C…» no seria una pastilla.
+   ========================================================================== */
+
+.simclock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* ------------------------------------------------------------- la barra --- */
+
+/*
+ * EL GEST: transport i hora a dalt, barra a sota.
+ *
+ * LA BARRA SEMPRE OCUPA LA SEVA PRÒPIA LÍNIA, i no és una concessió al mòbil:
+ * aquest component viu dins d'una columna de ~410 px tant a l'iPhone com a
+ * l'escriptori (el compte enrere és de dues columnes), o sigui que una
+ * consulta de mitjans sobre l'AMPLADA DE FINESTRA hi menteix — es va provar i
+ * a 1482 px de finestra deixava l'hora sola en una tercera línia, penjada a la
+ * dreta. Amb la barra a la seva línia, la forma és la mateixa a totes les
+ * amplades: «▶ … 20:28:33» a dalt, que és el que es reconeix sense llegir, i
+ * el recorregut sencer a sota, prou llarg per arrossegar-lo amb el dit.
+ */
+.simclock__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+}
+
+.simclock__scrub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  flex: 1 1 100%;
+  order: 3;
+  min-width: 0;
+}
+
+/*
+ * LA CONFIGURACIÓ, a sota i més apagada: de quin món és l'hora i a quina
+ * velocitat corre. Es tria un cop; no ha de competir amb el que es toca.
+ */
+.simclock__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.simclock__mode {
+  flex: 0 1 auto;
+}
+
+.simclock__rate {
+  flex: 1 1 auto;
+  max-width: 22rem;
+}
+
+/*
+ * En temps real la velocitat no vol dir res, però el forat no es col·lapsa:
+ * amagar-la del tot faria que la barra canviés d'alçada en commutar de món i
+ * que el commutador de mode saltés de sota el dit just quan s'acaba de prémer.
+ */
+.simclock__rate--idle {
+  visibility: hidden;
+}
+
+
+/* ------------------------------------------------------------- la lectura --- */
+
+/*
+ * L'hora i la frase que diu de quin món és.
+ *
+ * `align-items: baseline` i no `center`: el rellotge és de 26 px i la frase de
+ * 14, i centrats verticalment la frase sura. Amb la línia de base compartida
+ * es llegeixen com una sola frase, que és el que són.
+ */
+.simclock__read {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-3);
+  margin: 0;
+}
+
+.simclock__clock {
+  font-family: var(--font-mono);
+  font-size: var(--fs-title-2);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-data);
+  /* Xifres de la mateixa amplada: sense això, l'hora balla horitzontalment a
+     cada segon durant la reproducció i no es pot llegir de reüll. */
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.simclock__note {
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+/*
+ * EL PUNT DE «EN DIRECTE».
+ *
+ * Verd d'estat (--status-clear) i no ambre: l'ambre d'aquesta fila ja és el
+ * temps transcorregut de la barra. El verd aquí no vol dir «bo» sinó «viu», i
+ * és el mateix codi que fa servir tothom per dir-ho, cosa que en aquest cas és
+ * un argument i no una excusa: la convenció és el que fa que s'entengui sense
+ * llegir.
+ *
+ * En simulació el punt NO desapareix, es buida. Si desaparegués, la fila
+ * canviaria d'amplada en commutar i l'hora saltaria de lloc.
+ */
+.simclock__dot {
+  width: var(--sp-3);
+  height: var(--sp-3);
+  border-radius: var(--r-pill);
+  border: var(--bw-hair) solid var(--border-strong);
+  background: transparent;
+  /* La línia de base d'un element buit cau a la seva vora inferior: el
+     desplaçament el torna a l'altura de les xifres. */
+  transform: translateY(-1px);
+}
+
+.simclock__read--live .simclock__dot {
+  background: var(--status-clear);
+  border-color: var(--status-clear);
+}
+
+.simclock__read--live .simclock__note {
+  color: var(--status-clear);
+}
+
+/*
+ * La pulsació només per a qui no ha demanat menys moviment.
+ *
+ * NO es fa amb `--dur-*`: aquells tokens col·lapsen a 1 ms amb
+ * `prefers-reduced-motion`, i una animació infinita d'un mil·lisegon no és una
+ * animació aturada, és un parpelleig. La consulta ha d'envoltar la regla
+ * sencera. Ja va passar en algun altre lloc de l'app i es paga en epilèpsia,
+ * no en estètica.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .simclock__read--live .simclock__dot {
+    animation: simclock-live 2s var(--ease-standard) infinite;
+  }
+}
+
+@keyframes simclock-live {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* --------------------------------------------------------- els contactes --- */
+
+/*
+ * ELS CONTACTES PENGEN DE LA BARRA, i per això van dins de `__scrub`: són
+ * posicions D'AQUELLA barra, no una llista a part. Repartits per l'amplada
+ * amb `space-between`, cauen aproximadament sota el tram que representen —C1
+ * a l'esquerra, C4 a la dreta— i el conjunt es llegeix com una regla graduada
+ * en comptes de com cinc etiquetes soltes.
+ */
+.simclock__contacts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+/* ---------------------------------------------------------- el transport --- */
+
+/*
+ * ELS TRES BOTONS, JUNTS I A L'ESQUERRA.
+ *
+ * Abans el del mig portava `margin-inline: auto` i els repartia per tota
+ * l'amplada de la fila: el de reproduir quedava sol al centre d'una franja
+ * buida i no es llegia com un transport sinó com tres botons sense relació.
+ * Junts, el grup ÉS la forma que tothom reconeix sense llegir cap etiqueta, i
+ * el polze els troba tots tres sense recórrer la pantalla.
+ */
+.simclock__transport {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 0 0 auto;
+}
+
+/* El de reproduir mana dins del grup: és el que es busca amb la vista. */
+.simclock__play {
+  color: var(--text-primary);
+}
+
+.simclock__read {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+}

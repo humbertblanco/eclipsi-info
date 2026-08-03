@@ -1,13 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { computeLocalCircumstances, findSunset } from '../../core/astro/contacts';
 import { STANDARD_ATMOSPHERE } from '../../core/astro/constants';
 import type { GeoLocation } from '../../core/astro/types';
 import { getEclipse } from '../../core/eclipses/catalog';
 import { horizonSampler, type HorizonProfile } from '../../core/horizon/profile';
 import { computeVisibility } from '../../core/visibility/verdict';
+import { sampleIndexForTime, timelineFromContacts } from '../../core/timeline';
 import { renderEclipseSky } from './renderSky';
 import { renderTrajectory } from './renderTrajectory';
-import { TRAJECTORY_SAMPLES, trajectorySamples } from './samples';
+import { trajectorySamples } from './samples';
+import { TimelineControls } from './TimelineControls';
+import { useSimulationClock } from './useSimulationClock';
 import {
   formatObscurationPercent,
   partialCaveat,
@@ -86,13 +89,57 @@ export function SimulationView({ location, eclipseId, locale, horizon }: Props) 
     [circumstances, horizon, samples],
   );
 
-  // Posició de la línia temporal, de 0 a 1 sobre l'interval C1-C4.
-  const [progress, setProgress] = useState(0.5);
+  /*
+   * LA LÍNIA DE TEMPS JA NO ÉS D'AQUESTA PANTALLA.
+   *
+   * Aquí hi havia un `progress` de 0 a 1 i un `input[type=range]` cru. Movia el
+   * cel dibuixat i prou: no reproduïa, no tenia velocitats, no sabia dir si
+   * l'hora que ensenyava era l'hora que és o una hora inventada, i no se'l
+   * podia endur cap altra pantalla —el mapa i la vista de càmera n'haurien
+   * hagut de fer una còpia, i llavors ja hi hauria tres definicions de «quin
+   * instant s'està mirant». Ara l'estat viu a `core/timeline` (provat a Node,
+   * els casos lletjos inclosos: el final durant la reproducció, el canvi de
+   * velocitat a mig camí i el fotograma gegant de la pestanya que torna de
+   * segon pla) i els botons a `TimelineControls`.
+   */
+  const { window: timelineWindow, marks } = useMemo(() => {
+    const { c1, c2, max, c3, c4 } = circumstances.contacts;
+    const at = (sample?: { time: Date }): number | undefined => sample?.time.getTime();
+    return timelineFromContacts({
+      c1: at(c1),
+      c2: at(c2),
+      max: max.time.getTime(),
+      c3: at(c3),
+      c4: at(c4),
+    });
+  }, [circumstances]);
 
-  const current = useMemo(() => {
-    const idx = Math.round(progress * (samples.length - 1));
-    return samples[Math.max(0, Math.min(samples.length - 1, idx))];
-  }, [progress, samples]);
+  const clock = useSimulationClock({
+    window: timelineWindow,
+    marks,
+    // AQUESTA PANTALLA ÉS LA SIMULACIÓ i per això és l'única que no s'obre en
+    // temps real: fer-ho ensenyaria un cel sense eclipsi fins d'aquí a un any.
+    // S'obre al màxim, que és l'instant que la persona ha vingut a veure —i és
+    // el mateix lloc on queia el 0,5 de la barra d'abans.
+    initialSource: 'sim',
+    initialTimeMs: circumstances.contacts.max.time.getTime(),
+  });
+
+  // De l'instant a la mostra precalculada. La conversió és de `core/timeline`
+  // perquè la barra i la corba comparteixen graella a posta (vegeu `samples.ts`)
+  // i el marcador ha de caure damunt d'una mostra, no entre dues.
+  const current = useMemo(
+    () =>
+      samples[
+        sampleIndexForTime(
+          clock.timeMs,
+          timelineWindow.startMs,
+          timelineWindow.endMs,
+          samples.length,
+        )
+      ],
+    [clock.timeMs, samples, timelineWindow],
+  );
 
   const skyRef = useRef<HTMLCanvasElement>(null);
   const trajRef = useRef<HTMLCanvasElement>(null);
@@ -216,18 +263,11 @@ export function SimulationView({ location, eclipseId, locale, horizon }: Props) 
 
       <canvas ref={skyRef} className="canvas canvas--sky" />
 
-      <input
-        className="scrub"
-        type="range"
-        min={0}
-        max={1}
-        step={1 / TRAJECTORY_SAMPLES}
-        value={progress}
-        onChange={(e) => setProgress(Number(e.target.value))}
-        aria-label={s('sim.timeline', locale)}
-      />
+      <TimelineControls clock={clock} locale={locale} />
+
+      {/* L'hora ja la diu `TimelineControls`, i amb ella si és simulada o real.
+          Aquí només queden les tres xifres del Sol en aquell instant. */}
       <div className="scrub__readout">
-        <strong>{formatClock(current.time, locale)}</strong>
         <span>
           {s('sim.readoutAlt', locale, {
             deg: `${formatDecimal(current.sun.altitudeApparent, 2, locale)}°`,

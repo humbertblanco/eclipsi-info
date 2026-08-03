@@ -14,6 +14,7 @@ import { VitePWA } from 'vite-plugin-pwa'
  */
 const CACHE_TERRAIN = 'eclipsi-relleu-v1'
 const CACHE_BASEMAP = 'eclipsi-mapa-v1'
+const CACHE_DATA = 'eclipsi-dades-v1'
 
 /** Un any. El terreny i la cartografia base no canvien en escales humanes. */
 const ONE_YEAR_S = 60 * 60 * 24 * 365
@@ -166,6 +167,42 @@ export default defineConfig(({ command }) => ({
                 maxAgeSeconds: ONE_YEAR_S,
                 purgeOnQuotaError: true,
               },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            /*
+             * ELS NOSTRES CATÀLEGS DE `public/data/`: miradors d'OSM,
+             * climatologia de núvols. Són fitxers nostres i podrien anar al
+             * precache afegint `json` als `globPatterns`, però NO hi van a
+             * posta: pesen centenars de kB i només els necessita qui encén
+             * aquelles capes del mapa. Al precache els pagaria tothom, en la
+             * primera visita i abans de veure res.
+             *
+             * `StaleWhileRevalidate` i no `CacheFirst` perquè, a diferència
+             * d'una tessel·la, aquests fitxers els regenerem nosaltres: qui
+             * els tingui desats els segueix veient a l'instant (i sense
+             * cobertura), i la versió nova entra silenciosament a la següent
+             * visita amb xarxa.
+             *
+             * Ho vigila `src/offline/budget.test.ts`: cap fitxer de `public/`
+             * pot quedar sense precache ni regla. Un JSON orfe no dona error
+             * ni avís — al camp l'usuari només veu una capa que no hi és.
+             */
+            urlPattern: /\/data\/[^/]+\.json$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: CACHE_DATA,
+              /*
+               * SENSE `purgeOnQuotaError`, i és a posta. Aquella opció no poda:
+               * esborra el calaix SENCER. Per a les tessel·les és una decisió
+               * defensable —n'hi ha milers i es tornen a baixar—, però aquests
+               * catàlegs pesen kilobytes, són el que fa possible una capa
+               * sencera i, un cop esborrats sense cobertura, no tornen. Si la
+               * quota s'omple, val més que el navegador es mengi els calaixos
+               * de tessel·les, que és on són els megabytes.
+               */
+              expiration: { maxEntries: 24, maxAgeSeconds: ONE_YEAR_S },
               cacheableResponse: { statuses: [0, 200] },
             },
           },

@@ -349,7 +349,11 @@ async function main(): Promise<void> {
     onProgress: (progress) => {
       if (progress.stage === lastStage) return;
       lastStage = progress.stage;
-      console.log(`  · ${progress.message}`);
+      // El nucli ja no envia prosa: envia el codi d'etapa (vegeu
+      // `core/spots/types.ts`). Aquest script mesura, no parla amb ningú, i
+      // per això escriu el codi tal qual en comptes de demanar-ne la frase a
+      // la capa de vista.
+      console.log(`  · ${progress.stage}`);
     },
   });
 

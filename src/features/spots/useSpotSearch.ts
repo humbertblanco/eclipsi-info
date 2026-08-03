@@ -21,6 +21,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GeoLocation } from '../../core/astro/types';
 import type { SpotSearchOutcome, SpotSearchProgress } from '../../core/spots/types';
+import {
+  toSpotSearchFailure,
+  type SpotSearchErrorCode,
+} from '../../core/spots/errors';
 import type {
   SpotsWorkerOptions,
   SpotsWorkerRequest,
@@ -28,6 +32,22 @@ import type {
 } from '../../workers/spots.worker';
 
 export type SpotSearchStatus = 'idle' | 'running' | 'done' | 'error' | 'cancelled';
+
+/**
+ * Per què s'ha aturat, com a CODI.
+ *
+ * Els quatre primers vénen del motor tal qual (`SpotSearchErrorCode`); els dos
+ * últims són propis d'aquest hook, que és qui sap del Worker: `worker` és que
+ * ha petat sencer, `no-worker` és que aquest navegador no en té. Exactament la
+ * mateixa forma que `HorizonProgressCode` (codis del nucli + codis del hook),
+ * perquè hi hagi UNA manera de fer això i no dues.
+ *
+ * ABANS AQUÍ HI HAVIA UN `string`. Hi arribava el `message` del motor —català
+ * escrit dins de `core/spots/search.ts`— i també dues frases catalanes
+ * clavades en aquest fitxer. Tot plegat es pintava dins d'una frase traduïda,
+ * i la meitat de la línia sortia en l'idioma equivocat.
+ */
+export type SpotSearchFailureCode = SpotSearchErrorCode | 'worker' | 'no-worker';
 
 export interface UseSpotSearchParams {
   eclipseId: string;
@@ -43,8 +63,8 @@ export interface UseSpotSearchResult {
   progress: SpotSearchProgress | null;
   /** Resultats i cost de l'última cerca acabada. */
   outcome: SpotSearchOutcome | null;
-  /** Missatge en català, llest per pintar. `null` si no hi ha hagut cap error. */
-  error: string | null;
+  /** Codi de la fallada; el text el posa `features/spots/strings.ts`. */
+  error: SpotSearchFailureCode | null;
   /** Cert quan es pot demanar una cerca ara mateix. */
   canSearch: boolean;
   search: () => void;
@@ -57,7 +77,7 @@ export function useSpotSearch(params: UseSpotSearchParams): UseSpotSearchResult 
   const [status, setStatus] = useState<SpotSearchStatus>('idle');
   const [progress, setProgress] = useState<SpotSearchProgress | null>(null);
   const [outcome, setOutcome] = useState<SpotSearchOutcome | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<SpotSearchFailureCode | null>(null);
 
   const workerRef = useRef<Worker | null>(null);
   const requestRef = useRef(0);
@@ -93,13 +113,31 @@ export function useSpotSearch(params: UseSpotSearchParams): UseSpotSearchResult 
         setStatus('done');
         return;
       }
-      setError(message.message);
+      /*
+       * LA FRONTERA DEL `postMessage` NO CONSERVA LES CLASSES: el que ha de
+       * creuar és la DADA. `workers/spots.worker.ts` encara respon
+       * `{ message: string }` —el fitxer el porta una altra sessió i el pegat
+       * va escrit a l'informe—, i mentrestant el pont funciona: el `message`
+       * d'un `SpotSearchError` ÉS el codi i `toSpotSearchFailure` el reconeix.
+       */
+      const failure =
+        'failure' in message
+          ? toSpotSearchFailure(message.failure)
+          : toSpotSearchFailure(message.message);
       setProgress(null);
+      // Cancel·lar no és fallar: qui atura la cerca no vol veure cap error.
+      if (failure.code === 'cancelled') {
+        setStatus('cancelled');
+        return;
+      }
+      setError(failure.code);
       setStatus('error');
     });
 
-    worker.addEventListener('error', (event: ErrorEvent) => {
-      setError(event.message || 'El càlcul dels llocs ha fallat');
+    worker.addEventListener('error', () => {
+      // El `message` d'un `ErrorEvent` ve en anglès i parla de fitxers i
+      // línies: no es pot ensenyar a ningú. El codi diu QUÈ ha passat.
+      setError('worker');
       setProgress(null);
       setStatus('error');
     });
@@ -114,7 +152,7 @@ export function useSpotSearch(params: UseSpotSearchParams): UseSpotSearchResult 
 
     const worker = ensureWorker();
     if (!worker) {
-      setError('Aquest navegador no pot calcular els llocs en segon pla.');
+      setError('no-worker');
       setStatus('error');
       return;
     }
@@ -130,13 +168,7 @@ export function useSpotSearch(params: UseSpotSearchParams): UseSpotSearchResult 
     setStatus('running');
     setError(null);
     setOutcome(null);
-    setProgress({
-      stage: 'grid',
-      ratio: 0,
-      message: 'Preparant la cerca',
-      examined: 0,
-      alive: 0,
-    });
+    setProgress({ stage: 'grid', ratio: 0, examined: 0, alive: 0 });
 
     const request: SpotsWorkerRequest = {
       type: 'search',

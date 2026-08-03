@@ -146,8 +146,14 @@ async function loadTile(z: number, x: number, y: number): Promise<ImageData> {
       mode: 'cors',
       signal: AbortSignal.timeout(TILE_TIMEOUT_MS),
     });
+    // EL TEXT D'AQUESTS DOS ERRORS NO ÉS UNA FRASE PER A L'USUARI, i per això
+    // no és en català: és diagnòstic de consola. Avui `prefetchTiles` se'ls
+    // empassa i només en surt el recompte —qui decideix si això és fatal és
+    // `computeHorizonProfile`, amb un codi tipat (`horizon/errors.ts`)—, però
+    // `elevationAt` els deixa sortir, i el dia que algú els pinti no ha de
+    // trobar-s'hi català clavat.
     if (!response.ok) {
-      throw new Error(`No s'ha pogut baixar la tessel·la ${key}: ${response.status}`);
+      throw new Error(`tile-http-${response.status}: ${key}`);
     }
     const blob = await response.blob();
     const bitmap = await createImageBitmap(blob);
@@ -166,7 +172,7 @@ async function loadTile(z: number, x: number, y: number): Promise<ImageData> {
       | CanvasRenderingContext2D
       | OffscreenCanvasRenderingContext2D
       | null;
-    if (!ctx) throw new Error('No hi ha context 2D per descodificar la tessel·la');
+    if (!ctx) throw new Error(`tile-no-2d-context: ${key}`);
 
     ctx.drawImage(bitmap, 0, 0);
     bitmap.close();

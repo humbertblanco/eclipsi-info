@@ -21,6 +21,7 @@
  */
 
 import type { Locale } from '../i18n';
+import type { PrepareFailure } from './prepare';
 
 type Entry = { ca: string; es: string };
 
@@ -82,9 +83,31 @@ const STRINGS = {
     ca: 'Sense xarxa no es pot baixar res. El que ja tinguis desat segueix disponible.',
     es: 'Sin red no se puede descargar nada. Lo que ya tengas guardado sigue disponible.',
   },
-  'note.error': {
-    ca: 'No s’ha pogut completar la preparació: {error}',
-    es: 'No se ha podido completar la preparación: {error}',
+  /* --- per què no s'ha pogut preparar ------------------------------------
+   *
+   * ABANS AQUÍ HI HAVIA UNA SOLA CLAU amb un `{error}` que s'omplia amb el
+   * `message` cru de `prepare.ts` — una frase catalana. La línia sortia mig
+   * traduïda: «No se ha podido completar la preparación: No s'ha pogut baixar
+   * cap tessel·la del terreny. Comprova la connexió i torna-ho a provar.» Ara
+   * el motor emet codis (`PrepareErrorCode`) i cada codi té la seva frase.
+   *
+   * TO: què ha passat i què pots fer. La frase no promet mai que amb un
+   * reintent anirà bé, perquè al camp sovint no hi anirà.                    */
+  'error.noTerrain': {
+    ca: 'No s’ha pogut baixar cap tessel·la del terreny. Comprova la connexió i torna-ho a provar.',
+    es: 'No se ha podido descargar ninguna tesela del terreno. Comprueba la conexión y vuelve a intentarlo.',
+  },
+  'error.horizonTiles': {
+    ca: 'El terreny ha baixat a mitges i amb un horitzó incomplet el resultat no seria de fiar. Comprova la connexió i torna-ho a provar.',
+    es: 'El terreno se ha descargado a medias y con un horizonte incompleto el resultado no sería fiable. Comprueba la conexión y vuelve a intentarlo.',
+  },
+  'error.horizon': {
+    ca: 'El terreny s’ha desat, però no s’ha pogut calcular l’horitzó d’aquest punt.',
+    es: 'El terreno se ha guardado, pero no se ha podido calcular el horizonte de este punto.',
+  },
+  'error.unknown': {
+    ca: 'No s’ha pogut completar la preparació.',
+    es: 'No se ha podido completar la preparación.',
   },
   'note.done': { ca: 'Punt preparat. {bytes} desats.', es: 'Punto preparado. {bytes} guardados.' },
   'note.doneFailed': {
@@ -162,4 +185,30 @@ export function os(
     const value = vars[name];
     return value === undefined ? match : String(value);
   });
+}
+
+/**
+ * De la fallada a la frase, amb `switch` exhaustiu.
+ *
+ * EL MOTIU DE L'HORITZÓ NO ES RESUMEIX. «No ha arribat gens de relleu» i
+ * «n'ha arribat una part» porten al mateix consell —comprova la connexió— però
+ * es diuen diferent perquè el segon cas passa amb cobertura dolenta i el
+ * primer amb cobertura nul·la, i qui és al camp ha de poder distingir si val
+ * la pena esperar-se o si ha de moure's.
+ *
+ * Mateix contracte que `horizonFailureText` i `spotSearchFailureText`: un codi
+ * nou trenca la compilació aquí fins que algú escriu les dues llengües.
+ */
+export function prepareFailureText(failure: PrepareFailure, locale: Locale): string {
+  switch (failure.code) {
+    case 'no-terrain':
+      return os('error.noTerrain', locale);
+    case 'horizon':
+      return failure.horizon?.code === 'tiles-incomplete' ||
+        failure.horizon?.code === 'no-terrain'
+        ? os('error.horizonTiles', locale)
+        : os('error.horizon', locale);
+    case 'unknown':
+      return os('error.unknown', locale);
+  }
 }

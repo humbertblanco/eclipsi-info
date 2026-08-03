@@ -11,14 +11,45 @@ export {
   outlookMode,
   leadDays,
   confidenceForLead,
+  confidenceForYears,
   forecastCaveat,
   climatologyCaveat,
   CONFIDENCE_LABEL,
   CLIMATOLOGY_YEARS,
   CLIMATOLOGY_WINDOW_DAYS,
+  CLIMATOLOGY_MIN_YEARS,
   FORECAST_TTL_MS,
   CLIMATOLOGY_TTL_MS,
 } from './outlook';
+
+/**
+ * La capa de nuvolositat del mapa. Són dues peces i van juntes: `climGrid`
+ * llegeix la climatologia precalculada de tota la franja i `mapMode` decideix
+ * si el que toca ensenyar és aquella climatologia o una previsió viva —i amb
+ * quina cara, que és la part que no es pot delegar al component.
+ */
+export {
+  parseCloudClimGrid,
+  climCellsForViewport,
+  climCellsToGeoJson,
+  climCellAt,
+  climGridBounds,
+  climGridFileName,
+  allClimCells,
+  CloudClimGridError,
+  CLIM_GRID_FORMAT,
+} from './climGrid';
+export type {
+  CloudClimGrid,
+  CloudClimColumns,
+  ClimCell,
+  ClimCellProperties,
+  ClimGridErrorCode,
+  GeoBBox,
+} from './climGrid';
+
+export { planCloudMap, FORECAST_HORIZON_DAYS, LIVE_FORECAST_MAX_POINTS } from './mapMode';
+export type { CloudMapPlan, CloudMapPlanOptions, CloudMapTexture } from './mapMode';
 
 export {
   scoreCloudLayers,

@@ -75,7 +75,7 @@ import type { EclipseContext } from './screens/context';
 import { s } from './screens/strings';
 import { formatCoords, formatDuration, NO_DATA } from './screens/format';
 import { useHorizon } from './features/sim/useHorizon';
-import { horizonProgressText } from './features/sim/strings';
+import { horizonFailureText, horizonProgressText } from './features/sim/strings';
 import {
   LocationBar,
   LocationGate,
@@ -92,6 +92,7 @@ import {
 import { isDefaultFix } from './features/location/LocationBar';
 import { computeLocalCircumstances } from './core/astro/contacts';
 import { computeVisibility } from './core/visibility/verdict';
+import { durationBucket, horizonReason, terrainBucket, track } from './core/analytics';
 import { ECLIPSES } from './core/eclipses/catalog';
 import { buildShareLink, parseShareLink, type SharedPoint } from './features/share';
 import { useObserver } from './state/useObserver';
@@ -553,7 +554,15 @@ function Shell() {
       setGuideSection(null);
       // La vista amb què s'obre el mapa: la demanada, o la franja. Tornar-hi
       // per la barra obre sempre la vista per defecte, com ha fet sempre.
-      if (next === 'map') setMapView(mapViewTarget ?? 'band');
+      if (next === 'map') {
+        setMapView(mapViewTarget ?? 'band');
+        // Amb destí explícit ve d'una crida a l'acció; sense, de la barra. La
+        // diferència separa un problema de descobriment d'un de demanda.
+        track('map_view_open', {
+          view: mapViewTarget ?? 'band',
+          via: mapViewTarget === undefined ? 'tab' : 'cta',
+        });
+      }
       const fragment =
         next === 'map' && mapViewTarget !== undefined && mapViewTarget !== 'band'
           ? `${HASH_BY_TAB.map}/${MAP_SEGMENT_BY_VIEW[mapViewTarget]}`
@@ -614,11 +623,50 @@ function Shell() {
       setGuideSection(next.tab === 'guide' ? next.section : null);
       // La vista del mapa d'aquella entrada: així «enrere» no torna només a la
       // pestanya sinó a la vista que s'hi estava mirant.
-      if (next.view !== null) setMapView(next.view);
+      if (next.view !== null) {
+        setMapView(next.view);
+        track('map_view_open', { view: next.view, via: 'link' });
+      }
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
   }, [camera.unknown, camera.supported]);
+
+  /*
+   * L'ATERRATGE, mesurat un sol cop. `route` i `shared` surten
+   * d'inicialitzadors de `useState` i no canvien mai: això corre una vegada
+   * (dues en desenvolupament, per l'StrictMode). Un enllaç compartit que obre
+   * una vista concreta del mapa és el camí que decideix si la targeta per punt
+   * val la pena, i fins ara no en sabíem res.
+   */
+  useEffect(() => {
+    if (route.tab === 'map' && route.view !== null) {
+      track('map_view_open', { view: route.view, via: 'link' });
+    }
+    if (shared !== null) track('point_set', { method: 'shared_link', had_point: 'no' });
+  }, [route, shared]);
+
+  /*
+   * EL VEREDICTE SENCER, amb el terreny ja comptat: quants segons en queden i
+   * quants se n'ha menjat el relleu. És l'única xifra que fa aquesta app i no
+   * en fa cap altra, i si resulta que el relleu roba segons a molta gent, ha
+   * de deixar de ser un detall de la fitxa i passar a ser el titular.
+   */
+  useEffect(() => {
+    if (circumstances === null || verdict === null) return;
+    track('verdict_shown', {
+      kind: circumstances.kind,
+      duration: durationBucket(verdict.centralVisibleSec),
+      terrain: terrainBucket(circumstances.centralDurationSec, verdict.centralVisibleSec),
+    });
+  }, [circumstances, verdict]);
+
+  useEffect(() => {
+    if (horizon.error === null) return;
+    const reason = horizonReason(horizon.error.code);
+    // Nul vol dir «cancel·lat»: no és cap avaria i no s'ha de comptar.
+    if (reason !== null) track('horizon_failed', { reason });
+  }, [horizon.error]);
 
   /*
    * Si la pestanya del cel desapareix mentre s'hi és —una sessió restaurada en
@@ -923,15 +971,14 @@ function Shell() {
             {horizon.error && (
               <div className="shell__alert">
                 {/*
-                  Si el càlcul ha dit PER QUÈ ha fallat (tessel·les que no han
-                  baixat, per exemple), el motiu s'ensenya: «comprova la
-                  connexió» és accionable i el genèric no ho era.
+                  EL MOTIU, EN L'IDIOMA DE QUI LLEGEIX. Aquí hi havia el text
+                  que arribava del càlcul, i el càlcul l'escrivia en català:
+                  l'usuari en castellà rebia «Només s'han pogut baixar 12 de
+                  64 tessel·les» tal qual. Ara el nucli dona un CODI amb les
+                  seves xifres i la frase la munta la capa de vista, que és
+                  l'única que sap en quin idioma s'està parlant.
                 */}
-                <span>
-                  {horizon.error.detail
-                    ? s('horizon.failedDetail', locale, { error: horizon.error.detail })
-                    : s('horizon.failed', locale)}
-                </span>
+                <span>{horizonFailureText(horizon.error, locale)}</span>
                 <Button variant="ghost" size="sm" onClick={horizon.reload}>
                   {s('horizon.retry', locale)}
                 </Button>
@@ -1000,7 +1047,13 @@ function Shell() {
                   commutador (i del fragment) n'és amo MapScreen.
                 */
                 initialView={mapView}
-                onPickLocation={observer.setManual}
+                onPickLocation={(lat, lon) => {
+                  track('point_set', {
+                    method: 'map_tap',
+                    had_point: observer.fix === null ? 'no' : 'yes',
+                  });
+                  observer.setManual(lat, lon);
+                }}
                 onOpenCountdown={() => navigateTab('countdown')}
               />
             </Suspense>
@@ -1068,6 +1121,8 @@ function Shell() {
         <LocationGate
           locale={locale}
           onUseGps={() => {
+            // La porta només es pinta sense punt: `had_point` hi és exacte.
+            track('point_set', { method: 'gps', had_point: 'no' });
             observer.dismissIntro();
             observer.locate();
           }}
@@ -1076,6 +1131,7 @@ function Shell() {
             setSheetOpen(true);
           }}
           onSkip={() => {
+            track('point_set', { method: 'example', had_point: 'no' });
             observer.dismissIntro();
             void observer.useDefaultLocation();
           }}

@@ -1,0 +1,4152 @@
+[
+  {
+    "id": "ast-aller-alto-de-coto-bello",
+    "name": {
+      "ca": "Alto de Coto Bello",
+      "es": "Alto de Coto Bello"
+    },
+    "lat": 43.135,
+    "lon": -5.63473,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Aller, Astúries.",
+      "es": "Aller, Asturias."
+    }
+  },
+  {
+    "id": "ast-san-martin-del-rey-aurelio-alto-de-la-camperona",
+    "name": {
+      "ca": "Alto de La Camperona",
+      "es": "Alto de La Camperona"
+    },
+    "lat": 43.32928,
+    "lon": -5.6075,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "San Martín del Rey Aurelio, Astúries.",
+      "es": "San Martín del Rey Aurelio, Asturias."
+    }
+  },
+  {
+    "id": "ast-tineo-alto-de-la-casa-el-puerto-sierra-de-tineo",
+    "name": {
+      "ca": "Alto de la Casa El Puerto (Sierra de Tineo)",
+      "es": "Alto de la Casa El Puerto (Sierra de Tineo)"
+    },
+    "lat": 43.36419,
+    "lon": -6.39796,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Tineo, Astúries.",
+      "es": "Tineo, Asturias."
+    }
+  },
+  {
+    "id": "ast-quiros-alto-de-la-cobertoria",
+    "name": {
+      "ca": "Alto de La Cobertoria",
+      "es": "Alto de La Cobertoria"
+    },
+    "lat": 43.1435,
+    "lon": -5.90565,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Quirós, Astúries.",
+      "es": "Quirós, Asturias."
+    }
+  },
+  {
+    "id": "ast-belmonte-de-miranda-alto-de-la-corredoria",
+    "name": {
+      "ca": "Alto de La Corredoria",
+      "es": "Alto de La Corredoria"
+    },
+    "lat": 43.24991,
+    "lon": -6.20464,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Belmonte de Miranda, Astúries.",
+      "es": "Belmonte de Miranda, Asturias."
+    }
+  },
+  {
+    "id": "ast-somiedo-alto-de-la-farrapona",
+    "name": {
+      "ca": "Alto de la Farrapona",
+      "es": "Alto de la Farrapona"
+    },
+    "lat": 43.05701,
+    "lon": -6.08996,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Somiedo, Astúries.",
+      "es": "Somiedo, Asturias."
+    }
+  },
+  {
+    "id": "ast-teverga-alto-de-san-lorenzo",
+    "name": {
+      "ca": "Alto de San Lorenzo",
+      "es": "Alto de San Lorenzo"
+    },
+    "lat": 43.14117,
+    "lon": -6.19501,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Teverga, Astúries.",
+      "es": "Teverga, Asturias."
+    }
+  },
+  {
+    "id": "ast-ibias-alto-de-tormaleo-area-recreativa",
+    "name": {
+      "ca": "Alto de Tormaleo - Área recreativa",
+      "es": "Alto de Tormaleo - Área recreativa"
+    },
+    "lat": 42.9359,
+    "lon": -6.73305,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Ibias, Astúries.",
+      "es": "Ibias, Asturias."
+    }
+  },
+  {
+    "id": "ast-sariego-alto-fario",
+    "name": {
+      "ca": "Alto Fario",
+      "es": "Alto Fario"
+    },
+    "lat": 43.43406,
+    "lon": -5.5919,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Sariego, Astúries.",
+      "es": "Sariego, Asturias."
+    }
+  },
+  {
+    "id": "ast-candamo-aparcamiento-cueva-de-la-pena-san-roman-carreter",
+    "name": {
+      "ca": "Aparcamiento Cueva de La Peña (San Román). Carretera local CD-3, desde la AS-236",
+      "es": "Aparcamiento Cueva de La Peña (San Román). Carretera local CD-3, desde la AS-236"
+    },
+    "lat": 43.45623,
+    "lon": -6.07261,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Candamo, Astúries.",
+      "es": "Candamo, Asturias."
+    }
+  },
+  {
+    "id": "ast-sobrescobio-aparcamiento-de-soto-de-agues",
+    "name": {
+      "ca": "Aparcamiento de Soto de Agues.",
+      "es": "Aparcamiento de Soto de Agues."
+    },
+    "lat": 43.2022,
+    "lon": -5.46767,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Sobrescobio, Astúries.",
+      "es": "Sobrescobio, Asturias."
+    }
+  },
+  {
+    "id": "ast-langreo-area-recreativa-brana-del-rio",
+    "name": {
+      "ca": "Área Recreativa Braña del Río",
+      "es": "Área Recreativa Braña del Río"
+    },
+    "lat": 43.31818,
+    "lon": -5.62537,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Langreo, Astúries.",
+      "es": "Langreo, Asturias."
+    }
+  },
+  {
+    "id": "ast-boal-area-recreativa-de-llaviada-carretera-as12-boal-gra",
+    "name": {
+      "ca": "Área recreativa de Llaviada. Carretera  AS12 Boal-Grandas de Salime.",
+      "es": "Área recreativa de Llaviada. Carretera  AS12 Boal-Grandas de Salime."
+    },
+    "lat": 43.42075,
+    "lon": -6.81468,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Boal, Astúries.",
+      "es": "Boal, Asturias."
+    }
+  },
+  {
+    "id": "ast-pesoz-area-recreativa-de-pesoz",
+    "name": {
+      "ca": "Área recreativa de Pesoz",
+      "es": "Área recreativa de Pesoz"
+    },
+    "lat": 43.257,
+    "lon": -6.8755,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Pesoz, Astúries.",
+      "es": "Pesoz, Asturias."
+    }
+  },
+  {
+    "id": "ast-coana-area-recreativa-de-salias",
+    "name": {
+      "ca": "Área Recreativa de Salías",
+      "es": "Área Recreativa de Salías"
+    },
+    "lat": 43.556,
+    "lon": -6.79449,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Coaña, Astúries.",
+      "es": "Coaña, Asturias."
+    }
+  },
+  {
+    "id": "ast-grado-area-recreativa-de-sorribas",
+    "name": {
+      "ca": "Área Recreativa de Sorribas",
+      "es": "Área Recreativa de Sorribas"
+    },
+    "lat": 43.32882,
+    "lon": -6.13601,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Grado, Astúries.",
+      "es": "Grado, Asturias."
+    }
+  },
+  {
+    "id": "ast-morcin-area-recreativa-de-viapara",
+    "name": {
+      "ca": "Área Recreativa de Viapará",
+      "es": "Área Recreativa de Viapará"
+    },
+    "lat": 43.24465,
+    "lon": -5.91196,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Morcín, Astúries.",
+      "es": "Morcín, Asturias."
+    }
+  },
+  {
+    "id": "ast-riosa-area-recreativa-de-viapara-riosa",
+    "name": {
+      "ca": "Área Recreativa de Viapará - Riosa",
+      "es": "Área Recreativa de Viapará - Riosa"
+    },
+    "lat": 43.24465,
+    "lon": -5.91196,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Riosa, Astúries.",
+      "es": "Riosa, Asturias."
+    }
+  },
+  {
+    "id": "ast-degana-area-recreativa-del-puerto-de-zarreu-puerto-cerre",
+    "name": {
+      "ca": "Area Recreativa del Puerto de Zarréu / Puerto Cerredo",
+      "es": "Area Recreativa del Puerto de Zarréu / Puerto Cerredo"
+    },
+    "lat": 42.95563,
+    "lon": -6.43939,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Degaña, Astúries.",
+      "es": "Degaña, Asturias."
+    }
+  },
+  {
+    "id": "ast-ribera-de-arriba-area-recreativa-el-llosalin",
+    "name": {
+      "ca": "Área recreativa el Llosalín",
+      "es": "Área recreativa el Llosalín"
+    },
+    "lat": 43.31404,
+    "lon": -5.8895,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Ribera de Arriba, Astúries.",
+      "es": "Ribera de Arriba, Asturias."
+    }
+  },
+  {
+    "id": "ast-pilona-area-recreativa-monte-cayon",
+    "name": {
+      "ca": "Área recreativa Monte Cayón",
+      "es": "Área recreativa Monte Cayón"
+    },
+    "lat": 43.36172,
+    "lon": -5.35888,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Piloña, Astúries.",
+      "es": "Piloña, Asturias."
+    }
+  },
+  {
+    "id": "ast-cabranes-area-recreativa-pena-cabrera",
+    "name": {
+      "ca": "Área Recreativa Peña Cabrera",
+      "es": "Área Recreativa Peña Cabrera"
+    },
+    "lat": 43.43656,
+    "lon": -5.4198,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Cabranes, Astúries.",
+      "es": "Cabranes, Asturias."
+    }
+  },
+  {
+    "id": "ast-cudillero-cabo-vidio-ovinana",
+    "name": {
+      "ca": "Cabo Vidio-Oviñana",
+      "es": "Cabo Vidio-Oviñana"
+    },
+    "lat": 43.59326,
+    "lon": -6.24316,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Cudillero, Astúries.",
+      "es": "Cudillero, Asturias."
+    }
+  },
+  {
+    "id": "ast-san-tirso-de-abres-calle-la-tapia-san-tirso-de-abres",
+    "name": {
+      "ca": "Calle La Tapia (San Tirso de Abres)",
+      "es": "Calle La Tapia (San Tirso de Abres)"
+    },
+    "lat": 43.4077,
+    "lon": -7.14405,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "San Tirso de Abres, Astúries.",
+      "es": "San Tirso de Abres, Asturias."
+    }
+  },
+  {
+    "id": "ast-laviana-camin-del-horron-cruce-con-ramal-barrio-el-castr",
+    "name": {
+      "ca": "Camín del Horrón, Cruce con ramal \"Barrio El Castrillón\"",
+      "es": "Camín del Horrón, Cruce con ramal \"Barrio El Castrillón\""
+    },
+    "lat": 43.25559,
+    "lon": -5.5658,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Laviana, Astúries.",
+      "es": "Laviana, Asturias."
+    }
+  },
+  {
+    "id": "ast-villanueva-de-oscos-campo-de-la-feria-del-puerto-de-la-g",
+    "name": {
+      "ca": "Campo de la Feria del Puerto de La Garganta.",
+      "es": "Campo de la Feria del Puerto de La Garganta."
+    },
+    "lat": 43.34554,
+    "lon": -7.01046,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Villanueva de Oscos, Astúries.",
+      "es": "Villanueva de Oscos, Asturias."
+    }
+  },
+  {
+    "id": "ast-siero-campo-municipal-de-futbol-sergio-sanchez-lopez-pep",
+    "name": {
+      "ca": "Campo Municipal de Fútbol “Sergio Sánchez López Pepio” – El Berrón.",
+      "es": "Campo Municipal de Fútbol “Sergio Sánchez López Pepio” – El Berrón."
+    },
+    "lat": 43.38171,
+    "lon": -5.69635,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Siero, Astúries.",
+      "es": "Siero, Asturias."
+    }
+  },
+  {
+    "id": "ast-grandas-de-salime-capilla-nuestra-senora-de-los-remedios",
+    "name": {
+      "ca": "Capilla Nuestra señora de los Remedios, Santa Maria",
+      "es": "Capilla Nuestra señora de los Remedios, Santa Maria"
+    },
+    "lat": 43.23287,
+    "lon": -6.87405,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Grandas de Salime, Astúries.",
+      "es": "Grandas de Salime, Asturias."
+    }
+  },
+  {
+    "id": "ast-valdes-caroyas",
+    "name": {
+      "ca": "Caroyas",
+      "es": "Caroyas"
+    },
+    "lat": 43.54563,
+    "lon": -6.47799,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Valdés, Astúries.",
+      "es": "Valdés, Asturias."
+    }
+  },
+  {
+    "id": "ast-aviles-centro-niemeyer",
+    "name": {
+      "ca": "Centro Niemeyer",
+      "es": "Centro Niemeyer"
+    },
+    "lat": 43.55768,
+    "lon": -5.91707,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Avilés, Astúries.",
+      "es": "Avilés, Asturias."
+    }
+  },
+  {
+    "id": "ast-caso-collada-del-pandu",
+    "name": {
+      "ca": "Collada del Pandu",
+      "es": "Collada del Pandu"
+    },
+    "lat": 43.18996,
+    "lon": -5.33624,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Caso, Astúries.",
+      "es": "Caso, Asturias."
+    }
+  },
+  {
+    "id": "ast-mieres-collau-de-les-muries-polio",
+    "name": {
+      "ca": "Collau de Les Muries -Polio",
+      "es": "Collau de Les Muries -Polio"
+    },
+    "lat": 43.23042,
+    "lon": -5.7257,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Mieres, Astúries.",
+      "es": "Mieres, Asturias."
+    }
+  },
+  {
+    "id": "ast-santo-adriano-dosango",
+    "name": {
+      "ca": "Dosango",
+      "es": "Dosango"
+    },
+    "lat": 43.2726,
+    "lon": -5.9712,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Santo Adriano, Astúries.",
+      "es": "Santo Adriano, Asturias."
+    }
+  },
+  {
+    "id": "ast-corvera-de-asturias-entrada-al-pueblo-de-gavitos",
+    "name": {
+      "ca": "Entrada al pueblo de Gavitos",
+      "es": "Entrada al pueblo de Gavitos"
+    },
+    "lat": 43.53694,
+    "lon": -5.8744,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Corvera de Asturias, Astúries.",
+      "es": "Corvera de Asturias, Asturias."
+    }
+  },
+  {
+    "id": "ast-vegadeo-explanada-del-recinto-ferial-de-vegadeo",
+    "name": {
+      "ca": "Explanada del Recinto Ferial de Vegadeo.",
+      "es": "Explanada del Recinto Ferial de Vegadeo."
+    },
+    "lat": 43.46535,
+    "lon": -7.05168,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Vegadeo, Astúries.",
+      "es": "Vegadeo, Asturias."
+    }
+  },
+  {
+    "id": "ast-taramundi-explanada-granja-de-los-huevos-camperos-y-area",
+    "name": {
+      "ca": "Explanada Granja de los huevos camperos y Área AC",
+      "es": "Explanada Granja de los huevos camperos y Área AC"
+    },
+    "lat": 43.36054,
+    "lon": -7.11565,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Taramundi, Astúries.",
+      "es": "Taramundi, Asturias."
+    }
+  },
+  {
+    "id": "ast-colunga-faro-de-luces",
+    "name": {
+      "ca": "Faro de Luces",
+      "es": "Faro de Luces"
+    },
+    "lat": 43.53401,
+    "lon": -5.30034,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Colunga, Astúries.",
+      "es": "Colunga, Asturias."
+    }
+  },
+  {
+    "id": "ast-gozon-faro-del-cabo-penas",
+    "name": {
+      "ca": "Faro del Cabo Peñas",
+      "es": "Faro del Cabo Peñas"
+    },
+    "lat": 43.65565,
+    "lon": -5.84853,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Gozón, Astúries.",
+      "es": "Gozón, Asturias."
+    }
+  },
+  {
+    "id": "ast-bimenes-fayacaba",
+    "name": {
+      "ca": "Fayacaba",
+      "es": "Fayacaba"
+    },
+    "lat": 43.3114,
+    "lon": -5.52345,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Bimenes, Astúries.",
+      "es": "Bimenes, Asturias."
+    }
+  },
+  {
+    "id": "ast-amieva-iglesia-de-san-juan",
+    "name": {
+      "ca": "Iglesia de San Juan",
+      "es": "Iglesia de San Juan"
+    },
+    "lat": 43.24361,
+    "lon": -5.07379,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Amieva, Astúries.",
+      "es": "Amieva, Asturias."
+    }
+  },
+  {
+    "id": "ast-ribadesella-la-rasa-de-berbes-campo-de-golf-ribadesella",
+    "name": {
+      "ca": "La Rasa de Berbes (Campo de Golf - Ribadesella)",
+      "es": "La Rasa de Berbes (Campo de Golf - Ribadesella)"
+    },
+    "lat": 43.46549,
+    "lon": -5.14833,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Ribadesella, Astúries.",
+      "es": "Ribadesella, Asturias."
+    }
+  },
+  {
+    "id": "ast-nava-les-praeres-de-nava",
+    "name": {
+      "ca": "Les Praeres de Nava",
+      "es": "Les Praeres de Nava"
+    },
+    "lat": 43.3214,
+    "lon": -5.49967,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Nava, Astúries.",
+      "es": "Nava, Asturias."
+    }
+  },
+  {
+    "id": "ast-cangas-de-onis-llano-del-cura",
+    "name": {
+      "ca": "Llano del cura",
+      "es": "Llano del cura"
+    },
+    "lat": 43.34279,
+    "lon": -5.12378,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Cangas de Onís, Astúries.",
+      "es": "Cangas de Onís, Asturias."
+    }
+  },
+  {
+    "id": "ast-onis-llano-miyar",
+    "name": {
+      "ca": "Llano Miyar",
+      "es": "Llano Miyar"
+    },
+    "lat": 43.32692,
+    "lon": -4.99737,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Onís, Astúries.",
+      "es": "Onís, Asturias."
+    }
+  },
+  {
+    "id": "ast-villayon-mirador-de-busmente",
+    "name": {
+      "ca": "Mirador de Busmente",
+      "es": "Mirador de Busmente"
+    },
+    "lat": 43.42832,
+    "lon": -6.68405,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Villayón, Astúries.",
+      "es": "Villayón, Asturias."
+    }
+  },
+  {
+    "id": "ast-proaza-mirador-de-la-cruz-de-linares",
+    "name": {
+      "ca": "Mirador de la Cruz de Linares",
+      "es": "Mirador de la Cruz de Linares"
+    },
+    "lat": 43.2723,
+    "lon": -6.02857,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Proaza, Astúries.",
+      "es": "Proaza, Asturias."
+    }
+  },
+  {
+    "id": "ast-pravia-mirador-de-la-penona",
+    "name": {
+      "ca": "Mirador de la Peñona",
+      "es": "Mirador de la Peñona"
+    },
+    "lat": 43.52512,
+    "lon": -6.13894,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Pravia, Astúries.",
+      "es": "Pravia, Asturias."
+    }
+  },
+  {
+    "id": "ast-gijon-mirador-de-la-providencia",
+    "name": {
+      "ca": "Mirador de la Providencia",
+      "es": "Mirador de la Providencia"
+    },
+    "lat": 43.55393,
+    "lon": -5.61899,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Gijón, Astúries.",
+      "es": "Gijón, Asturias."
+    }
+  },
+  {
+    "id": "ast-allande-mirador-de-montefurado-carretera-as-14",
+    "name": {
+      "ca": "Mirador de Montefurado – Carretera AS-14.",
+      "es": "Mirador de Montefurado – Carretera AS-14."
+    },
+    "lat": 43.26891,
+    "lon": -6.68511,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Allande, Astúries.",
+      "es": "Allande, Asturias."
+    }
+  },
+  {
+    "id": "ast-penamellera-alta-mirador-de-oceno",
+    "name": {
+      "ca": "Mirador de Oceño",
+      "es": "Mirador de Oceño"
+    },
+    "lat": 43.29636,
+    "lon": -4.74395,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Peñamellera Alta, Astúries.",
+      "es": "Peñamellera Alta, Asturias."
+    }
+  },
+  {
+    "id": "ast-penamellera-baja-mirador-de-san-antonio-alevia",
+    "name": {
+      "ca": "Mirador de San Antonio, Alevia",
+      "es": "Mirador de San Antonio, Alevia"
+    },
+    "lat": 43.33309,
+    "lon": -4.59561,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Peñamellera Baja, Astúries.",
+      "es": "Peñamellera Baja, Asturias."
+    }
+  },
+  {
+    "id": "ast-illano-mirador-de-tiracais",
+    "name": {
+      "ca": "Mirador de Tiracais",
+      "es": "Mirador de Tiracais"
+    },
+    "lat": 43.361,
+    "lon": -6.82929,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Illano, Astúries.",
+      "es": "Illano, Asturias."
+    }
+  },
+  {
+    "id": "ast-ponga-mirador-les-bedules",
+    "name": {
+      "ca": "Mirador les Bedules",
+      "es": "Mirador les Bedules"
+    },
+    "lat": 43.18953,
+    "lon": -5.14124,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Ponga, Astúries.",
+      "es": "Ponga, Asturias."
+    }
+  },
+  {
+    "id": "ast-salas-mirador-pico-el-viso",
+    "name": {
+      "ca": "Mirador Pico el Viso",
+      "es": "Mirador Pico el Viso"
+    },
+    "lat": 43.42208,
+    "lon": -6.25232,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Salas, Astúries.",
+      "es": "Salas, Asturias."
+    }
+  },
+  {
+    "id": "ast-las-regueras-monte-la-berruga",
+    "name": {
+      "ca": "Monte la Berruga",
+      "es": "Monte la Berruga"
+    },
+    "lat": 43.38326,
+    "lon": -5.94501,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Las Regueras, Astúries.",
+      "es": "Las Regueras, Asturias."
+    }
+  },
+  {
+    "id": "ast-parres-parque-de-la-concordia",
+    "name": {
+      "ca": "Parque de La Concordia",
+      "es": "Parque de La Concordia"
+    },
+    "lat": 43.38578,
+    "lon": -5.18539,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Parres, Astúries.",
+      "es": "Parres, Asturias."
+    }
+  },
+  {
+    "id": "ast-norena-parque-de-los-riegos",
+    "name": {
+      "ca": "Parque de los Riegos",
+      "es": "Parque de los Riegos"
+    },
+    "lat": 43.39004,
+    "lon": -5.70539,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Noreña, Astúries.",
+      "es": "Noreña, Asturias."
+    }
+  },
+  {
+    "id": "ast-oviedo-parque-del-oeste",
+    "name": {
+      "ca": "Parque del Oeste",
+      "es": "Parque del Oeste"
+    },
+    "lat": 43.3629,
+    "lon": -5.87311,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Oviedo, Astúries.",
+      "es": "Oviedo, Asturias."
+    }
+  },
+  {
+    "id": "ast-carreno-parque-ingles",
+    "name": {
+      "ca": "Parque Inglés",
+      "es": "Parque Inglés"
+    },
+    "lat": 43.59357,
+    "lon": -5.76263,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Carreño, Astúries.",
+      "es": "Carreño, Asturias."
+    }
+  },
+  {
+    "id": "ast-llanes-paseo-de-san-pedro-llanes",
+    "name": {
+      "ca": "Paseo de San Pedro, Llanes",
+      "es": "Paseo de San Pedro, Llanes"
+    },
+    "lat": 43.42523,
+    "lon": -4.75986,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Llanes, Astúries.",
+      "es": "Llanes, Asturias."
+    }
+  },
+  {
+    "id": "ast-navia-playa-de-frexulfe",
+    "name": {
+      "ca": "Playa de Frexulfe",
+      "es": "Playa de Frexulfe"
+    },
+    "lat": 43.55923,
+    "lon": -6.67818,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Navia, Astúries.",
+      "es": "Navia, Asturias."
+    }
+  },
+  {
+    "id": "ast-caravia-playa-de-la-espasa-moracey-y-arenal-de-moris-zon",
+    "name": {
+      "ca": "Playa de La Espasa, Moracey, y Arenal de Morís (zona)",
+      "es": "Playa de La Espasa, Moracey, y Arenal de Morís (zona)"
+    },
+    "lat": 43.47433,
+    "lon": -5.21457,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Caravia, Astúries.",
+      "es": "Caravia, Asturias."
+    }
+  },
+  {
+    "id": "ast-ribadedeva-playa-de-la-franca",
+    "name": {
+      "ca": "Playa de la Franca",
+      "es": "Playa de la Franca"
+    },
+    "lat": 43.39395,
+    "lon": -4.57502,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Ribadedeva, Astúries.",
+      "es": "Ribadedeva, Asturias."
+    }
+  },
+  {
+    "id": "ast-soto-del-barco-playa-de-los-quebrantos",
+    "name": {
+      "ca": "Playa de Los Quebrantos",
+      "es": "Playa de Los Quebrantos"
+    },
+    "lat": 43.56566,
+    "lon": -6.06957,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Soto del Barco, Astúries.",
+      "es": "Soto del Barco, Asturias."
+    }
+  },
+  {
+    "id": "ast-castropol-playa-de-penarronda",
+    "name": {
+      "ca": "Playa de Peñarronda",
+      "es": "Playa de Peñarronda"
+    },
+    "lat": 43.55362,
+    "lon": -6.99676,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Castropol, Astúries.",
+      "es": "Castropol, Asturias."
+    }
+  },
+  {
+    "id": "ast-el-franco-playa-de-porcia",
+    "name": {
+      "ca": "Playa de Porcía",
+      "es": "Playa de Porcía"
+    },
+    "lat": 43.56365,
+    "lon": -6.87347,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "El Franco, Astúries.",
+      "es": "El Franco, Asturias."
+    }
+  },
+  {
+    "id": "ast-villaviciosa-playa-de-rodiles-accesos-carretera-vv-6",
+    "name": {
+      "ca": "Playa de Rodiles. Accesos: Carretera VV-6",
+      "es": "Playa de Rodiles. Accesos: Carretera VV-6"
+    },
+    "lat": 43.53296,
+    "lon": -5.37798,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Villaviciosa, Astúries.",
+      "es": "Villaviciosa, Asturias."
+    }
+  },
+  {
+    "id": "ast-castrillon-playa-de-san-juan-de-nieva-el-espartal",
+    "name": {
+      "ca": "Playa de San Juan de Nieva / El Espartal",
+      "es": "Playa de San Juan de Nieva / El Espartal"
+    },
+    "lat": 43.58697,
+    "lon": -5.94295,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Castrillón, Astúries.",
+      "es": "Castrillón, Asturias."
+    }
+  },
+  {
+    "id": "ast-tapia-de-casariego-playa-de-serantes",
+    "name": {
+      "ca": "Playa de Serantes",
+      "es": "Playa de Serantes"
+    },
+    "lat": 43.55585,
+    "lon": -6.97494,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Tapia de Casariego, Astúries.",
+      "es": "Tapia de Casariego, Asturias."
+    }
+  },
+  {
+    "id": "ast-muros-de-nalon-playa-del-aguilar",
+    "name": {
+      "ca": "Playa del Aguilar",
+      "es": "Playa del Aguilar"
+    },
+    "lat": 43.55509,
+    "lon": -6.11626,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Muros de Nalón, Astúries.",
+      "es": "Muros de Nalón, Asturias."
+    }
+  },
+  {
+    "id": "ast-santa-eulalia-de-oscos-plaza-detras-de-la-iglesia-santal",
+    "name": {
+      "ca": "Plaza detrás de la Iglesia.  Santalla",
+      "es": "Plaza detrás de la Iglesia.  Santalla"
+    },
+    "lat": 43.25891,
+    "lon": -7.02555,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Santa Eulalia de Oscos, Astúries.",
+      "es": "Santa Eulalia de Oscos, Asturias."
+    }
+  },
+  {
+    "id": "ast-yernes-y-tameza-prado-al-lado-de-la-fundacion-vital",
+    "name": {
+      "ca": "Prado al lado de la Fundación Vital",
+      "es": "Prado al lado de la Fundación Vital"
+    },
+    "lat": 43.28126,
+    "lon": -6.08638,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Yernes y Tameza, Astúries.",
+      "es": "Yernes y Tameza, Asturias."
+    }
+  },
+  {
+    "id": "ast-lena-prau-llaguezos-la-cobertoria",
+    "name": {
+      "ca": "Prau LLagüezos – La Cobertoria",
+      "es": "Prau LLagüezos – La Cobertoria"
+    },
+    "lat": 43.14662,
+    "lon": -5.90683,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Lena, Astúries.",
+      "es": "Lena, Asturias."
+    }
+  },
+  {
+    "id": "ast-llanera-recinto-ferial-de-llanera",
+    "name": {
+      "ca": "Recinto Ferial de Llanera",
+      "es": "Recinto Ferial de Llanera"
+    },
+    "lat": 43.43082,
+    "lon": -5.8649,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Llanera, Astúries.",
+      "es": "Llanera, Asturias."
+    }
+  },
+  {
+    "id": "ast-cangas-del-narcea-santuario-del-acebo",
+    "name": {
+      "ca": "Santuario del Acebo",
+      "es": "Santuario del Acebo"
+    },
+    "lat": 43.15881,
+    "lon": -6.49889,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Cangas del Narcea, Astúries.",
+      "es": "Cangas del Narcea, Asturias."
+    }
+  },
+  {
+    "id": "ast-cabrales-sotres-la-caballar",
+    "name": {
+      "ca": "Sotres- La Caballar",
+      "es": "Sotres- La Caballar"
+    },
+    "lat": 43.23781,
+    "lon": -4.73792,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Cabrales, Astúries.",
+      "es": "Cabrales, Asturias."
+    }
+  },
+  {
+    "id": "ast-illas-taborneda",
+    "name": {
+      "ca": "Taborneda",
+      "es": "Taborneda"
+    },
+    "lat": 43.5024,
+    "lon": -5.94687,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Illas, Astúries.",
+      "es": "Illas, Asturias."
+    }
+  },
+  {
+    "id": "ast-san-martin-de-oscos-villarin-de-trasmonte",
+    "name": {
+      "ca": "Villarín de Trasmonte",
+      "es": "Villarín de Trasmonte"
+    },
+    "lat": 43.24785,
+    "lon": -6.97601,
+    "precision": "exact",
+    "source": {
+      "who": "Principado de Asturias / FICYT",
+      "url": "https://eclipseasturias2026.ficyt.es/puntos_observacion.php"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "San Martín de Oscos, Astúries.",
+      "es": "San Martín de Oscos, Asturias."
+    }
+  },
+  {
+    "id": "cyl-avila-adanero",
+    "name": {
+      "ca": "Adanero",
+      "es": "Adanero"
+    },
+    "lat": 40.93549,
+    "lon": -4.61025,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Adanero, Àvila.",
+      "es": "Adanero, Ávila."
+    }
+  },
+  {
+    "id": "cyl-avila-arevalo",
+    "name": {
+      "ca": "Arévalo",
+      "es": "Arévalo"
+    },
+    "lat": 41.0718,
+    "lon": -4.73655,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Arévalo, Àvila.",
+      "es": "Arévalo, Ávila."
+    }
+  },
+  {
+    "id": "cyl-avila-moraleja-de-matacabras",
+    "name": {
+      "ca": "Moraleja de Matacabras",
+      "es": "Moraleja de Matacabras"
+    },
+    "lat": 41.10906,
+    "lon": -4.96283,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Moraleja de Matacabras, Àvila.",
+      "es": "Moraleja de Matacabras, Ávila."
+    }
+  },
+  {
+    "id": "cyl-avila-palacios-rubios",
+    "name": {
+      "ca": "Palacios Rubios (Nava de Arévalo)",
+      "es": "Palacios Rubios (Nava de Arévalo)"
+    },
+    "lat": 41.02729,
+    "lon": -4.77303,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Nava de Arévalo, Àvila.",
+      "es": "Nava de Arévalo, Ávila."
+    }
+  },
+  {
+    "id": "cyl-avila-vinaderos",
+    "name": {
+      "ca": "Vinaderos (Nava de Arévalo)",
+      "es": "Vinaderos (Nava de Arévalo)"
+    },
+    "lat": 41.01323,
+    "lon": -4.74254,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Nava de Arévalo, Àvila.",
+      "es": "Nava de Arévalo, Ávila."
+    }
+  },
+  {
+    "id": "cyl-avila-palacios-de-goda",
+    "name": {
+      "ca": "Palacios de Goda",
+      "es": "Palacios de Goda"
+    },
+    "lat": 41.12922,
+    "lon": -4.78756,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Palacios de Goda, Àvila.",
+      "es": "Palacios de Goda, Ávila."
+    }
+  },
+  {
+    "id": "cyl-burgos-arija",
+    "name": {
+      "ca": "Arija",
+      "es": "Arija"
+    },
+    "lat": 42.9947,
+    "lon": -3.94697,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Arija, Burgos.",
+      "es": "Arija, Burgos."
+    }
+  },
+  {
+    "id": "cyl-burgos-burgos",
+    "name": {
+      "ca": "Burgos",
+      "es": "Burgos"
+    },
+    "lat": 42.3295,
+    "lon": -3.70347,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Burgos, Burgos.",
+      "es": "Burgos, Burgos."
+    }
+  },
+  {
+    "id": "cyl-burgos-hacinas",
+    "name": {
+      "ca": "Hacinas",
+      "es": "Hacinas"
+    },
+    "lat": 41.98377,
+    "lon": -3.2878,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Hacinas, Burgos.",
+      "es": "Hacinas, Burgos."
+    }
+  },
+  {
+    "id": "cyl-burgos-quintanarraya",
+    "name": {
+      "ca": "Quintanarraya (Huerta de Rey)",
+      "es": "Quintanarraya (Huerta de Rey)"
+    },
+    "lat": 41.78149,
+    "lon": -3.33717,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Huerta de Rey, Burgos.",
+      "es": "Huerta de Rey, Burgos."
+    }
+  },
+  {
+    "id": "cyl-burgos-lodoso",
+    "name": {
+      "ca": "Lodoso (Pedrosa de Río Úrbel)",
+      "es": "Lodoso (Pedrosa de Río Úrbel)"
+    },
+    "lat": 42.44022,
+    "lon": -3.84007,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Pedrosa de Río Úrbel, Burgos.",
+      "es": "Pedrosa de Río Úrbel, Burgos."
+    }
+  },
+  {
+    "id": "cyl-burgos-poza-de-la-sal",
+    "name": {
+      "ca": "Poza de la Sal",
+      "es": "Poza de la Sal"
+    },
+    "lat": 42.67997,
+    "lon": -3.58,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Poza de la Sal, Burgos.",
+      "es": "Poza de la Sal, Burgos."
+    }
+  },
+  {
+    "id": "cyl-burgos-tejada",
+    "name": {
+      "ca": "Tejada",
+      "es": "Tejada"
+    },
+    "lat": 41.94434,
+    "lon": -3.55231,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Tejada, Burgos.",
+      "es": "Tejada, Burgos."
+    }
+  },
+  {
+    "id": "cyl-burgos-burgos-2",
+    "name": {
+      "ca": "Burgos",
+      "es": "Burgos"
+    },
+    "lat": 42.34387,
+    "lon": -3.71091,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Burgos, Burgos.",
+      "es": "Burgos, Burgos."
+    }
+  },
+  {
+    "id": "cyl-burgos-tejada-2",
+    "name": {
+      "ca": "Tejada",
+      "es": "Tejada"
+    },
+    "lat": 41.94993,
+    "lon": -3.53388,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Tejada, Burgos.",
+      "es": "Tejada, Burgos."
+    }
+  },
+  {
+    "id": "cyl-leon-santa-catalina-de-somoza",
+    "name": {
+      "ca": "Santa Catalina de Somoza (Astorga)",
+      "es": "Santa Catalina de Somoza (Astorga)"
+    },
+    "lat": 42.45433,
+    "lon": -6.15359,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Astorga, Lleó.",
+      "es": "Astorga, León."
+    }
+  },
+  {
+    "id": "cyl-leon-destriana",
+    "name": {
+      "ca": "Destriana",
+      "es": "Destriana"
+    },
+    "lat": 42.31861,
+    "lon": -6.09441,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Destriana, Lleó.",
+      "es": "Destriana, León."
+    }
+  },
+  {
+    "id": "cyl-leon-valderilla-de-torio",
+    "name": {
+      "ca": "Valderilla de Torío (Garrafe de Torío)",
+      "es": "Valderilla de Torío (Garrafe de Torío)"
+    },
+    "lat": 42.72436,
+    "lon": -5.53634,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Garrafe de Torío, Lleó.",
+      "es": "Garrafe de Torío, León."
+    }
+  },
+  {
+    "id": "cyl-leon-san-feliz-de-torio",
+    "name": {
+      "ca": "San Feliz de Torío (Garrafe de Torío)",
+      "es": "San Feliz de Torío (Garrafe de Torío)"
+    },
+    "lat": 42.6833,
+    "lon": -5.5333,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Garrafe de Torío, Lleó.",
+      "es": "Garrafe de Torío, León."
+    }
+  },
+  {
+    "id": "cyl-leon-leon",
+    "name": {
+      "ca": "León",
+      "es": "León"
+    },
+    "lat": 42.59257,
+    "lon": -5.58378,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "León, Lleó.",
+      "es": "León, León."
+    }
+  },
+  {
+    "id": "cyl-leon-noceda-del-bierzo",
+    "name": {
+      "ca": "Noceda del Bierzo",
+      "es": "Noceda del Bierzo"
+    },
+    "lat": 42.71718,
+    "lon": -6.39888,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Noceda del Bierzo, Lleó.",
+      "es": "Noceda del Bierzo, León."
+    }
+  },
+  {
+    "id": "cyl-leon-ponferrada",
+    "name": {
+      "ca": "Ponferrada",
+      "es": "Ponferrada"
+    },
+    "lat": 42.54407,
+    "lon": -6.5936,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Ponferrada, Lleó.",
+      "es": "Ponferrada, León."
+    }
+  },
+  {
+    "id": "cyl-leon-sabero",
+    "name": {
+      "ca": "Sabero",
+      "es": "Sabero"
+    },
+    "lat": 42.85325,
+    "lon": -5.19606,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Sabero, Lleó.",
+      "es": "Sabero, León."
+    }
+  },
+  {
+    "id": "cyl-leon-san-andres-del-rabanedo",
+    "name": {
+      "ca": "San Andrés del Rabanedo",
+      "es": "San Andrés del Rabanedo"
+    },
+    "lat": 42.61575,
+    "lon": -5.61906,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "San Andrés del Rabanedo, Lleó.",
+      "es": "San Andrés del Rabanedo, León."
+    }
+  },
+  {
+    "id": "cyl-palencia-herrera-de-pisuerga",
+    "name": {
+      "ca": "Herrera de Pisuerga",
+      "es": "Herrera de Pisuerga"
+    },
+    "lat": 42.5935,
+    "lon": -4.28855,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Herrera de Pisuerga, Palència.",
+      "es": "Herrera de Pisuerga, Palencia."
+    }
+  },
+  {
+    "id": "cyl-palencia-ledigos",
+    "name": {
+      "ca": "Ledigos",
+      "es": "Ledigos"
+    },
+    "lat": 42.35458,
+    "lon": -4.86137,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Ledigos, Palència.",
+      "es": "Ledigos, Palencia."
+    }
+  },
+  {
+    "id": "cyl-palencia-palencia",
+    "name": {
+      "ca": "Palencia",
+      "es": "Palencia"
+    },
+    "lat": 42.02828,
+    "lon": -4.52853,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Palencia, Palència.",
+      "es": "Palencia, Palencia."
+    }
+  },
+  {
+    "id": "cyl-palencia-paredes-de-nava",
+    "name": {
+      "ca": "Paredes de Nava",
+      "es": "Paredes de Nava"
+    },
+    "lat": 42.17184,
+    "lon": -4.67637,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Paredes de Nava, Palència.",
+      "es": "Paredes de Nava, Palencia."
+    }
+  },
+  {
+    "id": "cyl-palencia-saldana",
+    "name": {
+      "ca": "Saldaña",
+      "es": "Saldaña"
+    },
+    "lat": 42.53003,
+    "lon": -4.73638,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Saldaña, Palència.",
+      "es": "Saldaña, Palencia."
+    }
+  },
+  {
+    "id": "cyl-palencia-osorno-la-mayor",
+    "name": {
+      "ca": "Osorno La Mayor (Osorno la Mayor)",
+      "es": "Osorno La Mayor (Osorno la Mayor)"
+    },
+    "lat": 42.4292,
+    "lon": -4.36242,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Osorno la Mayor, Palència.",
+      "es": "Osorno la Mayor, Palencia."
+    }
+  },
+  {
+    "id": "cyl-segovia-arcones",
+    "name": {
+      "ca": "Arcones",
+      "es": "Arcones"
+    },
+    "lat": 41.10888,
+    "lon": -3.71696,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Arcones, Segòvia.",
+      "es": "Arcones, Segovia."
+    }
+  },
+  {
+    "id": "cyl-segovia-ayllon",
+    "name": {
+      "ca": "Ayllón",
+      "es": "Ayllón"
+    },
+    "lat": 41.41991,
+    "lon": -3.3733,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Ayllón, Segòvia.",
+      "es": "Ayllón, Segovia."
+    }
+  },
+  {
+    "id": "cyl-segovia-boceguillas",
+    "name": {
+      "ca": "Boceguillas",
+      "es": "Boceguillas"
+    },
+    "lat": 41.34031,
+    "lon": -3.63981,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Boceguillas, Segòvia.",
+      "es": "Boceguillas, Segovia."
+    }
+  },
+  {
+    "id": "cyl-segovia-collado-hermoso",
+    "name": {
+      "ca": "Collado Hermoso",
+      "es": "Collado Hermoso"
+    },
+    "lat": 41.03222,
+    "lon": -3.91564,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Collado Hermoso, Segòvia.",
+      "es": "Collado Hermoso, Segovia."
+    }
+  },
+  {
+    "id": "cyl-segovia-otero-de-los-herreros",
+    "name": {
+      "ca": "Otero de los Herreros (Otero de Herreros)",
+      "es": "Otero de los Herreros (Otero de Herreros)"
+    },
+    "lat": 40.81765,
+    "lon": -4.21481,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Otero de Herreros, Segòvia.",
+      "es": "Otero de Herreros, Segovia."
+    }
+  },
+  {
+    "id": "cyl-segovia-segovia",
+    "name": {
+      "ca": "Segovia",
+      "es": "Segovia"
+    },
+    "lat": 40.92547,
+    "lon": -4.10708,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Segovia, Segòvia.",
+      "es": "Segovia, Segovia."
+    }
+  },
+  {
+    "id": "cyl-segovia-turegano",
+    "name": {
+      "ca": "Turégano",
+      "es": "Turégano"
+    },
+    "lat": 41.15858,
+    "lon": -4.00539,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Turégano, Segòvia.",
+      "es": "Turégano, Segovia."
+    }
+  },
+  {
+    "id": "cyl-segovia-riaza",
+    "name": {
+      "ca": "Riaza",
+      "es": "Riaza"
+    },
+    "lat": 41.27067,
+    "lon": -3.49747,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Riaza, Segòvia.",
+      "es": "Riaza, Segovia."
+    }
+  },
+  {
+    "id": "cyl-soria-agreda",
+    "name": {
+      "ca": "Ágreda",
+      "es": "Ágreda"
+    },
+    "lat": 41.85097,
+    "lon": -1.92139,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Ágreda, Sòria.",
+      "es": "Ágreda, Soria."
+    }
+  },
+  {
+    "id": "cyl-soria-borobia",
+    "name": {
+      "ca": "Borobia",
+      "es": "Borobia"
+    },
+    "lat": 41.66028,
+    "lon": -1.89906,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Borobia, Sòria.",
+      "es": "Borobia, Soria."
+    }
+  },
+  {
+    "id": "cyl-soria-castillejo-de-robledo",
+    "name": {
+      "ca": "Castillejo de Robledo",
+      "es": "Castillejo de Robledo"
+    },
+    "lat": 41.57167,
+    "lon": -3.52944,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Castillejo de Robledo, Sòria.",
+      "es": "Castillejo de Robledo, Soria."
+    }
+  },
+  {
+    "id": "cyl-soria-garray",
+    "name": {
+      "ca": "Garray",
+      "es": "Garray"
+    },
+    "lat": 41.81342,
+    "lon": -2.44094,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Garray, Sòria.",
+      "es": "Garray, Soria."
+    }
+  },
+  {
+    "id": "cyl-soria-san-leonardo-de-yague",
+    "name": {
+      "ca": "San Leonardo de Yagüe",
+      "es": "San Leonardo de Yagüe"
+    },
+    "lat": 41.83104,
+    "lon": -3.07751,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "San Leonardo de Yagüe, Sòria.",
+      "es": "San Leonardo de Yagüe, Soria."
+    }
+  },
+  {
+    "id": "cyl-soria-soria",
+    "name": {
+      "ca": "Soria",
+      "es": "Soria"
+    },
+    "lat": 41.81111,
+    "lon": -2.54994,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Soria, Sòria.",
+      "es": "Soria, Soria."
+    }
+  },
+  {
+    "id": "cyl-valladolid-alcazaren",
+    "name": {
+      "ca": "Alcazarén",
+      "es": "Alcazarén"
+    },
+    "lat": 41.375,
+    "lon": -4.67222,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Alcazarén, Valladolid.",
+      "es": "Alcazarén, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-arroyo-de-la-encomienda",
+    "name": {
+      "ca": "Arroyo de la Encomienda",
+      "es": "Arroyo de la Encomienda"
+    },
+    "lat": 41.61611,
+    "lon": -4.80406,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Arroyo de la Encomienda, Valladolid.",
+      "es": "Arroyo de la Encomienda, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-cabezon-de-pisuerga",
+    "name": {
+      "ca": "Cabezón de Pisuerga",
+      "es": "Cabezón de Pisuerga"
+    },
+    "lat": 41.73232,
+    "lon": -4.64222,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Cabezón de Pisuerga, Valladolid.",
+      "es": "Cabezón de Pisuerga, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-cigales",
+    "name": {
+      "ca": "Cigales",
+      "es": "Cigales"
+    },
+    "lat": 41.75717,
+    "lon": -4.713,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Cigales, Valladolid.",
+      "es": "Cigales, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-cisterniga",
+    "name": {
+      "ca": "Cistérniga",
+      "es": "Cistérniga"
+    },
+    "lat": 41.61745,
+    "lon": -4.68177,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Cistérniga, Valladolid.",
+      "es": "Cistérniga, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-iscar",
+    "name": {
+      "ca": "Íscar",
+      "es": "Íscar"
+    },
+    "lat": 41.37133,
+    "lon": -4.54589,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Íscar, Valladolid.",
+      "es": "Íscar, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-laguna-de-duero",
+    "name": {
+      "ca": "Laguna de Duero",
+      "es": "Laguna de Duero"
+    },
+    "lat": 41.5825,
+    "lon": -4.73082,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Laguna de Duero, Valladolid.",
+      "es": "Laguna de Duero, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-medina-del-campo",
+    "name": {
+      "ca": "Medina del Campo",
+      "es": "Medina del Campo"
+    },
+    "lat": 41.29389,
+    "lon": -4.91703,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Medina del Campo, Valladolid.",
+      "es": "Medina del Campo, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-medina-de-rioseco",
+    "name": {
+      "ca": "Medina de Rioseco",
+      "es": "Medina de Rioseco"
+    },
+    "lat": 41.86353,
+    "lon": -5.08242,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Medina de Rioseco, Valladolid.",
+      "es": "Medina de Rioseco, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-montealegre-de-campos",
+    "name": {
+      "ca": "Montealegre de Campos",
+      "es": "Montealegre de Campos"
+    },
+    "lat": 41.90069,
+    "lon": -4.8985,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Montealegre de Campos, Valladolid.",
+      "es": "Montealegre de Campos, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-rueda",
+    "name": {
+      "ca": "Rueda",
+      "es": "Rueda"
+    },
+    "lat": 41.41639,
+    "lon": -4.95639,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Rueda, Valladolid.",
+      "es": "Rueda, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-tiedra",
+    "name": {
+      "ca": "Tiedra",
+      "es": "Tiedra"
+    },
+    "lat": 41.65778,
+    "lon": -5.26306,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Tiedra, Valladolid.",
+      "es": "Tiedra, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-tiedra-2",
+    "name": {
+      "ca": "Tiedra",
+      "es": "Tiedra"
+    },
+    "lat": 41.65185,
+    "lon": -5.27471,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Tiedra, Valladolid.",
+      "es": "Tiedra, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-trigueros-del-valle",
+    "name": {
+      "ca": "Trigueros del Valle",
+      "es": "Trigueros del Valle"
+    },
+    "lat": 41.83122,
+    "lon": -4.65131,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Trigueros del Valle, Valladolid.",
+      "es": "Trigueros del Valle, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-tudela-de-duero",
+    "name": {
+      "ca": "Tudela de Duero",
+      "es": "Tudela de Duero"
+    },
+    "lat": 41.56667,
+    "lon": -4.55,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Tudela de Duero, Valladolid.",
+      "es": "Tudela de Duero, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-urones-de-castroponce",
+    "name": {
+      "ca": "Urones de Castroponce",
+      "es": "Urones de Castroponce"
+    },
+    "lat": 42.0995,
+    "lon": -5.28462,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Urones de Castroponce, Valladolid.",
+      "es": "Urones de Castroponce, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-uruena",
+    "name": {
+      "ca": "Urueña",
+      "es": "Urueña"
+    },
+    "lat": 41.73083,
+    "lon": -5.20283,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Urueña, Valladolid.",
+      "es": "Urueña, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-valladolid",
+    "name": {
+      "ca": "Valladolid",
+      "es": "Valladolid"
+    },
+    "lat": 41.64915,
+    "lon": -4.7578,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Valladolid, Valladolid.",
+      "es": "Valladolid, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-villalar-de-los-comuneros",
+    "name": {
+      "ca": "Villalar de los Comuneros",
+      "es": "Villalar de los Comuneros"
+    },
+    "lat": 41.54491,
+    "lon": -5.13931,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Villalar de los Comuneros, Valladolid.",
+      "es": "Villalar de los Comuneros, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-villalon-de-campos",
+    "name": {
+      "ca": "Villalón de Campos",
+      "es": "Villalón de Campos"
+    },
+    "lat": 42.12308,
+    "lon": -5.05361,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Villalón de Campos, Valladolid.",
+      "es": "Villalón de Campos, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-valladolid-villanubla",
+    "name": {
+      "ca": "Villanubla",
+      "es": "Villanubla"
+    },
+    "lat": 41.692,
+    "lon": -4.842,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Villanubla, Valladolid.",
+      "es": "Villanubla, Valladolid."
+    }
+  },
+  {
+    "id": "cyl-zamora-benavente",
+    "name": {
+      "ca": "Benavente",
+      "es": "Benavente"
+    },
+    "lat": 41.9992,
+    "lon": -5.68095,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Benavente, Zamora.",
+      "es": "Benavente, Zamora."
+    }
+  },
+  {
+    "id": "cyl-zamora-toro",
+    "name": {
+      "ca": "Toro",
+      "es": "Toro"
+    },
+    "lat": 41.52036,
+    "lon": -5.40628,
+    "precision": "exact",
+    "source": {
+      "who": "Junta de Castilla y León",
+      "url": "https://www.jcyl.es/web/es/portada/eclipse-solar/puntos-visualizacion-recomendados.html"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Toro, Zamora.",
+      "es": "Toro, Zamora."
+    }
+  },
+  {
+    "id": "cat-alcanar-placa-de-bous",
+    "name": {
+      "ca": "Alcanar — Plaça de bous",
+      "es": "Alcanar — Plaza de toros"
+    },
+    "lat": 40.53945,
+    "lon": 0.48063,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-altafulla-font-del-mirador",
+    "name": {
+      "ca": "Altafulla — Font del Mirador",
+      "es": "Altafulla — Font del Mirador"
+    },
+    "lat": 41.13752,
+    "lon": 1.38811,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-amposta-poligon-industrial-l-oriola",
+    "name": {
+      "ca": "Amposta — Polígon industrial l’Oriola",
+      "es": "Amposta — Polígono industrial l’Oriola"
+    },
+    "lat": 40.69412,
+    "lon": 0.5765,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-camarles-pla-de-camarles",
+    "name": {
+      "ca": "Camarles — Pla de Camarles",
+      "es": "Camarles — Pla de Camarles"
+    },
+    "lat": 40.77031,
+    "lon": 0.66504,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-cambrils-cooperativa-agricola-de-cambrils",
+    "name": {
+      "ca": "Cambrils — Cooperativa Agrícola de Cambrils",
+      "es": "Cambrils — Cooperativa Agrícola de Cambrils"
+    },
+    "lat": 41.08541,
+    "lon": 1.03353,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-constanti-carrer-joan-miro",
+    "name": {
+      "ca": "Constantí — Carrer Joan Miró",
+      "es": "Constantí — Calle Joan Miró"
+    },
+    "lat": 41.15199,
+    "lon": 1.21332,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-gandesa-poligon-industrial-la-plana",
+    "name": {
+      "ca": "Gandesa — Polígon industrial la Plana",
+      "es": "Gandesa — Polígono industrial la Plana"
+    },
+    "lat": 41.05569,
+    "lon": 0.45317,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-l-aldea-can-girones",
+    "name": {
+      "ca": "l’Aldea — Can Gironès",
+      "es": "l’Aldea — Can Gironès"
+    },
+    "lat": 40.74564,
+    "lon": 0.62749,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-l-ametlla-de-mar-camp-de-futbol-municipal",
+    "name": {
+      "ca": "l’Ametlla de Mar — Camp de futbol municipal",
+      "es": "l’Ametlla de Mar — Campo de fútbol municipal"
+    },
+    "lat": 40.88684,
+    "lon": 0.79305,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-les-borges-blanques-zona-esportiva",
+    "name": {
+      "ca": "les Borges Blanques — Zona esportiva",
+      "es": "les Borges Blanques — Zona deportiva"
+    },
+    "lat": 41.51302,
+    "lon": 0.87379,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-lleida-magraners",
+    "name": {
+      "ca": "Lleida — Magraners",
+      "es": "Lleida — Magraners"
+    },
+    "lat": 41.60521,
+    "lon": 0.66007,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-montbrio-del-camp-les-palomeres-granja-gira-sol",
+    "name": {
+      "ca": "Montbrió del Camp — les Palomeres / Granja Gira-sol",
+      "es": "Montbrió del Camp — les Palomeres / Granja Gira-sol"
+    },
+    "lat": 41.12607,
+    "lon": 1.00597,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-mora-la-nova-carrer-tortosa",
+    "name": {
+      "ca": "Móra la Nova — Carrer Tortosa",
+      "es": "Móra la Nova — Calle Tortosa"
+    },
+    "lat": 41.09764,
+    "lon": 0.65294,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-reus-barri-de-la-immaculada",
+    "name": {
+      "ca": "Reus — Barri de la Immaculada",
+      "es": "Reus — Barrio de la Inmaculada"
+    },
+    "lat": 41.15082,
+    "lon": 1.09162,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-santa-barbara-zona-esportiva-de-la-carretera-de-la-galer",
+    "name": {
+      "ca": "Santa Bàrbara — Zona esportiva de la carretera de la Galera",
+      "es": "Santa Bàrbara — Zona deportiva de la carretera de la Galera"
+    },
+    "lat": 40.71373,
+    "lon": 0.48709,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-torredembarra-poligon-industrial-de-roques-planes",
+    "name": {
+      "ca": "Torredembarra — Polígon industrial de Roques Planes",
+      "es": "Torredembarra — Polígono industrial de Roques Planes"
+    },
+    "lat": 41.15287,
+    "lon": 1.39092,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-valls-poligon-industrial-de-valls-carrer-fuster",
+    "name": {
+      "ca": "Valls — Polígon industrial de Valls, carrer Fuster",
+      "es": "Valls — Polígono industrial de Valls, calle Fuster"
+    },
+    "lat": 41.30733,
+    "lon": 1.25735,
+    "precision": "exact",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official"
+  },
+  {
+    "id": "cat-tarragona-anella-mediterrania",
+    "name": {
+      "ca": "Tarragona — l’Anella Mediterrània",
+      "es": "Tarragona — l’Anella Mediterrània"
+    },
+    "lat": 41.12209,
+    "lon": 1.20393,
+    "precision": "estimated",
+    "source": {
+      "who": "Generalitat de Catalunya",
+      "url": "https://eclipsicatalunya.cat/punts-d-observacio/"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "La Generalitat publica aquest punt sense coordenada: aquesta és la de l’Anella Mediterrània a OpenStreetMap.",
+      "es": "La Generalitat publica este punto sin coordenada: esta es la de l’Anella Mediterrània en OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-arguedas",
+    "name": {
+      "ca": "Arguedas",
+      "es": "Arguedas"
+    },
+    "lat": 42.17582,
+    "lon": -1.59701,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-bardenas-reales-aguilares",
+    "name": {
+      "ca": "Bardenas Reales — Aguilares",
+      "es": "Bardenas Reales — Aguilares"
+    },
+    "lat": 42.18091,
+    "lon": -1.53423,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-bardenas-reales-el-ferial",
+    "name": {
+      "ca": "Bardenas Reales — El Ferial",
+      "es": "Bardenas Reales — El Ferial"
+    },
+    "lat": 42.28857,
+    "lon": -1.58813,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-bunuel",
+    "name": {
+      "ca": "Buñuel",
+      "es": "Buñuel"
+    },
+    "lat": 41.97975,
+    "lon": -1.44488,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-carcar",
+    "name": {
+      "ca": "Cárcar",
+      "es": "Cárcar"
+    },
+    "lat": 42.39133,
+    "lon": -1.97474,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-cascante",
+    "name": {
+      "ca": "Cascante",
+      "es": "Cascante"
+    },
+    "lat": 42.01176,
+    "lon": -1.70676,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-castejon",
+    "name": {
+      "ca": "Castejón",
+      "es": "Castejón"
+    },
+    "lat": 42.16843,
+    "lon": -1.69078,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-corella",
+    "name": {
+      "ca": "Corella",
+      "es": "Corella"
+    },
+    "lat": 42.11521,
+    "lon": -1.78937,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-fitero",
+    "name": {
+      "ca": "Fitero",
+      "es": "Fitero"
+    },
+    "lat": 42.05572,
+    "lon": -1.85657,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-larraga",
+    "name": {
+      "ca": "Larraga",
+      "es": "Larraga"
+    },
+    "lat": 42.55805,
+    "lon": -1.85007,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-lerin",
+    "name": {
+      "ca": "Lerín",
+      "es": "Lerín"
+    },
+    "lat": 42.48271,
+    "lon": -1.97272,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-lodosa",
+    "name": {
+      "ca": "Lodosa",
+      "es": "Lodosa"
+    },
+    "lat": 42.42419,
+    "lon": -2.07856,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-marcilla",
+    "name": {
+      "ca": "Marcilla",
+      "es": "Marcilla"
+    },
+    "lat": 42.32588,
+    "lon": -1.7381,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-mendavia",
+    "name": {
+      "ca": "Mendavia",
+      "es": "Mendavia"
+    },
+    "lat": 42.44439,
+    "lon": -2.20029,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-peralta",
+    "name": {
+      "ca": "Peralta",
+      "es": "Peralta"
+    },
+    "lat": 42.35686,
+    "lon": -1.7995,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-ribaforada",
+    "name": {
+      "ca": "Ribaforada",
+      "es": "Ribaforada"
+    },
+    "lat": 41.99814,
+    "lon": -1.51266,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-sendaviva-arguedas",
+    "name": {
+      "ca": "Sendaviva (Arguedas)",
+      "es": "Sendaviva (Arguedas)"
+    },
+    "lat": 42.19266,
+    "lon": -1.57326,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-tafalla",
+    "name": {
+      "ca": "Tafalla",
+      "es": "Tafalla"
+    },
+    "lat": 42.51297,
+    "lon": -1.70683,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-tudela",
+    "name": {
+      "ca": "Tudela",
+      "es": "Tudela"
+    },
+    "lat": 42.07831,
+    "lon": -1.63866,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "nav-viana",
+    "name": {
+      "ca": "Viana",
+      "es": "Viana"
+    },
+    "lat": 42.51547,
+    "lon": -2.37134,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Navarra / NICDO — Planetario de Pamplona",
+      "url": "https://eklipsenavarra.com/es/puntos-de-observacion"
+    },
+    "kind": "event",
+    "note": {
+      "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "ara-alcaniz-motorland-aragon",
+    "name": {
+      "ca": "Alcañiz — MotorLand Aragón",
+      "es": "Alcañiz — MotorLand Aragón"
+    },
+    "lat": 41.07782,
+    "lon": -0.19497,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Aragón",
+      "url": "https://www.aragon.es/actualidad/aragon-eclipse-solar-2026"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial del Govern d’Aragó (POGA); cal reserva de vehicle. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "ara-calamocha-antic-aerodrom",
+    "name": {
+      "ca": "Calamocha — antic aeròdrom",
+      "es": "Calamocha — antiguo aeródromo"
+    },
+    "lat": 40.90186,
+    "lon": -1.2974,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Aragón",
+      "url": "https://www.aragon.es/actualidad/aragon-eclipse-solar-2026"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial del Govern d’Aragó (POGA); cal reserva de vehicle. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "ara-camarena-de-la-sierra-estacio-d-esqui-de-javalambre",
+    "name": {
+      "ca": "Camarena de la Sierra — estació d’esquí de Javalambre",
+      "es": "Camarena de la Sierra — estación de esquí de Javalambre"
+    },
+    "lat": 40.11516,
+    "lon": -1.01785,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Aragón",
+      "url": "https://www.aragon.es/actualidad/aragon-eclipse-solar-2026"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial del Govern d’Aragó (POGA); cal reserva de vehicle. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "ara-epila-poligon-industrial",
+    "name": {
+      "ca": "Épila — polígon industrial",
+      "es": "Épila — polígono industrial"
+    },
+    "lat": 41.5985,
+    "lon": -1.27962,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Aragón",
+      "url": "https://www.aragon.es/actualidad/aragon-eclipse-solar-2026"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial del Govern d’Aragó (POGA); cal reserva de vehicle. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "ara-carinena-poligon-industrial",
+    "name": {
+      "ca": "Cariñena — polígon industrial",
+      "es": "Cariñena — polígono industrial"
+    },
+    "lat": 41.33821,
+    "lon": -1.22631,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Aragón",
+      "url": "https://www.aragon.es/actualidad/aragon-eclipse-solar-2026"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial del Govern d’Aragó (POGA); cal reserva de vehicle. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "ara-ariza",
+    "name": {
+      "ca": "Ariza",
+      "es": "Ariza"
+    },
+    "lat": 41.31036,
+    "lon": -2.05556,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Aragón",
+      "url": "https://www.aragon.es/actualidad/aragon-eclipse-solar-2026"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial del Govern d’Aragó (POGA); cal reserva de vehicle. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "ara-monreal-del-campo",
+    "name": {
+      "ca": "Monreal del Campo",
+      "es": "Monreal del Campo"
+    },
+    "lat": 40.77495,
+    "lon": -1.34937,
+    "precision": "estimated",
+    "source": {
+      "who": "Gobierno de Aragón",
+      "url": "https://www.aragon.es/actualidad/aragon-eclipse-solar-2026"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial del Govern d’Aragó (POGA); cal reserva de vehicle. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "val-benassal-ermita-de-sant-cristofol",
+    "name": {
+      "ca": "Benassal — ermita de Sant Cristòfol",
+      "es": "Benassal — ermita de Sant Cristòfol"
+    },
+    "lat": 40.35977,
+    "lon": -0.13938,
+    "precision": "estimated",
+    "source": {
+      "who": "Generalitat Valenciana",
+      "url": "https://trioeclipses.es/es/ccaa/comunitat-valenciana"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "val-peniscola",
+    "name": {
+      "ca": "Peníscola",
+      "es": "Peñíscola"
+    },
+    "lat": 40.35778,
+    "lon": 0.40738,
+    "precision": "estimated",
+    "source": {
+      "who": "Generalitat Valenciana",
+      "url": "https://trioeclipses.es/es/ccaa/comunitat-valenciana"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "val-castello-de-la-plana-entorn-del-planetari",
+    "name": {
+      "ca": "Castelló de la Plana — entorn del Planetari",
+      "es": "Castellón de la Plana — entorno del Planetario"
+    },
+    "lat": 39.97931,
+    "lon": 0.02206,
+    "precision": "estimated",
+    "source": {
+      "who": "Generalitat Valenciana",
+      "url": "https://trioeclipses.es/es/ccaa/comunitat-valenciana"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "val-pucol",
+    "name": {
+      "ca": "Puçol",
+      "es": "Puçol"
+    },
+    "lat": 39.61722,
+    "lon": -0.30283,
+    "precision": "estimated",
+    "source": {
+      "who": "Generalitat Valenciana",
+      "url": "https://trioeclipses.es/es/ccaa/comunitat-valenciana"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "val-aras-de-los-olmos",
+    "name": {
+      "ca": "Aras de los Olmos",
+      "es": "Aras de los Olmos"
+    },
+    "lat": 39.92423,
+    "lon": -1.13323,
+    "precision": "estimated",
+    "source": {
+      "who": "Generalitat Valenciana",
+      "url": "https://trioeclipses.es/es/ccaa/comunitat-valenciana"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "val-macastre",
+    "name": {
+      "ca": "Macastre",
+      "es": "Macastre"
+    },
+    "lat": 39.38204,
+    "lon": -0.78549,
+    "precision": "estimated",
+    "source": {
+      "who": "Generalitat Valenciana",
+      "url": "https://trioeclipses.es/es/ccaa/comunitat-valenciana"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "val-utiel",
+    "name": {
+      "ca": "Utiel",
+      "es": "Utiel"
+    },
+    "lat": 39.56808,
+    "lon": -1.20516,
+    "precision": "estimated",
+    "source": {
+      "who": "Generalitat Valenciana",
+      "url": "https://trioeclipses.es/es/ccaa/comunitat-valenciana"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "val-valencia",
+    "name": {
+      "ca": "València",
+      "es": "Valencia"
+    },
+    "lat": 39.46971,
+    "lon": -0.37634,
+    "precision": "estimated",
+    "source": {
+      "who": "Generalitat Valenciana",
+      "url": "https://trioeclipses.es/es/ccaa/comunitat-valenciana"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-felanitx-circuit-de-son-matamoros",
+    "name": {
+      "ca": "Felanitx — circuit de Son Matamoros",
+      "es": "Felanitx — circuito de Son Matamoros"
+    },
+    "lat": 39.48497,
+    "lon": 3.13497,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-platja-de-palma",
+    "name": {
+      "ca": "Platja de Palma",
+      "es": "Playa de Palma"
+    },
+    "lat": 39.51777,
+    "lon": 2.7426,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-porreres-ronda-de-porreres",
+    "name": {
+      "ca": "Porreres — ronda de Porreres",
+      "es": "Porreres — ronda de Porreres"
+    },
+    "lat": 39.51689,
+    "lon": 3.02275,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-platja-de-santa-ponca",
+    "name": {
+      "ca": "Platja de Santa Ponça",
+      "es": "Playa de Santa Ponça"
+    },
+    "lat": 39.51621,
+    "lon": 2.48009,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-algaida-camp-de-futbol",
+    "name": {
+      "ca": "Algaida — camp de futbol",
+      "es": "Algaida — campo de fútbol"
+    },
+    "lat": 39.55711,
+    "lon": 2.89729,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-pina-camp-de-futbol",
+    "name": {
+      "ca": "Pina — camp de futbol",
+      "es": "Pina — campo de fútbol"
+    },
+    "lat": 39.59919,
+    "lon": 2.92458,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-llucmajor-de-maioris-a-tolleric",
+    "name": {
+      "ca": "Llucmajor — de Maioris a Tolleric",
+      "es": "Llucmajor — de Maioris a Tolleric"
+    },
+    "lat": 39.4493,
+    "lon": 2.76255,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-llucmajor-aparcament-de-la-ma-3220",
+    "name": {
+      "ca": "Llucmajor — aparcament de la MA-3220",
+      "es": "Llucmajor — aparcamiento de la MA-3220"
+    },
+    "lat": 39.45443,
+    "lon": 2.7514,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-llucmajor-maioris",
+    "name": {
+      "ca": "Llucmajor — Maioris",
+      "es": "Llucmajor — Maioris"
+    },
+    "lat": 39.45478,
+    "lon": 2.74933,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-cala-en-bosc",
+    "name": {
+      "ca": "Cala en Bosc",
+      "es": "Cala en Bosc"
+    },
+    "lat": 39.92733,
+    "lon": 3.83086,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-cala-blanca",
+    "name": {
+      "ca": "Cala Blanca",
+      "es": "Cala Blanca"
+    },
+    "lat": 39.96766,
+    "lon": 3.83592,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-ciutadella-son-blanc",
+    "name": {
+      "ca": "Ciutadella — Son Blanc",
+      "es": "Ciutadella — Son Blanc"
+    },
+    "lat": 39.98546,
+    "lon": 3.83366,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-platja-de-son-bou",
+    "name": {
+      "ca": "Platja de Son Bou",
+      "es": "Playa de Son Bou"
+    },
+    "lat": 39.90177,
+    "lon": 4.06725,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-cala-en-blanes-avinguda-los-delfines",
+    "name": {
+      "ca": "Cala en Blanes — avinguda Los Delfines",
+      "es": "Cala en Blanes — avenida Los Delfines"
+    },
+    "lat": 40.00203,
+    "lon": 3.81372,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-passeig-maritim-de-mao",
+    "name": {
+      "ca": "Passeig Marítim de Maó",
+      "es": "Paseo Marítimo de Mahón"
+    },
+    "lat": 39.89019,
+    "lon": 4.27267,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-platja-de-sant-tomas",
+    "name": {
+      "ca": "Platja de Sant Tomàs",
+      "es": "Playa de Sant Tomàs"
+    },
+    "lat": 39.91349,
+    "lon": 4.04189,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-costa-de-sant-antoni-de-portmany",
+    "name": {
+      "ca": "Costa de Sant Antoni de Portmany",
+      "es": "Costa de Sant Antoni de Portmany"
+    },
+    "lat": 38.98306,
+    "lon": 1.30095,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-cala-tarida",
+    "name": {
+      "ca": "Cala Tarida",
+      "es": "Cala Tarida"
+    },
+    "lat": 38.94008,
+    "lon": 1.23576,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-sa-pedrera-de-port-des-torrent",
+    "name": {
+      "ca": "Sa Pedrera de Port des Torrent",
+      "es": "Sa Pedrera de Port des Torrent"
+    },
+    "lat": 38.96423,
+    "lon": 1.26007,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-cala-comte",
+    "name": {
+      "ca": "Cala Comte",
+      "es": "Cala Comte"
+    },
+    "lat": 38.96288,
+    "lon": 1.22127,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-cala-vedella",
+    "name": {
+      "ca": "Cala Vedella",
+      "es": "Cala Vedella"
+    },
+    "lat": 38.91004,
+    "lon": 1.22411,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-cala-gracio",
+    "name": {
+      "ca": "Cala Gració",
+      "es": "Cala Gració"
+    },
+    "lat": 38.99196,
+    "lon": 1.29043,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-estany-des-peix",
+    "name": {
+      "ca": "Estany des Peix",
+      "es": "Estany des Peix"
+    },
+    "lat": 38.7289,
+    "lon": 1.41758,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  },
+  {
+    "id": "bal-es-arenals",
+    "name": {
+      "ca": "Es Arenals",
+      "es": "Es Arenals"
+    },
+    "lat": 38.67557,
+    "lon": 1.49313,
+    "precision": "estimated",
+    "source": {
+      "who": "Govern de les Illes Balears",
+      "url": "https://www.caib.es/webgoib/-/zones-d-observaci%C3%B3-oficial-zoo-"
+    },
+    "kind": "official",
+    "note": {
+      "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+    }
+  }
+]

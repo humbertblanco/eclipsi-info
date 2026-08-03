@@ -145,6 +145,7 @@ import {
   windowDistanceAt,
 } from './window';
 import type { HorizonWindow } from './window';
+import { SpotSearchError } from './errors';
 import type {
   SpotCandidate,
   SpotResult,
@@ -237,7 +238,7 @@ function yieldToEventLoop(): Promise<void> {
 }
 
 function abortIfNeeded(signal: AbortSignal | undefined): void {
-  if (signal?.aborted) throw new Error('Cerca de llocs cancel·lada');
+  if (signal?.aborted) throw new SpotSearchError('cancelled');
 }
 
 /** Progrés acumulat fins a l'inici d'una etapa. */
@@ -468,10 +469,20 @@ export async function searchSpots(
 
   const downloaded = new Set<string>();
 
+  /*
+   * EL PROGRÉS NO PORTA CAP FRASE, I ABANS EN PORTAVA UNA.
+   *
+   * `report` rebia un `message` escrit aquí en català («Baixant el relleu (3 de
+   * 150 tessel·les)») que viatjava dins de `SpotSearchProgress` fins al Worker
+   * i fins a la pantalla. No el pintava ningú —`SpotSearchPanel` ja componia la
+   * seva frase a partir de `stage`, que sí que és un codi— però hi era, i un
+   * canal de text en català obert cap a la interfície s'acaba fent servir. El
+   * que queda és la DADA: quina etapa, quant en portem i quants candidats
+   * queden vius. Les paraules, a `features/spots/strings.ts`.
+   */
   const report = (
     stage: SpotSearchStage,
     within: number,
-    message: string,
     examined: number,
     alive: number,
   ): void => {
@@ -481,7 +492,6 @@ export async function searchSpots(
         1,
         stageStart(stageWeights, stage) + stageWeights[stage] * Math.min(1, within),
       ),
-      message,
       examined,
       alive,
     };
@@ -492,7 +502,7 @@ export async function searchSpots(
 
   abortIfNeeded(signal);
   let t0 = Date.now();
-  report('grid', 0, 'Preparant la graella de candidats', 0, 0);
+  report('grid', 0, 0, 0);
 
   // Les cotes encara no es poden llegir: no hi ha cap tessel·la baixada. Els
   // candidats hereten la d'on ets, que a efectes de la paral·laxi topocèntrica
@@ -509,7 +519,7 @@ export async function searchSpots(
   /* ---- etapa A: astronomia barata ------------------------------------- */
 
   t0 = Date.now();
-  report('astro', 0, `Calculant l’eclipsi a ${candidates.length} punts`, 0, 0);
+  report('astro', 0, 0, 0);
 
   const seed = buildCentralSeed(eclipseId, origin, atmosphere);
   cost.astro.ephemerisCalls += seed.ephemerisCalls;
@@ -525,7 +535,6 @@ export async function searchSpots(
       report(
         'astro',
         i / candidates.length,
-        `Calculant l’eclipsi a ${candidates.length} punts`,
         i,
         scanned.length,
       );
@@ -599,7 +608,7 @@ export async function searchSpots(
 
   if (alive.length === 0) {
     cost.totalMs = Date.now() - startedAt;
-    report('done', 1, 'Cap candidat viable dins del radi', candidates.length, 0);
+    report('done', 1, candidates.length, 0);
     return {
       results: [],
       cost,
@@ -635,7 +644,6 @@ export async function searchSpots(
   report(
     'tiles',
     0,
-    `Baixant el mapa de terra i mar (0 de ${discTileList.length} tessel·les)`,
     0,
     alive.length,
   );
@@ -646,7 +654,6 @@ export async function searchSpots(
       report(
         'tiles',
         total === 0 ? 0.15 : 0.15 * (done / total),
-        `Baixant el mapa de terra i mar (${done} de ${total} tessel·les)`,
         done,
         alive.length,
       );
@@ -656,10 +663,9 @@ export async function searchSpots(
   for (const tile of discTileList) downloaded.add(tileKey(tile));
   cost.tiles.tiles += discTileList.length;
 
+  // El motiu viatja com a CODI, no com a frase: vegeu `spots/errors.ts`.
   if (discTileList.length > 0 && discFetch.loaded === 0) {
-    throw new Error(
-      'No s’ha pogut baixar cap tessel·la del terreny. Comprova la connexió.',
-    );
+    throw new SpotSearchError('no-terrain');
   }
 
   // TERRA O MAR, I EL CIM DE CADA CEL·LA. Vegeu la capçalera (etapa B′) i
@@ -672,7 +678,6 @@ export async function searchSpots(
       report(
         'tiles',
         0.15 + 0.1 * (i / alive.length),
-        'Triant terra ferma i el punt alt de cada cel·la',
         i,
         landAlive.length,
       );
@@ -745,7 +750,7 @@ export async function searchSpots(
     cost.tiles.ms = Date.now() - t0;
     cost.uniqueTiles = downloaded.size;
     cost.totalMs = Date.now() - startedAt;
-    report('done', 1, 'Cap candidat en terra ferma dins del radi', alive.length, 0);
+    report('done', 1, alive.length, 0);
     return {
       results: [],
       cost,
@@ -790,7 +795,6 @@ export async function searchSpots(
   report(
     'tiles',
     0.25,
-    `Baixant el relleu (0 de ${sieveTileList.length} tessel·les)`,
     0,
     landAlive.length,
   );
@@ -801,7 +805,6 @@ export async function searchSpots(
       report(
         'tiles',
         total === 0 ? 1 : 0.25 + 0.75 * (done / total),
-        `Baixant el relleu (${done} de ${total} tessel·les)`,
         done,
         landAlive.length,
       );
@@ -815,9 +818,7 @@ export async function searchSpots(
   cost.tiles.ms = Date.now() - t0;
 
   if (sieveTileList.length > 0 && sieveFetch.loaded === 0) {
-    throw new Error(
-      'No s’ha pogut baixar cap tessel·la del terreny. Comprova la connexió.',
-    );
+    throw new SpotSearchError('no-terrain');
   }
 
   /* ---- etapa C: garbell d'horitzó ------------------------------------- */
@@ -832,7 +833,6 @@ export async function searchSpots(
       report(
         'sieve',
         i / landAlive.length,
-        `Mirant l’horitzó de ${landAlive.length} punts`,
         i,
         landAlive.length,
       );
@@ -929,7 +929,7 @@ export async function searchSpots(
   if (!refine) {
     cost.totalMs = Date.now() - startedAt;
     cost.uniqueTiles = downloaded.size;
-    report('done', 1, 'Llista llesta (estimació)', candidates.length, results.length);
+    report('done', 1, candidates.length, results.length);
     return {
       results: results.slice(0, limit),
       cost,
@@ -973,7 +973,6 @@ export async function searchSpots(
   report(
     'refineTiles',
     0,
-    `Baixant el relleu fi (0 de ${finalTileList.length} tessel·les)`,
     0,
     chosen.length,
   );
@@ -984,7 +983,6 @@ export async function searchSpots(
       report(
         'refineTiles',
         total === 0 ? 1 : done / total,
-        `Baixant el relleu fi (${done} de ${total} tessel·les)`,
         done,
         chosen.length,
       );
@@ -1022,7 +1020,6 @@ export async function searchSpots(
     report(
       'refine',
       i / chosen.length,
-      `Calculant els finalistes (${i + 1} de ${chosen.length})`,
       i,
       chosen.length,
     );
@@ -1097,7 +1094,7 @@ export async function searchSpots(
   cost.totalMs = Date.now() - startedAt;
 
   results.sort((a, b) => compareSpots(a, b));
-  report('done', 1, 'Llista llesta', candidates.length, results.length);
+  report('done', 1, candidates.length, results.length);
 
   return {
     results: results.slice(0, limit),

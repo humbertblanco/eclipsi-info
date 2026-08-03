@@ -10,6 +10,8 @@ import type { GeoLocation } from '../core/astro/types';
 import {
   isAbortError,
   prepareLocation,
+  toPrepareFailure,
+  type PrepareFailure,
   type PrepareOptions,
   type PrepareProgress,
   type PrepareResult,
@@ -26,7 +28,15 @@ const THROTTLE_MS = 80;
 export interface UsePrepareState {
   running: boolean;
   progress: PrepareProgress | null;
-  error: string | null;
+  /**
+   * La fallada com a CODI, no com a frase.
+   *
+   * Abans hi arribava `error.message` tal qual, que era una frase catalana
+   * escrita dins de `prepare.ts`, i `OfflinePanel` la interpolava dins de
+   * `note.error`: mitja línia en castellà i mitja en català. El text el posa
+   * ara `offline/strings.ts` amb `prepareFailureText`.
+   */
+  error: PrepareFailure | null;
   result: PrepareResult | null;
 }
 
@@ -99,7 +109,7 @@ export function usePrepare(): UsePrepareResult {
           setState((previous) => ({
             ...previous,
             running: false,
-            error: error instanceof Error ? error.message : String(error),
+            error: toPrepareFailure(error),
           }));
         });
     },

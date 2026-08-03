@@ -18,6 +18,15 @@ export const CACHE_TERRAIN = 'eclipsi-relleu-v1';
 export const CACHE_BASEMAP = 'eclipsi-mapa-v1';
 
 /**
+ * Memòria cau dels nostres catàlegs de `public/data/` (miradors, climatologia
+ * de núvols). Igual que a vite.config.ts.
+ *
+ * No van al precache a posta: pesen centenars de kB i només els necessita qui
+ * encén aquelles capes. Vegeu-hi el raonament sencer al costat de la regla.
+ */
+export const CACHE_DATA = 'eclipsi-dades-v1';
+
+/**
  * Arrel de les tessel·les d'elevació terrarium (AWS Open Data, sense clau).
  *
  * Font: https://registry.opendata.aws/terrain-tiles/

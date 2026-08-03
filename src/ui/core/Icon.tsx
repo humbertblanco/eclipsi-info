@@ -21,6 +21,8 @@ import {
   Map,
   MapPin,
   Moon,
+  Pause,
+  Play,
   Rss,
   Satellite,
   ScanEye,
@@ -106,6 +108,15 @@ export type IconName =
      component és com vam acabar tenint un tic d'SVG dins de `Checkbox`. */
   | 'arrow-left'
   | 'arrow-right'
+  /* El transport de la línia de temps del simulador (`features/sim/
+     TimelineControls.tsx`). Van al vocabulari i no dibuixades a mà dins del
+     component per la mateixa raó que hi van les vuit de sobre: el tic d'SVG
+     que va acabar dins de `Checkbox` va començar exactament així, amb una
+     forma que «només la fa servir un component». I un triangle i dues barres
+     són el senyal universal de reproduir i pausar: no hi ha manera d'escriure
+     «Reprodueix» en un botó de 44 px que hagi de conviure amb els de ±1 min. */
+  | 'play'
+  | 'pause'
   | 'check'
   | 'chevron-down'
   | 'layers'
@@ -187,6 +198,8 @@ const REGISTRY: Record<IconName, ComponentType<LucideProps>> = {
   'map-pin': MapPin,
   crosshair: Crosshair,
   compass: Compass,
+  play: Play,
+  pause: Pause,
   camera: Camera,
   aperture: Aperture,
   eye: Eye,

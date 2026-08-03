@@ -42,6 +42,7 @@ import {
   tileKey,
   type TileId,
 } from './elevation';
+import { HorizonComputeError } from './errors';
 import { HORIZON_PROFILE_VERSION, type HorizonProfile } from './profile';
 
 /** Radi terrestre en metres. Reutilitzem la constant del nucli astronòmic. */
@@ -509,7 +510,7 @@ function yieldToEventLoop(): Promise<void> {
 }
 
 function abortIfNeeded(signal: AbortSignal | undefined): void {
-  if (signal?.aborted) throw new Error("Càlcul de l'horitzó cancel·lat");
+  if (signal?.aborted) throw new HorizonComputeError({ code: 'cancelled' });
 }
 
 /**
@@ -590,11 +591,19 @@ export async function computeHorizonProfile(
    * resposta diferent i equivocada, i en aquesta app la resposta equivocada és
    * «sí que el veuràs». Val més no tenir-ne.
    */
+  /*
+   * EL MOTIU VIATJA COM A CODI I NO COM A FRASE. Aquí hi havia el text català
+   * «Només s'han pogut baixar X de N tessel·les… Comprova la connexió», i
+   * pujava sencer fins a la pantalla d'un usuari que podia tenir l'app en
+   * castellà. Les xifres van dins de la dada; les paraules, a
+   * `features/sim/strings.ts`. Vegeu `horizon/errors.ts`.
+   */
   if (tiles.length > 0 && result.loaded / tiles.length < MIN_TILE_COVERAGE) {
-    throw new Error(
-      `Només s'han pogut baixar ${result.loaded} de ${tiles.length} tessel·les del terreny.` +
-        ' Amb el relleu a mitges, el resultat no seria de fiar. Comprova la connexió.',
-    );
+    throw new HorizonComputeError({
+      code: result.loaded === 0 ? 'no-terrain' : 'tiles-incomplete',
+      loaded: result.loaded,
+      total: tiles.length,
+    });
   }
 
   // --- Fase 1b: origen vertical --------------------------------------------

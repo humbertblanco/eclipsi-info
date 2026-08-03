@@ -17,6 +17,7 @@
  */
 
 import type { Locale } from '../../i18n';
+import type { SpotSearchFailureCode } from './useSpotSearch';
 
 type Entry = { ca: string; es: string };
 
@@ -41,18 +42,6 @@ const STRINGS = {
   'panel.failed': {
     ca: 'El càlcul dels llocs ha fallat.',
     es: 'El cálculo de los sitios ha fallado.',
-  },
-  /*
-   * EL DETALL DE L'ERROR. Un «ha fallat» pelat no deixa distingir una xarxa
-   * caiguda d'un relleu corrupte, i el missatge real ja el guarda
-   * `useSpotSearch`. El patró és el d'`src/offline/strings.ts` (`note.error`):
-   * frase traduïda i la causa crua interpolada. El text del motor pot arribar
-   * en català a una pantalla en castellà; és tècnic, i val més una pista en
-   * l'idioma equivocat que cap pista.
-   */
-  'panel.failedDetail': {
-    ca: 'El cercador ha fallat: {error}',
-    es: 'El buscador ha fallado: {error}',
   },
   'panel.progressLabel': { ca: 'Progrés de la cerca', es: 'Progreso de la búsqueda' },
   /*
@@ -175,7 +164,38 @@ const STRINGS = {
   'cost.stage.refineTiles': { ca: 'D1 · Tessel·les dels finalistes', es: 'D1 · Teselas de los finalistas' },
   'cost.stage.refine': { ca: 'D2 · Càlcul complet', es: 'D2 · Cálculo completo' },
 
-  /* --- errors del worker -------------------------------------------------- */
+  /* --- errors ---------------------------------------------------------------
+   *
+   * AQUÍ HI HAVIA UN FORAT I ERA GROS. La clau que hi vivia abans es deia
+   * `panel.failedDetail` i deia «El cercador ha fallat: {error}», amb
+   * `{error}` omplert pel `message` cru del motor — que estava escrit en
+   * català dins de `core/spots/search.ts`. La capçalera d'aquest fitxer ho
+   * defensava dient que allò era «tècnic»: no ho era. Era «Comprova la
+   * connexió», o sigui l'única part accionable de l'avís, arribant en català
+   * a una pantalla en castellà. Ara el motor emet codis
+   * (`core/spots/errors.ts`) i cada codi té la seva frase, en dues llengües.
+   *
+   * TO: què ha passat i què pots fer. Res d'HTTP i res de culpar l'usuari.   */
+  'error.cancelled': {
+    ca: 'Cerca aturada.',
+    es: 'Búsqueda detenida.',
+  },
+  'error.noTerrain': {
+    ca: 'No ha arribat cap tessel·la del terreny i sense relleu no es pot mirar cap horitzó. Comprova la connexió.',
+    es: 'No ha llegado ninguna tesela del terreno y sin relieve no se puede mirar ningún horizonte. Comprueba la conexión.',
+  },
+  'error.terrainIncomplete': {
+    ca: 'Ha faltat relleu per baixar. Amb el terreny a mitges els llocs sortirien optimistes i falsos, i val més no donar-los. Comprova la connexió.',
+    es: 'Ha faltado relieve por descargar. Con el terreno a medias los sitios saldrían optimistas y falsos, y vale más no darlos. Comprueba la conexión.',
+  },
+  'error.unknown': {
+    ca: 'No s’han pogut calcular els llocs. Torna-ho a provar.',
+    es: 'No se han podido calcular los sitios. Vuelve a intentarlo.',
+  },
+  'error.worker': {
+    ca: 'La cerca s’ha aturat sola. Torna-ho a provar; si es repeteix, tanca i torna a obrir l’app.',
+    es: 'La búsqueda se ha parado sola. Vuelve a intentarlo; si se repite, cierra y vuelve a abrir la app.',
+  },
   'error.noWorker': {
     ca: 'Aquest navegador no pot calcular els llocs en segon pla.',
     es: 'Este navegador no puede calcular los sitios en segundo plano.',
@@ -196,4 +216,31 @@ export function sp(
     const value = vars[name];
     return value === undefined ? match : String(value);
   });
+}
+
+/**
+ * Del codi de la fallada a la frase, amb `switch` exhaustiu.
+ *
+ * Mateix contracte que `horizonProgressText` i `horizonFailureText`: afegir un
+ * codi a la unió trenca la compilació aquí fins que algú escriu les dues
+ * frases. És l'única xarxa que evita que el castellà arribi tard.
+ */
+export function spotSearchFailureText(
+  code: SpotSearchFailureCode,
+  locale: Locale,
+): string {
+  switch (code) {
+    case 'cancelled':
+      return sp('error.cancelled', locale);
+    case 'no-terrain':
+      return sp('error.noTerrain', locale);
+    case 'terrain-incomplete':
+      return sp('error.terrainIncomplete', locale);
+    case 'worker':
+      return sp('error.worker', locale);
+    case 'no-worker':
+      return sp('error.noWorker', locale);
+    case 'unknown':
+      return sp('error.unknown', locale);
+  }
 }

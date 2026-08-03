@@ -130,12 +130,20 @@ export type SpotSearchStage =
   | 'refine'
   | 'done';
 
+/**
+ * El progrés és DADA, no prosa.
+ *
+ * Aquí hi havia un `message: string` amb «Text llest per ensenyar, en català».
+ * Cap frase que neixi al nucli no és llesta per ensenyar: aquest mòdul ha de
+ * poder córrer en un Worker i en Node, i no sap ni pot saber en quin idioma
+ * està la interfície. `stage` ja era el codi i la pantalla ja el feia servir;
+ * el text només era un segon canal, en català, esperant que algú el pintés.
+ * Vegeu `features/spots/strings.ts` (`stage.*`).
+ */
 export interface SpotSearchProgress {
   stage: SpotSearchStage;
   /** Progrés global de 0 a 1. */
   ratio: number;
-  /** Text llest per ensenyar, en català. */
-  message: string;
   /** Candidats processats a l'etapa actual. */
   examined: number;
   /** Candidats que segueixen vius. */

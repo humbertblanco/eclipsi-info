@@ -30,6 +30,7 @@ import {
 } from '../features/map/LayerControl';
 import { clampConeRadiusKm, type ViewConeData } from '../features/map/layers/viewCone';
 import { horizonDistanceAt } from '../core/horizon/profile';
+import { track } from '../core/analytics';
 import { TrajectoryThumb } from '../features/sim/TrajectoryThumb';
 import { ShareButton } from '../features/share';
 /*
@@ -252,6 +253,7 @@ export function MapScreen({
    */
   const switchView = (next: View) => {
     setView(next);
+    track('map_view_open', { view: next, via: 'switch' });
     const fragment = next === 'band' ? '#/mapa' : `#/mapa/${MAP_SEGMENT_BY_VIEW[next]}`;
     if (window.location.hash === fragment) return;
     window.history.replaceState(
@@ -445,7 +447,32 @@ export function MapScreen({
             què s'hi pinta. Va damunt del mapa i no a la fitxa perquè no
             respon cap pregunta de la fitxa — val per a les cinc vistes.
           */}
-          <LayerControl locale={locale} value={layers} onChange={setLayers} />
+          <LayerControl
+            locale={locale}
+            value={layers}
+            onChange={(next) => {
+              /*
+               * El control envia l'estat sencer de les capes; el que decideix
+               * res és QUINA s'ha tocat i cap on, i això només es pot saber
+               * comparant amb l'anterior, que és aquí. El defecte
+               * relleu-sí-a-escriptori i no-a-mòbil és una hipòtesi que ningú
+               * no ha comprovat mai amb dades.
+               */
+              if (next.hillshade !== layers.hillshade) {
+                track('map_layer_toggle', {
+                  layer: 'hillshade',
+                  state: next.hillshade ? 'on' : 'off',
+                });
+              }
+              if (next.cone !== layers.cone) {
+                track('map_layer_toggle', {
+                  layer: 'cone',
+                  state: next.cone ? 'on' : 'off',
+                });
+              }
+              setLayers(next);
+            }}
+          />
 
           {/* Llegenda pròpia. La d'`EclipseMap` viu sota el llenç i aquí el
               llenç ocupa el marc sencer, així que quedaria fora de vista. */}

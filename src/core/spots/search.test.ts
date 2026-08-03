@@ -582,7 +582,11 @@ describe('progrés i cancel·lació', () => {
     for (const pas of passos) {
       expect(pas.ratio).toBeGreaterThanOrEqual(anterior - 1e-9);
       expect(pas.ratio).toBeLessThanOrEqual(1);
-      expect(pas.message.length).toBeGreaterThan(0);
+      // Aquí es comprovava que `pas.message` no fos buit. El camp ja no
+      // existeix: era una frase catalana nascuda al nucli i ningú no la
+      // pintava (vegeu `SpotSearchProgress`). El que ha de portar el progrés
+      // és l'etapa, que és un codi i sí que es pinta traduïda.
+      expect(pas.stage.length).toBeGreaterThan(0);
       expect(Number.isFinite(pas.examined)).toBe(true);
       expect(Number.isFinite(pas.alive)).toBe(true);
       anterior = pas.ratio;

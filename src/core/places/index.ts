@@ -5,14 +5,22 @@
  * "Oviedo" o en "a 2,3 km de Cervera", i el nom que algú escriu en unes
  * coordenades on plantar-se.
  *
- * L'ÚNIC MÒDUL DE `src/core/**` QUE NECESSITA XARXA I NO FUNCIONA SENSE. És una
- * decisió presa a consciència: el terreny, les efemèrides i el veredicte de
- * visibilitat sí que van sense connexió i seguiran anant-hi. El nom del lloc,
- * no; i quan no hi arriba, es cauen les coordenades i no passa res més.
+ * LA GEOCODIFICACIÓ ÉS L'ÚNICA PART DE `src/core/**` QUE NECESSITA XARXA I NO
+ * FUNCIONA SENSE. És una decisió presa a consciència: el terreny, les
+ * efemèrides i el veredicte de visibilitat sí que van sense connexió i
+ * seguiran anant-hi. El nom del lloc, no; i quan no hi arriba, es cauen les
+ * coordenades i no passa res més.
+ *
+ * L'EXCEPCIÓ, I ÉS DELIBERADA: `viewpoints.ts`. Els miradors i els cims de la
+ * franja també són llocs d'OpenStreetMap, però no es demanen mai en temps
+ * d'execució: es preextreuen amb `scripts/build-viewpoints.ts` i viatgen amb
+ * l'app com un fitxer estàtic. Serveixen justament quan ja ets al camp i no hi
+ * ha cobertura, que és quan cap servei en viu no és una opció.
  *
  * ATRIBUCIÓ OBLIGATÒRIA: `PLACES_ATTRIBUTION` ha de sortir a la interfície allà
- * on es faci servir el servei, igual que hi surten la d'OpenStreetMap al mapa i
- * la de Fred Espenak a les efemèrides.
+ * on es faci servir el servei, i `OSM_ODBL_ATTRIBUTION` allà on es pintin els
+ * miradors, igual que hi surten la d'OpenStreetMap al mapa i la de Fred
+ * Espenak a les efemèrides.
  */
 
 export {
@@ -69,6 +77,40 @@ export {
   searchPlacesWhenSettled,
 } from './resolver';
 export type { PlaceResolver, PlaceResolverOptions } from './resolver';
+
+export {
+  DEFAULT_RELEVANCE,
+  OSM_COPYRIGHT_URL,
+  OSM_LICENSE_ID,
+  OSM_ODBL_ATTRIBUTION,
+  bandChunks,
+  bandGeometry,
+  boxKey,
+  chunkQueryBoxes,
+  decimateByCell,
+  dedupeViewpoints,
+  insideAnyBox,
+  insideBand,
+  parseElevationM,
+  parseViewpointFile,
+  selectViewpoints,
+  splitAntimeridian,
+  toViewpoint,
+  viewpointsFileName,
+} from './viewpoints';
+export type {
+  BandBox,
+  BandChunk,
+  BandGeometry,
+  BandOptions,
+  OverpassElement,
+  RelevanceOptions,
+  SelectionResult,
+  SelectionStats,
+  Viewpoint,
+  ViewpointFile,
+  ViewpointKind,
+} from './viewpoints';
 
 export { PlaceLookupError, SETTLEMENT_RADIUS_KM, SETTLEMENT_RANKS } from './types';
 export type {

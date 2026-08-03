@@ -57,6 +57,11 @@ import {
   terrainTileUrl,
   type BasemapLevel,
 } from './config';
+import {
+  isHorizonCancelled,
+  toHorizonFailure,
+  type HorizonFailure,
+} from '../core/horizon/errors';
 import { planPrepare, type PreparePlan } from './plan';
 import { preparedPlaceId, savePreparedPlace, type PreparedPlace } from './store';
 import { requestPersistentStorage } from './storage';
@@ -69,21 +74,94 @@ export type PreparePhase =
   | 'desat'
   | 'fet';
 
+/**
+ * El progrés és DADA, no prosa.
+ *
+ * Aquí hi havia un `message: string` amb una frase curta en català, i la seva
+ * pròpia excusa escrita al costat: «el panell NO la pinta, es manté per a
+ * registres». Un canal de text en català obert cap a la interfície s'acaba
+ * fent servir —ha passat tres vegades en aquest projecte— i el dia que algú el
+ * pinti, l'usuari en castellà rebrà català. `phase` ja era el codi i
+ * `OfflinePanel` ja el feia servir (`PHASE_KEY` → `os('phase.*')`).
+ */
 export interface PrepareProgress {
   phase: PreparePhase;
   /** Progrés global de 0 a 1. */
   ratio: number;
-  /**
-   * Frase curta en català. El panell NO la pinta: compon la seva pròpia frase
-   * localitzada a partir de `phase`, perquè aquest motor no sap l'idioma de la
-   * interfície. Es manté per a registres i per a qui cridi `prepareLocation`
-   * des de fora de React.
-   */
-  message: string;
   /** Bytes baixats fins ara, comptats resposta a resposta. */
   bytes: number;
   doneTiles: number;
   totalTiles: number;
+}
+
+/**
+ * Per què ha fallat la preparació, com a codi.
+ *
+ * MATEIX PATRÓ QUE `core/horizon/errors.ts` I `core/spots/errors.ts`: unió
+ * tancada, dada plana i les paraules a la capa de vista (`offline/strings.ts`).
+ * Abans d'això, `prepareLocation` llançava «No s'ha pogut baixar cap tessel·la
+ * del terreny. Comprova la connexió i torna-ho a provar.» i `OfflinePanel`
+ * l'interpolava dins de `note.error` — frase de fora traduïda, motiu de dins
+ * en català.
+ *
+ * `horizon` PORTA LA FALLADA DE L'HORITZÓ A SOBRE i no la resumeix: la
+ * diferència entre «no ha arribat gens de relleu» i «n'ha arribat una part» és
+ * la diferència entre dos consells diferents, i qui l'ha de dir és la
+ * pantalla.
+ */
+export type PrepareErrorCode =
+  /** Ni una tessel·la del terreny. Sense relleu no hi ha res a preparar. */
+  | 'no-terrain'
+  /** El terreny ha baixat, però el càlcul de l'horitzó ha fallat. */
+  | 'horizon'
+  /** Qualsevol altra cosa. */
+  | 'unknown';
+
+export interface PrepareFailure {
+  readonly code: PrepareErrorCode;
+  /** El motiu de sota, quan el codi és `horizon`. */
+  readonly horizon?: HorizonFailure;
+}
+
+/** Totes les possibilitats, per poder recórrer-les des d'un test. */
+export const PREPARE_ERROR_CODES: readonly PrepareErrorCode[] = [
+  'no-terrain',
+  'horizon',
+  'unknown',
+];
+
+/** L'excepció de la precàrrega. El `message` és el codi, no una frase. */
+export class PrepareError extends Error {
+  readonly failure: PrepareFailure;
+
+  constructor(failure: PrepareFailure, cause?: unknown) {
+    super(failure.code, { cause });
+    this.name = 'PrepareError';
+    this.failure = failure;
+  }
+}
+
+/**
+ * Qualsevol cosa que hagi petat → una fallada tipada. No llança mai.
+ *
+ * Una cancel·lació NO passa per aquí: `isAbortError` la separa abans, perquè
+ * qui atura la descàrrega no ha de veure cap error. Una fallada de l'horitzó
+ * sí que hi entra, i es conserva sencera perquè la pantalla en pugui dir el
+ * motiu de debò.
+ */
+export function toPrepareFailure(error: unknown): PrepareFailure {
+  if (error instanceof PrepareError) return error.failure;
+
+  const horizon = toHorizonFailure(error);
+  if (horizon.code !== 'unknown') return { code: 'horizon', horizon };
+
+  if (typeof error === 'object' && error !== null) {
+    const message = (error as { message?: unknown }).message;
+    if (message === 'no-terrain') return { code: 'no-terrain' };
+  }
+  if (error === 'no-terrain') return { code: 'no-terrain' };
+
+  return { code: 'unknown' };
 }
 
 export interface PrepareOptions {
@@ -165,7 +243,9 @@ export async function waitForServiceWorkerControl(timeoutMs = 5000): Promise<boo
 }
 
 function abortIfNeeded(signal: AbortSignal | undefined): void {
-  if (signal?.aborted) throw new DOMException('Precàrrega cancel·lada', 'AbortError');
+  // El text d'un `AbortError` no el llegeix ningú: qui l'espera mira el `name`
+  // (vegeu `isAbortError`). Es deixa en codi estable i no en català.
+  if (signal?.aborted) throw new DOMException('cancelled', 'AbortError');
 }
 
 /** Cert si l'error ve d'una cancel·lació de l'usuari i no d'una avaria. */
@@ -262,12 +342,21 @@ async function computeProfile(
   if (typeof Worker === 'undefined') {
     // Sense Workers el càlcul bloqueja la interfície uns segons. És pitjor que
     // la barra es quedi quieta que no pas no tenir perfil.
-    return computeHorizonProfile(location, {
-      rings: maxRangeKm === undefined ? undefined : clipRings(maxRangeKm),
-      eyeHeightM,
-      onProgress: (progress) => onRatio(progress.ratio),
-      signal,
-    });
+    try {
+      return await computeHorizonProfile(location, {
+        rings: maxRangeKm === undefined ? undefined : clipRings(maxRangeKm),
+        eyeHeightM,
+        onProgress: (progress) => onRatio(progress.ratio),
+        signal,
+      });
+    } catch (error) {
+      // La cancel·lació segueix sent una cancel·lació: `isAbortError` l'ha de
+      // poder reconèixer o el hook ensenyaria un error a qui ha premut Atura.
+      if (isHorizonCancelled(error)) {
+        throw new DOMException('cancelled', 'AbortError');
+      }
+      throw new PrepareError({ code: 'horizon', horizon: toHorizonFailure(error) }, error);
+    }
   }
 
   return new Promise<HorizonProfile>((resolve, reject) => {
@@ -286,7 +375,7 @@ async function computeProfile(
       const cancel: HorizonWorkerRequest = { type: 'cancel', id };
       worker.postMessage(cancel);
       cleanup();
-      reject(new DOMException('Precàrrega cancel·lada', 'AbortError'));
+      reject(new DOMException('cancelled', 'AbortError'));
     };
 
     signal?.addEventListener('abort', onAbort);
@@ -301,13 +390,31 @@ async function computeProfile(
         resolve(message.profile);
       } else {
         cleanup();
-        reject(new Error(message.message));
+        /*
+         * Mateix pont que a `features/sim/useHorizon.ts`: el clonatge
+         * estructurat no conserva les classes, i `workers/horizon.worker.ts`
+         * encara respon `{ message: string }` (el pegat va escrit a
+         * l'informe). Com que el `message` d'un `HorizonComputeError` ÉS el
+         * codi, `toHorizonFailure` el recupera igualment; quan el Worker
+         * enviï `failure`, hi arribaran també les xifres.
+         */
+        const failure =
+          'failure' in message
+            ? toHorizonFailure(message.failure)
+            : toHorizonFailure(message.message);
+        reject(
+          isHorizonCancelled(failure)
+            ? new DOMException('cancelled', 'AbortError')
+            : new PrepareError({ code: 'horizon', horizon: failure }),
+        );
       }
     });
 
     worker.addEventListener('error', () => {
       cleanup();
-      reject(new Error('El càlcul de l’horitzó ha fallat dins del worker.'));
+      // El `message` de l'`ErrorEvent` ve en anglès i parla de fitxers: no és
+      // per a ningú. El codi diu que el càlcul de l'horitzó ha caigut.
+      reject(new PrepareError({ code: 'horizon', horizon: { code: 'unknown' } }));
     });
 
     const request: HorizonWorkerRequest = {
@@ -345,11 +452,11 @@ export async function prepareLocation(
   const snapped: GeoLocation = { lat, lon, elevation: location.elevation };
 
   let bytes = 0;
-  const emit = (phase: PreparePhase, ratio: number, message: string, done: number, total: number) => {
-    onProgress?.({ phase, ratio, message, bytes, doneTiles: done, totalTiles: total });
+  const emit = (phase: PreparePhase, ratio: number, done: number, total: number) => {
+    onProgress?.({ phase, ratio, bytes, doneTiles: done, totalTiles: total });
   };
 
-  emit('inici', 0, 'Preparant la llista del que cal baixar…', 0, 0);
+  emit('inici', 0, 0, 0);
 
   // Demanar persistència abans de baixar res: si el navegador la concedeix,
   // els megabytes que vindran ja neixen protegits de la neteja automàtica.
@@ -370,7 +477,6 @@ export async function prepareLocation(
       emit(
         'relleu',
         (done / Math.max(1, terrainUrls.length)) * WEIGHT.relleu,
-        `Baixant el relleu (${done} de ${terrainUrls.length})`,
         done,
         total,
       );
@@ -378,10 +484,9 @@ export async function prepareLocation(
   });
   abortIfNeeded(signal);
 
+  // El motiu viatja com a CODI, no com a frase: vegeu `PrepareErrorCode`.
   if (terrainUrls.length > 0 && terrain.failed === terrainUrls.length) {
-    throw new Error(
-      'No s’ha pogut baixar cap tessel·la del terreny. Comprova la connexió i torna-ho a provar.',
-    );
+    throw new PrepareError({ code: 'no-terrain' });
   }
 
   // --- Fase 2: mapa ---------------------------------------------------------
@@ -393,7 +498,6 @@ export async function prepareLocation(
       emit(
         'mapa',
         WEIGHT.relleu + (done / Math.max(1, mapUrls.length)) * WEIGHT.mapa,
-        `Baixant el mapa (${done} de ${mapUrls.length})`,
         plan.terrain.length + done,
         total,
       );
@@ -403,27 +507,21 @@ export async function prepareLocation(
   abortIfNeeded(signal);
 
   // --- Fase 3: càlcul -------------------------------------------------------
-  emit('calcul', WEIGHT.relleu + WEIGHT.mapa, 'Calculant l’horitzó…', total, total);
+  emit('calcul', WEIGHT.relleu + WEIGHT.mapa, total, total);
 
   const profile = await computeProfile(
     snapped,
     maxRangeKm,
     eyeHeightM,
     (ratio) => {
-      emit(
-        'calcul',
-        WEIGHT.relleu + WEIGHT.mapa + ratio * WEIGHT.calcul,
-        'Calculant l’horitzó…',
-        total,
-        total,
-      );
+      emit('calcul', WEIGHT.relleu + WEIGHT.mapa + ratio * WEIGHT.calcul, total, total);
     },
     signal,
   );
   abortIfNeeded(signal);
 
   // --- Fase 4: desat --------------------------------------------------------
-  emit('desat', 1 - WEIGHT.desat, 'Desant els càlculs…', total, total);
+  emit('desat', 1 - WEIGHT.desat, total, total);
 
   // Aquesta signatura ha de sortir EXACTAMENT igual que la que compon
   // `useHorizon`, o el perfil que acabem de calcular es desarà en una clau que
@@ -466,7 +564,7 @@ export async function prepareLocation(
   };
   await savePreparedPlace(place);
 
-  emit('fet', 1, 'Llest per anar-hi', total, total);
+  emit('fet', 1, total, total);
 
   return { place, profile, failedTiles: terrain.failed + basemap.failed };
 }

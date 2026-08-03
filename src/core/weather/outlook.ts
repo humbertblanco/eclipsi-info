@@ -72,8 +72,14 @@ export const CLIMATOLOGY_YEARS = 15;
  */
 export const CLIMATOLOGY_WINDOW_DAYS = 5;
 
-/** Anys mínims perquè l'estadística valgui alguna cosa. */
-const CLIMATOLOGY_MIN_YEARS = 6;
+/**
+ * Anys mínims perquè l'estadística valgui alguna cosa.
+ *
+ * S'exporta perquè `scripts/build-cloud-clim.ts` hi ha d'aplicar el MATEIX
+ * llindar: una cel·la del mapa amb quatre anys darrere no és menys mentida que
+ * una fitxa amb quatre anys darrere, i aquí es refusa de fer-la.
+ */
+export const CLIMATOLOGY_MIN_YEARS = 6;
 
 /** Peticions d'arxiu simultànies. Quinze de cop escanyen una xarxa mòbil. */
 const ARCHIVE_CONCURRENCY = 4;
@@ -116,8 +122,16 @@ export function confidenceForLead(lead: number): Confidence {
   return 'very-low';
 }
 
-/** Fiabilitat d'una climatologia: depèn de quants anys hi hagi darrere. */
-function confidenceForYears(years: number): Confidence {
+/**
+ * Fiabilitat d'una climatologia: depèn de quants anys hi hagi darrere.
+ *
+ * S'exporta perquè la capa de nuvolositat del mapa (`climGrid.ts` i
+ * `mapMode.ts`) ha de qualificar exactament igual la mateixa estadística. Amb
+ * els llindars copiats a l'altre fitxer, el dia que algú els mogués aquí la
+ * fitxa del punt diria «fiabilitat mitjana» i la llegenda del mapa, just al
+ * costat, en diria una altra.
+ */
+export function confidenceForYears(years: number): Confidence {
   if (years >= 12) return 'medium';
   if (years >= CLIMATOLOGY_MIN_YEARS) return 'low';
   return 'very-low';

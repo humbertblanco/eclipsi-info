@@ -194,6 +194,12 @@
       function eclipsiPage() {
         return location.origin + location.pathname + location.hash;
       }
+      // EL RETALL, TAMBÉ COM A PARÀMETRE GLOBAL. La «mesura millorada» de GA4
+      // ve activada per defecte i envia vistes de pàgina pel seu compte a cada
+      // canvi d'historial — i aquesta app crida replaceState CADA COP que
+      // toques el mapa, amb ?p=lat,lon a l'adreça. El retall del `config` no
+      // governa el que gtag.js enviï sol; el de `set`, sí.
+      gtag('set', { page_location: eclipsiPage() });
       gtag('config', 'G-1KCV75E6K8', {
         page_location: eclipsiPage(),
         allow_google_signals: false,
@@ -202,6 +208,8 @@
       // Les pestanyes són rutes hash: cada canvi és una vista de pàgina,
       // sempre amb l'adreça retallada.
       addEventListener('hashchange', function () {
+        // Es refresca el global perquè no quedi congelat a la ruta d'arrencada.
+        gtag('set', { page_location: eclipsiPage() });
         gtag('event', 'page_view', { page_location: eclipsiPage() });
       });
     </script>

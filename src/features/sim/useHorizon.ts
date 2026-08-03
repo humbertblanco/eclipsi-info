@@ -29,6 +29,12 @@ import {
   TERRESTRIAL_REFRACTION_K,
   type HorizonProgressStatus,
 } from '../../core/horizon/raycast';
+import {
+  isHorizonCancelled,
+  toHorizonFailure,
+  type HorizonErrorCode,
+  type HorizonFailure,
+} from '../../core/horizon/errors';
 import type {
   HorizonWorkerRequest,
   HorizonWorkerResponse,
@@ -65,16 +71,24 @@ export type HorizonProgressCode =
   | { stage: 'preparing' };
 
 /**
- * La fallada, també com a codi més la causa.
+ * La fallada, també com a codi.
  *
- * `detail` és el missatge tal com l'ha dit qui ha fallat (l'excepció del
- * càlcul o l'ErrorEvent del Worker): la pantalla l'interpola dins d'una frase
- * bilingüe en comptes d'ensenyar un genèric que amaga el motiu real.
+ * ABANS AQUÍ HI HAVIA UN `detail: string`, i era el forat que ESTAT.md §4
+ * tenia obert: hi viatjava el missatge tal com l'havia dit qui fallava —una
+ * frase catalana escrita dins de `core/horizon/raycast.ts`— i la pantalla
+ * l'interpolava dins d'una frase bilingüe. El resultat era mig castellà i mig
+ * català a la mateixa línia, i el motiu real (el que fa accionable l'avís) era
+ * justament la meitat que no es traduïa.
+ *
+ * Ara el nucli emet `HorizonErrorCode` i aquí només s'hi afegeix el codi que
+ * el nucli no pot conèixer: que el Worker hagi petat sencer. Exactament el
+ * mateix patró que `HorizonProgressCode` (tres estats del nucli, dos del
+ * hook). Les paraules, a `features/sim/strings.ts`.
  */
-export interface HorizonError {
-  /** `compute`: el càlcul ha llançat. `worker`: el Worker ha petat sencer. */
-  code: 'compute' | 'worker';
-  detail: string | null;
+export type HorizonFailureCode = HorizonErrorCode | 'worker';
+
+export interface HorizonError extends Omit<HorizonFailure, 'code'> {
+  code: HorizonFailureCode;
 }
 
 export interface UseHorizonResult {
@@ -226,13 +240,13 @@ export function useHorizon(
         });
       };
 
-      const fail = (code: HorizonError['code'], detail: string | null) => {
+      const fail = (error: HorizonError) => {
         setState({
           profile: null,
           progress: 0,
           progressCode: null,
           loading: false,
-          error: { code, detail },
+          error,
           fromCache: false,
         });
       };
@@ -256,7 +270,9 @@ export function useHorizon(
           finish(profile);
         } catch (error) {
           if (cancelled || id !== requestId.current) return;
-          fail('compute', error instanceof Error ? error.message : String(error));
+          // Una cancel·lació no és una avaria: es calla i s'espera el recàlcul.
+          if (isHorizonCancelled(error)) return;
+          fail(toHorizonFailure(error));
         }
         return;
       }
@@ -287,18 +303,35 @@ export function useHorizon(
           worker?.terminate();
           worker = null;
         } else {
-          fail('compute', message.message);
+          /*
+           * LA FRONTERA DEL `postMessage` NO CONSERVA LES CLASSES.
+           *
+           * El clonatge estructurat d'un `Error` es deixa la subclasse i les
+           * propietats afegides pel camí, i per això el que ha de creuar és la
+           * DADA (`HorizonFailure`), no l'excepció. El Worker encara respon
+           * `{ message: string }` — el fitxer el porta una altra sessió i el
+           * pegat va escrit a l'informe—, i mentrestant el pont funciona
+           * igualment: el `message` d'un `HorizonComputeError` ÉS el codi, i
+           * `toHorizonFailure` el reconeix. Quan el Worker enviï `failure`,
+           * aquesta primera branca l'agafarà i hi arribaran també les xifres.
+           */
+          const failure =
+            'failure' in message
+              ? toHorizonFailure(message.failure)
+              : toHorizonFailure(message.message);
+          if (!isHorizonCancelled(failure)) fail(failure);
           worker?.terminate();
           worker = null;
         }
       });
 
-      worker.addEventListener('error', (event) => {
+      worker.addEventListener('error', () => {
         if (cancelled || id !== requestId.current) return;
-        // Abans aquí hi havia una frase en català clavada al hook; ara el codi
-        // diu QUÈ ha passat (el Worker ha petat) i el detall, si el navegador
-        // el dona, viatja tal qual perquè la pantalla el pugui ensenyar.
-        fail('worker', event.message || null);
+        // Abans aquí hi havia una frase en català clavada al hook, i després
+        // el `event.message` del navegador —que ve en anglès i parla de
+        // fitxers i línies. Cap de les dues coses es pot ensenyar a ningú: el
+        // codi diu QUÈ ha passat i la frase la posa la pantalla.
+        fail({ code: 'worker' });
       });
 
       const request: HorizonWorkerRequest = {
