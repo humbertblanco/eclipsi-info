@@ -294,7 +294,19 @@ export function SkyScreen({
         </ErrorBoundary>
       </div>
 
-      {!tools && (
+      {/*
+        EL CROM DEL HUD NOMÉS AMB LA CÀMERA OBERTA.
+        Abans es pintava sempre, o sigui que en entrar a la pestanya del Cel
+        et trobaves la brúixola, les insígnies i la lectura d'azimut al voltant
+        d'un rectangle negre, amb un botó per obrir la càmera al mig. Semblava
+        una pantalla a mig carregar, i el que és de debò és una INVITACIÓ: la
+        càmera no s'obre mai sola (ESTAT.md §5) i abans de demanar-la s'ha
+        d'explicar què hi guanyes. Una brúixola que assenyala un Sol que no
+        pots veure no explica res; el que explica és la frase de la invitació.
+        Amb la càmera oberta torna tot, que és quan cada peça vol dir alguna
+        cosa.
+      */}
+      {!tools && arState.cameraOn && (
         <>
           <div className="skyscreen__top">
             <CompassStrip

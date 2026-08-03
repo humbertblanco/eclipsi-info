@@ -673,6 +673,33 @@
   gap: var(--sp-3);
 }
 
+/*
+ * LA LLEGENDA, EN UNA SOLA LÍNIA A MÒBIL (report de camp).
+ *
+ * Amb tres entrades i les etiquetes senceres, a 390 px baixava de línia i el
+ * bloc de vidre es menjava dues files de mapa. Aquí no s'escurça el text —una
+ * llegenda que digui «Fr…» no és una llegenda— sinó que es deixa lliscar: les
+ * mostres de color s'entenen soles i qui vulgui llegir-les totes arrossega.
+ * A partir del punt de dues columnes hi caben de sobres i torna a embolicar.
+ */
+@media (max-width: 899px) {
+  .mapscreen__legend {
+    flex-wrap: nowrap;
+    max-width: calc(100% - var(--sp-13));
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .mapscreen__legend::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mapscreen__legenditem {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
 /* La mostra de la franja: el mateix ambre que pinta MapLibre al llenç. */
 .mapscreen__swatch {
   width: var(--sp-6);
@@ -2079,4 +2106,19 @@
 
 .threeecl__tips li::marker {
   color: var(--border-strong);
+}
+
+/*
+ * L'APARADOR DE LA CÀMERA A LA PORTADA.
+ *
+ * A mòbil va just sota del compte enrere (vegeu `cameraCta` a
+ * `CountdownScreen.tsx`): és la funció que cap altra app té i quedava al fons
+ * de la pila, després del veredicte, els contactes i la simulació sencera.
+ * La frase i el botó van junts amb menys aire del normal perquè es llegeixin
+ * com una sola cosa —promesa i acció— i no com dos blocs seguits.
+ */
+.home__cameracta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
 }

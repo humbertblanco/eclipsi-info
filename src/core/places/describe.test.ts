@@ -219,16 +219,40 @@ describe('tria del nucli', () => {
     expect(describePlace(place)?.primary).toBe('a 2,0 km de Bulnes de Arriba');
   });
 
-  it('en cas d’empat es queda el nucli més gran', () => {
+  it('en cas d’empat a la vora es queda el centre més proper', () => {
     const lat = 42;
     const candidates = [
       settlement('Petit', 'hamlet', northOf(lat, 0.1), 1, null, null),
       settlement('Gran', 'city', northOf(lat, 2.0), 1, null, null),
     ];
-    // Tots dos queden dins del seu propi radi, o sigui amb la vora a 0 km
-    // clavat. Guanya el gran, que és el que la gent de fora coneixerà.
+    /*
+     * Tots dos queden dins del seu propi radi suposat, o sigui amb la vora a
+     * 0 km clavat.
+     *
+     * AQUEST TEST AFIRMAVA EL CONTRARI —que havia de guanyar el gran, «que és
+     * el que la gent de fora coneixerà»— i un report de camp del 3-8-2026 el
+     * va desmentir: plantat a Esplugues de Llobregat, l'app deia
+     * «l'Hospitalet de Llobregat», que és a 2,28 km, perquè el radi de ciutat
+     * se'l empassava i la mida desempatava. Dir el nom d'un municipi veí quan
+     * en tens un a dues-centes passes no és ser reconeixible, és equivocar-se.
+     *
+     * Quan els dos t'enclouen, el que t'enclou de debò és el que tens a
+     * tocar. La mida es queda com a últim desempat, per a dos centres a la
+     * mateixa distància exacta.
+     */
     const place = buildPlaceName(candidates, lat, 1, 0);
-    expect(place.settlement?.name).toBe('Gran');
+    expect(place.settlement?.name).toBe('Petit');
+  });
+
+  it('a igual distància de centre, el més gran', () => {
+    // El desempat de tercer nivell, que sí que segueix sent la mida: dos
+    // nuclis amb el node exactament al mateix lloc no els distingeix res més.
+    const lat = 42;
+    const candidates = [
+      settlement('Petit', 'hamlet', northOf(lat, 1.0), 1, null, null),
+      settlement('Gran', 'city', northOf(lat, 1.0), 1, null, null),
+    ];
+    expect(buildPlaceName(candidates, lat, 1, 0).settlement?.name).toBe('Gran');
   });
 });
 

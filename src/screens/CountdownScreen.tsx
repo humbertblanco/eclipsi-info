@@ -7,6 +7,7 @@ import {
   PhaseDial,
   Stat,
   TimelineTrack,
+  useMediaQuery,
   VisibilityMeter,
   type TimelineContact,
   type Tone,
@@ -165,6 +166,45 @@ export function CountdownScreen({
    * (sense lloc no hi ha pantalla) i un ganxo després d'un retorn condicional
    * és exactament el «Rendered more hooks» que va tombar la pantalla.
    */
+  /*
+   * L'APARADOR DE LA CÀMERA, DEFINIT UN COP I COL·LOCAT SEGONS L'AMPLADA.
+   *
+   * És la funció que cap altra app té —apuntar el mòbil al cel i veure-hi el
+   * Sol eclipsat ancorat al terreny de debò— i a mòbil quedava al fons de la
+   * pila: la columna lateral s'apila DESPRÉS de la principal sencera, o sigui
+   * després del compte enrere, el veredicte, els contactes i la simulació.
+   * Qui obria l'app al telèfon no la veia mai si no es desplaçava molt.
+   *
+   * Ara, en una sola columna, va JUST SOTA del compte enrere: la primera cosa
+   * que es veu és quants segons en tindràs i la segona és què hi pots fer. A
+   * l'escriptori es queda a la columna lateral, on les dues es llegeixen
+   * alhora i no cal robar-li el lloc a res.
+   *
+   * Es defineix un sol cop i es pinta a un lloc o a l'altre: dues còpies al
+   * document serien dos botons amb la mateixa etiqueta per a un lector de
+   * pantalla.
+   */
+  const cameraCta = onOpenCamera ? (
+    <div className="home__cameracta">
+      {/*
+        Un botó pelat no deia què hi guanyes: la línia de sobre ho explica
+        ABANS de demanar el gest. No és una targeta sencera perquè l'acció ja
+        és el botó primari — l'aparador és la frase, no una caixa més.
+      */}
+      <p className="home__camerapitch">{s('home.cameraPitch', locale)}</p>
+      <Button size="lg" icon="camera" fullWidth onClick={onOpenCamera}>
+        {s('home.openCamera', locale)}
+      </Button>
+    </div>
+  ) : (
+    <Button size="lg" icon="map" fullWidth onClick={onOpenMap}>
+      {s('home.openMap', locale)}
+    </Button>
+  );
+
+  /* El punt on la portada deixa de ser una pila i passa a dues columnes. */
+  const desktop = useMediaQuery('(min-width: 900px) and (min-height: 500px)');
+
   const skyTint = useMemo(() => {
     if (!contacts) return null;
     const sky = skyStateFromSample(contacts.max);
@@ -239,6 +279,9 @@ export function CountdownScreen({
             targetMs={target ? target.time.getTime() : null}
           />
         </section>
+
+        {/* A MÒBIL, JUST SOTA DEL COMPTE ENRERE. Vegeu `cameraCta`. */}
+        {!desktop && cameraCta}
 
         <Card className="home__phase">
           <PhaseDial obscuration={obscuration} totality={showsCorona} size={96} />
@@ -337,24 +380,12 @@ export function CountdownScreen({
         */}
         <ClockDriftNotice locale={locale} />
 
-        {onOpenCamera ? (
-          <>
-            {/*
-              LA CÀMERA ÉS LA FUNCIÓ QUE CAP ALTRA APP TÉ, i un botó pelat no
-              ho deia: una línia a sobre explica QUÈ hi guanyes abans de
-              demanar-te el gest. No és una targeta sencera perquè l'acció ja
-              és el botó primari — l'aparador és la frase, no una caixa més.
-            */}
-            <p className="home__camerapitch">{s('home.cameraPitch', locale)}</p>
-            <Button size="lg" icon="camera" fullWidth onClick={onOpenCamera}>
-              {s('home.openCamera', locale)}
-            </Button>
-          </>
-        ) : (
-          <Button size="lg" icon="map" fullWidth onClick={onOpenMap}>
-            {s('home.openMap', locale)}
-          </Button>
-        )}
+        {/*
+          A MÒBIL L'APARADOR JA ÉS A DALT (vegeu la columna principal): aquí
+          només hi queda quan la pantalla és ampla i les dues columnes es
+          llegeixen alhora.
+        */}
+        {desktop && cameraCta}
 
         {/*
           COMPARTIR EL PUNT, SOTA L'ACCIÓ PRINCIPAL I EN `ghost`.

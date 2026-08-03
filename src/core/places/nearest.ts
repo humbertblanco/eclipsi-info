@@ -138,6 +138,33 @@ export function rankSettlements(
     .sort((a, b) => {
       const byEdge = a.edgeDistanceKm - b.edgeDistanceKm;
       if (Math.abs(byEdge) > 1e-9) return byEdge;
+
+      /*
+       * EMPAT A LA VORA: GUANYA EL CENTRE MÉS PROPER, NO EL MÉS GRAN.
+       *
+       * Aquí desempatava la MIDA, i en zona urbana densa donava la resposta
+       * contrària a la bona. Report de camp del 3-8-2026, plantat a Esplugues
+       * de Llobregat (41,3769 / 2,0851), amb els quatre candidats que dona la
+       * font:
+       *
+       *   l'Hospitalet   centre 2,28 km   vora 0,00   (city, radi suposat 3,0)
+       *   Cornellà       centre 2,64 km   vora 0,00   (city)
+       *   Esplugues      centre 0,22 km   vora 0,00   (town, radi 1,2)
+       *
+       * Els tres «vora 0» perquè el radi suposat de ciutat se'ls empassa, i
+       * llavors la mida posava l'Hospitalet primer: l'app deia que eres a
+       * dues ciutats de distància del lloc on eres. Amb el centre com a
+       * desempat, guanya Esplugues, que és on ets.
+       *
+       * PER QUÈ ERA LA MIDA I PER QUÈ ES POT CANVIAR: la idea era que, si ets
+       * dins d'un poble que alhora és dins del radi d'una ciutat, la ciutat
+       * es reconeix més. Però quan els dos «t'enclouen», el que t'enclou de
+       * debò és el que tens a tocar — i dir el nom del barri o del municipi
+       * petit és MÉS precís, no menys. La mida es queda com a últim desempat,
+       * per al cas improbable de dos centres a la mateixa distància.
+       */
+      const byCentre = a.distanceKm - b.distanceKm;
+      if (Math.abs(byCentre) > 1e-9) return byCentre;
       return sizeIndex(a.settlement.rank) - sizeIndex(b.settlement.rank);
     });
 }

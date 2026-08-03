@@ -925,8 +925,17 @@ function Shell() {
           locale={locale}
           loading={observer.loading}
           error={observer.error}
+          /*
+            AL MAPA, SEMPRE COMPACTA (report de camp amb un telèfon de debò).
+            La barra desplegada ocupa dues línies —nom, distintiu de GPS,
+            coordenades, precisió— i al mapa aquelles dues línies són mapa que
+            no es veu. A més, la informació que treu és la que el mapa ja
+            ensenya: on ets ho diu la diana, i les coordenades exactes són a la
+            fitxa. Es desplega igualment tocant-la, que és el gest de sempre.
+          */
           compact={
-            !isDefaultFix(observer.fix) && (tab === 'sky' || scrolled || desktopWide)
+            !isDefaultFix(observer.fix) &&
+            (tab === 'sky' || tab === 'map' || scrolled || desktopWide)
           }
           onOpen={() => setSheetOpen(true)}
         />
