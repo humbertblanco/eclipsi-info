@@ -18,20 +18,35 @@
  *
  * ───────────────────────────────────────────────────────────────────────────
  *
- * EL BUCLE DE DIBUIX ES CREA UNA SOLA VEGADA. No és una optimització: és una
- * correcció. Abans l'efecte del bucle depenia d'`orientation.camera`, que era
- * un objecte nou a cada esdeveniment del sensor —fins a 67 per segon—. Cada
- * recreació cancel·lava el `requestAnimationFrame` pendent abans que
- * s'executés, i amb el sensor per damunt de la freqüència de pantalla molts
- * fotogrames no arribaven a dibuixar-se mai: la superposició es congelava
- * mentre el vídeo continuava. Tot el que canvia de pressa viu en refs; React
- * només s'assabenta del que ha de sortir a la interfície, i a poc a poc.
+ * EL BUCLE DE DIBUIX ES CREA UNA VEGADA PER SESSIÓ DE CÀMERA. No és una
+ * optimització: és una correcció. Abans l'efecte del bucle depenia
+ * d'`orientation.camera`, que era un objecte nou a cada esdeveniment del
+ * sensor —fins a 67 per segon—. Cada recreació cancel·lava el
+ * `requestAnimationFrame` pendent abans que s'executés, i amb el sensor per
+ * damunt de la freqüència de pantalla molts fotogrames no arribaven a
+ * dibuixar-se mai: la superposició es congelava mentre el vídeo continuava.
+ * Tot el que canvia de pressa viu en refs; React només s'assabenta del que ha
+ * de sortir a la interfície, i a poc a poc. L'única dependència d'estat que
+ * queda és `cameraOn`, que canvia dos cops per sessió, no seixanta-set per
+ * segon: AMB LA CÀMERA TANCADA EL BUCLE NO EXISTEIX. La invitació és DOM
+ * estàtic i el llenç viu dins d'un contenidor amagat (`hidden={!cameraOn}`):
+ * no hi ha cap píxel a servir a 60 Hz, i el que canviaria el dibuix —
+ * l'instant, el mode, la mida — arriba per render de React, que deixa el
+ * llenç marcat com a brut perquè el primer fotograma de la sessió següent
+ * pinti l'estat al dia.
  *
  * LA SUPERPOSICIÓ VA CLAVADA AL FOTOGRAMA QUE ES VEU, no a l'instant. Entre dos
  * fotogrames de càmera —que a 30 Hz són dos fotogrames de dibuix— la imatge de
  * la pantalla no canvia, i per tant la superposició tampoc no s'ha de moure. Si
  * s'hi mogués, es desenganxaria del paisatge i hi tornaria seixanta vegades per
- * segon, que és tremolor pur.
+ * segon, que és tremolor pur. Des d'ara això és literal també al PINTAT: quan
+ * el navegador anuncia cada fotograma (`requestVideoFrameCallback`, vegeu
+ * `VideoFrameClock`) el llenç només es repinta quan n'arriba un de nou o quan
+ * alguna cosa del dibuix ha canviat de debò; sense l'anunci, es pinta a cada
+ * RAF com sempre, que és el camí de reserva. El fosc de l'eclipsi sobre el
+ * vídeo no hi entra: és un filtre CSS que compon la GPU al ritme del mateix
+ * vídeo, gratis. I la FUSIÓ no canvia de pas: segueix rebent el sensor a cada
+ * RAF, perquè canviar-li la cadència seria tocar-ne la dinàmica.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -556,6 +571,16 @@ export function ARView({
   const lastDrawMsRef = useRef<number | null>(null);
   /** Mitjana mòbil del cost del cos de dibuix, en ms. És l'àrbitre del 10 Hz. */
   const drawMsRef = useRef(0);
+  /**
+   * Si hi ha res de nou a PINTAR que no vingui d'un fotograma de càmera.
+   *
+   * Amb el pintat lligat als fotogrames del vídeo, els canvis que no passen
+   * per la càmera — l'usuari arrossega el regle del temps, canvia de mode,
+   * el llenç es redimensiona — necessiten la seva pròpia porta d'entrada:
+   * cada render de React la marca (vegeu l'efecte que sincronitza
+   * `renderRef`), i el bucle la consumeix al fotograma següent.
+   */
+  const paintDirtyRef = useRef(true);
   /** Camp de visió mesurat, en graus sobre el costat llarg del sensor. */
   const measuredFovRef = useRef<number | null>(null);
   /**
@@ -788,6 +813,11 @@ export function ARView({
       locale,
       mode,
     };
+    // Tot el que pot canviar el dibuix passa per aquí: marcar el llenç com a
+    // brut és el que fa que, amb el pintat lligat als fotogrames de càmera,
+    // un canvi d'instant, de mode o d'idioma es vegi al fotograma següent
+    // sense haver d'esperar que la càmera en doni un de nou.
+    paintDirtyRef.current = true;
   });
 
   /**
@@ -925,14 +955,31 @@ export function ARView({
     }
   }, [light.cssFilter, mode]);
 
-  // ---- Bucle de dibuix. Es crea UNA vegada i no es torna a crear mai. ----
+  // ---- Bucle de dibuix. Una creació per sessió de càmera; tancada, cap. ----
   const cameraRef = orientation.cameraRef;
   const smoothingRef = orientation.smoothingRef;
   const poseHistoryRef = orientation.poseHistoryRef;
   const predictAheadRef = orientation.predictAheadRef;
 
   useEffect(() => {
+    /*
+     * AMB LA CÀMERA TANCADA, CAP BUCLE. Abans el `requestAnimationFrame`
+     * corria també a la pantalla d'invitació: seixanta passades per segon
+     * fent la fusió i pintant un llenç que viu dins d'un contenidor amagat i
+     * que no veu ningú. La invitació no té res que es mogui, i el que sí que
+     * canvia — instant, mode, mida — arriba per render de React i queda
+     * apuntat a `paintDirtyRef` per al primer fotograma de la sessió següent.
+     * Tancar la càmera desmunta el bucle pel cleanup d'aquest mateix efecte.
+     */
+    if (!cameraOn) return;
+
     let frame = 0;
+
+    // La sessió comença neta. Un `dt` que abastés l'estona de càmera tancada
+    // entraria als filtres com si fos un salt real de postura — el mateix
+    // perill que ja es tanca quan la pàgina torna d'estar amagada.
+    lastDrawMsRef.current = null;
+    paintDirtyRef.current = true;
 
     const draw = () => {
       frame = requestAnimationFrame(draw);
@@ -991,6 +1038,9 @@ export function ARView({
       if (canvas.width !== bw || canvas.height !== bh) {
         canvas.width = bw;
         canvas.height = bh;
+        // Redimensionar buida el buffer: aquest fotograma ha de pintar
+        // encara que la càmera no n'hagi donat cap de nou.
+        paintDirtyRef.current = true;
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -1355,72 +1405,99 @@ export function ARView({
       });
 
       /*
-       * LA PREDICCIÓ, NOMÉS AL DIBUIX. La fusió treballa en el seu temps i no
-       * es toca; el que s'empeny endavant és la postura que es PINTA, perquè
-       * el píxel arribi a l'ull quan el mòbil ja és allà. La rampa d'entrada
-       * evita l'esglaó al llindar.
+       * ES PINTA AL RITME DE LA CÀMERA, NO AL DE LA PANTALLA.
+       *
+       * Quan el navegador anuncia cada fotograma (`exact`, que és
+       * `requestVideoFrameCallback` amb el seu `captureTime`), entre dos
+       * fotogrames de càmera la imatge de sota no canvia — i la doctrina de
+       * dalt mana: la superposició va clavada al fotograma que es veu, o
+       * sigui que repintar-la entremig no és fluïdesa, és desenganxar-la del
+       * paisatge. A 30 fps de càmera sobre 60 Hz de pantalla, això és la
+       * meitat de les passades de `renderMixed` estalviades, i es llegeix
+       * directament a «ms de dibuix» del panell.
+       *
+       * La porta bruta cobreix el que no passa per la càmera (regle de
+       * temps, mode, mida); el camí sense anunci exacte pinta a cada RAF,
+       * com sempre. I res del que hi ha AMUNT d'aquesta línia canvia de
+       * cadència: el seguidor visual ja anava per fotograma de càmera, i la
+       * fusió continua rebent el sensor a cada RAF.
        */
-      let predAz = 0;
-      let predAlt = 0;
-      const speedNow = smoothingRef.current.angularSpeedDegPerSec;
-      if (speedNow > PREDICT_MIN_SPEED_DPS) {
-        const pred = predictAheadRef.current?.(nowMs, PREDICT_AHEAD_MS);
-        if (pred) {
-          const wPred = Math.min(1, (speedNow - PREDICT_MIN_SPEED_DPS) / 3);
-          predAz = wPred * pred.dAzDeg;
-          predAlt = wPred * pred.dAltDeg;
+      const paintNow =
+        !frameClockRef.current.exact || newFrame || paintDirtyRef.current;
+
+      if (paintNow) {
+        paintDirtyRef.current = false;
+
+        /*
+         * LA PREDICCIÓ, NOMÉS AL DIBUIX. La fusió treballa en el seu temps i
+         * no es toca; el que s'empeny endavant és la postura que es PINTA,
+         * perquè el píxel arribi a l'ull quan el mòbil ja és allà. La rampa
+         * d'entrada evita l'esglaó al llindar.
+         */
+        let predAz = 0;
+        let predAlt = 0;
+        const speedNow = smoothingRef.current.angularSpeedDegPerSec;
+        if (speedNow > PREDICT_MIN_SPEED_DPS) {
+          const pred = predictAheadRef.current?.(nowMs, PREDICT_AHEAD_MS);
+          if (pred) {
+            const wPred = Math.min(1, (speedNow - PREDICT_MIN_SPEED_DPS) / 3);
+            predAz = wPred * pred.dAzDeg;
+            predAlt = wPred * pred.dAltDeg;
+          }
+        }
+
+        const stable: CameraPointing = {
+          ...camera,
+          azimuth: normalizeAngle(fused.azimuthDeg + predAz),
+          altitude: Math.max(-90, Math.min(90, fused.altitudeDeg + predAlt)),
+        };
+        drawnCameraRef.current = stable;
+
+        if (state.mode === 'mixed') {
+          renderMixed(ctx, state.currentSample, {
+            viewport,
+            camera: stable,
+            calibration: state.calibration,
+            horizonProfile: state.horizonProfile,
+            bodies: state.bodies,
+            pathSamples: state.samples,
+            locale: state.locale,
+            palette: PALETTE,
+            guide: {
+              label: s('camera.sunArrowLabel', state.locale),
+              distanceDeg: angularSeparationDeg(
+                stable.azimuth,
+                stable.altitude,
+                state.currentSample.sun.azimuth,
+                state.currentSample.sun.altitudeApparent,
+              ),
+              sunLockedAtMs: sunLockRef.current,
+              nowMs,
+            },
+          });
+        } else {
+          renderOverlay(ctx, state.circumstances, state.samples, {
+            viewport,
+            camera: stable,
+            calibration: state.calibration,
+            currentTime: state.currentSample.time,
+            horizonProfile: state.horizonProfile,
+            locale: state.locale,
+            palette: PALETTE,
+          });
         }
       }
 
-      const stable: CameraPointing = {
-        ...camera,
-        azimuth: normalizeAngle(fused.azimuthDeg + predAz),
-        altitude: Math.max(-90, Math.min(90, fused.altitudeDeg + predAlt)),
-      };
-      drawnCameraRef.current = stable;
-
-      if (state.mode === 'mixed') {
-        renderMixed(ctx, state.currentSample, {
-          viewport,
-          camera: stable,
-          calibration: state.calibration,
-          horizonProfile: state.horizonProfile,
-          bodies: state.bodies,
-          pathSamples: state.samples,
-          locale: state.locale,
-          palette: PALETTE,
-          guide: {
-            label: s('camera.sunArrowLabel', state.locale),
-            distanceDeg: angularSeparationDeg(
-              stable.azimuth,
-              stable.altitude,
-              state.currentSample.sun.azimuth,
-              state.currentSample.sun.altitudeApparent,
-            ),
-            sunLockedAtMs: sunLockRef.current,
-            nowMs,
-          },
-        });
-      } else {
-        renderOverlay(ctx, state.circumstances, state.samples, {
-          viewport,
-          camera: stable,
-          calibration: state.calibration,
-          currentTime: state.currentSample.time,
-          horizonProfile: state.horizonProfile,
-          locale: state.locale,
-          palette: PALETTE,
-        });
-      }
-
       // Mitjana mòbil exponencial (α=0,1): estable per llegir-la al panell i
-      // prou viva per veure una pujada de cost quan passa.
+      // prou viva per veure una pujada de cost quan passa. Hi entren TOTS els
+      // tics, també els que no pinten: la xifra és el cost mitjà per passada
+      // del bucle, i és on es llegeix l'estalvi del pintat a ritme de càmera.
       drawMsRef.current = drawMsRef.current * 0.9 + (performance.now() - bodyStartMs) * 0.1;
     };
 
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
-  }, [cameraRef, smoothingRef, poseHistoryRef, predictAheadRef]);
+  }, [cameraOn, cameraRef, smoothingRef, poseHistoryRef, predictAheadRef]);
 
   // ---- Diagnòstic i calibratge de focal, desacoblats del bucle de dibuix. --
   useEffect(() => {
