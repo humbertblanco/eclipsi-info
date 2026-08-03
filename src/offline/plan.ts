@@ -22,6 +22,7 @@ import {
   AVG_BASEMAP_TILE_BYTES,
   AVG_TERRAIN_TILE_BYTES,
   BASEMAP_LEVELS,
+  HILLSHADE_LEVELS,
   type BasemapLevel,
 } from './config';
 
@@ -101,6 +102,29 @@ export function tilesInRadius(
   return tiles;
 }
 
+/**
+ * Tessel·les d'elevació que necessita el RELLEU OMBREJAT del mapa.
+ *
+ * Són tessel·les terrarium com les de l'horitzó, però amb la geometria de la
+ * cartografia (quadrats per zoom de vista, no anells per distància): el
+ * relleu es mira desplaçant el mapa, igual que la base. Es dedupliquen contra
+ * les de l'horitzó a `planPrepare` — moltes coincideixen, i és exactament el
+ * que es vol: una sola memòria cau, una sola descàrrega.
+ */
+export function planHillshadeTiles(
+  lat: number,
+  lon: number,
+  levels: BasemapLevel[] = HILLSHADE_LEVELS,
+): TileId[] {
+  const wanted = new Map<string, TileId>();
+  for (const level of levels) {
+    for (const tile of tilesInRadius(lat, lon, level.radiusKm, level.zoom)) {
+      wanted.set(tileKey(tile), tile);
+    }
+  }
+  return [...wanted.values()];
+}
+
 /** Tessel·les del mapa base per a tots els nivells de detall configurats. */
 export function planBasemapTiles(
   lat: number,
@@ -134,7 +158,21 @@ export function planPrepare(
   lon: number,
   options: { maxRangeKm?: number; levels?: BasemapLevel[] } = {},
 ): PreparePlan {
-  const terrain = planTerrainTiles(lat, lon, options.maxRangeKm);
+  /*
+   * El terreny del pla són DUES necessitats amb una sola llista: els anells
+   * de l'horitzó (per calcular) i els quadrats del relleu ombrejat (per
+   * pintar). Comparteixen URL i memòria cau, així que es dedupliquen aquí i
+   * la descàrrega, el recompte i l'estimació de pes en surten coherents sense
+   * que `prepare.ts` hagi de saber que existeix el hillshade.
+   */
+  const terrainWanted = new Map<string, TileId>();
+  for (const tile of planTerrainTiles(lat, lon, options.maxRangeKm)) {
+    terrainWanted.set(tileKey(tile), tile);
+  }
+  for (const tile of planHillshadeTiles(lat, lon)) {
+    terrainWanted.set(tileKey(tile), tile);
+  }
+  const terrain = [...terrainWanted.values()];
   const basemap = planBasemapTiles(lat, lon, options.levels);
   const rings = options.maxRangeKm === undefined ? DEFAULT_RINGS : clipRings(options.maxRangeKm);
   const maxRangeKm = rings.reduce((max, r) => Math.max(max, r.maxDistanceKm), 0);

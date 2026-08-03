@@ -36,6 +36,26 @@ export function terrainTileUrl(z: number, x: number, y: number): string {
 }
 
 /**
+ * Plantilla de tessel·la d'elevació per a MapLibre (`{z}/{x}/{y}`).
+ *
+ * ÉS LA MATEIXA URL QUE `terrainTileUrl`, en forma de plantilla: el relleu
+ * ombrejat del mapa i el càlcul de l'horitzó han de demanar byte a byte les
+ * mateixes tessel·les, o la memòria cau `eclipsi-relleu-v1` es parteix en dues
+ * meitats que no es troben mai. Ho vigila `terrain-agreement.test.ts`.
+ */
+export const TERRAIN_TILE_TEMPLATE = `${TERRAIN_TILE_BASE}/{z}/{x}/{y}.png`;
+
+/**
+ * Zoom màxim del relleu ombrejat al mapa.
+ *
+ * És el mateix zoom 12 (~30 m) amb què `core/horizon/elevation.ts` calcula el
+ * perfil d'horitzó: per sobre MapLibre sobreescala la tessel·la en comptes de
+ * demanar-ne de noves, o sigui que el mapa no baixa mai res que l'horitzó no
+ * pogués necessitar igualment.
+ */
+export const HILLSHADE_MAX_ZOOM = 12;
+
+/**
  * Descripció d'un proveïdor de tessel·les rasteritzades.
  *
  * ATENCIÓ per a qui munti el mapa: el component de MapLibre ha de construir
@@ -125,6 +145,18 @@ export const BASEMAP_LEVELS: BasemapLevel[] = [
   { zoom: 13, radiusKm: 6 },
   { zoom: 14, radiusKm: 3 },
 ];
+
+/**
+ * Zooms del RELLEU del mapa que es desen amb la precàrrega, i fins on.
+ *
+ * És el tram de `BASEMAP_LEVELS` que no passa de `HILLSHADE_MAX_ZOOM`: el
+ * relleu ombrejat es mira amb el mateix gest que la cartografia, així que es
+ * precarrega amb els mateixos radis. Per sota de z9, MapLibre reescala z9 i
+ * el que hi ha és prou (el mateix tall que ja fa la cartografia base).
+ */
+export const HILLSHADE_LEVELS: BasemapLevel[] = BASEMAP_LEVELS.filter(
+  (level) => level.zoom <= HILLSHADE_MAX_ZOOM,
+);
 
 /**
  * Pesos mitjans mesurats, només per a l'estimació que s'ensenya ABANS de

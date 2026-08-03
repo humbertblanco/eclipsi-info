@@ -256,6 +256,23 @@ const STRINGS = {
   },
   'map.shadowFrom': { ca: 'L’ombra arriba per', es: 'La sombra llega por' },
   'map.shadowSpeed': { ca: 'Velocitat de l’ombra', es: 'Velocidad de la sombra' },
+  'map.sunAzimuth': { ca: 'El Sol al màxim, cap a', es: 'El Sol en el máximo, hacia' },
+  'map.overTerrain': { ca: 'Marge sobre el terreny', es: 'Margen sobre el terreno' },
+  'map.terrainBlocksMax': {
+    ca: 'El terreny tapa el Sol just al moment del màxim. Mira la durada visible: és el que en queda.',
+    es: 'El terreno tapa el Sol justo en el momento del máximo. Mira la duración visible: es lo que queda.',
+  },
+  'map.layers.open': { ca: 'Capes del mapa', es: 'Capas del mapa' },
+  'map.layers.hillshade': { ca: 'Relleu ombrejat', es: 'Relieve sombreado' },
+  'map.layers.hillshadeDesc': {
+    ca: 'Il·luminat des d’on serà el Sol al màxim del teu punt.',
+    es: 'Iluminado desde donde estará el Sol en el máximo de tu punto.',
+  },
+  'map.layers.cone': { ca: 'Con de visió', es: 'Cono de visión' },
+  'map.layers.coneDesc': {
+    ca: 'El sector que tindràs davant, del primer contacte a l’últim.',
+    es: 'El sector que tendrás delante, del primer contacto al último.',
+  },
   'map.pickHint': {
     ca: 'Toca qualsevol punt del mapa i tot es recalcula des d’allà.',
     es: 'Toca cualquier punto del mapa y todo se recalcula desde allí.',

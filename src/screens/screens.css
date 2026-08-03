@@ -676,6 +676,76 @@
   border: none;
 }
 
+/* El con de visió: el mateix to corona del llenç, en versió farcida. */
+.mapscreen__swatch--cone {
+  background: color-mix(in srgb, var(--corona-100) 14%, transparent);
+  border: var(--bw-hair) solid color-mix(in srgb, var(--corona-100) 55%, transparent);
+}
+
+/*
+ * EL CONTROL DE CAPES.
+ *
+ * A la dreta i per sota dels botons de zoom de MapLibre (dos botons de 29 px
+ * amb el marge de 10 px que posa la llibreria): és cromatge de mapa i ha de
+ * viure amb el cromatge de mapa, no barrejat amb la llegenda, que és lectura.
+ * L'esquerra queda lliure per a la llegenda, que creix quan s'encenen capes.
+ */
+.mapscreen__layers {
+  position: absolute;
+  top: calc(var(--sp-5) + 78px);
+  right: max(var(--gutter-app), env(safe-area-inset-right));
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-3);
+}
+
+.mapscreen__layers > button {
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+}
+
+/*
+ * ELS INTERRUPTORS D'AQUEST PLAFÓ NO SÓN AMBRE.
+ *
+ * El `Switch` del sistema s'encén en `--accent`, i està bé a tot arreu menys
+ * aquí: en aquesta pantalla l'ambre ja té amo —la franja pintada al llenç— i
+ * la capçalera de `MapScreen.tsx` diu explícitament que cap element seu porta
+ * accent. Dos interruptors ambre surant damunt del mapa eren, literalment, el
+ * segon ambre que la regla prohibeix, i a més el més cridaner de la pantalla:
+ * el control de capes cridava més que la resposta.
+ *
+ * Encès = corona, que és el to que en aquest mapa vol dir «actiu però no és
+ * el veredicte» (la línia central i el con de visió ja hi van). Es distingeix
+ * d'apagat pel to i per la posició del botó, no pel color d'accent.
+ */
+.mapscreen__layerpanel .ui-switch__input:checked + .ui-switch__track {
+  background: var(--corona-100);
+}
+
+.mapscreen__layerpanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  /*
+   * Amplada màxima i no fixa: a 390 px el plafó ha de cabre amb el marge de
+   * la vora dreta i encara deixar veure mapa a l'esquerra. Si no hi cap, el
+   * text de la descripció s'ajusta; el que no pot fer és empènyer res.
+   */
+  width: max-content;
+  max-width: min(20rem, 62vw);
+  padding: var(--sp-4) var(--sp-5);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+}
+
 /*
  * La fitxa. Al mòbil flota damunt del mapa —i per això és de vidre, que és
  * l'únic ús que el sistema permet del vidre: cromatge que no ha de tapar el

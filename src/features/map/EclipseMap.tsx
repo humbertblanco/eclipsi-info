@@ -20,7 +20,7 @@
  *    el llenç en comptes d'anar-hi a sota.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BASEMAP } from '../../offline/config';
 import {
   type GeoJSONSource,
@@ -49,6 +49,8 @@ import {
   ESPENAK_ATTRIBUTION,
   type EclipsePathGeoJson,
 } from '../../core/eclipses/path';
+import { ensureHillshade, removeHillshade } from './layers/hillshade';
+import { applyViewCone, type ViewConeData } from './layers/viewCone';
 
 interface Props {
   eclipseId: string;
@@ -110,6 +112,21 @@ interface Props {
    * seu «Calcula-ho des d'aquí».
    */
   spots?: { lat: number; lon: number; index: number }[] | null;
+  /**
+   * Relleu ombrejat amb el model d'elevació de l'horitzó. El commuta el
+   * control de capes de `MapScreen`; aquí només s'obeeix.
+   */
+  hillshade?: boolean;
+  /**
+   * Azimut del Sol al màxim per il·luminar el relleu des d'on serà de debò.
+   * Nul (sense punt o sense contactes): llum cartogràfica estàndard de 315°.
+   */
+  sunAzimuthDeg?: number | null;
+  /**
+   * El con de visió del punt triat: cap on miraràs durant l'eclipsi. Nul
+   * quan no hi ha punt o la capa està apagada.
+   */
+  cone?: ViewConeData | null;
 }
 
 /** Atribució d'OSM, obligatòria per llicència. */
@@ -304,6 +321,9 @@ export function EclipseMap({
   picked = null,
   focus = null,
   spots = null,
+  hillshade = false,
+  sunAzimuthDeg = null,
+  cone = null,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -330,6 +350,31 @@ export function EclipseMap({
   // sempre la darrera franja calculada, no la que hi havia quan es va crear.
   const geojsonRef = useRef(geojson);
   geojsonRef.current = geojson;
+
+  /*
+   * Les capes opcionals segueixen el mateix règim que la franja: l'estil pot
+   * carregar abans o després que canviïn les propietats, així que l'estat
+   * viu en referències i una sola funció (`syncLayers`) el reconcilia, tant
+   * des del `style.load` com des dels efectes de canvi.
+   */
+  const layersRef = useRef({ hillshade, sunAzimuthDeg, cone });
+  layersRef.current = { hillshade, sunAzimuthDeg, cone };
+
+  const syncLayers = useCallback((map: MapLibreMap): void => {
+    const wanted = layersRef.current;
+    if (wanted.hillshade) {
+      // Sota la franja: el relleu és context i la resposta va a sobre.
+      ensureHillshade(
+        map,
+        PALETTE,
+        wanted.sunAzimuthDeg,
+        map.getLayer('band-fill') !== undefined ? 'band-fill' : undefined,
+      );
+    } else {
+      removeHillshade(map);
+    }
+    applyViewCone(map, PALETTE, wanted.cone);
+  }, []);
 
   // --- Creació del mapa (una sola vegada) ---
   useEffect(() => {
@@ -449,7 +494,10 @@ export function EclipseMap({
      * idempotent a posta —comprova si la font hi és abans de crear res— i es
      * pot cridar dues vegades sense fer cap mal.
      */
-    const apply = (): void => applyPath(map, geojsonRef.current);
+    const apply = (): void => {
+      applyPath(map, geojsonRef.current);
+      syncLayers(map);
+    };
     map.on('style.load', apply);
     if (map.isStyleLoaded()) apply();
 
@@ -508,6 +556,15 @@ export function EclipseMap({
     if (map === null || map.getSource(BAND_SOURCE) === undefined) return;
     applyPath(map, geojson);
   }, [geojson]);
+
+  // --- Les capes opcionals, sincronitzades amb les propietats ---
+  useEffect(() => {
+    const map = mapRef.current;
+    // Mateixa porta que el canvi d'eclipsi: si la franja encara no hi és,
+    // l'estil no ha carregat i el `style.load` ja cridarà `syncLayers`.
+    if (map === null || map.getSource(BAND_SOURCE) === undefined) return;
+    syncLayers(map);
+  }, [hillshade, sunAzimuthDeg, cone, syncLayers]);
 
   // --- La diana del punt tocat, sincronitzada amb la propietat ---
   useEffect(() => {

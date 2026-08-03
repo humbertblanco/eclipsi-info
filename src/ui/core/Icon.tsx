@@ -16,6 +16,7 @@ import {
   Eye,
   EyeOff,
   Info,
+  Layers,
   Mail,
   Map,
   MapPin,
@@ -107,6 +108,7 @@ export type IconName =
   | 'arrow-right'
   | 'check'
   | 'chevron-down'
+  | 'layers'
   | 'scan-eye'
   | 'search'
   | 'settings'
@@ -205,6 +207,7 @@ const REGISTRY: Record<IconName, ComponentType<LucideProps>> = {
   'arrow-right': ArrowRight,
   check: Check,
   'chevron-down': ChevronDown,
+  layers: Layers,
   'scan-eye': ScanEye,
   search: Search,
   settings: Settings,

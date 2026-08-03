@@ -11,12 +11,14 @@ import { describe, expect, it } from 'vitest';
 import {
   formatBytes,
   planBasemapTiles,
+  planHillshadeTiles,
   planPrepare,
   planTerrainTiles,
   tilesInRadius,
 } from './plan';
 import { lonLatToTilePixel, tileKey } from '../core/horizon/elevation';
 import { DEFAULT_RINGS } from '../core/horizon/raycast';
+import { HILLSHADE_LEVELS, HILLSHADE_MAX_ZOOM } from './config';
 
 /** Reinosa, Cantàbria: dins la franja de totalitat del 12-08-2026. */
 const LAT = 42.999;
@@ -104,7 +106,83 @@ describe('planBasemapTiles', () => {
   });
 });
 
+describe('planHillshadeTiles', () => {
+  it('no repeteix cap tessel·la entre nivells', () => {
+    const tiles = planHillshadeTiles(LAT, LON);
+    expect(new Set(tiles.map(tileKey)).size).toBe(tiles.length);
+  });
+
+  it('no demana cap zoom que l’horitzó no baixaria igualment', () => {
+    /*
+     * El relleu ombrejat es pinta amb les MATEIXES tessel·les terrarium que el
+     * perfil d'horitzó, i el sostre és `HILLSHADE_MAX_ZOOM` (12, ~30 m). Una
+     * tessel·la de z13 al pla seria una descàrrega que no aprofita ningú més:
+     * el càlcul no la llegirà mai i MapLibre ja sobreescala z12 sense demanar
+     * res. Els zooms han de sortir exactament de `HILLSHADE_LEVELS`.
+     */
+    const zooms = new Set(planHillshadeTiles(LAT, LON).map((t) => t.z));
+    for (const z of zooms) expect(z).toBeLessThanOrEqual(HILLSHADE_MAX_ZOOM);
+    expect([...zooms].sort((a, b) => a - b)).toEqual(
+      HILLSHADE_LEVELS.map((l) => l.zoom).sort((a, b) => a - b),
+    );
+  });
+
+  it('cap tessel·la cau fora de la piràmide', () => {
+    // Una x o una y fora de [0, 2^z) és un 404 garantit i una entrada de
+    // memòria cau enverinada: el service worker només desa el que respon 200,
+    // o sigui que aquell forat es tornaria a demanar per xarxa cada vegada.
+    for (const tile of planHillshadeTiles(LAT, LON)) {
+      const n = 2 ** tile.z;
+      expect(tile.x).toBeGreaterThanOrEqual(0);
+      expect(tile.x).toBeLessThan(n);
+      expect(tile.y).toBeGreaterThanOrEqual(0);
+      expect(tile.y).toBeLessThan(n);
+    }
+  });
+
+  it('inclou la tessel·la on és l’observador, al zoom més fi', () => {
+    const tiles = new Set(planHillshadeTiles(LAT, LON).map(tileKey));
+    const here = lonLatToTilePixel(LON, LAT, HILLSHADE_MAX_ZOOM);
+    expect(tiles.has(tileKey(here))).toBe(true);
+  });
+
+  it('es manté en un ordre de magnitud raonable per a dades mòbils', () => {
+    // Mesurat a Reinosa: 66 tessel·les (9 a z9, 16 a z10, 25 a z11, 16 a z12),
+    // uns 4,5 MB de terrarium. El límit de 250 és la mateixa alarma que la del
+    // mapa base: si algú puja un radi sense pensar-hi, salta abans que l'usuari
+    // es mengi la descàrrega.
+    const tiles = planHillshadeTiles(LAT, LON);
+    expect(tiles.length).toBeGreaterThan(30);
+    expect(tiles.length).toBeLessThan(250);
+  });
+});
+
 describe('planPrepare', () => {
+  it('no compta dues vegades el que necessiten alhora l’horitzó i el relleu', () => {
+    /*
+     * AQUESTA ÉS LA PROVA QUE PROTEGEIX LA XIFRA QUE VEU L'USUARI. El pla
+     * ensenya els MB abans de començar a baixar, i l'horitzó i el relleu
+     * ombrejat comparteixen bona part de les tessel·les de prop del punt —
+     * mateixa URL, mateixa memòria cau, una sola descàrrega. Si la suma es fes
+     * sense deduplicar, l'estimació sortiria inflada i, pitjor, la barra de
+     * progrés comptaria feina que no existeix.
+     *
+     * Mesurat a Reinosa: 157 tessel·les d'anells + 66 de relleu = 223 per
+     * separat, 170 un cop deduplicades. Són 53 tessel·les i uns 3,6 MB que no
+     * s'han de baixar ni prometre.
+     */
+    const plan = planPrepare(LAT, LON);
+    const horitzo = planTerrainTiles(LAT, LON);
+    const relleu = planHillshadeTiles(LAT, LON);
+
+    expect(new Set(plan.terrain.map(tileKey)).size).toBe(plan.terrain.length);
+    expect(plan.terrain.length).toBeLessThan(horitzo.length + relleu.length);
+
+    // I no en falta cap: la llista deduplicada és exactament la unió.
+    const unio = new Set([...horitzo, ...relleu].map(tileKey));
+    expect(new Set(plan.terrain.map(tileKey))).toEqual(unio);
+  });
+
   it('suma les dues llistes i estima un pes plausible', () => {
     const plan = planPrepare(LAT, LON);
     expect(plan.totalTiles).toBe(plan.terrain.length + plan.basemap.length);

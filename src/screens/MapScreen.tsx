@@ -17,11 +17,19 @@ import {
   SegmentedControl,
   Stat,
   TimelineTrack,
+  useMediaQuery,
   VisibilityMeter,
   type TimelineContact,
   type Tone,
 } from '../ui';
 import { EclipseMap } from '../features/map/EclipseMap';
+import {
+  LayerControl,
+  readStoredLayers,
+  type MapLayerState,
+} from '../features/map/LayerControl';
+import { clampConeRadiusKm, type ViewConeData } from '../features/map/layers/viewCone';
+import { horizonDistanceAt } from '../core/horizon/profile';
 import { TrajectoryThumb } from '../features/sim/TrajectoryThumb';
 import { ShareButton } from '../features/share';
 /*
@@ -209,6 +217,19 @@ export function MapScreen({
   const [creditsOpen, setCreditsOpen] = useState(false);
 
   /*
+   * LES CAPES DEL MAPA (relleu, con de visió), a part del segmentat: el
+   * segmentat commuta la fitxa i aquestes commuten territori, i valen per a
+   * totes les vistes alhora. El defecte depèn de la pantalla — el relleu és
+   * GPU i dades, i al mòbil s'ofereix apagat — però el que l'usuari triï es
+   * recorda i mana per sobre del defecte (localStorage, dins de
+   * `LayerControl`).
+   */
+  const desktop = useMediaQuery('(min-width: 900px) and (min-height: 500px)');
+  const [layers, setLayers] = useState<MapLayerState>(() =>
+    readStoredLayers({ hillshade: desktop, cone: true }),
+  );
+
+  /*
    * Si la navegació torna a demanar una vista amb el mapa ja obert —l'enrere
    * del navegador entre dues entrades del mapa—, s'adopta. Mateix contracte
    * que `initialSection` a la guia: la prop és l'encàrrec, no l'estat, i per
@@ -281,6 +302,28 @@ export function MapScreen({
 
   const contacts = circumstances?.contacts ?? null;
   const central = circumstances?.kind === 'total' || circumstances?.kind === 'annular';
+
+  /*
+   * EL CON DE VISIÓ: el sector d'azimuts que recorre el Sol de C1 a C4 des
+   * del teu punt. El radi arriba fins a l'obstacle que fa d'horitzó al rumb
+   * del màxim — si el perfil del terreny ja s'ha calculat — i si no, a un
+   * radi de cortesia (dins de `clampConeRadiusKm`). Un eclipsi parcial sense
+   * C1/C4 tabulats degrada al rumb del màxim tot sol.
+   */
+  const cone = useMemo<ViewConeData | null>(() => {
+    if (!layers.cone || location === null || contacts === null) return null;
+    const maxAzimuthDeg = contacts.max.sun.azimuth;
+    return {
+      lat: location.lat,
+      lon: location.lon,
+      c1AzimuthDeg: contacts.c1?.sun.azimuth ?? maxAzimuthDeg,
+      maxAzimuthDeg,
+      c4AzimuthDeg: contacts.c4?.sun.azimuth ?? maxAzimuthDeg,
+      radiusKm: clampConeRadiusKm(
+        horizon !== null ? horizonDistanceAt(horizon, maxAzimuthDeg) : Number.NaN,
+      ),
+    };
+  }, [layers.cone, location, contacts, horizon]);
 
   const clouds = useCloudOutlook({
     location,
@@ -377,6 +420,16 @@ export function MapScreen({
             picked={location}
             focus={focus}
             spots={view === 'spots' ? spotPins : null}
+            hillshade={layers.hillshade}
+            /*
+              LA LLUM DEL RELLEU VE D'ON SERÀ EL SOL. No és cosmètica: amb el
+              Sol a 7° el 12 d'agost, els vessants que el mapa ensenya foscos
+              són exactament els que estaran a contrallum, i el pendent que
+              et tapa al mapa és el que et taparà al camp. Sense punt encara,
+              el relleu s'il·lumina amb el 315° convencional.
+            */
+            sunAzimuthDeg={contacts?.max.sun.azimuth ?? null}
+            cone={cone}
             onPickLocation={(loc) => {
               // Tocar el mapa tanca el capítol de la cerca: el punt triat ja
               // té el seu marcador propi i el rètol del resultat només faria
@@ -386,8 +439,22 @@ export function MapScreen({
             }}
           />
 
+          {/*
+            EL CONTROL DE CAPES sura sobre el llenç, a l'altre costat de la
+            llegenda: la llegenda diu què hi ha pintat i aquest botó decideix
+            què s'hi pinta. Va damunt del mapa i no a la fitxa perquè no
+            respon cap pregunta de la fitxa — val per a les cinc vistes.
+          */}
+          <LayerControl locale={locale} value={layers} onChange={setLayers} />
+
           {/* Llegenda pròpia. La d'`EclipseMap` viu sota el llenç i aquí el
               llenç ocupa el marc sencer, així que quedaria fora de vista. */}
+          {/*
+            LA LLEGENDA NOMÉS DIU EL QUE HI HA PINTAT. La franja i la línia
+            central hi són sempre; el con només quan la capa és encesa. Una
+            llegenda que enumera capes apagades fa buscar al mapa coses que no
+            hi són.
+          */}
           <div className="mapscreen__legend">
             <span className="mapscreen__legenditem">
               <span className="mapscreen__swatch" aria-hidden="true" />
@@ -400,6 +467,15 @@ export function MapScreen({
               />
               {s('map.legend.center', locale)}
             </span>
+            {cone !== null && (
+              <span className="mapscreen__legenditem">
+                <span
+                  className="mapscreen__swatch mapscreen__swatch--cone"
+                  aria-hidden="true"
+                />
+                {s('map.layers.cone', locale)}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -565,6 +641,31 @@ export function MapScreen({
                 <p className="screen__note">{s('map.edgeNote', locale)}</p>
               )}
               {!central && <p className="screen__note">{s('map.noCentral', locale)}</p>}
+
+              {/*
+                CAP ON I AMB QUANT DE MARGE, i va DESPRÉS de la línia de temps
+                a posta. Dins del 45dvh de la fitxa del mòbil, el primer cop
+                d'ull ha de ser distintiu + tres xifres + per on va el dia
+                (ESTAT.md ho fixa així); posant aquest bloc entremig, la línia
+                C1–C4 quedava sota la retallada i calia desplaçar-se per veure
+                l'hora del màxim. Això és detall de segona lectura: hi arriba
+                qui ja sap que el lloc li serveix i ara vol saber cap on mirar.
+
+                El MARGE és la xifra que decideix, no l'altura: set graus són
+                una fortuna en una plana i no res darrere d'una carena. És el
+                que la competència ensenya com a «Visible (6,6° sobre
+                horitzó)», i nosaltres el calculem amb refracció i contra el
+                perfil real d'aquest punt.
+              */}
+              <SunAtMaxBlock
+                azimuthDeg={contacts.max.sun.azimuth}
+                clearanceDeg={
+                  verdict
+                    ? verdict.sunAltitudeAtMaxDeg - verdict.horizonAltitudeAtMaxDeg
+                    : null
+                }
+                locale={locale}
+              />
 
               {/*
                 La trajectòria en miniatura: com hi passa el Sol i què li tapa
@@ -862,6 +963,51 @@ function LimitBlock({
             card: bearingToCardinal(limit.inwardBearingDeg, locale),
           })}
         </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Cap on miraràs al màxim, i quant de marge et queda sobre el que tens davant.
+ *
+ * PER QUÈ EL MARGE I NO L'ALTURA. L'altura del Sol ja surt al trio de dalt, i
+ * tota sola no decideix res: set graus són una fortuna en una plana i no res
+ * darrere d'una carena a tres quilòmetres. El marge —altura del Sol menys
+ * altura del terreny en aquell mateix azimut— és la resta que respon la
+ * pregunta, i només es pot escriure quan el perfil d'horitzó del punt ja s'ha
+ * calculat: mentre no hi és, aquesta fila no s'inventa cap número.
+ *
+ * MARGE NEGATIU NO ÉS UNA ALARMA. Vol dir que al minut del màxim el Sol queda
+ * darrere del relleu, cosa que passa sovint amb els eclipsis d'aquest catàleg
+ * i que no anul·la el lloc: la durada visible del trio de dalt ja diu què en
+ * queda. Per això va en to `cloudy` i no en ambre —l'ambre és de la franja— ni
+ * en vermell, que aquí vol dir seguretat ocular.
+ */
+function SunAtMaxBlock({
+  azimuthDeg,
+  clearanceDeg,
+  locale,
+}: {
+  azimuthDeg: number;
+  clearanceDeg: number | null;
+  locale: Locale;
+}) {
+  return (
+    <div className="mapscreen__block">
+      <div className="mapscreen__stats mapscreen__pairs">
+        <Stat
+          label={s('map.sunAzimuth', locale)}
+          value={bearingToCardinal(azimuthDeg, locale)}
+          unit={formatDegrees(azimuthDeg, locale)}
+        />
+        <Stat
+          label={s('map.overTerrain', locale)}
+          value={clearanceDeg === null ? NO_DATA : formatDegrees(clearanceDeg, locale)}
+        />
+      </div>
+      {clearanceDeg !== null && clearanceDeg < 0 && (
+        <p className="screen__note">{s('map.terrainBlocksMax', locale)}</p>
       )}
     </div>
   );
