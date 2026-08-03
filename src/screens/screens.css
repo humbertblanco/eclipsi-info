@@ -406,6 +406,14 @@
   position: relative;
 }
 
+/* L'aparador de la càmera: la frase que ven el botó primari de sota. Curta,
+   secundària i enganxada a l'acció — no és un avís, és un argument. */
+.home__camerapitch {
+  margin: 0 0 var(--sp-3);
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
 .home__phase {
   display: flex;
   align-items: center;
@@ -417,6 +425,13 @@
   gap: var(--sp-5);
   flex: 1;
   min-width: 0;
+}
+
+/* Les coordenades darrere del nom del lloc, a la nota del peu de la portada:
+   la parella no es parteix mai pel mig — si no hi cap, baixa sencera de
+   línia. El to ja el posa la nota (`screen__note`): són detall, no titular. */
+.home__coords {
+  white-space: nowrap;
 }
 
 /* ============================================================================
@@ -619,7 +634,10 @@
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
+  /* Un graó menys d'aire que a l'escriptori (que recupera --sp-5 al seu bloc):
+     dins del sostre de 45dvh cada graó és mitja línia de dades que es veu o
+     no es veu abans del primer desplaçament. */
+  gap: var(--sp-4);
   /*
    * EL MAPA MANA: la fitxa es queda per sota de mitja pantalla (45dvh, unitat
    * dinàmica perquè les barres del navegador mòbil no la facin créixer) i la
@@ -1157,6 +1175,8 @@
     position: static;
     max-height: none;
     overflow: visible;
+    /* L'aire de sempre: el graó compacte és del mòbil, on mana el 45dvh. */
+    gap: var(--sp-5);
     background: var(--surface-card);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -1366,13 +1386,17 @@
  * No competeix amb res: text apagat, sense accent i sense caixa. És
  * informació de referència, i el sistema reserva l'ambre per a la xifra que
  * decideix. Vegeu `SiteFooter.tsx` per què hi és.
+ *
+ * TRES BLOCS I PROU: signatura, privadesa i una línia de meta. La llista de
+ * les set fonts se n'ha anat a «Com funciona» (i al diàleg de crèdits del
+ * mapa), i és legalment net que no hi sigui: l'ODbL no depenia del peu — el
+ * mapa porta la seva atribució DINS del llenç (control de MapLibre) i al seu
+ * diàleg, que és on la dada es fa servir. El que hi guanya el peu és el que
+ * el peu ha de ser: l'autoria, llegible com a autoria.
  */
 .sitefoot {
   display: flex;
   flex-direction: column;
-  /* Un punt més d'aire que una llista corrent: el peu són cinc blocs de mena
-     diferent (signatura, privadesa, fonts, meta) i amb --sp-3 es llegien com
-     un sol paràgraf apilat. */
   gap: var(--sp-4);
   margin-top: var(--sp-10);
   padding-top: var(--sp-7);
@@ -1381,43 +1405,13 @@
   font: var(--text-body-sm);
 }
 
-/* L'overline de les fonts obre secció: una mica més de coixí per sobre perquè
-   la llista no sembli continuació de la frase de privadesa. */
-.sitefoot .screen__overline {
-  margin-top: var(--sp-4);
-}
-
-/* La línia de meta tanca el peu: separada del bloc de fonts, com una firma. */
+/* La línia de meta tanca el peu: separada de la signatura, com una nota. */
 .sitefoot__meta {
   margin-top: var(--sp-3);
 }
 
 .sitefoot__what {
   color: var(--text-secondary);
-}
-
-.sitefoot__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.sitefoot__list li {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-3);
-  align-items: baseline;
-}
-
-/* L'etiqueta té una amplada mínima perquè les fonts quedin alineades en una
-   columna, i es rendeix quan no hi cap: a 320 px val més que baixi de línia
-   que no pas que parteixi el nom del proveïdor. */
-.sitefoot__what2 {
-  min-width: 11rem;
-  color: var(--text-muted);
 }
 
 .sitefoot__meta {
@@ -1430,14 +1424,19 @@
 }
 
 /*
- * LA SIGNATURA.
+ * LA SIGNATURA, EL PROTAGONISTA DEL PEU.
  *
- * Va primer i és l'única línia del peu amb color de text principal: és el que
- * respon la primera pregunta de qui baixa fins aquí. Prou pes per llegir-se
- * com una signatura, no prou per competir amb res de la pantalla — el peu
- * segueix sense cap ambre (vegeu-hi la nota de sota).
+ * Cos de títol petit (Space Grotesk, via token) i aire propi per sota: ara
+ * que el peu no és una llista, la signatura és el que és — l'autoria — i no
+ * lletra petita legal. El «Fet per» i la «i» queden en secundari; els noms,
+ * en principal (`.sitefoot__author`). Prou pes per llegir-se com una
+ * signatura, no prou per competir amb cap pantalla: el peu segueix sense cap
+ * ambre (vegeu la nota dels enllaços, més avall).
  */
 .sitefoot__by {
+  margin-bottom: var(--sp-2);
+  font: var(--text-title-3);
+  letter-spacing: var(--ls-title);
   color: var(--text-secondary);
 }
 
@@ -1485,27 +1484,15 @@
 }
 
 /*
- * A PANTALLA AMPLA EL PEU ÉS UN BLOC, NO UNA COLUMNA PENJANT.
+ * A PANTALLA AMPLA, LES FRASES DEL PEU CONSERVEN AMPLADA DE FRASE.
  *
- * A 1.440 px les set fonts feien set files d'una columna prima amb dos terços
- * de l'amplada buits a la dreta, i el peu es llegia com una llista oblidada al
- * final. En dues columnes ocupa el que li toca, es recorre d'un cop d'ull i la
- * signatura de dalt queda separada del bloc de dades, que és la distinció que
- * el peu ha de fer.
- *
- * El punt de tall és el mateix que fa servir la resta de l'estructura per
- * passar a dues coses de costat, I AMB LA MATEIXA GUARDA D'ALÇADA: un mòbil
- * girat també passa el tall dels 900 (vegeu el bloc de l'ESCRIPTORI, més
- * amunt) i sense la guarda rebia el peu a dues columnes amb la disposició de
- * mòbil a tota la resta.
+ * (Aquí hi havia la graella de dues columnes de la llista de fonts; la llista
+ * ja no viu al peu i la graella se'n va anar amb ella.) El punt de tall és el
+ * mateix que fa servir la resta de l'estructura, I AMB LA MATEIXA GUARDA
+ * D'ALÇADA: un mòbil girat també passa el tall dels 900 (vegeu el bloc de
+ * l'ESCRIPTORI, més amunt).
  */
 @media (min-width: 900px) and (min-height: 500px) {
-  .sitefoot__list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: var(--sp-8);
-  }
-
   /* La signatura i la nota de privadesa no es parteixen: són frases. */
   .sitefoot__by,
   .sitefoot__what {
@@ -1585,6 +1572,131 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-3);
+}
+
+/* ============================================================================
+   Densitat de la fitxa del mapa a MÒBIL
+
+   La fitxa viu dins d'un sostre de 45dvh, i el que no es veu abans del primer
+   desplaçament és com si no hi fos. El primer cop d'ull ha de donar el
+   veredicte sencer: distintiu, les tres xifres i la línia de temps C1–C4.
+   Aquestes regles són la versió compacta del mòbil; l'escriptori les desfà
+   totes al bloc de mitjans del final d'aquesta secció, perquè allà la fitxa
+   té una columna sencera i l'aire torna a ser informació.
+
+   El patró de les tres xifres en fila és el mateix que ja fan les targetes
+   del cercador de llocs (`spots.css`) i la targeta d'eclipsi de la guia
+   (`.threeecl__stats`): graella, xifra en cos de títol petit.
+   ========================================================================== */
+
+/* Les tres xifres de capçalera: tres columnes iguals, sempre una sola fila.
+   El `minmax(0, 1fr)` deixa que la cel·la s'encongeixi per sota del contingut
+   mono en lloc de desbordar la fitxa. */
+.mapscreen__stats--trio {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-3) var(--sp-4);
+}
+
+/* La xifra baixa al cos de títol petit: es continua llegint d'un cop d'ull i
+   les tres caben de costat a 390 px. La família i el tabular no es toquen —
+   tota xifra de l'app és mono tabular. */
+.mapscreen__stats--trio .ui-stat__value {
+  font-size: var(--fs-title-3);
+}
+
+/* Aire entre l'overline i la via: els punts de la línia sobresurten 4 px per
+   sobre del traç (vegeu `.ui-timeline__dot`) i amb el gap del bloc a seques
+   fregaven l'etiqueta. Un graó petit: la densitat és el motiu del bloc. */
+.mapscreen__timeline .ui-timeline {
+  margin-top: var(--sp-3);
+}
+
+/* La taula d'efemèrides d'escriptori: el BLOC sencer fora al mòbil. La taula
+   de dins ja no es pintava (`.ephemeris` és display:none), però l'overline
+   quedava com una etiqueta òrfena sobre no res; la mateixa informació la diu
+   la línia de temps de dalt. */
+.mapscreen__ephemeris {
+  display: none;
+}
+
+/* Els parells etiqueta–valor (límits de franja, línia central, ombra): cada
+   Stat es tomba en UNA línia — etiqueta a l'esquerra, xifra a la dreta, com
+   les files de la taula d'efemèrides — en lloc del bloc de dues alçades.
+   `--pairs` és el modificador de la llista del límit; `--pair` és el bloc de
+   l'ombra, que porta els Stats directament a dins. */
+.mapscreen__pairs,
+.mapscreen__block--pair {
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.mapscreen__pairs .ui-stat,
+.mapscreen__block--pair > .ui-stat {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+/* La xifra del parell, en cos de text llarg: acompanya una etiqueta a la
+   mateixa línia i no ha de competir amb les tres xifres de capçalera. */
+.mapscreen__pairs .ui-stat .ui-stat__value,
+.mapscreen__block--pair > .ui-stat .ui-stat__value {
+  font-size: var(--fs-body-lg);
+}
+
+/*
+ * L'ESCRIPTORI DESFÀ LA COMPACTACIÓ. Mateix parell tall/guarda que la resta
+ * de l'estructura (vegeu el bloc ESCRIPTORI, més amunt). Va aquí i no dins
+ * del bloc gran dels 1180 perquè les regles que desfà són en aquesta secció,
+ * més avall al full que aquell bloc: l'ordre del full és qui decideix
+ * l'empat d'especificitat, i lluny del que desfan es tornarien a perdre.
+ */
+@media (min-width: 1180px) and (min-height: 500px) {
+  /* Les tres xifres tornen a la fila fluida de sempre. */
+  .mapscreen__stats--trio {
+    display: flex;
+    gap: var(--sp-5) var(--sp-8);
+  }
+
+  .mapscreen__stats--trio .ui-stat__value {
+    font-size: var(--fs-data);
+  }
+
+  /* La línia de temps és del mòbil: aquí hi ha la taula, amb el segon exacte
+     i el marge sobre el terreny. Mai totes dues. */
+  .mapscreen__timeline {
+    display: none;
+  }
+
+  .mapscreen__ephemeris {
+    display: flex;
+  }
+
+  /* Els parells tornen a ser columnes de dues alçades, de costat. */
+  .mapscreen__pairs {
+    flex-direction: row;
+    gap: var(--sp-5) var(--sp-8);
+  }
+
+  .mapscreen__block--pair {
+    flex-direction: row;
+    gap: var(--sp-6);
+  }
+
+  .mapscreen__pairs .ui-stat,
+  .mapscreen__block--pair > .ui-stat {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: var(--sp-2);
+  }
+
+  .mapscreen__pairs .ui-stat .ui-stat__value,
+  .mapscreen__block--pair > .ui-stat .ui-stat__value {
+    font-size: var(--fs-data);
+  }
 }
 
 /* ============================================================================

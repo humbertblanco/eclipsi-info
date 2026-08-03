@@ -1,5 +1,12 @@
 import { formatObscurationPercent } from '../core/astro/obscuration';
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+/*
+ * Els noms públics de les vistes (#/mapa/llocs → spots) viuen a App i no aquí,
+ * pel paquet: App els llegeix a la primera pintada i aquest fitxer és un tros
+ * mandrós. La importació en aquest sentit no costa res — App ja és al paquet
+ * principal quan aquest tros arriba.
+ */
+import { MAP_SEGMENT_BY_VIEW, type MapView } from '../App';
 import {
   Badge,
   Button,
@@ -9,11 +16,14 @@ import {
   Input,
   SegmentedControl,
   Stat,
+  TimelineTrack,
   VisibilityMeter,
+  type TimelineContact,
   type Tone,
 } from '../ui';
 import { EclipseMap } from '../features/map/EclipseMap';
 import { TrajectoryThumb } from '../features/sim/TrajectoryThumb';
+import { ShareButton } from '../features/share';
 /*
  * La cerca de topònims és LA MATEIXA que la de la fulla d'ubicació: mateix
  * hook, mateixos missatges tipats de degradació, mateixa atribució de dades.
@@ -27,7 +37,7 @@ import {
   type PlaceSearchApi,
 } from '../features/location';
 import { CREDITS, PRIVACY_NOTE, SOURCES_HEADING } from './SiteFooter';
-import type { GeoLocation } from '../core/astro/types';
+import type { EclipseSample, GeoLocation } from '../core/astro/types';
 import { CloudPanel, useCloudOutlook } from '../features/weather';
 import {
   bearingToCardinal,
@@ -47,6 +57,7 @@ import type { Locale } from '../i18n';
 import { s } from './strings';
 import {
   formatAge,
+  formatClockShort,
   formatCoords,
   formatDecimal,
   formatDegrees,
@@ -108,10 +119,18 @@ export interface MapScreenProps extends EclipseContext {
    * miniatura de la trajectòria: l'aparador és aquí, la funció és allà.
    */
   onOpenCountdown?: () => void;
+  /**
+   * La vista amb què s'obre la fitxa quan una navegació en demana una
+   * (`#/mapa/llocs`, la crida a l'acció del compte enrere). Com
+   * `initialSection` de la guia: un encàrrec d'aterratge, no l'estat — de
+   * l'estat n'és amo el commutador de sota.
+   */
+  initialView?: View;
 }
 
-/** Què respon la fitxa de sota del mapa. */
-type View = 'band' | 'clouds' | 'move' | 'spots' | 'align';
+/** Què respon la fitxa de sota del mapa. Els noms públics del fragment
+    (`franja`, `llocs`…) són a `MAP_SEGMENT_BY_VIEW`, a App. */
+type View = MapView;
 
 
 
@@ -184,9 +203,43 @@ export function MapScreen({
   horizon,
   onPickLocation,
   onOpenCountdown,
+  initialView,
 }: MapScreenProps) {
-  const [view, setView] = useState<View>('band');
+  const [view, setView] = useState<View>(initialView ?? 'band');
   const [creditsOpen, setCreditsOpen] = useState(false);
+
+  /*
+   * Si la navegació torna a demanar una vista amb el mapa ja obert —l'enrere
+   * del navegador entre dues entrades del mapa—, s'adopta. Mateix contracte
+   * que `initialSection` a la guia: la prop és l'encàrrec, no l'estat, i per
+   * això només mana quan CANVIA.
+   */
+  useEffect(() => {
+    if (initialView !== undefined) setView(initialView);
+  }, [initialView]);
+
+  /*
+   * EL COMMUTADOR ESCRIU EL FRAGMENT, I AMB `replaceState`: canviar de vista
+   * dins del mapa no és una navegació — és el mateix lloc mirat d'una altra
+   * manera — i apilar-hi entrades faria que l'enrere del navegador repassés
+   * pestanyetes de la fitxa en comptes de desfer camins de debò. La consulta
+   * (?p=...) es conserva intacta, com a totes les escriptures d'adreça de
+   * l'app. La franja s'escriu com a `#/mapa` a seques: és la vista per
+   * defecte i el nom net és el canònic, igual que la portada va sense
+   * fragment. El popstate d'App llegeix aquests fragments quan hi arriba un
+   * enllaç o l'historial es mou.
+   */
+  const switchView = (next: View) => {
+    setView(next);
+    const fragment = next === 'band' ? '#/mapa' : `#/mapa/${MAP_SEGMENT_BY_VIEW[next]}`;
+    if (window.location.hash === fragment) return;
+    window.history.replaceState(
+      // L'estat que hi hagi es conserva: no és nostre.
+      window.history.state,
+      '',
+      `${window.location.pathname}${window.location.search}${fragment}`,
+    );
+  };
 
   /*
    * ON HA D'ENQUADRAR-SE EL MAPA quan es tria un resultat de la cerca. És un
@@ -194,6 +247,16 @@ export function MapScreen({
    * i triar el mateix lloc dues vegades ha de tornar-hi encara que les
    * coordenades no hagin canviat, perquè entremig pots haver mogut el mapa.
    */
+  /*
+   * Les xinxetes numerades del cercador de llocs: el panell (fill mandrós) fa
+   * pujar els resultats i el mapa els marca amb el número de cada targeta.
+   * Només es pinten a la vista «Llocs»: a les altres serien soroll d'una
+   * pregunta que ningú no està fent.
+   */
+  const [spotPins, setSpotPins] = useState<
+    { lat: number; lon: number; index: number }[] | null
+  >(null);
+
   const [focus, setFocus] = useState<{
     location: GeoLocation;
     label: string | null;
@@ -268,6 +331,33 @@ export function MapScreen({
     };
   }, [view, eclipseId, circumstances, location]);
 
+  /*
+   * ELS CINC CONTACTES PER A LA LÍNIA DE TEMPS DEL MÒBIL.
+   *
+   * Mateixa recepta que la targeta del compte enrere: etiqueta curta i hora
+   * SENSE segons, que és el que cap cinc vegades en 390 px. El segon exacte el
+   * dona la taula d'efemèrides, que a l'escriptori es pinta en lloc d'aquesta
+   * línia — mai totes dues alhora: qui decideix quina es veu és `screens.css`,
+   * amb el mateix patró de tall que ja fan servir la targeta de la línia i la
+   * de la taula a la portada.
+   */
+  const timeline = useMemo<TimelineContact[]>(() => {
+    if (contacts === null) return [];
+    const rows: [string, EclipseSample | undefined][] = [
+      ['C1', contacts.c1],
+      ['C2', contacts.c2],
+      ['Màx', contacts.max],
+      ['C3', contacts.c3],
+      ['C4', contacts.c4],
+    ];
+    return rows
+      .filter((row): row is [string, EclipseSample] => row[1] !== undefined)
+      .map(([label, sample]) => ({
+        label,
+        time: formatClockShort(sample.time, locale),
+      }));
+  }, [contacts, locale]);
+
   return (
     <div className="screen screen--full screen--split screen--flush">
       <div className="screen__col screen__col--main">
@@ -286,6 +376,7 @@ export function MapScreen({
             observer={location}
             picked={location}
             focus={focus}
+            spots={view === 'spots' ? spotPins : null}
             onPickLocation={(loc) => {
               // Tocar el mapa tanca el capítol de la cerca: el punt triat ja
               // té el seu marcador propi i el rètol del resultat només faria
@@ -373,7 +464,7 @@ export function MapScreen({
 
           <SegmentedControl
             value={view}
-            onChange={setView}
+            onChange={switchView}
             /*
               CINC OPCIONS NO CABEN EN UNA FILA de la fitxa d'escriptori. Sense
               `wrap`, «Franja» es llegia «Fr…» i «Enquadra», «E…»; i el salt
@@ -414,7 +505,14 @@ export function MapScreen({
                 </span>
               </div>
 
-              <div className="mapscreen__stats">
+              {/*
+                LES TRES XIFRES DE CAPÇALERA, EN UNA SOLA FILA AL MÒBIL.
+                El modificador `--trio` és qui ho fa (`screens.css`): graella
+                de tres i xifra en cos de títol petit, el mateix patró compacte
+                que les targetes del cercador de llocs. A l'escriptori la fila
+                torna a ser la de sempre.
+              */}
+              <div className="mapscreen__stats mapscreen__stats--trio">
                 <Stat
                   label={
                     verdict
@@ -443,6 +541,23 @@ export function MapScreen({
                 <Stat
                   label={s('home.sunAltitude', locale)}
                   value={formatDegrees(contacts.max.sun.altitudeApparent)}
+                />
+              </div>
+
+              {/*
+                LA LÍNIA DE TEMPS C1–C4, NOMÉS AL MÒBIL I AQUÍ DALT.
+                Dins del 45dvh de la fitxa, el primer cop d'ull ha de donar el
+                veredicte sencer: distintiu, tres xifres i per on va el dia.
+                Per això la línia va enganxada a les xifres i no al fons de la
+                fitxa, on viu la taula d'escriptori. És la MATEIXA informació
+                que la taula (`mapscreen__ephemeris`, més avall): `screens.css`
+                pinta l'una o l'altra segons l'amplada, mai les dues.
+              */}
+              <div className="mapscreen__block mapscreen__timeline">
+                <span className="screen__overline">{s('map.contacts', locale)}</span>
+                <TimelineTrack
+                  contacts={timeline}
+                  activeIndex={timeline.findIndex((c) => c.label === 'Màx')}
                 />
               </div>
 
@@ -479,8 +594,15 @@ export function MapScreen({
                 </div>
               )}
 
-              {/* Les hores dels cinc contactes, per a AQUEST punt. */}
-              <div className="mapscreen__block">
+              {/*
+                Les hores dels cinc contactes amb el segon exacte i el marge
+                sobre el terreny: NOMÉS A L'ESCRIPTORI. Al mòbil el bloc
+                sencer desapareix (`mapscreen__ephemeris`, `screens.css`) —
+                la mateixa informació ja la diu la línia de temps de dalt, i
+                deixar aquí l'overline amb la taula amagada era una etiqueta
+                òrfena sobre no res.
+              */}
+              <div className="mapscreen__block mapscreen__ephemeris">
                 <span className="screen__overline">{s('map.contacts', locale)}</span>
                 <EphemerisTable circumstances={circumstances} horizon={horizon} locale={locale} />
               </div>
@@ -491,6 +613,21 @@ export function MapScreen({
                 locale={locale}
               />
               <ShadowBlock shadow={detail?.shadow ?? null} locale={locale} />
+
+              {/*
+                Compartir també des d'aquí: qui compara llocs al mapa és
+                exactament qui vol enviar «mira, jo seré aquí». Mateix botó i
+                mateixa escala de gestos que a la portada.
+              */}
+              <ShareButton
+                eclipseId={eclipseId}
+                locale={locale}
+                location={location}
+                label={placeLabel}
+                circumstances={circumstances}
+                profile={horizon}
+                verdict={verdict}
+              />
 
               <p className="screen__note">{s('map.pickNote', locale)}</p>
             </>
@@ -516,6 +653,7 @@ export function MapScreen({
                 locale={locale}
                 origin={location}
                 onSelect={(spot) => onPickLocation(spot.lat, spot.lon)}
+                onResults={setSpotPins}
               />
             </Suspense>
           ) : view === 'align' ? (
@@ -700,7 +838,9 @@ function LimitBlock({
   if (limit === null && toCenterKm === null) return null;
   return (
     <div className="mapscreen__block">
-      <div className="mapscreen__stats">
+      {/* `--pairs`: al mòbil cada Stat es tomba en una línia etiqueta–valor
+          (vegeu `screens.css`); a l'escriptori tornen a ser columnes. */}
+      <div className="mapscreen__stats mapscreen__pairs">
         {limit !== null && (
           <Stat
             label={s('map.toLimit', locale, {

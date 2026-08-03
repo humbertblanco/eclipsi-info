@@ -148,9 +148,9 @@ function shortDate(id: string): string {
 const NARROW_HEADER = '(max-width: 480px)';
 
 /**
- * Quan la franja de dades (Dateline) és visible i ja porta les coordenades:
- * repetir-les al subtítol de la capçalera seria dir el mateix número dues
- * vegades a un pam de distància.
+ * Quan la franja de dades (Dateline) és visible i ja porta el lloc (el nom si
+ * en té, les coordenades si no): repetir-lo al subtítol de la capçalera seria
+ * dir la mateixa dada dues vegades a un pam de distància.
  *
  * LA GUARDA D'ALÇADA NO ÉS OPCIONAL: és la MATEIXA consulta que fa aparèixer
  * la franja a `screens.css` (un mòbil apaïsat passa els 900 d'amplada però no
@@ -244,11 +244,45 @@ const HASH_BY_TAB: Record<Tab, string> = {
   about: '#/com-funciona',
 };
 
+/*
+ * LA VISTA DEL MAPA, AL SEGON SEGMENT DEL FRAGMENT (`#/mapa/llocs`), amb el
+ * mateix contracte que les seccions de la guia (`#/guia/<seccio>`): el nom
+ * públic és en català —és una adreça que la gent llegeix i comparteix— i el
+ * nom intern és cosa del codi. `#/mapa` a seques és la franja, que és la
+ * vista per defecte i per això no porta segment (la mateixa regla que fa que
+ * la portada no porti fragment: el cas per defecte té el nom net).
+ *
+ * LA TAULA VIU AQUÍ I NO A MapScreen pel paquet: el fragment es llegeix a la
+ * primera pintada i MapScreen és un tros mandrós que potser no es baixa mai.
+ * És MapScreen qui la importa d'aquí per ESCRIURE el fragment quan es canvia
+ * de vista — en la direcció contrària, una importació estàtica de MapScreen
+ * des d'App fondria el tros sencer al paquet principal.
+ */
+export type MapView = 'band' | 'clouds' | 'move' | 'spots' | 'align';
+
+export const MAP_SEGMENT_BY_VIEW: Record<MapView, string> = {
+  band: 'franja',
+  clouds: 'nuvols',
+  move: 'durada',
+  spots: 'llocs',
+  align: 'enquadra',
+};
+
+/** La taula de dalt, girada per llegir el fragment. Una i prou: si fossin
+    dues escrites a mà, un dia divergirien i una adreça deixaria d'obrir-se. */
+const MAP_VIEW_BY_SEGMENT = new Map<string, MapView>(
+  (Object.entries(MAP_SEGMENT_BY_VIEW) as [MapView, string][]).map(
+    ([view, segment]) => [segment, view],
+  ),
+);
+
 /** El que diu el fragment: quina pestanya i, si és la guia, quina secció. */
 interface HashRoute {
   tab: Tab;
   /** Clau de contingut de la guia (`safety`, `phases`…), o `null`. */
   section: string | null;
+  /** Vista de la fitxa del mapa, o `null` si la ruta no és del mapa. */
+  view: MapView | null;
 }
 
 /*
@@ -258,16 +292,27 @@ interface HashRoute {
  * pantalla que aquesta versió no té ha d'obrir l'app, no una pàgina d'error.
  */
 function parseHashRoute(hash: string): HashRoute {
-  if (hash === HASH_BY_TAB.map) return { tab: 'map', section: null };
-  if (hash === HASH_BY_TAB.sky) return { tab: 'sky', section: null };
-  if (hash === HASH_BY_TAB.about) return { tab: 'about', section: null };
-  if (hash === HASH_BY_TAB.guide) return { tab: 'guide', section: null };
+  if (hash === HASH_BY_TAB.map) return { tab: 'map', section: null, view: 'band' };
+  if (hash === HASH_BY_TAB.sky) return { tab: 'sky', section: null, view: null };
+  if (hash === HASH_BY_TAB.about) return { tab: 'about', section: null, view: null };
+  if (hash === HASH_BY_TAB.guide) return { tab: 'guide', section: null, view: null };
   // La secció viatja SENSE el prefix «guia-» de l'àncora del DOM: el fragment
   // és una adreça pública i el prefix és un detall del marcatge. Si la clau no
   // existeix a la guia, la pantalla l'ignora en silenci (getElementById nul).
   const guideSection = /^#\/guia\/([\w-]+)$/.exec(hash);
-  if (guideSection !== null) return { tab: 'guide', section: guideSection[1] };
-  return { tab: 'countdown', section: null };
+  if (guideSection !== null)
+    return { tab: 'guide', section: guideSection[1], view: null };
+  // La vista del mapa, amb la mateixa desconfiança: un segment que aquesta
+  // versió no coneix obre el mapa a la franja, EN SILENCI — l'enllaç d'una
+  // versió futura amb una vista nova ha d'obrir el mapa, no una pantalla buida.
+  const mapView = /^#\/mapa\/([\w-]+)$/.exec(hash);
+  if (mapView !== null)
+    return {
+      tab: 'map',
+      section: null,
+      view: MAP_VIEW_BY_SEGMENT.get(mapView[1]) ?? 'band',
+    };
+  return { tab: 'countdown', section: null, view: null };
 }
 
 /**
@@ -276,7 +321,8 @@ function parseHashRoute(hash: string): HashRoute {
  * fragment és el reflex del que l'usuari navega, no la font.
  */
 function readInitialRoute(): HashRoute {
-  if (typeof window === 'undefined') return { tab: 'countdown', section: null };
+  if (typeof window === 'undefined')
+    return { tab: 'countdown', section: null, view: null };
   return parseHashRoute(window.location.hash);
 }
 
@@ -340,6 +386,14 @@ function Shell() {
    * scroll, i a partir d'aquí qui mana és el dit de l'usuari.
    */
   const [guideSection, setGuideSection] = useState<string | null>(route.section);
+  /*
+   * La vista del mapa demanada per una navegació (`#/mapa/llocs`, la crida a
+   * l'acció del compte enrere, l'enrere del navegador). Mateix contracte que
+   * `guideSection`: un encàrrec d'ATERRATGE, no l'estat de la fitxa — d'aquell
+   * n'és amo el commutador de MapScreen, que quan l'usuari canvia de vista
+   * reescriu el fragment pel seu compte (amb `replaceState`, vegeu-lo allà).
+   */
+  const [mapView, setMapView] = useState<MapView>(route.view ?? 'band');
   /*
    * QUANTES ENTRADES D'HISTORIAL HA APILAT L'APP en aquesta sessió. La fletxa
    * d'enrere de la capçalera només pot fer `history.back()` si darrere hi ha
@@ -479,19 +533,41 @@ function Shell() {
    * LA CONSULTA ES CONSERVA INTACTA: el punt (?p&e&n) és ortogonal a la
    * pestanya i canviar de pantalla no ha de fer perdre el lloc de l'enllaç.
    */
-  const navigateTab = useCallback((next: Tab) => {
-    setTab(next);
-    // Navegació nova de la barra: sense secció encarregada. Si no es netegés,
-    // sortir de la guia i tornar-hi repetiria l'scroll a la secció de l'enllaç.
-    setGuideSection(null);
-    const target = `${window.location.pathname}${window.location.search}${HASH_BY_TAB[next]}`;
-    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    // Tocar la pestanya on ja s'és no és anar enlloc: sense la guarda,
-    // cada toc redundant apilaria una entrada que fa l'enrere més llarg.
-    if (target === current) return;
-    window.history.pushState(null, '', target);
-    appPushes.current += 1;
-  }, []);
+  /*
+   * EL SEGON PARÀMETRE ÉS NOU I OPCIONAL: la vista del mapa amb què s'ha
+   * d'obrir la pestanya («porta'm al mapa, A LA VISTA DE LLOCS»). Qui no el
+   * passa —la barra de pestanyes, totes les crides velles— navega com sempre.
+   */
+  const navigateTab = useCallback(
+    (next: Tab, mapViewTarget?: MapView) => {
+      /*
+       * Tocar «Mapa» quan ja s'hi és no és anar enlloc, i aquí NI ES TOCA el
+       * fragment: del segment de vista n'és amo el commutador de MapScreen, i
+       * reescriure'l des d'aquí diria «franja» damunt d'una vista que potser
+       * és una altra. (Amb destí explícit sí que es navega: és una vista nova.)
+       */
+      if (next === 'map' && tab === 'map' && mapViewTarget === undefined) return;
+      setTab(next);
+      // Navegació nova de la barra: sense secció encarregada. Si no es netegés,
+      // sortir de la guia i tornar-hi repetiria l'scroll a la secció de l'enllaç.
+      setGuideSection(null);
+      // La vista amb què s'obre el mapa: la demanada, o la franja. Tornar-hi
+      // per la barra obre sempre la vista per defecte, com ha fet sempre.
+      if (next === 'map') setMapView(mapViewTarget ?? 'band');
+      const fragment =
+        next === 'map' && mapViewTarget !== undefined && mapViewTarget !== 'band'
+          ? `${HASH_BY_TAB.map}/${MAP_SEGMENT_BY_VIEW[mapViewTarget]}`
+          : HASH_BY_TAB[next];
+      const target = `${window.location.pathname}${window.location.search}${fragment}`;
+      const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      // Tocar la pestanya on ja s'és no és anar enlloc: sense la guarda,
+      // cada toc redundant apilaria una entrada que fa l'enrere més llarg.
+      if (target === current) return;
+      window.history.pushState(null, '', target);
+      appPushes.current += 1;
+    },
+    [tab],
+  );
 
   /*
    * Tornada a la portada SENSE apilar res: és el destí de les caigudes (el cel
@@ -536,6 +612,9 @@ function Shell() {
       }
       setTab(next.tab);
       setGuideSection(next.tab === 'guide' ? next.section : null);
+      // La vista del mapa d'aquella entrada: així «enrere» no torna només a la
+      // pestanya sinó a la vista que s'hi estava mirant.
+      if (next.view !== null) setMapView(next.view);
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
@@ -717,15 +796,18 @@ function Shell() {
               else resetToCountdown();
             }}
             /*
-              Les coordenades, només mentre el Dateline no les diu: a partir
-              de --bp-rail la franja de dades és visible i les porta, i el
-              mateix número dues vegades a un pam fa dubtar de si són el
-              mateix número.
+              EL LLOC, només mentre el Dateline no el diu: a partir de
+              --bp-rail la franja de dades és visible i el porta, i la mateixa
+              dada dues vegades a un pam fa dubtar de si és la mateixa dada.
+              I EL NOM MANA: quan el punt en té, el subtítol diu el nom — les
+              coordenades queden per a quan encara no n'hi ha (resolent-se o
+              offline), sense parpelleig, com pertot.
             */
             subtitle={
               datelineVisible || observer.location === null
                 ? undefined
-                : formatCoords(observer.location.lat, observer.location.lon)
+                : (observer.fix?.label ??
+                    formatCoords(observer.location.lat, observer.location.lon))
             }
             right={headerActions}
           />
@@ -893,6 +975,14 @@ function Shell() {
               */
               onOpenCamera={camera.supported ? () => navigateTab('sky') : undefined}
               onOpenMap={() => navigateTab('map')}
+              /*
+                «Busca un lloc millor a prop» navega al mapa AMB el cercador de
+                llocs obert: mateix camí que la barra (una entrada d'historial,
+                l'enrere torna al compte enrere), amb el segment que diu el
+                destí. La pantalla només l'ensenya quan el terreny roba temps
+                de debò: la condició viu al costat del veredicte, allà.
+              */
+              onOpenSpots={() => navigateTab('map', 'spots')}
             />
           )}
           {/*
@@ -904,6 +994,12 @@ function Shell() {
             <Suspense fallback={<div className="screen screen--full" />}>
               <MapScreen
                 {...context}
+                /*
+                  La vista que el fragment o una crida a l'acció han encarregat
+                  d'obrir, com `initialSection` a la guia. A partir d'aquí, del
+                  commutador (i del fragment) n'és amo MapScreen.
+                */
+                initialView={mapView}
                 onPickLocation={observer.setManual}
                 onOpenCountdown={() => navigateTab('countdown')}
               />
@@ -1036,7 +1132,7 @@ function Dateline({
   eclipseId: string;
   locale: EclipseContext['locale'];
 }) {
-  const { circumstances, verdict, location } = context;
+  const { circumstances, verdict, location, placeLabel } = context;
   const central = circumstances?.kind === 'total' || circumstances?.kind === 'annular';
   const durationSec = verdict
     ? verdict.centralVisibleSec
@@ -1048,8 +1144,25 @@ function Dateline({
         {s(`kind.${circumstances?.kind ?? 'none'}` as 'kind.total', locale)} ·{' '}
         {shortDate(eclipseId)}
       </span>
-      <span>
-        {location ? formatCoords(location.lat, location.lon) : s('common.unknownPlace', locale)}
+      {/*
+        EL LLOC: EL NOM MANA I LES COORDENADES NO ES PERDEN. Quan el punt té
+        nom, el camp diu el nom — que és com l'usuari es refereix al seu lloc —
+        i les coordenades passen al `title`: en una franja d'overline en mono i
+        majúscules amb `overflow: hidden`, nom i parella de coordenades junts
+        es retallaven abans que ningú els llegís. Sense nom (resolent-se o
+        offline), les coordenades es queden al camp com sempre, sense
+        parpelleig: al camp són or.
+      */}
+      <span
+        title={
+          placeLabel !== null && location !== null
+            ? formatCoords(location.lat, location.lon)
+            : undefined
+        }
+      >
+        {location
+          ? (placeLabel ?? formatCoords(location.lat, location.lon))
+          : s('common.unknownPlace', locale)}
       </span>
       <span className="shell__dateline-accent">
         {/* El valor de la durada, amb classe pròpia: `screens.css` l'estila. */}

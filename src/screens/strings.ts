@@ -111,6 +111,14 @@ const STRINGS = {
   },
   'home.openCamera': { ca: 'Apunta el mòbil al cel', es: 'Apunta el móvil al cielo' },
   /*
+   * L'aparador de la càmera: una línia que diu QUÈ hi guanyes. És la funció
+   * diferencial del producte (ESTAT §6) i un botó pelat no la venia.
+   */
+  'home.cameraPitch': {
+    ca: 'El mode càmera superposa el Sol que vindrà al teu horitzó real: veuràs què et taparà abans que passi.',
+    es: 'El modo cámara superpone el Sol que vendrá a tu horizonte real: verás qué lo tapará antes de que pase.',
+  },
+  /*
    * L'ALTERNATIVA D'ESCRIPTORI.
    *
    * A l'escriptori no hi ha càmera cap enfora ni giroscopi, la pestanya del Cel
@@ -122,6 +130,16 @@ const STRINGS = {
    * seràs. L'escriptori és on es planifica.
    */
   'home.openMap': { ca: 'Tria on seràs, al mapa', es: 'Elige dónde estarás, en el mapa' },
+  /*
+   * La resposta a la frase del veredicte quan el terreny roba fase central:
+   * el botó que obre el cercador de llocs del mapa (la vista «Llocs»). Va en
+   * fantasma i no en ambre — l'accent del compte enrere ja el té la durada
+   * visible — i només surt quan hi ha segons a recuperar de debò.
+   */
+  'home.findSpot': {
+    ca: 'Busca un lloc millor a prop',
+    es: 'Busca un sitio mejor cerca',
+  },
   'home.terrainPending': {
     ca: 'La durada encara és la teòrica: el perfil del terreny no està calculat i el relleu de ponent no hi entra.',
     es: 'La duración todavía es la teórica: el perfil del terreno no está calculado y el relieve de poniente no entra.',

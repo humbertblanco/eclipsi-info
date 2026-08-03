@@ -48,6 +48,13 @@ export interface CountdownScreenProps extends EclipseContext {
   onOpenCamera?: () => void;
   /** Porta l'usuari al mapa. És l'acció principal quan no hi ha càmera. */
   onOpenMap: () => void;
+  /**
+   * Porta l'usuari al cercador de llocs del mapa (la vista «Llocs»). Només es
+   * crida quan el veredicte diu que el terreny roba fase central de debò:
+   * és la resposta a la frase que ho diu, no una porta permanent al mapa —
+   * d'aquella ja en fa `onOpenMap`.
+   */
+  onOpenSpots?: () => void;
 }
 
 /** El tipus d'eclipsi mana el color de tot el que en depèn. */
@@ -76,6 +83,7 @@ export function CountdownScreen({
   horizon,
   onOpenCamera,
   onOpenMap,
+  onOpenSpots,
 }: CountdownScreenProps) {
   const eclipse = getEclipse(eclipseId);
   const contacts = circumstances?.contacts ?? null;
@@ -182,6 +190,25 @@ export function CountdownScreen({
     ? verdict.maxVisibleObscuration
     : contacts.max.obscuration;
 
+  /*
+   * QUAN ES PROPOSA BUSCAR UN LLOC MILLOR: només quan el terreny roba fase
+   * central DE DEBÒ. La condició és la mateixa que fa que `decideStatus`
+   * (core/visibility/verdict.ts) no declari `central-visible`: hi ha fase
+   * central teòrica des d'aquí i el que en sobreviu queda a més d'un segon de
+   * la sencera — el mateix marge d'un segon, perquè alarmar per una dècima
+   * que és dins de l'error del model del terreny seria mentir. Cobreix el
+   * tros robat (central-partial), la fase central sencera darrere el relleu
+   * (central-blocked) i el Sol amagat del tot (sun-blocked): en tots tres
+   * casos la resposta honesta a «i doncs, què faig?» és moure's, i el
+   * cercador de llocs és l'eina que ho respon. Sense veredicte encara no se
+   * sap si el terreny roba res, i no es promet una solució a un problema no
+   * diagnosticat.
+   */
+  const terrainRobsCentral =
+    verdict !== null &&
+    verdict.centralTotalSec > 0 &&
+    verdict.centralVisibleSec < verdict.centralTotalSec - 1;
+
   const outlook = clouds.outlook;
 
   return (
@@ -235,6 +262,17 @@ export function CountdownScreen({
 
         {!horizon && <p className="screen__note">{s('home.terrainPending', locale)}</p>}
         {verdict && <p className="screen__note">{verdictSummary(verdict, locale)}</p>}
+        {/*
+          Just sota la frase que diu què roba el terreny, la sortida: el
+          cercador de llocs del mapa, que és l'única part de l'app que respon
+          «i doncs, què faig?» amb llocs concrets. En fantasma i mai en ambre:
+          l'accent d'aquesta pantalla ja el té la durada visible, aquí dalt.
+        */}
+        {onOpenSpots !== undefined && terrainRobsCentral && (
+          <Button variant="ghost" size="sm" icon="search" onClick={onOpenSpots}>
+            {s('home.findSpot', locale)}
+          </Button>
+        )}
 
         {/*
           Els cinc contactes, al mòbil: la línia horitzontal que diu «per on
@@ -299,9 +337,18 @@ export function CountdownScreen({
         <ClockDriftNotice locale={locale} />
 
         {onOpenCamera ? (
-          <Button size="lg" icon="camera" fullWidth onClick={onOpenCamera}>
-            {s('home.openCamera', locale)}
-          </Button>
+          <>
+            {/*
+              LA CÀMERA ÉS LA FUNCIÓ QUE CAP ALTRA APP TÉ, i un botó pelat no
+              ho deia: una línia a sobre explica QUÈ hi guanyes abans de
+              demanar-te el gest. No és una targeta sencera perquè l'acció ja
+              és el botó primari — l'aparador és la frase, no una caixa més.
+            */}
+            <p className="home__camerapitch">{s('home.cameraPitch', locale)}</p>
+            <Button size="lg" icon="camera" fullWidth onClick={onOpenCamera}>
+              {s('home.openCamera', locale)}
+            </Button>
+          </>
         ) : (
           <Button size="lg" icon="map" fullWidth onClick={onOpenMap}>
             {s('home.openMap', locale)}
@@ -350,9 +397,25 @@ export function CountdownScreen({
           />
         </Card>
 
+        {/*
+          LA LÍNIA DEL LLOC: EL NOM MANA, LES COORDENADES NO ES PERDEN.
+          Quan el punt té nom, la línia diu «Reinosa · 807 m» — que és com
+          l'usuari anomena el seu lloc — i les coordenades queden darrere, en
+          el mateix to apagat de la nota. Van dins d'un span que no es parteix
+          (`home__coords`): si no hi caben, baixen SENCERES de línia en lloc
+          de trencar la parella pel mig. Sense nom (resolent-se o offline),
+          les coordenades es queden al capdavant com sempre, sense parpelleig:
+          al camp són or.
+        */}
         <p className="screen__note">
-          {formatCoords(location.lat, location.lon)} ·{' '}
+          {placeLabel ?? formatCoords(location.lat, location.lon)} ·{' '}
           {Math.round(location.elevation)} m
+          {placeLabel !== null && (
+            <span className="home__coords">
+              {' · '}
+              {formatCoords(location.lat, location.lon)}
+            </span>
+          )}
         </p>
         <p className="screen__note">{eclipse.spain[locale]}</p>
         <p className="screen__note">{s('home.sources', locale)}</p>
