@@ -26,8 +26,12 @@
  *            en cuestión de unos cuantos segundos», reacció dels animals.
  * [IGN-2028] IGN — «Eclipse anular de Sol de 26 de enero de 2028»
  *            https://eclipses.ign.es/eclipse-anular-sol-de-26-de-enero-2028.html
- *            Sol a 4-7° sobre l'horitzó oest; cal «esa parte del horizonte bien
- *            despejada de montes, árboles, edificios u otros obstáculos».
+ *            Cal «esa parte del horizonte bien despejada de montes, árboles,
+ *            edificios u otros obstáculos». La pàgina diu «Sol a 4-7°», però
+ *            aquest interval NO cobreix tota la franja espanyola: el motor del
+ *            projecte (computeLocalCircumstances) dona ~7° a Sevilla i ~2° a
+ *            València al màxim. La guia escriu els valors del motor, no els de
+ *            la pàgina.
  * [IGN-COND] IGN — «Condiciones de observación»
  *            https://eclipses.ign.es/condiciones-de-observacion.html
  *            La refracció atmosfèrica altera l'altura aparent del Sol i l'efecte
@@ -50,13 +54,18 @@
  *            ~5 lux durant la totalitat (comparable al crepuscle civil);
  *            la pupil·la passa d'~1 mm a ~2 mm durant la parcial (×4 de llum).
  *            ATENCIÓ ABANS DE COPIAR-NE CAP XIFRA: totes són d'eclipsis amb el
- *            SOL ALT. Els espanyols del 2026 i el 2028 tenen el Sol entre 1° i
- *            25°, on el cel serè ja només dona uns quants milers de lux i el
- *            mateix percentatge tapat cau uns quants ordres de magnitud més
- *            avall. Aquest fitxer les cita com el que són —la referència de
- *            migdia— i al costat hi posa les del cas espanyol, que surten del
- *            model del projecte (`src/core/sky/illuminance.ts`, que reprodueix
- *            aquestes mateixes taules amb el Sol alt: 97.400 / 981 / 7,1 lux).
+ *            SOL ALT. Els espanyols del 2026 i el 2028 tenen el Sol entre 12° i
+ *            1° a la fase central (motor: la Corunya 12°, Maó 1,8° el 2026;
+ *            Sevilla 7,3°, València 2,4° el 2028), on el cel serè dona des
+ *            d'uns 17.000 lux fins a pocs milers arran d'horitzó i el mateix
+ *            percentatge tapat deixa molta menys llum en valor absolut. Aquest
+ *            fitxer les cita com el que són —la referència de migdia— i al
+ *            costat hi posa les del cas espanyol, que surten del model del
+ *            projecte (`src/core/sky/illuminance.ts` amb la taula obscuració →
+ *            flux de `solarDisc.ts`; amb el Sol a 60° dona 97.400 lux de cel
+ *            serè, uns 570 al 99% d'obscuració i 7,1 a la totalitat — el 99%
+ *            queda per sota dels 1.000 de l'AAS perquè la Lluna acaba tapant
+ *            el centre del disc, que brilla més que el limbe).
  *            El guió de la totalitat no n'escriu cap a mà: les demana al model
  *            amb l'altura del Sol del punt de l'usuari.
  * [NASA-EXP] NASA RP 1318 — «Solar Eclipse Exposure Guide» (F. Espenak)
@@ -373,7 +382,11 @@ function guideCa(): GuideSection[] {
         },
         {
           kind: 'p',
-          text: 'Una obscuració del 90% sona a molt i visualment no és res. Les xifres que se citen sempre —100 000 lux amb el Sol ple, 1 000 lux al 99% d’obscuració— són de migdia, amb el Sol ben alt. Els eclipsis espanyols del 2026 i el 2028 no són així: el Sol és a pocs graus de l’horitzó i tot el rang baixa d’un cop. A Astúries, amb el Sol a 12°, el cel serè dona uns 17 000 lux; al 90% tapat en queden 1 700, i al 99%, uns 170. El percentatge enganya igual, però des de molt més avall.',
+          // Xifres del motor amb el Sol a 12°: eclipseIlluminance(
+          // luminousFractionFromObscuration(0,90 | 0,99), 12) → 1.240 i 99,5
+          // lux; cel serè 16.791 lux. No són proporcionals al percentatge
+          // perquè la taula de solarDisc.ts descompta l'enfosquiment de limbe.
+          text: 'Una obscuració del 90% sona a molt i visualment no és res. Les xifres que se citen sempre —100 000 lux amb el Sol ple, 1 000 lux al 99% d’obscuració— són de migdia, amb el Sol ben alt. Els eclipsis espanyols del 2026 i el 2028 no són així: el Sol és a pocs graus de l’horitzó i tot el rang baixa d’un cop. A Astúries, amb el Sol a 12°, el cel serè dona uns 17 000 lux; al 90% tapat en queden uns 1 200, i al 99%, un centenar. No és la regla de tres que esperaves: la Lluna acaba tapant el centre del disc, que és la part que més brilla. El percentatge enganya igual, però des de molt més avall.',
         },
         {
           kind: 'p',
@@ -383,7 +396,10 @@ function guideCa(): GuideSection[] {
           kind: 'callout',
           tone: 'info',
           title: 'Tota la caiguda és als últims segons',
-          text: 'Del 99% a la totalitat hi ha un factor de l’ordre de cent, concentrat en menys d’un minut: molt més ràpid del que l’ull es pot adaptar. Amb el Sol alt es passa d’uns 1 000 lux a uns 7; amb el Sol espanyol a 12°, d’uns 170 a poc més de 2, que ja és nit tancada de fons de cel. La caiguda relativa és la mateixa i el salt es nota igual. Per això la totalitat no “arriba”, sinó que et cau a sobre. I per això un 99% i un 100% són experiències diferents, no la mateixa amb un pèl més o menys. Les xifres del teu punt, amb la teva altura del Sol, les calcula el compte enrere.',
+          // Motor: amb el Sol a 60°, del 99% (571 lux) a la totalitat (7,1)
+          // hi ha un factor ~80; amb el Sol a 12°, de 99,5 lux a 2,2, un
+          // factor ~45. D'aquí el «entre cinquanta i cent vegades».
+          text: 'Del 99% a la totalitat la llum encara es divideix entre cinquanta i cent vegades, concentrat en menys d’un minut: molt més ràpid del que l’ull es pot adaptar. Amb el Sol alt es passa d’uns 570 lux a uns 7; amb el Sol espanyol a 12°, d’un centenar a poc més de 2, que ja és fons de cel de nit. La caiguda relativa és semblant i el salt es nota igual. Per això la totalitat no “arriba”, sinó que et cau a sobre. I per això un 99% i un 100% són experiències diferents, no la mateixa amb un pèl més o menys. Les xifres del teu punt, amb la teva altura del Sol, les calcula el compte enrere.',
         },
       ],
     },
@@ -455,7 +471,9 @@ function guideCa(): GuideSection[] {
       blocks: [
         {
           kind: 'p',
-          text: 'El 12 d’agost de 2026 la totalitat passa al capvespre, amb el Sol entre uns 12° i poc més d’1° sobre l’horitzó segons on siguis: com més a l’est de la península, més baix. El 26 de gener de 2028 l’anularitat arriba amb el Sol a 4-7° a ponent. En tots dos casos el problema no és el cel: és el que tens al davant.',
+          // Rangs del motor a la fase central: 2026 la Corunya 12°, Oviedo
+          // 10,3°, Burgos 8,3°, Maó 1,8°; 2028 Sevilla 7,3°, València 2,4°.
+          text: 'El 12 d’agost de 2026 la totalitat passa al capvespre, amb el Sol entre uns 12° i poc més d’1° sobre l’horitzó segons on siguis: com més a l’est de la península, més baix. El 26 de gener de 2028 l’anularitat arriba amb el Sol entre uns 7° i amb prou feines 2° a ponent: com més al nord-est de la franja, més baix. En tots dos casos el problema no és el cel: és el que tens al davant.',
         },
         {
           kind: 'callout',
@@ -561,7 +579,10 @@ function guideCa(): GuideSection[] {
             'Aigua i menjar per a moltes més hores de les previstes, i cadira plegable.',
             'Roba d’abric: la temperatura cau de cop durant la totalitat, i el 2028 és al gener i al capvespre.',
             'Llençol blanc estès a terra per veure les bandes d’ombra.',
-            'Repel·lent d’insectes per al 2026 i el 2027, que són a l’agost i al capvespre.',
+            // El 2027 és de matí (motor, Cadis: C1 a les 09:40 locals amb el
+            // Sol a 24° i pujant): el consell del capvespre només val per al
+            // 2026.
+            'Repel·lent d’insectes per al 2026, que és a l’agost i al capvespre, just l’hora dels mosquits. El 2027 també és a l’agost però passa al matí: allà el que mana és la crema solar i alguna cosa per fer ombra durant l’espera.',
             'Brúixola o l’app, per saber exactament per on serà el Sol des del lloc triat.',
           ],
         },
@@ -711,7 +732,9 @@ function guideEs(): GuideSection[] {
         },
         {
           kind: 'p',
-          text: 'Una oscuración del 90% suena a mucho y visualmente no es nada. Las cifras que siempre se citan —100 000 lux con el Sol pleno, 1 000 lux al 99% de oscuración— son de mediodía, con el Sol bien alto. Los eclipses españoles de 2026 y 2028 no son así: el Sol está a pocos grados del horizonte y todo el rango baja de golpe. En Asturias, con el Sol a 12°, el cielo despejado da unos 17 000 lux; al 90% tapado quedan 1 700, y al 99%, unos 170. El porcentaje engaña igual, pero desde mucho más abajo.',
+          // Mirall castellà del paràgraf català: mateixes xifres del motor
+          // (Sol a 12°: 16.791 lux serè; 1.240 al 90%; 99,5 al 99%).
+          text: 'Una oscuración del 90% suena a mucho y visualmente no es nada. Las cifras que siempre se citan —100 000 lux con el Sol pleno, 1 000 lux al 99% de oscuración— son de mediodía, con el Sol bien alto. Los eclipses españoles de 2026 y 2028 no son así: el Sol está a pocos grados del horizonte y todo el rango baja de golpe. En Asturias, con el Sol a 12°, el cielo despejado da unos 17 000 lux; al 90% tapado quedan unos 1 200, y al 99%, un centenar. No es la regla de tres que esperabas: la Luna acaba tapando el centro del disco, que es la parte que más brilla. El porcentaje engaña igual, pero desde mucho más abajo.',
         },
         {
           kind: 'p',
@@ -721,7 +744,9 @@ function guideEs(): GuideSection[] {
           kind: 'callout',
           tone: 'info',
           title: 'Toda la caída está en los últimos segundos',
-          text: 'Del 99% a la totalidad hay un factor del orden de cien, concentrado en menos de un minuto: mucho más rápido de lo que el ojo puede adaptarse. Con el Sol alto se pasa de unos 1 000 lux a unos 7; con el Sol español a 12°, de unos 170 a poco más de 2, que ya es noche cerrada de fondo de cielo. La caída relativa es la misma y el salto se nota igual. Por eso la totalidad no «llega», sino que se te echa encima. Y por eso un 99% y un 100% son experiencias distintas, no la misma con un poco más o menos. Las cifras de tu punto, con tu altura del Sol, las calcula la cuenta atrás.',
+          // Mirall castellà: motor a 60° → 571 → 7,1 lux (×~80); a 12° →
+          // 99,5 → 2,2 lux (×~45).
+          text: 'Del 99% a la totalidad la luz todavía se divide entre cincuenta y cien veces, concentrado en menos de un minuto: mucho más rápido de lo que el ojo puede adaptarse. Con el Sol alto se pasa de unos 570 lux a unos 7; con el Sol español a 12°, de un centenar a poco más de 2, que ya es fondo de cielo nocturno. La caída relativa es parecida y el salto se nota igual. Por eso la totalidad no «llega», sino que se te echa encima. Y por eso un 99% y un 100% son experiencias distintas, no la misma con un poco más o menos. Las cifras de tu punto, con tu altura del Sol, las calcula la cuenta atrás.',
         },
       ],
     },
@@ -793,7 +818,9 @@ function guideEs(): GuideSection[] {
       blocks: [
         {
           kind: 'p',
-          text: 'El 12 de agosto de 2026 la totalidad ocurre al atardecer, con el Sol entre unos 12° y poco más de 1° sobre el horizonte según dónde estés: cuanto más al este de la península, más bajo. El 26 de enero de 2028 la anularidad llega con el Sol a 4-7° al oeste. En ambos casos el problema no es el cielo: es lo que tienes delante.',
+          // Mirall castellà: rangs del motor (2026: 12° → 1,8°; 2028: 7,3° →
+          // 2,4° entre Sevilla i València).
+          text: 'El 12 de agosto de 2026 la totalidad ocurre al atardecer, con el Sol entre unos 12° y poco más de 1° sobre el horizonte según dónde estés: cuanto más al este de la península, más bajo. El 26 de enero de 2028 la anularidad llega con el Sol entre unos 7° y apenas 2° al oeste: cuanto más al noreste de la franja, más bajo. En ambos casos el problema no es el cielo: es lo que tienes delante.',
         },
         {
           kind: 'callout',
@@ -899,7 +926,8 @@ function guideEs(): GuideSection[] {
             'Agua y comida para muchas más horas de las previstas, y silla plegable.',
             'Ropa de abrigo: la temperatura cae de golpe durante la totalidad, y 2028 es en enero y al atardecer.',
             'Sábana blanca extendida en el suelo para ver las bandas de sombra.',
-            'Repelente de insectos para 2026 y 2027, que son en agosto y al atardecer.',
+            // Mirall castellà: el 2027 és de matí (Cadis, C1 09:40 locals).
+            'Repelente de insectos para 2026, que es en agosto y al atardecer, justo la hora de los mosquitos. 2027 también es en agosto pero ocurre por la mañana: allí lo que manda es la crema solar y algo de sombra durante la espera.',
             'Brújula o la app, para saber exactamente por dónde estará el Sol desde el sitio elegido.',
           ],
         },
@@ -975,11 +1003,13 @@ const HIGHLIGHTS: Record<string, Record<Locale, EclipseHighlight>> = {
     ca: {
       tone: 'warn',
       title: 'Total, al capvespre i amb el Sol molt baix',
+      // El 12°–1° surt del motor: la Corunya 12° i Maó 1,8° a la totalitat.
       text: 'Durant la totalitat, i només llavors, et pots treure el filtre. Però el Sol estarà entre 12° i poc més d’1° sobre l’horitzó: el lloc que triïs, i què tinguis cap a ponent, decideix si ho veus o no. Llegeix la secció de Sol baix abans de decidir on vas.',
     },
     es: {
       tone: 'warn',
       title: 'Total, al atardecer y con el Sol muy bajo',
+      // Mirall castellà del 12°–1° del motor (la Corunya 12°, Maó 1,8°).
       text: 'Durante la totalidad, y solo entonces, puedes quitarte el filtro. Pero el Sol estará entre 12° y poco más de 1° sobre el horizonte: el sitio que elijas, y qué tengas hacia poniente, decide si lo ves o no. Lee la sección de Sol bajo antes de decidir a dónde vas.',
     },
   },
@@ -999,12 +1029,14 @@ const HIGHLIGHTS: Record<string, Record<Locale, EclipseHighlight>> = {
     ca: {
       tone: 'bad',
       title: 'ANULAR: el filtre no es treu en cap moment',
-      text: 'Aquest eclipsi NO és total. Queda sempre un anell de Sol visible i crema igual que el Sol sencer. A diferència del 2026 i el 2027, aquí no hi ha ni un segon en què es pugui mirar sense filtre homologat — ni durant l’anularitat. A sobre, el Sol serà a 4-7° sobre l’horitzó de ponent, així que també et cal l’horitzó lliure.',
+      // El 7°–2° surt del motor: Sevilla 7,3° i València 2,4° al màxim.
+      text: 'Aquest eclipsi NO és total. Queda sempre un anell de Sol visible i crema igual que el Sol sencer. A diferència del 2026 i el 2027, aquí no hi ha ni un segon en què es pugui mirar sense filtre homologat — ni durant l’anularitat. A sobre, el Sol serà entre uns 7° i amb prou feines 2° sobre l’horitzó de ponent, així que també et cal l’horitzó lliure.',
     },
     es: {
       tone: 'bad',
       title: 'ANULAR: el filtro no se quita en ningún momento',
-      text: 'Este eclipse NO es total. Siempre queda un anillo de Sol visible y quema igual que el Sol entero. A diferencia de 2026 y 2027, aquí no hay ni un segundo en que se pueda mirar sin filtro homologado — ni durante la anularidad. Además, el Sol estará a 4-7° sobre el horizonte de poniente, así que también necesitas el horizonte despejado.',
+      // Mirall castellà del 7°–2° del motor (Sevilla 7,3°, València 2,4°).
+      text: 'Este eclipse NO es total. Siempre queda un anillo de Sol visible y quema igual que el Sol entero. A diferencia de 2026 y 2027, aquí no hay ni un segundo en que se pueda mirar sin filtro homologado — ni durante la anularidad. Además, el Sol estará entre unos 7° y apenas 2° sobre el horizonte de poniente, así que también necesitas el horizonte despejado.',
     },
   },
 };

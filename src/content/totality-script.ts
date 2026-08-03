@@ -48,11 +48,14 @@
  *            1 000 lux al 99 % d'obscuració; ~5 lux durant la totalitat.
  *            ATENCIÓ: AQUESTES DUES XIFRES SÓN D'ECLIPSIS AMB EL SOL ALT i no
  *            es poden copiar en aquest guió. Els eclipsis espanyols de 2026 i
- *            2028 tenen el Sol entre 1° i 8°, on el cel serè ja només dona uns
- *            quants milers de lux, i el mateix percentatge tapat cau dos o tres
- *            ordres de magnitud més avall. Per això aquí no s'escriu cap xifra
- *            de llum a mà: se li demana a `src/core/sky/illuminance.ts`, que és
- *            el model del projecte i està calibrat contra les mateixes taules.
+ *            2028 tenen el Sol entre 12° i 1° a la fase central (motor: la
+ *            Corunya 12°, Maó 1,8° el 2026; Sevilla 7,3°, València 2,4° el
+ *            2028), on el cel serè ja només dona des d'uns 17.000 lux fins a
+ *            pocs milers arran d'horitzó, i el mateix percentatge tapat deixa
+ *            molta menys llum en valor absolut. Per això aquí no s'escriu cap
+ *            xifra de llum a mà: se li demana a `src/core/sky/illuminance.ts`,
+ *            que és el model del projecte i està calibrat contra les mateixes
+ *            taules.
  */
 
 import { bearingToCardinal } from '../core/astro/gradient';
