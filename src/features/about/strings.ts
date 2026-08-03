@@ -39,9 +39,14 @@ const STRINGS = {
     ca: 'Les hores de contacte, la magnitud i la durada no surten d’una taula per ciutats: es calculen per a les teves coordenades i la teva altitud, amb paral·laxi lunar i refracció. És un càlcul topocèntric — del teu punt, no del d’un catàleg.',
     es: 'Las horas de contacto, la magnitud y la duración no salen de una tabla por ciudades: se calculan para tus coordenadas y tu altitud, con paralaje lunar y refracción. Es un cálculo topocéntrico — de tu punto, no del de un catálogo.',
   },
+  /*
+   * La salvaguarda («per calcular-te res») era correcta i l'acabava desfent
+   * una afirmació nua que no ho és: les coordenades SÍ que surten cap a
+   * Photon i Open-Meteo. Vegeu `PRIVACY_NOTE` a `credits.ts`.
+   */
   'calc.p2': {
-    ca: 'I tot això passa aquí, al dispositiu. Cap servidor no rep les teves coordenades per calcular-te res: la teva ubicació no surt del mòbil.',
-    es: 'Y todo eso pasa aquí, en el dispositivo. Ningún servidor recibe tus coordenadas para calcularte nada: tu ubicación no sale del móvil.',
+    ca: 'I tot això passa aquí, al dispositiu: cap servidor no rep les teves coordenades per calcular-te res. Sí que les reben, en canvi, els dos serveis que posen nom al lloc i donen la previsió — i el relleu es baixa per tessel·les, que també diuen aproximadament on ets.',
+    es: 'Y todo eso pasa aquí, en el dispositivo: ningún servidor recibe tus coordenadas para calcularte nada. Sí las reciben, en cambio, los dos servicios que ponen nombre al lugar y dan la previsión — y el relieve se descarga por teselas, que también dicen aproximadamente dónde estás.',
   },
 
   /* --- bloc 2: l'horitzó de veritat (la funció diferencial) ---------------- */
@@ -77,9 +82,17 @@ const STRINGS = {
     ca: 'No et detecta l’idioma: el tries tu al selector, i s’hi queda.',
     es: 'No te detecta el idioma: lo eliges tú en el selector, y ahí se queda.',
   },
+  /*
+   * AQUESTA DEIA «no envia la teva ubicació enlloc» I ERA FALSA: l'app la
+   * envia a Photon per posar nom al punt i a Open-Meteo per la previsió.
+   * Vegeu el raonament sencer al costat de `PRIVACY_NOTE` a `credits.ts`. El
+   * que és cert —i segueix sent el que la gent vol saber— és que no la desa
+   * fora del dispositiu, que no va a cap altre lloc i que no arriba mai a
+   * l'analítica.
+   */
   'not.location': {
-    ca: 'No envia la teva ubicació enlloc ni la desa fora del dispositiu.',
-    es: 'No envía tu ubicación a ningún sitio ni la guarda fuera del dispositivo.',
+    ca: 'No desa la teva ubicació fora del dispositiu ni la envia enlloc més que als dos serveis que la necessiten: Photon, per posar nom al lloc, i Open-Meteo, per la previsió.',
+    es: 'No guarda tu ubicación fuera del dispositivo ni la envía a ningún sitio más que a los dos servicios que la necesitan: Photon, para poner nombre al lugar, y Open-Meteo, para la previsión.',
   },
   'not.offline': {
     ca: 'No necessita connexió un cop preparat: el càlcul, la guia i el que hagis desat funcionen sense cobertura, que és com estarà la xarxa dins la franja aquell dia.',

@@ -129,7 +129,7 @@ function previsio(leadDies: number, opcions: Munta = {}): ForecastOutlook {
       lineOfSightUsed: true,
     },
     confidence: confidenceForLead(leadDies),
-    caveat: forecastCaveat(leadDies, confidenceForLead(leadDies), locale),
+    caveat: forecastCaveat(leadDies, confidenceForLead(leadDies), totalOnly, locale),
     leadDays: leadDies,
     validAtMs: MAXIM,
     haze: null,
@@ -179,6 +179,9 @@ function climatologia(anys: number, opcions: Munta = {}): ClimatologyOutlook {
     firstYear: 2025 - anys,
     lastYear: 2024,
     windowDays: 5,
+    // El tipus l'exigeix i val `null` per definició: una climatologia no diu
+    // res de la boirina d'un dia concret.
+    haze: null,
   };
 }
 

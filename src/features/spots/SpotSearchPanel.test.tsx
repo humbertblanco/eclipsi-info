@@ -165,7 +165,7 @@ function lloc(over: Partial<SpotResult> = {}): SpotResult {
     sunAzimuthDeg: 283.7,
     sunAltitudeDeg: 6.9,
     midCentralMs: Date.UTC(2026, 7, 12, 20, 29, 0),
-    status: 'full',
+    status: 'central-visible',
     edgeUncertain: false,
     coverage: 1,
     ...over,
@@ -195,7 +195,7 @@ function resultat(over: Partial<SpotSearchOutcome> = {}): SpotSearchOutcome {
       uniqueTiles: 41,
       tilesIfNaive: 900,
       terrainSamplesIfNaive: 1_000_000,
-    } as SpotSearchOutcome['cost'],
+    },
     origin: TAFALLA,
     radiusKm: 25,
     candidates: 1187,
@@ -238,6 +238,18 @@ function panell({ origin = TAFALLA, locale = 'ca', onResults }: PanellProps = {}
 
 const botó = (clau: Parameters<typeof sp>[0], locale: Locale = 'ca'): HTMLButtonElement =>
   screen.getByRole('button', { name: sp(clau, locale) }) as HTMLButtonElement;
+
+/**
+ * El text tal com el llegeix testing-library.
+ *
+ * `format.ts` escriu «25 km» i «1:41 min» amb ESPAI DUR entre la xifra i la
+ * unitat, que és el que impedeix que se separin de línia i és una decisió
+ * tipogràfica del projecte. El normalitzador de les consultes col·lapsa
+ * qualsevol espai —el dur també— en un de normal, i una prova que compari
+ * contra la cadena original falla amb els dos textos idèntics a la pantalla.
+ * Es normalitza aquí i no es toca `format.ts`: qui té raó és el component.
+ */
+const net = (text: string): string => text.replace(/\s+/g, ' ').trim();
 
 /* ------------------------------------------------------------------ proves */
 
@@ -400,7 +412,7 @@ describe('SpotSearchPanel · el mapa no es queda amb xinxetes velles', () => {
 
     expect(rebuts.at(-1)).toBeNull();
     expect(
-      screen.getByText(sp('list.empty', 'ca', { radius: formatDistance(25, 'ca') })),
+      screen.getByText(net(sp('list.empty', 'ca', { radius: formatDistance(25, 'ca') }))),
     ).toBeTruthy();
   });
 });
@@ -417,7 +429,13 @@ describe('SpotList · el context va abans que les xifres', () => {
     llista({ results: [lloc()], candidates: 1187 });
     expect(
       screen.getByText(
-        sp('list.contextOne', 'ca', { n: 1, candidates: 1187, radius: formatDistance(25, 'ca') }),
+        net(
+          sp('list.contextOne', 'ca', {
+            n: 1,
+            candidates: 1187,
+            radius: formatDistance(25, 'ca'),
+          }),
+        ),
         { exact: false },
       ),
     ).toBeTruthy();
@@ -433,16 +451,20 @@ describe('SpotList · el context va abans que les xifres', () => {
      */
     llista({ centralReachable: false, bestCentralSec: 0 });
 
-    expect(screen.getByText(sp('list.noCentral', 'ca'), { exact: false })).toBeTruthy();
+    expect(screen.getByText(net(sp('list.noCentral', 'ca')), { exact: false })).toBeTruthy();
     expect(
-      screen.queryByText(sp('list.best', 'ca', { duration: durationText(101) }), { exact: false }),
+      screen.queryByText(net(sp('list.best', 'ca', { duration: durationText(101) })), {
+        exact: false,
+      }),
     ).toBeNull();
   });
 
   it('amb la franja a dins, diu quant dura la millor fase central', () => {
     llista({ centralReachable: true, bestCentralSec: 101 });
     expect(
-      screen.getByText(sp('list.best', 'ca', { duration: durationText(101) }), { exact: false }),
+      screen.getByText(net(sp('list.best', 'ca', { duration: durationText(101) })), {
+        exact: false,
+      }),
     ).toBeTruthy();
   });
 

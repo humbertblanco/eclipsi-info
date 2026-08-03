@@ -53,6 +53,22 @@
   /*
    * Els tests de `src/` també són d'aquí, no de `tsconfig.app.json`: vegeu-hi
    * el perquè. Corren amb Vitest en entorn Node i poden llegir del disc.
+   *
+   * ELS `.test.tsx` HI SÓN PERQUÈ SI NO NO ELS COMPROVA NINGÚ. `tsconfig.app.json`
+   * ja els exclou (`exclude`) i aquesta llista només deia `*.test.ts`: els
+   * fitxers de proves de components queien pel forat d'enmig i `tsc -b` —que és
+   * el que corre `npm run build`— no els obria mai. Amb un projecte sencer sense
+   * comprovar, una prova que munti un component amb una prop que ja no existeix
+   * segueix compilant per esbuild i el build no diu res; l'única cosa que ho
+   * destaparia seria que la prova es posés vermella per un altre motiu. El
+   * `"jsx": "react-jsx"` d'aquí dalt ja hi era —hi ha tests que importen
+   * components per llegir-ne constants— i per tant no cal res més.
    */
-  "include": ["tests", "scripts", "vitest.config.ts", "src/**/*.test.ts"]
+  "include": [
+    "tests",
+    "scripts",
+    "vitest.config.ts",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx"
+  ]
 }

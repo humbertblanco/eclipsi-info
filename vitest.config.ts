@@ -11,12 +11,21 @@ import { defineConfig } from 'vitest/config';
  * ─────────────────────────────────────────────────────────────────────────────
  * DOS PROJECTES, I PER QUÈ NO UNA CONFIGURACIÓ SOLA
  *
- * Aquí hi corren dues coses molt diferents. El NUCLI són 105 fitxers i 1.782
- * proves que fan trigonometria a Node i acaben en 26 s; la VISTA són uns quants
- * fitxers `.test.tsx` que necessiten un DOM. La regla és que la segona no pot
- * fer pagar res a la primera: aquelles 1.782 proves són el patrimoni d'aquest
- * projecte, i el dia que els 26 s passin a ser 90 ningú no les tornarà a córrer
+ * Aquí hi corren dues coses molt diferents. El NUCLI són 107 fitxers i 1.809
+ * proves que fan trigonometria a Node; la VISTA són quatre fitxers `.test.tsx`
+ * amb 63 proves que necessiten un DOM. La regla és que la segona no pot fer
+ * pagar res a la primera: aquelles 1.809 proves són el patrimoni d'aquest
+ * projecte, i el dia que els 24 s passin a ser 90 ningú no les tornarà a córrer
  * abans de pujar res.
+ *
+ * MESURAT EL 3-8-2026, tres passades de cada, en aquest ordinador: el nucli sol
+ * fa 24,36 / 24,40 / 24,42 s i les dues meitats juntes 24,54 / 24,57 / 24,72 s.
+ * Els components costen DOS DÈCIMES a la bateria sencera —el 0,8 %— i no perquè
+ * siguin gratis, sinó perquè els seus quatre fitxers caben dins del temps que
+ * el nucli ja passa esperant els seus: la vista sola són 1,5 s. Si algun dia
+ * aquesta diferència es fa de segons, el que ha passat és que un `.test.tsx` ha
+ * començat a fer feina de nucli i el que s'ha de moure és la prova, no el
+ * llindar.
  *
  * S'HI VAN MIRAR TRES CAMINS:
  *
@@ -29,7 +38,7 @@ import { defineConfig } from 'vitest/config';
  *   2. El comentari per fitxer, `@vitest-environment jsdom`. Funciona i és el
  *      mínim, però obliga a un `setupFiles` global —el `cleanup()` de
  *      testing-library s'ha de registrar d'alguna manera— i un `setupFiles`
- *      d'una configuració sola corre també als 105 fitxers de Node: hi importa
+ *      d'una configuració sola corre també als 107 fitxers de Node: hi importa
  *      React i testing-library a cada un per no fer-hi res.
  *
  *   3. ELS PROJECTES, que és el que hi ha. Cada meitat declara el seu entorn i

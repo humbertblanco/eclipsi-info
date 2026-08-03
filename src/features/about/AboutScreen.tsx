@@ -139,8 +139,14 @@ export function AboutScreen({ locale, onOpenGuideSafety }: AboutScreenProps) {
           <h3 className="about__blocktitle">{ab('sources.title', locale)}</h3>
           <p className="about__p">{ab('sources.p1', locale)}</p>
           <ul className="about__sources">
+            {/*
+              LA CLAU ÉS `who` I NO `url`: les dues files d'OpenStreetMap —la
+              cartografia i els miradors— apunten totes dues a la pàgina de la
+              llicència, perquè és on són les condicions de totes dues. Amb
+              `key={source.url}` serien dues germanes amb la mateixa clau.
+            */}
             {CREDITS.map((source) => (
-              <li key={source.url}>
+              <li key={source.who}>
                 <span className="about__sourcewhat">{source.what[locale]}</span>
                 {/*
                   EL NOM I LA LLICÈNCIA VAN JUNTS I EN AQUEST ORDRE. «Open-Meteo

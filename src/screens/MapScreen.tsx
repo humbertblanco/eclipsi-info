@@ -954,6 +954,10 @@ export function MapScreen({
                 circumstances={circumstances}
                 profile={horizon}
                 verdict={verdict}
+                // Sense això el gest no s'apunta enlloc, i és a posta que no
+                // tingui valor per omissió: comptar el mapa com a portada
+                // seria una fila equivocada, que és pitjor que una que falta.
+                surface="map"
               />
 
               <p className="screen__note">{s('map.pickNote', locale)}</p>

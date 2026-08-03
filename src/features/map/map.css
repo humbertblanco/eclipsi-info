@@ -291,6 +291,29 @@
   color: var(--text-muted);
 }
 
+/* Qui la fa i sota quina llicència, en un sol bloc: «Open-Meteo (CC BY 4.0)» és
+   l'atribució sencera, i si el nom es quedés en una línia i la llicència saltés
+   a la següent, l'atribució quedaria partida just per la meitat que la fa
+   valer. El `li` de sobre ja embolica: aquest tros, no. */
+.map-credits__who {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  flex-wrap: nowrap;
+}
+
+/* Un nom de llicència no és cap avís: ni accent, ni to d'enllaç. Mono i en cos
+   petit, com les xifres del projecte — és una etiqueta exacta que s'ha de poder
+   copiar tal com sona («ODbL 1.0», «CC BY 4.0»), no una paraula. Idèntica a
+   `.about__sourcelicence` a posta: la mateixa dada es veu igual a les dues
+   pantalles que la pinten. */
+.map-credits__licence {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 /* ============================================================================
    Controls de MapLibre.
 

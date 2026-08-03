@@ -4,8 +4,8 @@
  * EL PEU ÉS LA SIGNATURA, NO L'ARXIU. Abans duia les set files de fonts i es
  * llegia com un peu legal amb una firma perduda a dalt; ara la firma és el
  * protagonista i les fonts viuen on es poden llegir amb calma: senceres a la
- * pàgina «Com funciona» (`features/about`, que en té còpia pròpia) i al diàleg
- * de crèdits del mapa (que ensenya la llista `CREDITS` d'aquí sota). El peu
+ * pàgina «Com funciona» i al diàleg de crèdits del mapa, que ensenyen totes
+ * dues LA MATEIXA llista (`features/about/credits.ts`) i no una còpia. El peu
  * només hi deixa la porta, explícita.
  *
  * I AIXÒ ÉS LEGALMENT NET: l'ODbL d'OpenStreetMap no depenia del peu. El mapa

@@ -41,7 +41,7 @@
  * PAQUET D'ARRENCADA. `OSM_COPYRIGHT_URL` viu a `core/places/viewpoints.ts`, que
  * importa `core/eclipses/path.ts` per retallar els miradors a la franja: importar
  * la constant hauria arrossegat els elements besselians sencers a la primera
- * pintada per estalviar-se vint-i-nou caràcters. L'adreça s'escriu aquí i és
+ * pintada per estalviar-se trenta-nou caràcters. L'adreça s'escriu aquí i és
  * `tests/credits-de-les-fonts.test.ts` qui exigeix que sigui la MATEIXA cadena
  * que `OSM_COPYRIGHT_URL` i que `PLACES_ATTRIBUTION_URL`. No és cap excepció a
  * la regla de no duplicar: és el mateix criteri que ja fa servir
@@ -78,7 +78,16 @@ const OSM_COPYRIGHT_URL = 'https://www.openstreetmap.org/copyright';
 export interface Credit {
   /** Què n'obtenim, en la llengua de qui llegeix. */
   what: Record<Locale, string>;
-  /** Qui la fa. Nom propi, mai traduït. */
+  /**
+   * Qui la fa. Nom propi, mai traduït.
+   *
+   * ÉS TAMBÉ LA IDENTITAT DE LA FILA: és el que fan servir de clau de React les
+   * dues llistes que la pinten. L'`url` no pot fer-ho —les dues files d'OSM
+   * apunten totes dues a la pàgina de la llicència, perquè és on són les
+   * condicions de totes dues—, i que dues germanes comparteixin clau és de les
+   * poques maneres que React té de pintar malament sense petar. Ho vigila
+   * `tests/credits-de-les-fonts.test.ts`.
+   */
   who: string;
   /** On es pot anar a comprovar, i on hi ha les condicions. */
   url: string;
@@ -232,9 +241,30 @@ export const CREDITS: readonly Credit[] = [
  * el peu, «Com funciona» i el diàleg del mapa han de dir LA MATEIXA frase, no
  * tres frases bessones que un dia divergeixen.
  */
+/**
+ * LA FRASE DE PRIVADESA, I PER QUÈ VA CANVIAR.
+ *
+ * Deia «Els càlculs es fan al teu dispositiu. La teva ubicació no surt d'aquí»
+ * i LA SEGONA MEITAT ERA FALSA. L'app envia les coordenades a dos serveis
+ * sense cap gest addicional: a Photon (OSM) per posar nom al punt —amb cinc
+ * decimals, un metre— i a Open-Meteo per la previsió de núvols. I les
+ * tessel·les de relleu de zoom 12 situen el punt a uns trenta metres. Aquest
+ * mateix fitxer declara els tres amfitrions a `CREDITS`: la contradicció cabia
+ * en una pantalla de l'editor, i qualsevol podia desmentir la frase amb les
+ * eines de desenvolupament obertes en deu segons.
+ *
+ * Era la frase que signa el peu de TOTES les pantalles i la que l'usuari va
+ * demanar explícitament. En un producte que té la porta de privadesa de
+ * l'analítica escrita com a codi provat (`core/analytics/sanitize.ts`), no es
+ * pot prometre de paraula una cosa més forta del que el codi garanteix.
+ *
+ * El que ara diu és el que de debò passa, i segueix sent una bona notícia: el
+ * CÀLCUL no surt —cap servidor no et calcula res— i les coordenades només van
+ * als dos serveis nominats, no es desen enlloc i no arriben mai a l'analítica.
+ */
 export const PRIVACY_NOTE: Record<Locale, string> = {
-  ca: 'Els càlculs es fan al teu dispositiu. La teva ubicació no surt d’aquí.',
-  es: 'Los cálculos se hacen en tu dispositivo. Tu ubicación no sale de aquí.',
+  ca: 'Els càlculs es fan al teu dispositiu: cap servidor no els fa per tu. Les coordenades només surten per posar nom al lloc i per la previsió, i no arriben mai a l’analítica.',
+  es: 'Los cálculos se hacen en tu dispositivo: ningún servidor los hace por ti. Las coordenadas solo salen para poner nombre al lugar y para la previsión, y nunca llegan a la analítica.',
 };
 
 export const SOURCES_HEADING: Record<Locale, string> = {

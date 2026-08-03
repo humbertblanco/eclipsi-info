@@ -865,9 +865,9 @@ export function ARView({
       track('camera_session', { anchor: sessionAnchor(seen), ended });
     }
 
-    // `mediaTrack` i no `track`: dues línies més amunt hi ha la funció
-    // d'analítica amb aquest nom, i una pista de vídeo que sembli un
-    // esdeveniment és un malentès esperant el seu torn.
+    // `mediaTrack` i no `track`: aquí sobre hi ha la funció d'analítica amb
+    // aquest nom, i una pista de vídeo que sembli un esdeveniment és un
+    // malentès esperant el seu torn.
     streamRef.current?.getTracks().forEach((mediaTrack) => mediaTrack.stop());
     streamRef.current = null;
     lensWatchRef.current?.();
