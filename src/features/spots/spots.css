@@ -127,6 +127,18 @@
   color: var(--text-muted);
 }
 
+/*
+ * L'atribució dels topònims, obligatòria per llicència. Mateixa veu que
+ * `.pname__source`: llegible, apagada, i mai confosa amb una dada.
+ */
+.spotlist__source {
+  margin: 0;
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: none;
+  color: var(--text-muted);
+}
+
 .spotlist__items {
   display: flex;
   flex-direction: column;
@@ -192,11 +204,45 @@
   font-variant-numeric: tabular-nums;
 }
 
-.spotcard__where {
+/*
+ * La identitat del lloc: el topònim (quan la xarxa l'ha dut) i la línia de
+ * direcció. El creixement flexible viu aquí i no a `__where` perquè ara són
+ * dues línies apilades que ocupen el mateix forat entre l'ordinal i la
+ * insígnia. `min-width: 0` deixa que un nom llarg parteixi línia en comptes
+ * de fer créixer la targeta d'amplada.
+ */
+.spotcard__id {
   flex: 1 1 auto;
+  min-width: 0;
+}
+
+/*
+ * El topònim, en pes de títol. Mateixa jerarquia que `.pname__primary` (el
+ * nom del punt de l'observador): la resposta a «quin lloc és» mana per mida,
+ * no per color. Sense punts suspensius: mig topònim no és cap topònim.
+ */
+.spotcard__name {
+  margin: 0;
+  font: var(--text-title-3);
+  letter-spacing: var(--ls-title);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.spotcard__where {
   margin: 0;
   font: var(--text-label);
   color: var(--text-primary);
+}
+
+/*
+ * Quan hi ha topònim, la direcció baixa un graó: de títol a subtítol. La
+ * informació no marxa —és la que funciona sense xarxa— però deixa de
+ * disputar-li el pes al nom.
+ */
+.spotcard__where--sub {
+  font: var(--text-body-sm);
+  color: var(--text-secondary);
 }
 
 .spotcard__alt {

@@ -20,6 +20,8 @@
  * és un cost real.
  */
 
+import { useEffect } from 'react';
+
 import type { GeoLocation } from '../../core/astro/types';
 import type { SpotResult } from '../../core/spots/types';
 import type { SpotsWorkerOptions } from '../../workers/spots.worker';
@@ -42,6 +44,13 @@ export interface SpotSearchPanelProps {
   /** Fer d'un resultat el punt de l'app. Es passa avall fins a cada targeta. */
   onSelect?: (spot: SpotResult) => void;
   /**
+   * Els resultats, cap amunt, perquè el mapa els pugui marcar amb el mateix
+   * número que la llista. `null` quan no n'hi ha (cerca nova, cancel·lada o
+   * sense resultats): el mapa treu les xinxetes i no queda cap òrfena d'una
+   * cerca vella.
+   */
+  onResults?: (spots: { lat: number; lon: number; index: number }[] | null) => void;
+  /**
    * Ensenya el desglossament del cost de cada etapa. Va destinat a qui toqui
    * els paràmetres, no a qui busca un lloc.
    */
@@ -55,6 +64,7 @@ export function SpotSearchPanel({
   origin,
   options,
   onSelect,
+  onResults,
   // La taula de cost és un diagnòstic d'enginyeria, no una funció d'usuari:
   // visible a `npm run dev` per mesurar el cercador, fora del build de
   // producció — una app que no demana res sense explicar-ho no planta una
@@ -75,6 +85,23 @@ export function SpotSearchPanel({
 
   const running = status === 'running';
   const teResultats = outcome !== null && outcome.results.length > 0;
+
+  /*
+   * Els resultats pugen al pare quan canvien: el mapa marca cada candidat amb
+   * el número de la seva targeta (mateixa numeració, mateixa lectura). `null`
+   * neteja — una cerca nova o buida no ha de deixar xinxetes velles al mapa.
+   * El pare ja retira les xinxetes en sortir de la vista, així que aquí només
+   * cal dir la veritat de l'última cerca.
+   */
+  useEffect(() => {
+    if (onResults === undefined) return;
+    const results = outcome?.results ?? null;
+    onResults(
+      results === null || results.length === 0
+        ? null
+        : results.map((spot, i) => ({ lat: spot.lat, lon: spot.lon, index: i + 1 })),
+    );
+  }, [outcome, onResults]);
 
   return (
     <section className={['spotpanel', className ?? ''].filter(Boolean).join(' ')}>
@@ -153,7 +180,9 @@ export function SpotSearchPanel({
         </>
       )}
 
-      {outcome && <SpotList outcome={outcome} locale={locale} onSelect={onSelect} />}
+      {outcome && (
+        <SpotList outcome={outcome} locale={locale} eclipseId={eclipseId} onSelect={onSelect} />
+      )}
 
       {showCost && outcome && (
         <Card tone="inset" padding="var(--sp-4)">

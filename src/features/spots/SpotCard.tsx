@@ -11,6 +11,13 @@
  *   3. Quant hauries de pujar per recuperar-ho, si es pot recuperar.
  *   4. Com s'hi arriba: rumb, distància, cota i coordenades.
  *
+ * A SOBRE DE TOT, QUAN LA XARXA HO PERMET, EL NOM DEL LLOC. «Coll de la
+ * Ventosa» es pot dir per telèfon i buscar al GPS del cotxe; «11 km cap al
+ * sud-oest» no. El nom arriba amb mandra i sense blocar res: la targeta surt
+ * sencera amb la direcció i la distància —que són la informació robusta i
+ * fora de línia del dia de l'eclipsi— i el títol apareix quan el servei
+ * respon. Sense xarxa, no apareix i no hi ha cap error.
+ *
  * ELS BADGES NO SÓN DECORACIÓ. `Estimació` vol dir que el número l'ha tret el
  * garbell amb terreny gruixut i pot equivocar-se en desenes de segons.
  * `Vora de la franja` vol dir que el marge umbral és més petit que l'error de
@@ -35,7 +42,9 @@ import {
   formatPercent,
   mapUrl,
 } from './format';
+import { buildShareLink, isAbortError } from '../share';
 import { sp } from './strings';
+import { useSpotPlaceName } from './useSpotPlaceName';
 import './spots.css';
 
 export interface SpotCardProps {
@@ -43,6 +52,11 @@ export interface SpotCardProps {
   /** Posició a la llista, començant per 1. */
   rank: number;
   locale: Locale;
+  /**
+   * L'eclipsi del càlcul, per poder compartir el candidat amb enllaç propi:
+   * «mira, anem aquí» amb el punt, l'eclipsi i el nom ja posats.
+   */
+  eclipseId: string;
   /**
    * Fa que aquest punt passi a ser el de l'app.
    *
@@ -120,10 +134,66 @@ function CopyCoords({ lat, lon, locale }: { lat: number; lon: number; locale: Lo
   );
 }
 
-export function SpotCard({ spot, rank, locale, onSelect, className }: SpotCardProps) {
+/**
+ * Comparteix el candidat amb enllaç propi. Mateixa escala de gestos que el
+ * botó de compartir de la portada: primer el full nadiu, i si no n'hi ha (o
+ * l'usuari el tanca sense triar, que no és cap error), el porta-retalls amb
+ * la confirmació de dos segons.
+ */
+function ShareSpot({
+  lat,
+  lon,
+  eclipseId,
+  label,
+  locale,
+}: {
+  lat: number;
+  lon: number;
+  eclipseId: string;
+  label: string | null;
+  locale: Locale;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const share = async () => {
+    const url = `${window.location.origin}${window.location.pathname}${buildShareLink(
+      { lat, lon, eclipseId, label },
+    )}`;
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ url });
+        return;
+      } catch (error) {
+        if (isAbortError(error)) return;
+        // Si el full nadiu falla per una altra cosa, es prova el porta-retalls.
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Sense porta-retalls (permís negat) no queda cap camí silenciós bo:
+      // el botó simplement no confirma, i les coordenades segueixen al costat.
+    }
+  };
+
+  return (
+    <Button variant="secondary" size="sm" icon="share-2" onClick={() => void share()}>
+      {copied ? sp('card.linkCopied', locale) : sp('card.share', locale)}
+    </Button>
+  );
+}
+
+export function SpotCard({ spot, rank, locale, eclipseId, onSelect, className }: SpotCardProps) {
   const visible = formatDuration(spot.centralVisibleSec);
   const total = formatDuration(spot.centralTotalSec);
   const perdut = spot.centralLostSec;
+
+  // El topònim, demanat amb mandra i sense blocar res: la targeta surt sencera
+  // amb la direcció, la distància i la cota —que funcionen sense xarxa— i el
+  // nom apareix quan arriba. Sense xarxa no apareix i no passa res més.
+  const placeLabel = useSpotPlaceName(spot.lat, spot.lon, locale);
 
   return (
     <Card
@@ -140,10 +210,19 @@ export function SpotCard({ spot, rank, locale, onSelect, className }: SpotCardPr
         >
           {rank}
         </span>
-        <p className="spotcard__where">
-          {formatDistance(spot.distanceKm, locale)} {bearingPhrase(spot.bearingDeg, locale)}
-          <span className="spotcard__alt"> · {formatMetres(spot.elevation, locale)}</span>
-        </p>
+        {/*
+          La identitat del lloc, en dues línies com a molt. Amb nom, el nom fa
+          de títol i la direcció baixa a subtítol; sense nom, la direcció es
+          queda de títol tal com estava. La direcció no marxa mai: és el que
+          es pot seguir amb brúixola quan el nom no ha arribat.
+        */}
+        <div className="spotcard__id">
+          {placeLabel && <p className="spotcard__name">{placeLabel.primary}</p>}
+          <p className={placeLabel ? 'spotcard__where spotcard__where--sub' : 'spotcard__where'}>
+            {formatDistance(spot.distanceKm, locale)} {bearingPhrase(spot.bearingDeg, locale)}
+            <span className="spotcard__alt"> · {formatMetres(spot.elevation, locale)}</span>
+          </p>
+        </div>
         <span className="spotcard__badges">
           <Badge tone={verdictTone(spot)} dot>
             {verdictLabel(spot, locale)}
@@ -217,6 +296,13 @@ export function SpotCard({ spot, rank, locale, onSelect, className }: SpotCardPr
           </Button>
         )}
         <CopyCoords lat={spot.lat} lon={spot.lon} locale={locale} />
+        <ShareSpot
+          lat={spot.lat}
+          lon={spot.lon}
+          eclipseId={eclipseId}
+          label={placeLabel ? placeLabel.primary : null}
+          locale={locale}
+        />
         <a
           className="spotcard__map"
           href={mapUrl(spot.lat, spot.lon)}

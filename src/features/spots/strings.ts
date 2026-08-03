@@ -142,6 +142,8 @@ const STRINGS = {
   'card.coverage': { ca: 'Relleu incomplet ({percent})', es: 'Relieve incompleto ({percent})' },
   'card.copy': { ca: 'Copia les coordenades', es: 'Copia las coordenadas' },
   'card.copied': { ca: 'Copiades', es: 'Copiadas' },
+  'card.share': { ca: 'Comparteix', es: 'Comparte' },
+  'card.linkCopied': { ca: 'Enllaç copiat', es: 'Enlace copiado' },
   'card.openMap': { ca: 'Obre al mapa', es: 'Abre en el mapa' },
   /* L'acció que faltava: una fitxa que no es pot fer teva és una fitxa morta. */
   'card.makeMine': { ca: 'Calcula-ho des d’aquí', es: 'Calcúlalo desde aquí' },

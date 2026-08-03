@@ -99,6 +99,17 @@ interface Props {
    * de triar punt continua sent tocar el mapa, també just a sota del rètol.
    */
   focus?: { location: GeoLocation; label: string | null } | null;
+  /**
+   * Els llocs candidats del cercador («Llocs»), numerats com a la llista.
+   *
+   * El mapa els ensenya perquè la llista sense mapa és mitja resposta: «11 km
+   * cap al sud-oest» només es torna un lloc de debò quan veus QUIN coll o
+   * QUINA carena és. El número lliga la xinxeta amb la targeta — mateixa
+   * numeració, mateixa lectura. NO atrapen el dit (pointer-events: none): el
+   * gest que tria punt continua sent tocar el mapa, i cada targeta ja té el
+   * seu «Calcula-ho des d'aquí».
+   */
+  spots?: { lat: number; lon: number; index: number }[] | null;
 }
 
 /** Atribució d'OSM, obligatòria per llicència. */
@@ -292,6 +303,7 @@ export function EclipseMap({
   observer = null,
   picked = null,
   focus = null,
+  spots = null,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -559,6 +571,28 @@ export function EclipseMap({
       marker.remove();
     };
   }, [focus]);
+
+  // --- Les xinxetes numerades del cercador de llocs ---
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map === null || spots === null || spots.length === 0) return;
+    /*
+     * Es refan senceres a cada canvi de llista: són quatre o cinc nodes i la
+     * llista només canvia quan s'acaba una cerca. Comptabilitzar diferències
+     * per estalviar tres createElement seria complexitat sense client.
+     */
+    const markers = spots.map((spot) => {
+      const element = document.createElement('div');
+      element.className = 'map__spotpin';
+      element.textContent = String(spot.index);
+      return new Marker({ element, anchor: 'center' })
+        .setLngLat([spot.lon, spot.lat])
+        .addTo(map);
+    });
+    return () => {
+      for (const marker of markers) marker.remove();
+    };
+  }, [spots]);
 
   const annular = eclipse.kind === 'annular';
   const central = s(annular ? 'map.centralAnnular' : 'map.centralTotal', locale);

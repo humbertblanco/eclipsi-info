@@ -162,6 +162,30 @@
   background: var(--bg-inset);
 }
 
+/* --- Xinxetes numerades del cercador de llocs -----------------------------
+   El número és el de la targeta: la llista i el mapa es lliguen per l'índex,
+   no per la memòria de qui mira. Neutres (ni ambre —que és de la franja— ni
+   blau —que és del resultat de la cerca de topònims—) i sense atrapar el dit.
+   ------------------------------------------------------------------------- */
+
+.map__spotpin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sp-7);
+  height: var(--sp-7);
+  border-radius: var(--r-pill);
+  border: var(--bw-hair) solid var(--border-strong);
+  background: var(--bg-scrim);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
 /* --- Convit inicial ------------------------------------------------------ */
 
 .map__hint {
