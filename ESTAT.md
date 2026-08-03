@@ -123,31 +123,58 @@ de llocs i l'enquadrament sense pantalla (les 5 vistes del mapa). La
 discrepància ΔT dels dos motors d'ombra NO es toca: és decisió de producte
 (vegeu §5). El que segueix és el que QUEDA.
 
+**El 3-8-2026 (matinada) es va fer la gran passada de disseny i pàgines**,
+amb orquestració multiagent i verificació visual real a 390 i 1440 px. Tancat:
+la guia amb escriptori de debò (dues columnes, índex enganxós, àncores per
+secció), el bàner de lloc que es plega en desplaçar (histèresi, mai amb el
+punt d'exemple), **rutes hash** (`#/mapa`, `#/cel`, `#/guia/<secció>`,
+`#/com-funciona` — l'Enrere del navegador ja no expulsa de l'app), la pantalla
+nova **«Com funciona»** amb bloc de premsa (logos, og.png, descripcions per
+copiar), el countdown d'escriptori equilibrat (taula d'efemèrides a la dreta,
+una sola còpia visible), el mapa amb cerca de topònims (marcador blau amb el
+nom del lloc), miniatura de la trajectòria i diàleg de crèdits/ODbL, la fitxa
+del mapa capada a 45dvh a mòbil, el mode **«Durant»** (la prosa del guió de la
+totalitat per fi es llegeix, lligada al mateix rellotge que la veu), el tint
+del cel del punt al card del compte enrere (core/sky), la targeta social
+1200×630 pròpia (`public/brand/og.png` + `summary_large_image`), robots.txt,
+sitemap.xml, 404.html i .htaccess, les tres contradiccions de contingut
+(altures del Sol pel motor, el 2027 és de matí, lux amb enfosquiment de
+limbe), el canal de progrés de l'horitzó en CODIS bilingües, l'AR sense bucle
+amb la càmera tancada i pintant al ritme real del vídeo, el smoke amb 187
+assercions i els tres eclipsis, `strict` a `tsconfig.app.json`, fora els
+`.woff` morts (els `@font-face` van escrits a mà — i **els `@import` dels
+tokens HAN D'ANAR ABANS de qualsevol regla** o el CSS els descarta en silenci:
+ja va passar), el contrast AA del distintiu ennuvolat, els ~17 tokens
+fantasmes d'`align.css`, el desempat del geocodificador (ciutat/municipi) i el
+llindar 20→40 s de `gate-invariant`.
+
 ### Mitjà
 
-- **La guia i el guió de la totalitat es contradiuen en diverses xifres**: el
-  rang d'altura del Sol (tres valors diferents per al mateix fet), «al
-  capvespre» per a un eclipsi que és a les 9:45, i les xifres de lux del cas
-  espanyol calculades amb fracció lluminosa però etiquetades com a obscuració.
-  És feina de contingut, no de codi: decidir la xifra bona i escriure-la als
-  dos llocs.
 - **Cap component de React té cap test.** `vitest.config.ts` només inclou
   `*.test.ts` amb entorn `node`, i no hi ha ni un `*.test.tsx`. La política
   fins ara: les parts pures es testegen (i en tenen molts), el render queda al
   protocol manual. Si mai es munta jsdom, començar pels components amb lògica
-  de decisió (LocationSheet, CloudPanel), no pels de pintar.
+  de decisió (LocationSheet, CloudPanel, i ara el col·lapse del bàner i el
+  mode «Durant»), no pels de pintar.
+- **Els ERRORS de l'horitzó encara viatgen en català** (el PROGRÉS ja són
+  codis): «Només s'han pogut baixar X de N tessel·les…» arriba tal qual a
+  l'usuari ES. Mateix camí pendent per als canals de progrés de
+  `core/spots/search.ts` i `offline/prepare.ts`.
 
 ### Baix
 
-- `tsconfig.app.json` **no té `strict`**. `tsconfig.test.json` sí. Verificat:
-  afegir-lo passa amb zero errors avui — és una barana que falta, no un deute.
-- Els `.woff` (336 kB) es publiquen i no els demanarà mai cap navegador que
-  pugui córrer aquesta app; els `.woff2` no estan subconjuntats.
 - Diversos tests asserteixen damunt dels seus propis simulacres o dins de
-  bucles que poden no córrer cap vegada (`geocoder.test.ts` sencer,
-  `search.test.ts:328,338,356,411,468`, `schedule.test.ts:180-187`).
-- `gate-invariant.test.ts` diu que envolta el llindar dels 20 s i el llindar ara
-  són 40: la graella no en prova cap valor a la vora.
+  bucles que poden no córrer cap vegada (`search.test.ts:328,338,356,411,468`,
+  `schedule.test.ts:180-187`).
+- `design-reference/_adherence.oxlintrc.json` (anti-hex, anti-px, whitelists
+  de props) segueix sense connectar a `.oxlintrc.json`.
+- Tota la tipografia és en px absoluts: el zoom de font del navegador no fa
+  res. El pas a rem és mecànic (÷16) però demana verificació visual sencera.
+- Cap `prefers-contrast` ni `prefers-reduced-transparency` per al crom de
+  vidre amb blur(18px).
+- Les pestanyes per moment de la guia (Abans/Durant/Fotografia) i la landing
+  pública prerenderitzada queden DESCARTADES de moment per decisió d'usuari
+  (2-8-2026): l'arrel és l'app, sense passos intermedis.
 
 ---
 
