@@ -10,7 +10,7 @@ export { CountdownView } from './CountdownView';
 export type { CountdownViewProps } from './CountdownView';
 
 export { useEclipseTimer } from './useEclipseTimer';
-export type { EclipseTimerState, UseEclipseTimerOptions } from './useEclipseTimer';
+export type { EclipseTimerState, ScriptMoment, UseEclipseTimerOptions } from './useEclipseTimer';
 
 export { createAnnouncer } from './speech';
 export type { Announcer, AnnouncerOptions, VoiceStatus } from './speech';

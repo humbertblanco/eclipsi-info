@@ -33,7 +33,7 @@ import type {
 } from '../../core/timer';
 import type { LocalCircumstances } from '../../core/astro/types';
 import { buildTotalityScript, mergeScriptIntoSchedule } from '../../content/totality-script';
-import type { TotalityScript } from '../../content/totality-script';
+import type { ScriptBeat, TotalityScript } from '../../content/totality-script';
 import { createAnnouncer } from './speech';
 import type { Announcer, VoiceStatus } from './speech';
 import { useWakeLock } from './useWakeLock';
@@ -57,6 +57,19 @@ export interface UseEclipseTimerOptions {
   centralPhaseVisible?: boolean;
 }
 
+/**
+ * Una fita del guió vista des d'ARA: el beat sencer —títol i, sobretot, la
+ * prosa que la veu no diu mai— i l'instant en què toca segons la línia de
+ * temps que sona (la comprimida, mentre dura l'assaig).
+ */
+export interface ScriptMoment {
+  beat: ScriptBeat;
+  /** Instant de la fita, en ms des de l'època, a l'escala del rellotge del reproductor. */
+  atMs: number;
+  /** Quant hi falta, en ms. Negatiu quan ja ha passat. */
+  inMs: number;
+}
+
 export interface EclipseTimerState {
   /** Programació real, amb el resultat de la porta de seguretat. */
   schedule: AlertSchedule;
@@ -70,6 +83,14 @@ export interface EclipseTimerState {
   lastAlert: VoiceAlert | null;
   /** Últim avís descartat i el motiu (pestanya congelada, típicament). */
   lastSkipped: { alert: VoiceAlert; reason: SkipReason } | null;
+
+  /**
+   * La fita del guió vigent ARA, amb la prosa sencera per llegir-la, i la
+   * següent amb quant hi falta. Surten de la mateixa llista d'avisos que
+   * sona; vegeu el comentari on es calculen.
+   */
+  currentMoment: ScriptMoment | null;
+  nextMoment: ScriptMoment | null;
 
   voiceEnabled: boolean;
   voiceStatus: VoiceStatus;
@@ -380,6 +401,64 @@ export function useEclipseTimer(options: UseEclipseTimerOptions): EclipseTimerSt
     [schedule, nowMs],
   );
 
+  /*
+   * EL GUIÓ, ARA TAMBÉ PER LLEGIR. Cada beat porta una prosa (`text`) que la
+   * veu no diu mai: era la part més treballada del guió i cap pantalla no
+   * l'ensenyava. Aquí es resol quina fita és la vigent i quina ve després.
+   *
+   * LA LÍNIA DE TEMPS NO ES REFÀ. Es recorre la mateixa llista d'avisos que
+   * sona —la fusionada, o la comprimida mentre dura l'assaig— i cada avís es
+   * retorna al seu beat pel seu identificador pelat: `script:corona` i
+   * `rehearsal:script:corona` duen a `corona`, i els avisos de filtre de la
+   * programació real comparteixen identificador amb els beats de filtre del
+   * guió a propòsit (vegeu `totality-script.ts`). Tres coses en surten de
+   * franc: el que es llegeix arriba EXACTAMENT quan el que se sent; una fita
+   * que la fusió ha descartat tampoc no s'ensenya; i la comporta de seguretat
+   * no s'ha de reimplementar, perquè un avís de treure's el filtre només és a
+   * la llista si `canRemoveFilter` l'ha autoritzat.
+   */
+  const beatById = useMemo(() => {
+    const byId = new Map<string, ScriptBeat>();
+    for (const beat of script.beats) byId.set(beat.id, beat);
+    return byId;
+  }, [script]);
+
+  const activeAlerts =
+    rehearsing && rehearsalSchedule !== null ? rehearsalSchedule.alerts : schedule.alerts;
+  const filterAllowed = schedule.filterGate.allowed;
+
+  const { currentMoment, nextMoment } = useMemo(() => {
+    let current: ScriptMoment | null = null;
+    let next: ScriptMoment | null = null;
+    // La llista ja ve ordenada per instant: l'última fita passada és la vigent
+    // i la primera futura és la següent.
+    for (const alert of activeAlerts) {
+      const beat = beatById.get(alert.id.replace(/^rehearsal:/, '').replace(/^script:/, ''));
+      if (beat === undefined) continue;
+      // Defensa en profunditat, la mateixa que `mergeScriptIntoSchedule`: cap
+      // fita sense filtre no s'ensenya si la porta no autoritza. Aquí només es
+      // llegeix el veredicte; la regla viu a `core/timer/safety.ts`.
+      if (beat.filterState === 'naked-eye' && !filterAllowed) continue;
+      const moment: ScriptMoment = { beat, atMs: alert.atMs, inMs: alert.atMs - nowMs };
+      if (alert.atMs <= nowMs) {
+        current = moment;
+      } else {
+        next = moment;
+        break;
+      }
+    }
+    // L'última fita no es queda «vigent» per sempre: passades la seva finestra
+    // i la seva validesa, el guió s'ha acabat i la secció ha de poder plegar.
+    if (
+      current !== null &&
+      next === null &&
+      nowMs > current.atMs + current.beat.windowSec * 1000 + current.beat.validForMs
+    ) {
+      current = null;
+    }
+    return { currentMoment: current, nextMoment: next };
+  }, [activeAlerts, beatById, nowMs, filterAllowed]);
+
   return {
     schedule,
     countdown,
@@ -387,6 +466,8 @@ export function useEclipseTimer(options: UseEclipseTimerOptions): EclipseTimerSt
     upcoming,
     lastAlert,
     lastSkipped,
+    currentMoment,
+    nextMoment,
     voiceEnabled,
     voiceStatus,
     enableVoice,

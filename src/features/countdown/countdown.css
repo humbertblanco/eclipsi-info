@@ -144,6 +144,78 @@
 }
 .countdown__filter--alarm .countdown__filterstate { color: var(--status-danger); }
 
+/* -------------------------------------------------------------- durant --- */
+
+/* El guió de la totalitat, per llegir-lo mentre passa. Tot en neutres, a
+   posta: l'únic ambre de la pantalla ja el té el botó d'activar els avisos, i
+   aquesta secció no li'n pot disputar cap. La jerarquia la fan la mida i
+   l'espai, no el color. */
+.countdown__during {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-top: var(--sp-5);
+  border-top: var(--bw-hair) solid var(--border-hairline);
+}
+
+.countdown__moment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* «Ara» i «Després»: la mateixa veu petita per a totes dues, perquè el que
+   canvia entre l'una i l'altra és el pes del que ve a sota. */
+.countdown__momentkicker {
+  font: var(--text-label);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* El títol del moment es llegeix amb el braç estirat i el cel a mig apagar:
+   cos de títol gran, en la display del sistema. */
+.countdown__momenttitle {
+  margin: 0;
+  font: var(--text-title-2);
+  letter-spacing: var(--ls-title);
+  color: var(--text-primary);
+}
+
+/* La prosa del guió. Cos gran i interlínia ampla: està escrita per llegir-se
+   a l'aire lliure, no per fer de lletra petita. L'amplada es limita perquè a
+   pantalla ampla una línia de vuitanta caràcters es perd a mig camí. */
+.countdown__momenttext {
+  margin: 0;
+  font: var(--text-body-lg);
+  color: var(--text-secondary);
+  max-width: 60ch;
+}
+
+/* El que ve: una sola línia, amb les xifres en mono tabular perquè el compte
+   no balli d'amplada mentre baixa. */
+.countdown__momentnext {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-3);
+  font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.countdown__momentnextname {
+  font: var(--text-body-md);
+  color: var(--text-body);
+}
+
+.countdown__momentnextdigits {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--ls-data);
+  color: var(--text-secondary);
+}
+
 /* ------------------------------------------------------------- accions --- */
 
 .countdown__actions {

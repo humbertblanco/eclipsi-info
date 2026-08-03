@@ -3,8 +3,9 @@
  *
  * ORDRE DELS ELEMENTS, i el perquè: primer el número gros, perquè és el que es
  * mira de reüll; després l'estat del filtre, perquè és l'única cosa d'aquesta
- * app que pot fer mal; i al final els botons i la llista de fites, que només
- * es toquen abans que comenci res.
+ * app que pot fer mal; després el guió del moment («Durant»), que és el que es
+ * llegeix quan l'eclipsi ja passa; i al final els botons i la llista de fites,
+ * que només es toquen abans que comenci res.
  *
  * El component no calcula cap instant ni cap text d'avís: tot ve de
  * `useEclipseTimer`, que al seu torn ho treu de `src/core/timer/**`.
@@ -24,6 +25,10 @@ import './countdown.css';
 const UI = {
   overline: { ca: 'Compte enrere', es: 'Cuenta atrás' },
   at: { ca: 'a les', es: 'a las' },
+  during: { ca: 'Durant', es: 'Durante' },
+  now: { ca: 'Ara', es: 'Ahora' },
+  then: { ca: 'Després', es: 'Después' },
+  thenIn: { ca: 'd’aquí a', es: 'dentro de' },
   filterOn: { ca: 'Filtre posat', es: 'Filtro puesto' },
   filterOff: { ca: 'Filtre fora', es: 'Filtro fuera' },
   filterBack: { ca: 'Posa’t el filtre', es: 'Ponte el filtro' },
@@ -68,6 +73,14 @@ const UI = {
  * sí que en sentiràs: saber quina és l'única finestra segura és part de la
  * informació, no una advertència de lletra petita.
  */
+
+/**
+ * Quan la secció «Durant» entra a la pantalla, si no hi ha cap fita vigent:
+ * quan la següent és a menys d'una hora. La primera fita del guió cau quatre
+ * minuts abans de la totalitat; amb una hora de coll, la secció apareix mentre
+ * la parcial avança i ningú no la descobreix amb el diamant ja a sobre.
+ */
+const DURING_AHEAD_MS = 60 * 60 * 1000;
 
 export interface CountdownViewProps {
   /** Circumstàncies locals ja calculades per a la ubicació de l'usuari. */
@@ -122,6 +135,15 @@ export function CountdownView({
   const alarm = filterState === 'back';
   const digits = formatCountdown(countdown.remainingMs);
 
+  // La secció «Durant» es mostra quan l'eclipsi és a prop o en curs, i sempre
+  // durant l'assaig: assajar és precisament veure com es veurà.
+  const { currentMoment, nextMoment } = timer;
+  const showDuring =
+    (currentMoment !== null || nextMoment !== null) &&
+    (timer.rehearsing ||
+      currentMoment !== null ||
+      (nextMoment !== null && nextMoment.inMs <= DURING_AHEAD_MS));
+
   return (
     <section
       className={[
@@ -175,6 +197,34 @@ export function CountdownView({
           {FILTER_GATE_NOTE[schedule.filterGate.reason][locale]}
         </p>
       </div>
+
+      {showDuring && (
+        <div className="countdown__during">
+          <span className="eclipsi-overline">{UI.during[locale]}</span>
+          {currentMoment !== null && (
+            /* `aria-live` educat: el canvi de fita ja el diu la veu, i el
+               lector de pantalla ha de poder seguir la prosa sense que cada
+               fita nova l'interrompi a mitja frase. */
+            <div className="countdown__moment" aria-live="polite">
+              <span className="countdown__momentkicker">{UI.now[locale]}</span>
+              <h3 className="countdown__momenttitle">{currentMoment.beat.title[locale]}</h3>
+              <p className="countdown__momenttext">{currentMoment.beat.text[locale]}</p>
+            </div>
+          )}
+          {nextMoment !== null && (
+            <p className="countdown__momentnext">
+              <span className="countdown__momentkicker">{UI.then[locale]}</span>
+              <span className="countdown__momentnextname">{nextMoment.beat.title[locale]}</span>
+              <span className="countdown__momentnextin">
+                {UI.thenIn[locale]}{' '}
+                <span className="countdown__momentnextdigits">
+                  {formatCountdown(nextMoment.inMs)}
+                </span>
+              </span>
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="countdown__actions">
         {timer.voiceEnabled ? (
