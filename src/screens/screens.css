@@ -431,6 +431,17 @@
   border-color: var(--border-subtle);
 }
 
+/* La base, en capa pròpia per poder-la il·luminar amb `filter` sense tocar
+   els vectors de sobre: el CARTO fosc encabit en 190 px era perceptualment
+   negre i el widget semblava no dur mapa. */
+.home__minimapbase {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(1.9) saturate(1.1);
+}
+
 .home__minimapcanvas {
   position: absolute;
   inset: 0;

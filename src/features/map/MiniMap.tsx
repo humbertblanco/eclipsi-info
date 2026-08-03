@@ -157,11 +157,22 @@ export function MiniMap({ eclipseId, location, label, onOpen }: Props) {
     <button
       type="button"
       className="home__minimap"
-      style={{ backgroundImage: `url(${BASE_SRC})` }}
       onClick={onOpen}
       aria-label={label}
       title={label}
     >
+      {/*
+        LA BASE VA EN UNA CAPA PRÒPIA AMB `filter: brightness()`: el CARTO
+        fosc a zoom 6 encabit en 190 px és perceptualment negre (report de
+        camp: «el widget no mostra mapa»), i el cop de llum en CSS sobre un
+        element és el camí que no depèn de res — el canvas de sobre queda
+        només per als vectors.
+      */}
+      <span
+        className="home__minimapbase"
+        style={{ backgroundImage: `url(${BASE_SRC})` }}
+        aria-hidden="true"
+      />
       <canvas ref={canvasRef} className="home__minimapcanvas" aria-hidden="true" />
       {/*
         L'atribució de la imatge cuita. El text és el de BASEMAP_SOURCES
