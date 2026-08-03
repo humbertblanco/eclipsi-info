@@ -115,6 +115,19 @@ export default defineConfig(({ command }) => ({
         // autoallotjades (woff2). Sense els woff2 al precache, la primera
         // obertura offline es veuria amb la tipografia de sistema.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest,woff2}'],
+        /*
+         * LA TARGETA SOCIAL NO ES PRECACHEJA, I SÓN 320 kB.
+         *
+         * `og.png` és la imatge que ensenyen WhatsApp, X o Slack quan algú
+         * comparteix un enllaç: qui la baixa és el RASTREJADOR d'aquells
+         * serveis, des del servidor i sense passar mai pel service worker.
+         * Dins de l'app no la pinta cap pantalla; només hi ha l'enllaç de
+         * descàrrega del kit de premsa a «Com funciona». Precachejar-la era
+         * prop d'un terç del pes d'instal·lació de tothom per a un fitxer que
+         * l'usuari no veu mai — i el paga sencer la primera vegada que obre
+         * l'app, que sovint és amb dades mòbils.
+         */
+        globIgnores: ['**/brand/og.png'],
         // L'app és una SPA: qualsevol ruta ha de tornar l'esquelet. Ha
         // d'incloure el subdirectori, o el service worker respondria amb una
         // ruta que al servidor no existeix.

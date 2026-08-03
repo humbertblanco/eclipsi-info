@@ -94,6 +94,28 @@ describe('toHorizonFailure', () => {
     expect(toHorizonFailure(new Error('no-terrain'))).toEqual({ code: 'no-terrain' });
   });
 
+  it('accepta el missatge SENCER del Worker, abans i després del pegat', () => {
+    /*
+     * Les dues formes s'han de poder llegir amb la mateixa línia de codi, o
+     * el dia que es pegui `workers/horizon.worker.ts` s'hauran de tocar tres
+     * consumidors alhora — i és exactament el moment en què se n'oblida un.
+     * Aquest test és el contracte que fa que el pegat sigui purament additiu.
+     */
+    const avui = { type: 'error', id: 7, message: 'tiles-incomplete' };
+    expect(toHorizonFailure(avui)).toEqual({ code: 'tiles-incomplete' });
+
+    const desprès = {
+      type: 'error',
+      id: 7,
+      failure: { code: 'tiles-incomplete', loaded: 3, total: 150 },
+    };
+    expect(toHorizonFailure(desprès)).toEqual({
+      code: 'tiles-incomplete',
+      loaded: 3,
+      total: 150,
+    });
+  });
+
   it('un AbortError és una cancel·lació, vingui d’on vingui', () => {
     const dom = new DOMException('cancelled', 'AbortError');
     expect(isHorizonCancelled(dom)).toBe(true);

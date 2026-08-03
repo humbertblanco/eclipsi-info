@@ -114,7 +114,12 @@ describe('la imatge base del mini-mapa', () => {
   const image = decode(readFileSync(ASSET));
 
   it('no és transparent ni negra', () => {
-    const max = Math.max(...image.luma);
+    // `Math.max(...luma)` i no un `reduce` era una bomba de rellotgeria: el
+    // nombre d'arguments d'un `spread` té sostre (entre 100.000 i 125.000 en
+    // aquest Node) i el generador documenta el zoom 7 com a alternativa, que
+    // en donaria 101.920. Hauria petat amb «Maximum call stack size exceeded»,
+    // que no parla de cap píxel.
+    const max = image.luma.reduce((m, v) => (v > m ? v : m), 0);
     const avg = image.luma.reduce((sum, v) => sum + v, 0) / image.luma.length;
     // El que es va publicar tenia max = 0 i avg = 0.
     expect(max).toBeGreaterThan(40);

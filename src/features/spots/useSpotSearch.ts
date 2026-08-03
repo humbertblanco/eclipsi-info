@@ -115,15 +115,13 @@ export function useSpotSearch(params: UseSpotSearchParams): UseSpotSearchResult 
       }
       /*
        * LA FRONTERA DEL `postMessage` NO CONSERVA LES CLASSES: el que ha de
-       * creuar és la DADA. `workers/spots.worker.ts` encara respon
-       * `{ message: string }` —el fitxer el porta una altra sessió i el pegat
-       * va escrit a l'informe—, i mentrestant el pont funciona: el `message`
-       * d'un `SpotSearchError` ÉS el codi i `toSpotSearchFailure` el reconeix.
+       * creuar és la DADA. S'hi passa el missatge SENCER perquè
+       * `workers/spots.worker.ts` encara respon `{ message: string }` —el
+       * fitxer el porta una altra sessió i el pegat va escrit a l'informe— i
+       * el pont funciona igualment: el `message` d'un `SpotSearchError` ÉS el
+       * codi. El dia que enviï `failure`, aquesta línia no s'ha de tocar.
        */
-      const failure =
-        'failure' in message
-          ? toSpotSearchFailure(message.failure)
-          : toSpotSearchFailure(message.message);
+      const failure = toSpotSearchFailure(message);
       setProgress(null);
       // Cancel·lar no és fallar: qui atura la cerca no vol veure cap error.
       if (failure.code === 'cancelled') {

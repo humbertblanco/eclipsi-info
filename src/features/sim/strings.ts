@@ -55,34 +55,41 @@ const STRINGS = {
 
   /* --- la fallada, una clau per codi -------------------------------------
    *
-   * TO: primer QUÈ ha passat, després QUÈ POTS FER. Cap «error», cap codi
-   * tècnic i cap culpa a l'usuari. La versió amb xifres existeix perquè
-   * «3 de 150» és el que fa entendre de cop que el problema és la connexió i
-   * no l'app; quan les xifres no arriben —el camí que passa pel Worker, que
-   * encara no les envia— es diu el mateix sense elles.
+   * TO: QUÈ ha passat, QUÈ VOL DIR i QUÈ POTS FER, en aquest ordre. Cap
+   * «error», cap codi tècnic i cap culpa a l'usuari. La versió amb xifres
+   * existeix perquè «3 de 150» és el que fa entendre de cop que el problema és
+   * la connexió i no l'app; quan les xifres no arriben —el camí que passa pel
+   * Worker, que encara no les envia— es diu el mateix sense elles.
+   *
+   * LA CLÀUSULA DEL MIG NO ES POT TREURE. Sense perfil del terreny no hi ha
+   * veredicte (`App.tsx` el deixa a `null` a posta) i el que es veu és la
+   * durada TEÒRICA, amb horitzó pla: optimista. Dir-ho és la mateixa regla que
+   * fa que `MIN_TILE_COVERAGE` existeixi. S'escriu amb les mateixes paraules
+   * que `sim.terrainPending` de `screens/strings.ts` perquè la mateixa
+   * situació, dita en dos llocs, no soni a dos problemes diferents.
    *
    * LA FRASE NO PROMET RES. «Un horitzó a mitges no és de fiar» és el
    * raonament de `MIN_TILE_COVERAGE`, dit a l'usuari: val més no donar
    * veredicte que donar-ne un d'optimista i fals.                            */
   'failed.tilesIncomplete': {
-    ca: 'Falta relleu per baixar ({loaded} de {total} tessel·les) i un horitzó a mitges no és de fiar. Comprova la connexió i torna-ho a provar.',
-    es: 'Falta relieve por descargar ({loaded} de {total} teselas) y un horizonte a medias no es fiable. Comprueba la conexión y vuelve a intentarlo.',
+    ca: 'Falta relleu per baixar ({loaded} de {total} tessel·les) i un horitzó a mitges no és de fiar. Sense el perfil del terreny, la durada que es mostra és la teòrica, amb horitzó pla. Comprova la connexió.',
+    es: 'Falta relieve por descargar ({loaded} de {total} teselas) y un horizonte a medias no es fiable. Sin el perfil del terreno, la duración que se muestra es la teórica, con horizonte plano. Comprueba la conexión.',
   },
   'failed.tilesIncompleteBare': {
-    ca: 'Falta relleu per baixar i un horitzó a mitges no és de fiar. Comprova la connexió i torna-ho a provar.',
-    es: 'Falta relieve por descargar y un horizonte a medias no es fiable. Comprueba la conexión y vuelve a intentarlo.',
+    ca: 'Falta relleu per baixar i un horitzó a mitges no és de fiar. Sense el perfil del terreny, la durada que es mostra és la teòrica, amb horitzó pla. Comprova la connexió.',
+    es: 'Falta relieve por descargar y un horizonte a medias no es fiable. Sin el perfil del terreno, la duración que se muestra es la teórica, con horizonte plano. Comprueba la conexión.',
   },
   'failed.noTerrain': {
-    ca: 'No ha arribat cap tessel·la del terreny. Sense relleu no hi ha horitzó: comprova la connexió.',
-    es: 'No ha llegado ninguna tesela del terreno. Sin relieve no hay horizonte: comprueba la conexión.',
+    ca: 'No ha arribat cap tessel·la del terreny. Sense el perfil del terreny, la durada que es mostra és la teòrica, amb horitzó pla. Comprova la connexió.',
+    es: 'No ha llegado ninguna tesela del terreno. Sin el perfil del terreno, la duración que se muestra es la teórica, con horizonte plano. Comprueba la conexión.',
   },
   'failed.worker': {
-    ca: 'El càlcul de l’horitzó s’ha aturat sol. Torna-ho a provar; si es repeteix, tanca i torna a obrir l’app.',
-    es: 'El cálculo del horizonte se ha parado solo. Vuelve a intentarlo; si se repite, cierra y vuelve a abrir la app.',
+    ca: 'El càlcul de l’horitzó s’ha aturat sol. Sense el perfil del terreny, la durada que es mostra és la teòrica, amb horitzó pla. Torna-ho a provar; si es repeteix, tanca i torna a obrir l’app.',
+    es: 'El cálculo del horizonte se ha parado solo. Sin el perfil del terreno, la duración que se muestra es la teórica, con horizonte plano. Vuelve a intentarlo; si se repite, cierra y vuelve a abrir la app.',
   },
   'failed.unknown': {
-    ca: 'No s’ha pogut calcular l’horitzó d’aquest punt.',
-    es: 'No se ha podido calcular el horizonte de este punto.',
+    ca: 'No s’ha pogut calcular l’horitzó d’aquest punt. Sense el perfil del terreny, la durada que es mostra és la teòrica, amb horitzó pla.',
+    es: 'No se ha podido calcular el horizonte de este punto. Sin el perfil del terreno, la duración que se muestra es la teórica, con horizonte plano.',
   },
 
   /* --- la línia de temps ------------------------------------------------

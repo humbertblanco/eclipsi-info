@@ -394,14 +394,12 @@ async function computeProfile(
          * Mateix pont que a `features/sim/useHorizon.ts`: el clonatge
          * estructurat no conserva les classes, i `workers/horizon.worker.ts`
          * encara respon `{ message: string }` (el pegat va escrit a
-         * l'informe). Com que el `message` d'un `HorizonComputeError` ÉS el
-         * codi, `toHorizonFailure` el recupera igualment; quan el Worker
-         * enviï `failure`, hi arribaran també les xifres.
+         * l'informe). S'hi passa el missatge sencer: com que el `message` d'un
+         * `HorizonComputeError` ÉS el codi, el motiu es recupera igualment, i
+         * el dia que el Worker enviï `failure` hi arribaran també les xifres
+         * sense tocar aquesta línia.
          */
-        const failure =
-          'failure' in message
-            ? toHorizonFailure(message.failure)
-            : toHorizonFailure(message.message);
+        const failure = toHorizonFailure(message);
         reject(
           isHorizonCancelled(failure)
             ? new DOMException('cancelled', 'AbortError')

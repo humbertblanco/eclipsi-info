@@ -308,17 +308,16 @@ export function useHorizon(
            *
            * El clonatge estructurat d'un `Error` es deixa la subclasse i les
            * propietats afegides pel camí, i per això el que ha de creuar és la
-           * DADA (`HorizonFailure`), no l'excepció. El Worker encara respon
-           * `{ message: string }` — el fitxer el porta una altra sessió i el
-           * pegat va escrit a l'informe—, i mentrestant el pont funciona
-           * igualment: el `message` d'un `HorizonComputeError` ÉS el codi, i
-           * `toHorizonFailure` el reconeix. Quan el Worker enviï `failure`,
-           * aquesta primera branca l'agafarà i hi arribaran també les xifres.
+           * DADA (`HorizonFailure`), no l'excepció.
+           *
+           * S'HI PASSA EL MISSATGE SENCER I NO UN CAMP CONCRET, a posta: el
+           * Worker encara respon `{ message: string }` —el fitxer el porta una
+           * altra sessió i el pegat va escrit a l'informe— i el pont funciona
+           * igualment, perquè el `message` d'un `HorizonComputeError` ÉS el
+           * codi. El dia que enviï `failure`, amb les xifres i tot, aquesta
+           * línia no s'ha de tocar.
            */
-          const failure =
-            'failure' in message
-              ? toHorizonFailure(message.failure)
-              : toHorizonFailure(message.message);
+          const failure = toHorizonFailure(message);
           if (!isHorizonCancelled(failure)) fail(failure);
           worker?.terminate();
           worker = null;

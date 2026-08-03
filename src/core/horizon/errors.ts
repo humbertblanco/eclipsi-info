@@ -116,7 +116,7 @@ function count(value: unknown): number | undefined {
 /**
  * Qualsevol cosa que hagi petat → una fallada tipada.
  *
- * Accepta quatre formes, i totes quatre passen de debò:
+ * Accepta cinc formes, i totes cinc passen de debò:
  *
  *   1. Un `HorizonComputeError` nostre: es torna la seva fallada.
  *   2. Un objecte pla amb `code` vàlid: és el que arriba per `postMessage`
@@ -126,6 +126,11 @@ function count(value: unknown): number | undefined {
  *      i com que el `message` del nostre error ÉS el codi, aquí es recupera.
  *      Es perden els comptadors, no el motiu. Quan el Worker enviï la fallada
  *      sencera, aquesta branca deixarà de fer falta i es pot esborrar.
+ *   5. EL MISSATGE SENCER DEL WORKER, tal com arriba: `{ type: 'error', id,
+ *      … }` amb `failure` o amb `message`. Que això s'accepti és el que
+ *      permet que qui el rep escrigui `toHorizonFailure(message)` i prou, i
+ *      que el dia que el Worker canviï de forma no s'hagi de tocar cap
+ *      consumidor. El pegat del Worker queda purament additiu.
  *
  * Tot el que no encaixi enlloc és `unknown`. Aquesta funció no llança mai:
  * és el darrer parapet abans de la pantalla.
@@ -138,9 +143,19 @@ export function toHorizonFailure(value: unknown): HorizonFailure {
   }
 
   if (typeof value === 'object' && value !== null) {
-    const candidate = value as { code?: unknown; name?: unknown; message?: unknown };
+    const candidate = value as {
+      code?: unknown;
+      name?: unknown;
+      message?: unknown;
+      failure?: unknown;
+    };
 
     if (candidate.name === 'AbortError') return { code: 'cancelled' };
+
+    // El sobre del Worker: la fallada de debò va a dins.
+    if (typeof candidate.failure === 'object' && candidate.failure !== null) {
+      return toHorizonFailure(candidate.failure);
+    }
 
     if (isHorizonErrorCode(candidate.code)) {
       const raw = value as { loaded?: unknown; total?: unknown };

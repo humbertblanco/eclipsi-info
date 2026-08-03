@@ -103,9 +103,19 @@ export function toSpotSearchFailure(value: unknown): SpotSearchFailure {
   }
 
   if (typeof value === 'object' && value !== null) {
-    const candidate = value as { code?: unknown; name?: unknown; message?: unknown };
+    const candidate = value as {
+      code?: unknown;
+      name?: unknown;
+      message?: unknown;
+      failure?: unknown;
+    };
 
     if (candidate.name === 'AbortError') return { code: 'cancelled' };
+    // El sobre del Worker: la fallada de debò va a dins. Que això s'accepti és
+    // el que deixa el pegat del Worker purament additiu.
+    if (typeof candidate.failure === 'object' && candidate.failure !== null) {
+      return toSpotSearchFailure(candidate.failure);
+    }
     if (isSpotSearchErrorCode(candidate.code)) return { code: candidate.code };
     if (isSpotSearchErrorCode(candidate.message)) return { code: candidate.message };
   }

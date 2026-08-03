@@ -64,6 +64,17 @@ describe('toSpotSearchFailure', () => {
     expect(toSpotSearchFailure(new Error('no-terrain'))).toEqual({ code: 'no-terrain' });
   });
 
+  it('accepta el missatge SENCER del Worker, abans i després del pegat', () => {
+    // El contracte que fa que el pegat de `workers/spots.worker.ts` sigui
+    // purament additiu: les dues formes es llegeixen amb la mateixa línia.
+    expect(toSpotSearchFailure({ type: 'error', id: 3, message: 'no-terrain' })).toEqual({
+      code: 'no-terrain',
+    });
+    expect(
+      toSpotSearchFailure({ type: 'error', id: 3, failure: { code: 'no-terrain' } }),
+    ).toEqual({ code: 'no-terrain' });
+  });
+
   it('tradueix la fallada de l’horitzó en comptes d’engolir-la', () => {
     // L'etapa D2 crida `computeHorizonProfile` de debò: la seva fallada surt
     // per aquí sense passar per cap `catch`. Si es resumís com a `unknown`,
