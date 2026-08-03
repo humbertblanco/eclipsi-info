@@ -505,6 +505,9 @@ export function MapScreen({
         : null;
     return {
       limit: uncertainty.limit,
+      // L'amplada de la incertesa del límit, per pintar-la al mapa: és la
+      // mateixa xifra que fa que la fitxa digui «just al caire».
+      limitUncertaintyKm: uncertainty.limitUncertaintyKm,
       shadow,
       toCenterKm: distanceToCenterLineKm(location, centerLineFor(eclipseId)),
     };
@@ -585,6 +588,16 @@ export function MapScreen({
               setPlace({ from: 'viewpoint', spot });
               onPickLocation(spot.lat, spot.lon);
             }}
+            /*
+              LA VORA D'INCERTESA, i només a la vista «Franja». És la resposta
+              cartogràfica de la pregunta que allà s'està fent («hi soc,
+              dins?»), i és el que la competència no pot dibuixar: ells pinten
+              el límit com una ratlla dura, que a la vora és una mentida de
+              quilòmetres.
+            */
+            edgeUncertaintyKm={
+              view === 'band' ? (detail?.limitUncertaintyKm ?? null) : null
+            }
             cloudCells={cloudCells}
             {...(cloudPlan !== null ? { cloudTexture: cloudPlan.texture } : {})}
             {...(view === 'move'

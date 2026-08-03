@@ -59,7 +59,7 @@ import {
   VIEWPOINT_INTERACTIVE_LAYERS,
 } from './layers/viewpoints';
 import { applyClouds, removeClouds } from './layers/clouds';
-import { applyEdgeUncertainty, type EdgeUncertaintyData } from './layers/edgeUncertainty';
+import { applyEdgeUncertainty } from './layers/edgeUncertainty';
 import { applyMoveArrow, type MoveArrowData } from './layers/moveArrow';
 import type { HeatCellValue } from '../../core/heat/compute';
 import type { HeatViewport } from './useHeatmap';
@@ -164,8 +164,20 @@ interface Props {
   cloudCells?: readonly ClimCell[] | null;
   cloudTexture?: CloudMapTexture;
 
-  /** La vora d'incertesa del caire de la franja. */
-  edge?: EdgeUncertaintyData | null;
+  /**
+   * Amplada de la incertesa del límit de la franja, en km, tal com surt de
+   * `computeUncertainty().limitUncertaintyKm` — sense retocar: nul i infinit
+   * són valors legítims i ja els tracta la capa.
+   *
+   * ES PASSA EL NÚMERO I NO LA GEOMETRIA a posta. La banda d'incertesa s'ha de
+   * dibuixar damunt dels MATEIXOS trams que el mapa pinta com a vora, i aquells
+   * els té aquest component (surten de `eclipsePathToGeoJson`, ja desenrotllats
+   * i partits on Web Mercator no els pot projectar). Si el pare n'enviés una
+   * còpia pròpia, el dia que les dues divergissin la banda travessaria el mapa
+   * sencer — que és exactament la família d'error que va costar la vora taronja
+   * surant al Mediterrani.
+   */
+  edgeUncertaintyKm?: number | null;
   /** La fletxa de cap on caminar per guanyar segons. */
   moveArrow?: MoveArrowData | null;
 }
@@ -374,7 +386,7 @@ export function EclipseMap({
   onPickViewpoint,
   cloudCells = null,
   cloudTexture = 'hatch',
-  edge = null,
+  edgeUncertaintyKm = null,
   moveArrow = null,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -421,7 +433,7 @@ export function EclipseMap({
     onPickViewpoint,
     cloudCells,
     cloudTexture,
-    edge,
+    edgeUncertaintyKm,
     moveArrow,
   };
   const layersRef = useRef(wantedLayers);
@@ -480,7 +492,22 @@ export function EclipseMap({
     }
     setBandFillForHeatmap(map, heatOn);
 
-    applyEdgeUncertainty(map, PALETTE, wanted.edge, underBand);
+    /*
+     * La banda d'incertesa es munta AQUÍ amb els trams que aquest component
+     * acaba de pintar com a vora: la geometria i la incertesa no poden venir
+     * de dues bandes diferents. Vegeu la propietat `edgeUncertaintyKm`.
+     */
+    applyEdgeUncertainty(
+      map,
+      PALETTE,
+      wanted.edgeUncertaintyKm === null
+        ? null
+        : {
+            limitRuns: geojsonRef.current.limits.geometry.coordinates,
+            limitUncertaintyKm: wanted.edgeUncertaintyKm,
+          },
+      underBand,
+    );
     applyMoveArrow(map, PALETTE, wanted.moveArrow);
 
     // Els oficials per damunt dels miradors: són pocs, curats i porten font.
@@ -744,7 +771,7 @@ export function EclipseMap({
     onPickViewpoint,
     cloudCells,
     cloudTexture,
-    edge,
+    edgeUncertaintyKm,
     moveArrow,
     syncLayers,
   ]);
