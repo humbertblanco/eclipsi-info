@@ -38,6 +38,7 @@ import { loadCloudClimGrid } from '../features/map/layers/clouds';
 import { allClimCells, type CloudClimGrid } from '../core/weather/climGrid';
 import { planCloudMap } from '../core/weather/mapMode';
 import type { Viewpoint } from '../core/places/viewpoints';
+import type { ObservationPoint } from '../data/observation-points/catalog';
 import { readPalette } from '../styles/palette';
 import { horizonDistanceAt } from '../core/horizon/profile';
 import { track } from '../core/analytics';
@@ -319,6 +320,24 @@ export function MapScreen({
     [view, cloudGrid],
   );
 
+  /*
+   * QUI ÉS EL PUNT QUE ESTÀS MIRANT.
+   *
+   * Tocar una xinxeta recalculava tot des d'aquelles coordenades i LLENÇAVA
+   * la resta: el nom, qui l'ha convocat, l'enllaç a la font, si la coordenada
+   * és estimada i si allà l'eclipsi és només parcial. L'usuari veia números
+   * correctes d'un lloc sense nom, i havia de recordar què acabava de tocar.
+   *
+   * Això no substitueix el veredicte: hi va A SOBRE. El motor segueix manant
+   * sobre les xifres —és el que fem nosaltres i la competència no— i aquesta
+   * targeta només diu de qui són.
+   *
+   * Es buida en tocar el mapa a pèl: aquell gest tria un punt QUALSEVOL, i
+   * deixar-hi el nom d'un altre lloc seria la mena de mentida petita que fa
+   * dubtar de tota la pantalla.
+   */
+  const [place, setPlace] = useState<PickedPlace | null>(null);
+
   const [viewpoints, setViewpoints] = useState<readonly Viewpoint[] | null>(null);
   useEffect(() => {
     if (!layers.viewpoints) {
@@ -554,13 +573,16 @@ export function MapScreen({
             onPickPoi={(poi) => {
               // Un punt oficial es tria com qualsevol altre punt: el motor en
               // calcula les circumstàncies de debò, que és el que hi afegim
-              // nosaltres i la competència no.
+              // nosaltres i la competència no. El que NO es perd és qui és:
+              // la targeta d'identitat sobreviu al recàlcul.
               setFocus(null);
+              setPlace({ from: 'official', point: poi });
               onPickLocation(poi.lat, poi.lon);
             }}
             viewpoints={viewpoints}
             onPickViewpoint={(spot) => {
               setFocus(null);
+              setPlace({ from: 'viewpoint', spot });
               onPickLocation(spot.lat, spot.lon);
             }}
             cloudCells={cloudCells}
@@ -571,8 +593,11 @@ export function MapScreen({
             onPickLocation={(loc) => {
               // Tocar el mapa tanca el capítol de la cerca: el punt triat ja
               // té el seu marcador propi i el rètol del resultat només faria
-              // soroll damunt del gest important.
+              // soroll damunt del gest important. I tanca també el del lloc
+              // anterior: aquest gest tria un punt QUALSEVOL, i deixar-hi el
+              // nom d'un altre seria mentir.
               setFocus(null);
+              setPlace(null);
               onPickLocation(loc.lat, loc.lon);
             }}
           />
@@ -741,6 +766,16 @@ export function MapScreen({
               { value: 'align', label: s('map.view.align', locale) },
             ]}
           />
+
+          {/*
+            DE QUI SÓN LES XIFRES. Va damunt del commutador i fora de les
+            vistes perquè el lloc que has triat no depèn de quina pregunta
+            estiguis fent-li: canviar de «Franja» a «Núvols» no et canvia de
+            lloc.
+          */}
+          {place !== null && (
+            <PlaceCard place={place} locale={locale} onClear={() => setPlace(null)} />
+          )}
 
           {circumstances === null || contacts === null ? (
             <p className="screen__note">{s('map.compareNote', locale)}</p>
@@ -931,7 +966,25 @@ export function MapScreen({
                 eclipseId={eclipseId}
                 locale={locale}
                 origin={location}
-                onSelect={(spot) => onPickLocation(spot.lat, spot.lon)}
+                onSelect={(spot) => {
+                  /*
+                   * EL NÚMERO SURT DE LES XINXETES, no d'un índex nou: és
+                   * exactament el que porta la xinxeta al mapa i el que diu la
+                   * targeta de la llista, i qui torni a la vista «Franja» ha
+                   * de poder saber quin dels candidats està mirant. Si el
+                   * candidat no és a les xinxetes (llista buida per un canvi
+                   * de cerca), es queda sense número en comptes d'inventar-lo.
+                   */
+                  const pin = spotPins?.find(
+                    (p) => p.lat === spot.lat && p.lon === spot.lon,
+                  );
+                  setPlace({
+                    from: 'spot',
+                    name: formatCoords(spot.lat, spot.lon),
+                    rank: pin?.index ?? 0,
+                  });
+                  onPickLocation(spot.lat, spot.lon);
+                }}
                 onResults={setSpotPins}
               />
             </Suspense>
@@ -1107,6 +1160,126 @@ function searchNote(search: PlaceSearchApi, locale: Locale): string | null {
       // vol dir que n'hi ha una altra de camí.
       return null;
   }
+}
+
+/**
+ * El lloc que has triat, sigui d'on sigui.
+ *
+ * Una unió i no un objecte amb camps opcionals: un punt oficial SEMPRE té
+ * font i un mirador d'OSM no en té cap (l'atribució és del conjunt, no de
+ * cada cim), i barrejar-los en una sola forma amb tot opcional acaba amb una
+ * targeta que no sap què ha d'ensenyar.
+ */
+type PickedPlace =
+  | { from: 'official'; point: ObservationPoint }
+  | { from: 'viewpoint'; spot: Viewpoint }
+  | { from: 'spot'; name: string; rank: number };
+
+/**
+ * De qui són les xifres que hi ha a sota.
+ *
+ * VA A SOBRE DEL VEREDICTE I NO EL SUBSTITUEIX. La competència ensenya una
+ * fitxa pròpia per als seus punts oficials, amb les seves dades; nosaltres
+ * ensenyem la identitat del lloc i, a sota, el veredicte calculat pel motor
+ * amb el perfil de terreny d'aquell punt exacte. La font sempre visible és
+ * una regla d'aquest producte: si algú ha convocat gent en un lloc, qui hi
+ * vagi ha de poder anar a llegir-ho de primera mà.
+ */
+function PlaceCard({
+  place,
+  locale,
+  onClear,
+}: {
+  place: PickedPlace;
+  locale: Locale;
+  onClear: () => void;
+}) {
+  const overline =
+    place.from === 'official'
+      ? s('map.place.official', locale)
+      : place.from === 'viewpoint'
+        ? s(
+            place.spot.kind === 'peak' ? 'map.viewpoint.peak' : 'map.viewpoint.viewpoint',
+            locale,
+          )
+        : place.rank > 0
+        ? s('map.place.spot', locale, { rank: place.rank })
+        : s('map.place.spotNoRank', locale);
+
+  const name =
+    place.from === 'official'
+      ? place.point.name[locale]
+      : place.from === 'viewpoint'
+        ? place.spot.name
+        : place.name;
+
+  const elevationM =
+    place.from === 'official'
+      ? place.point.elevationM
+      : place.from === 'viewpoint'
+        ? place.spot.ele
+        : undefined;
+
+  return (
+    <div className="mapscreen__place">
+      <div className="mapscreen__placehead">
+        <div>
+          <span className="screen__overline">{overline}</span>
+          <p className="mapscreen__placename">{name}</p>
+        </div>
+        <IconButton
+          icon="x"
+          variant="ghost"
+          size="sm"
+          label={s('map.place.clear', locale)}
+          onClick={onClear}
+        />
+      </div>
+
+      {place.from === 'official' && (
+        <>
+          {/*
+            LA FONT, SEMPRE, I AMB ENLLAÇ. Si algú ha convocat gent en un
+            lloc, qui hi vagi ha de poder llegir-ho de primera mà: horaris,
+            si cal inscripció, si hi ha aparcament. Nosaltres calculem què es
+            veurà; qui organitza ho sap tot això i nosaltres no.
+          */}
+          <p className="screen__note">
+            {s('map.layers.source', locale)}: {place.point.source.who}
+            {' · '}
+            <a href={place.point.source.url} target="_blank" rel="noreferrer noopener">
+              {s('map.place.openSource', locale)}
+            </a>
+          </p>
+          {place.point.note !== undefined && (
+            <p className="screen__note">{place.point.note[locale]}</p>
+          )}
+          {/*
+            La frase genèrica NOMÉS quan el punt no en porta una de pròpia.
+            El catàleg de Madrid ja explica a cada entrada per què la
+            coordenada és el nucli del poble, i dir-ho dos cops seguits amb
+            paraules diferents fa dubtar de si són dues coses o una.
+          */}
+          {place.point.precision === 'estimated' && place.point.note === undefined && (
+            <p className="screen__note">{s('map.place.estimated', locale)}</p>
+          )}
+          {place.point.phase === 'partial' && (
+            <p className="screen__note">{s('map.layers.officialPartial', locale)}</p>
+          )}
+        </>
+      )}
+
+      {place.from === 'viewpoint' && (
+        <p className="screen__note">{s('map.viewpoints.osm', locale)}</p>
+      )}
+
+      {elevationM !== undefined && (
+        <p className="screen__note">
+          {s('map.place.elevation', locale, { m: Math.round(elevationM) })}
+        </p>
+      )}
+    </div>
+  );
 }
 
 /** El to de la insígnia de franja. El caire no és ni un sí ni un no. */

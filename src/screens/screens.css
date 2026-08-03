@@ -749,6 +749,35 @@
   background: var(--corona-100);
 }
 
+/*
+ * LA TARGETA D'IDENTITAT DEL LLOC.
+ *
+ * Va damunt de tot a la fitxa i té vora pròpia perquè es llegeixi com una
+ * capçalera i no com una dada més: diu DE QUI són les xifres de sota. Sense
+ * accent ambre —l'ambre és de la franja— i sense fons de color: si cridés,
+ * competiria amb el veredicte, que és el que la persona ha vingut a buscar.
+ */
+.mapscreen__place {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-4);
+  border-bottom: var(--bw-hair) solid var(--border-subtle);
+}
+
+.mapscreen__placehead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.mapscreen__placename {
+  margin: 0;
+  font: var(--text-title-3);
+  color: var(--text-primary);
+}
+
 .mapscreen__layernote {
   margin: 0;
   padding-top: var(--sp-3);

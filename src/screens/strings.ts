@@ -273,6 +273,25 @@ const STRINGS = {
     ca: 'El sector que tindràs davant, del primer contacte a l’últim.',
     es: 'El sector que tendrás delante, del primer contacto al último.',
   },
+  'map.place.official': {
+    ca: 'Punt d’observació oficial',
+    es: 'Punto de observación oficial',
+  },
+  'map.place.spot': { ca: 'Lloc candidat {rank}', es: 'Sitio candidato {rank}' },
+  'map.place.spotNoRank': { ca: 'Lloc candidat', es: 'Sitio candidato' },
+  'map.place.clear': { ca: 'Deixa d’ensenyar aquest lloc', es: 'Deja de mostrar este lugar' },
+  'map.place.openSource': { ca: 'Web oficial', es: 'Web oficial' },
+  'map.place.estimated': {
+    ca: 'La coordenada és aproximada: la font dona el municipi, no el recinte.',
+    es: 'La coordenada es aproximada: la fuente da el municipio, no el recinto.',
+  },
+  'map.place.elevation': { ca: '{m} m de cota', es: '{m} m de cota' },
+  'map.viewpoint.viewpoint': { ca: 'Mirador senyalitzat', es: 'Mirador señalizado' },
+  'map.viewpoint.peak': { ca: 'Cim', es: 'Cumbre' },
+  'map.viewpoints.osm': {
+    ca: 'Miradors i cims d’OpenStreetMap (ODbL 1.0).',
+    es: 'Miradores y cumbres de OpenStreetMap (ODbL 1.0).',
+  },
   'map.clouds.grain': {
     ca: 'Cada quadre fa 25 km i té un sol valor: el del seu centre.',
     es: 'Cada cuadro mide 25 km y tiene un solo valor: el de su centro.',
