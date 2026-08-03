@@ -1218,10 +1218,49 @@ function trimRetrogradeEnds(points: PathPoint[], center: PathPoint[]): PathPoint
 }
 
 /**
+ * LA MEMÒRIA DE LA FRANJA, UNA I COMPARTIDA.
+ *
+ * Aquest càlcul val entre 108 i 147 ms (mesurat, no estimat: 117,7 ms per al
+ * 2026, 144,3 per al 2027 i 133,1 per al 2028) i el demanen quatre llocs
+ * diferents —el mini-mapa de la portada, el mapa gran, la distància a la línia
+ * central i la graella del mapa de calor—, cada un amb la seva memòria pròpia.
+ * Quatre memòries volen dir que obrir la portada i després el mapa el paga dues
+ * vegades, i que el primer moviment del mapa de calor el torna a pagar.
+ *
+ * Es memoritza AQUÍ, al mòdul que el produeix, perquè és l'únic lloc on tots
+ * quatre hi passen. La clau porta el pas de mostreig: `stepSeconds` canvia la
+ * geometria i dues crides amb passos diferents no són la mateixa resposta.
+ *
+ * No es poda mai: són tres eclipsis i el mòdul viu tant com la pestanya.
+ */
+const pathCache = new Map<string, EclipsePath>();
+
+/**
  * Franja de centralitat completa de l'eclipsi: línia central, límit nord i
  * límit sud.
+ *
+ * MEMORITZADA: vegeu `pathCache`. Si necessites forçar el càlcul —una prova
+ * que mesuri el cost, per exemple— demana-la amb un `stepSeconds` explícit
+ * diferent, o buida la memòria amb `resetPathCache()`.
  */
 export function computeEclipsePath(eclipseId: string, options: PathOptions = {}): EclipsePath {
+  const key = `${eclipseId}@${options.stepSeconds ?? 60}`;
+  const cached = pathCache.get(key);
+  if (cached !== undefined) return cached;
+  const fresh = computeEclipsePathUncached(eclipseId, options);
+  pathCache.set(key, fresh);
+  return fresh;
+}
+
+/** Buida la memòria de franges. Només per a proves que mesurin el cost. */
+export function resetPathCache(): void {
+  pathCache.clear();
+}
+
+function computeEclipsePathUncached(
+  eclipseId: string,
+  options: PathOptions = {},
+): EclipsePath {
   const el = elementsFor(eclipseId);
   const kind = getEclipse(eclipseId).kind;
   const stepMs = (options.stepSeconds ?? 60) * 1000;

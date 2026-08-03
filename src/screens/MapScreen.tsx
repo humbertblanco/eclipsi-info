@@ -157,7 +157,8 @@ type View = MapView;
 /**
  * La línia central de l'eclipsi, guardada a nivell de mòdul.
  *
- * `computeEclipsePath` val ~30 ms. `EclipseMap` calcula la seva per dibuixar;
+ * `computeEclipsePath` val entre 117 i 144 ms segons l'eclipsi (mesurat), i
+ * ja es memoritza al seu mòdul. `EclipseMap` calcula la seva per dibuixar;
  * aquí només en cal la polilínia per mesurar-hi distàncies, i només a partir
  * del primer toc al mapa. No és un `useMemo` a posta: el mòdul sobreviu al
  * component, i canviar de pestanya i tornar no repeteix el càlcul.

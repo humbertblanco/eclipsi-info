@@ -17,12 +17,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GeoLocation } from '../../core/astro/types';
-import {
-  CLOUD_ERROR_TEXT,
-  CloudOutlookError,
-  getCloudOutlook,
-  type CloudOutlook,
-} from '../../core/weather';
+// Del mòdul concret i no del barril: aquest hook el fa servir el compte
+// enrere. Vegeu el raonament sencer a `CloudPanel.tsx`.
+import { CLOUD_ERROR_TEXT, CloudOutlookError, type CloudOutlook } from '../../core/weather/types';
+import { getCloudOutlook } from '../../core/weather/outlook';
 import { FALLBACK_LOCALE, type Locale } from '../../i18n';
 
 export interface UseCloudOutlookParams {

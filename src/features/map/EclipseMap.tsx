@@ -403,8 +403,11 @@ export function EclipseMap({
 
   const eclipse = getEclipse(eclipseId);
 
-  // La franja només depèn de l'eclipsi. Generar-la val ~30 ms: es memoritza
-  // perquè no es refaci a cada clic.
+  // La franja només depèn de l'eclipsi. Generar-la val entre 117 i 144 ms
+  // segons l'eclipsi (mesurat; el «~30 ms» que hi deia era fals i portava
+  // anys sense remesurar), i `computeEclipsePath` ja la memoritza al seu
+  // mòdul per a tots els llocs que la demanen. Aquest `useMemo` només evita
+  // refer el GeoJSON a cada clic.
   const geojson = useMemo(
     () => eclipsePathToGeoJson(computeEclipsePath(eclipseId)),
     [eclipseId],

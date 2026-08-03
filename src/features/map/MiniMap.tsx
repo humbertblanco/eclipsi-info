@@ -28,30 +28,43 @@
  *     geogràfica sencera contra l'element. Vegeu `minimapFrame.ts`.
  */
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { GeoLocation } from '../../core/astro/types';
-import { computeEclipsePath, type PathPoint } from '../../core/eclipses/path';
+/*
+ * NOMÉS ELS TIPUS, I L'IMPORT DE DEBÒ ÉS DINÀMIC (vegeu l'efecte de sota).
+ *
+ * `core/eclipses/path.ts` arrossega els elements besselians i és de les peces
+ * grosses del projecte. Amb un import estàtic viatjava al paquet d'ARRENCADA
+ * per culpa d'aquest widget, i el paga tothom que obre l'app encara que no
+ * miri mai el mapa. Els tipus s'esborren en compilar i no pesen res.
+ */
+import type { EclipsePath, PathPoint } from '../../core/eclipses/path';
 import { readPalette, withAlpha } from '../../styles/palette';
 import { coverTransform, minimapXY } from './minimapFrame';
 
 const BASE_SRC = `${import.meta.env.BASE_URL}brand/minimapa-iberia.png`;
 
 /*
- * La franja de cada eclipsi, calculada UN COP per mòdul. El càlcul val
- * ~30 ms: el mòdul sobreviu al component i canviar de pestanya i tornar no
- * el repeteix (mateix patró que `centerLineFor` de MapScreen).
+ * LA FRANJA NO ES CALCULA DURANT EL PRIMER RENDER, I AIXÒ VA COSTAR MIG SEGON.
+ *
+ * Aquí hi havia un `useMemo(() => pathFor(eclipseId))` amb un comentari que
+ * deia «val ~30 ms». La xifra era falsa i feia anys que ningú no la
+ * remesurava: `computeEclipsePath` val 117,7 ms per al 2026, 144,3 per al 2027
+ * i 133,1 per al 2028 en un portàtil ràpid i en calent. En un mòbil de gamma
+ * mitjana són quatre o cinc vegades més — mig segon de pantalla congelada
+ * ABANS del primer píxel útil, i just a la portada, que és la primera cosa que
+ * es veu i sovint amb dades mòbils.
+ *
+ * Ara es demana DESPRÉS de pintar, i el widget viu perfectament sense: mentre
+ * no hi és, ensenya la seva imatge base —que és un mapa de debò— i prou. La
+ * franja hi apareix un fotograma més tard i ningú no ho nota, perquè això és
+ * una PORTA cap al mapa, no el mapa.
+ *
+ * La memòria ja no és aquí: viu a `core/eclipses/path.ts`, compartida amb els
+ * altres tres llocs que la demanaven amb la seva memòria pròpia.
  */
-const pathCache = new Map<string, ReturnType<typeof computeEclipsePath>>();
-
-function pathFor(eclipseId: string) {
-  let path = pathCache.get(eclipseId);
-  if (path === undefined) {
-    path = computeEclipsePath(eclipseId);
-    pathCache.set(eclipseId, path);
-  }
-  return path;
-}
+type EclipsePathData = EclipsePath;
 
 interface Props {
   eclipseId: string;
@@ -65,7 +78,42 @@ interface Props {
 
 export function MiniMap({ eclipseId, location, label, onOpen }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const path = useMemo(() => pathFor(eclipseId), [eclipseId]);
+
+  /*
+   * El càlcul es demana en un efecte, o sigui DESPRÉS de la primera pintada, i
+   * a més dins d'un `requestIdleCallback` quan el navegador en té: així no
+   * competeix ni amb el compte enrere ni amb el que l'usuari estigui llegint.
+   * Safari encara no en té, i allà es cau a un `setTimeout(0)`, que almenys
+   * cedeix el fil un cop.
+   */
+  const [path, setPath] = useState<EclipsePathData | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    const compute = (): void => {
+      /*
+       * L'import és DINÀMIC: així el mòdul de la franja (i els elements
+       * besselians que arrossega) no viatgen al paquet d'arrencada. Quan
+       * l'usuari obri el mapa, el tros ja estarà baixat i en memòria.
+       */
+      void import('../../core/eclipses/path').then(({ computeEclipsePath }) => {
+        if (alive) setPath(computeEclipsePath(eclipseId));
+      });
+    };
+    const idle = (
+      window as unknown as {
+        requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+      }
+    ).requestIdleCallback;
+    const handle =
+      idle === undefined
+        ? window.setTimeout(compute, 0)
+        : idle(compute, { timeout: 1200 });
+    return () => {
+      alive = false;
+      if (idle === undefined) window.clearTimeout(handle);
+    };
+  }, [eclipseId]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -99,8 +147,9 @@ export function MiniMap({ eclipseId, location, label, onOpen }: Props) {
         });
       };
 
-      // La franja plena: el mateix ambre tènue del mapa gran.
-      if (path.northLimit.length > 1 && path.southLimit.length > 1) {
+      // La franja plena: el mateix ambre tènue del mapa gran. Mentre el
+      // càlcul no ha arribat, el widget ensenya la seva imatge base i prou.
+      if (path !== null && path.northLimit.length > 1 && path.southLimit.length > 1) {
         ctx.beginPath();
         path.northLimit.forEach((pt, i) => {
           const [x, y] = toXY(pt);
@@ -123,7 +172,7 @@ export function MiniMap({ eclipseId, location, label, onOpen }: Props) {
       }
 
       // La línia central, discontínua com al mapa gran.
-      if (path.center.length > 1) {
+      if (path !== null && path.center.length > 1) {
         ctx.setLineDash([4, 4]);
         ctx.strokeStyle = withAlpha(palette.corona100, 0.9);
         ctx.lineWidth = 1;

@@ -26,24 +26,39 @@
  */
 
 import type { GeoLocation } from '../../core/astro/types';
+/*
+ * DEL MÒDUL CONCRET, NO DEL BARRIL, i és una decisió de pes de paquet.
+ *
+ * `core/weather/index.ts` exporta també `climGrid.ts` —la graella de
+ * climatologia de núvols del mapa— i aquest component el renderitza el COMPTE
+ * ENRERE, que és la primera pintada. Importar del barril arrossegava
+ * `climGrid` sencer al paquet d'arrencada de tothom, per a una capa que només
+ * existeix dins del mapa i que la majoria no obrirà mai. Es va detectar
+ * buscant les cadenes `eclipsi.clouds-clim` i `scoringVersion` dins del chunk
+ * d'entrada compilat.
+ *
+ * Els barrils són còmodes i cars: un barril és una promesa que tot el que hi
+ * ha a dins viatja junt.
+ */
 import {
   BAND_MEANING,
   BAND_TITLE,
-  CONFIDENCE_LABEL,
-  LAYER_LABEL,
-  LAYER_NOTE,
-  LAYER_OPACITY,
-  LAYER_ORDER,
-  OPEN_METEO_ATTRIBUTION,
   describeAge,
   describeAgeSince,
   describeDominantLayer,
   describeHaze,
   describeLead,
   describeLineOfSight,
-  type CloudLayerId,
-  type CloudOutlook,
-} from '../../core/weather';
+} from '../../core/weather/describe';
+import { CONFIDENCE_LABEL } from '../../core/weather/outlook';
+import {
+  LAYER_LABEL,
+  LAYER_NOTE,
+  LAYER_OPACITY,
+  LAYER_ORDER,
+} from '../../core/weather/layers';
+import { OPEN_METEO_ATTRIBUTION } from '../../core/weather/openMeteo';
+import type { CloudLayerId, CloudOutlook } from '../../core/weather/types';
 import type { Locale } from '../../i18n';
 import { ws } from './strings';
 import { useCloudOutlook, type UseCloudOutlookResult } from './useCloudOutlook';
