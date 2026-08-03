@@ -171,11 +171,20 @@ describe('el retall a la franja', () => {
   });
 
   it('el marge eixampla la franja i no l’encongeix mai', () => {
-    // El límit de la franja té la seva pròpia incertesa: pintar just fins a la
-    // ratlla seria fingir una precisió que no tenim. Palma queda a fora per
-    // poc, i amb deu quilòmetres de marge entra.
+    /*
+     * El límit de la franja té la seva pròpia incertesa: pintar just fins a
+     * la ratlla seria fingir una precisió que no tenim.
+     *
+     * AQUÍ HI DEIA QUE PALMA QUEDAVA FORA, i era el defecte escrit en forma
+     * de prova. La franja es tancava amb una corda recta de 810 km entre els
+     * extrems dels dos límits i es menjava tot el llevant: Palma en té 96
+     * segons de totalitat. Amb les tapes del terminador ja hi és de ple, i el
+     * marge de deu quilòmetres no l'hi ha de fer entrar — l'ha de deixar
+     * igual de dins. El que el marge no pot fer MAI és encongir la franja, i
+     * això és el que aquesta prova vigila de debò.
+     */
     const clip = bandClipFor(ECLIPSE);
-    expect(bandContains(clip, 2.65, 39.57, 0)).toBe(false);
+    expect(bandContains(clip, 2.65, 39.57, 0)).toBe(true);
     expect(bandContains(clip, 2.65, 39.57, 10)).toBe(true);
 
     const view: HeatBbox = { west: -4, south: 40.5, east: -1, north: 42.5 };

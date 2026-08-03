@@ -1,7 +1,9 @@
 /**
  * El guió de la totalitat: què has de mirar, i quan, amb les TEVES hores.
  *
- * PER QUÈ EXISTEIX. La totalitat dura entre un i dos minuts i dins hi passen
+ * PER QUÈ EXISTEIX. La totalitat dura poc —el motor dona com a màxim 110 s
+ * sobre terra espanyola el 12-8-2026 i 62 s a València; el 2-8-2027 són 277 s
+ * a Tarifa— i dins hi passen
  * vuit o deu coses seguides. Qui hi arriba sense saber què buscar es passa la
  * meitat del temps buscant, i el que es perd no es recupera fins al pròxim
  * eclipsi. Això és un guió: una seqüència ordenada, ancorada als contactes
@@ -48,10 +50,13 @@
  *            1 000 lux al 99 % d'obscuració; ~5 lux durant la totalitat.
  *            ATENCIÓ: AQUESTES DUES XIFRES SÓN D'ECLIPSIS AMB EL SOL ALT i no
  *            es poden copiar en aquest guió. Els eclipsis espanyols de 2026 i
- *            2028 tenen el Sol entre 12° i 1° a la fase central (motor: la
- *            Corunya 12°, Maó 1,8° el 2026; Sevilla 7,3°, València 2,4° el
- *            2028), on el cel serè ja només dona des d'uns 17.000 lux fins a
- *            pocs milers arran d'horitzó, i el mateix percentatge tapat deixa
+ *            2028 tenen el Sol entre 12° i ran d'horitzó a la fase central
+ *            (motor: la Corunya 12,0° i Maó 1,8° el 2026; Huelva 8,0°, Sevilla
+ *            7,3°, València 2,4°, Barcelona 0,2° i Girona −0,4° el 2028 —
+ *            aquest rang deia «entre 12° i 1°» fins a l'auditoria de text del
+ *            3-8-2026, i el 2028 el Sol es pon durant l'anularitat al nord-est
+ *            de la franja), on el cel serè ja només dona des d'uns 16.800 lux
+ *            fins a menys de 2.000 arran d'horitzó, i el mateix percentatge tapat deixa
  *            molta menys llum en valor absolut. Per això aquí no s'escriu cap
  *            xifra de llum a mà: se li demana a `src/core/sky/illuminance.ts`,
  *            que és el model del projecte i està calibrat contra les mateixes
@@ -669,9 +674,16 @@ function totalityBeats(
       filterState: 'away-from-sun',
       look: 'around',
       title: { ca: 'Crepuscle de 360°', es: 'Crepúsculo de 360°' },
+      // «UN CENTENAR DE QUILÒMETRES» ERA TRES VEGADES MASSA POC (corregit a
+      // l'auditoria de text del 3-8-2026). Mesurat caminant perpendicularment
+      // a la franja des de la línia central amb `computeLocalCircumstances`
+      // fins que la fase central s'apaga: el 2026 la franja fa ~305 km a
+      // Astúries, ~305 a la meseta i ~295 al Mediterrani; el 2027, ~240 km a
+      // l'Estret. La idea —ets sota una taca petita comparada amb l'horitzó—
+      // no canvia, però la xifra escrita ha de ser la que surt del motor.
       text: {
-        ca: 'Aparta la vista del Sol un moment i gira sobre tu mateix. Tot l’horitzó té color de posta de sol, en totes direccions alhora, perquè ets sota una ombra d’un centenar de quilòmetres i fora d’ella encara és de dia.',
-        es: 'Aparta la vista del Sol un momento y gira sobre ti mismo. Todo el horizonte tiene color de puesta de sol, en todas direcciones a la vez, porque estás bajo una sombra de un centenar de kilómetros y fuera de ella todavía es de día.',
+        ca: 'Aparta la vista del Sol un moment i gira sobre tu mateix. Tot l’horitzó té color de posta de sol, en totes direccions alhora, perquè ets sota una ombra de pocs centenars de quilòmetres i fora d’ella encara és de dia.',
+        es: 'Aparta la vista del Sol un momento y gira sobre ti mismo. Todo el horizonte tiene color de puesta de sol, en todas direcciones a la vez, porque estás bajo una sombra de pocos centenares de kilómetros y fuera de ella todavía es de día.',
       },
       speech: { ca: 'Gira’t. Tot l’horitzó és color de posta.', es: 'Date la vuelta. Todo el horizonte es color de puesta.' },
     });

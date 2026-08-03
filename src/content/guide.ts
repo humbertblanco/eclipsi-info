@@ -7,6 +7,22 @@
  *
  * FONTS (totes consultades i verificades; res d'aquí és inventat):
  *
+ * [MOTOR]    El nostre propi motor, que MANA PER SOBRE DE TOTES LES ALTRES.
+ *            `computeLocalCircumstances` (`core/astro/contacts.ts`),
+ *            `computeEclipsePath` i `centralLineAt` (`core/eclipses/path.ts`) i
+ *            el model de llum de `core/sky`. Quan una font oficial diu una cosa
+ *            i el motor en diu una altra, s'escriu la del motor i el perquè al
+ *            costat: vegeu [IGN-2028] aquí sota.
+ *            AUDITORIA DEL 3-8-2026: es van recalcular TOTES les afirmacions
+ *            numèriques d'aquest fitxer sobre seixanta localitats i les tres
+ *            línies centrals. Set no quadraven i estan corregides — la durada
+ *            de la totalitat del 2026, els dos rangs d'altura del Sol, el buit
+ *            C1→C2, el buit C3→C4, l'angle d'una serra a 10 km, el radi de la
+ *            corona en graus i l'amplada de l'ombra. Cada correcció duu al
+ *            costat la xifra que dona el motor. Perquè no es tornin a separar
+ *            en silenci, ara les vigila `tests/afirmacions-del-text.test.ts`,
+ *            que les torna a calcular totes a cada `vitest run`.
+ *
  * [IGN-OBS]  IGN — «Cómo observar los eclipses: Protege tus ojos»
  *            https://eclipses.ign.es/como-observar-eclipses.html
  *            Filtres casolans desaconsellats (pel·lícules velades, disquets,
@@ -29,9 +45,14 @@
  *            Cal «esa parte del horizonte bien despejada de montes, árboles,
  *            edificios u otros obstáculos». La pàgina diu «Sol a 4-7°», però
  *            aquest interval NO cobreix tota la franja espanyola: el motor del
- *            projecte (computeLocalCircumstances) dona ~7° a Sevilla i ~2° a
- *            València al màxim. La guia escriu els valors del motor, no els de
- *            la pàgina.
+ *            projecte (computeLocalCircumstances) dona 8,4° a Ayamonte i 8,0° a
+ *            Huelva a l'extrem sud-oest, 7,3° a Sevilla, 2,4° a València, 0,2°
+ *            a Barcelona i −0,4° a Girona i −0,7° a Maó, on l'anularitat
+ *            arriba amb el Sol JA POST. La guia escriu els valors del motor,
+ *            no els de la pàgina. (Fins al 3-8-2026 aquesta nota deia «~7° a
+ *            Sevilla i ~2° a València», que és cert però són dos punts de
+ *            mig país: donaven la impressió que 2° era el mínim quan al
+ *            nord-est de la franja el Sol ja s'ha post.)
  * [IGN-COND] IGN — «Condiciones de observación»
  *            https://eclipses.ign.es/condiciones-de-observacion.html
  *            La refracció atmosfèrica altera l'altura aparent del Sol i l'efecte
@@ -55,15 +76,16 @@
  *            la pupil·la passa d'~1 mm a ~2 mm durant la parcial (×4 de llum).
  *            ATENCIÓ ABANS DE COPIAR-NE CAP XIFRA: totes són d'eclipsis amb el
  *            SOL ALT. Els espanyols del 2026 i el 2028 tenen el Sol entre 12° i
- *            1° a la fase central (motor: la Corunya 12°, Maó 1,8° el 2026;
- *            Sevilla 7,3°, València 2,4° el 2028), on el cel serè dona des
- *            d'uns 17.000 lux fins a pocs milers arran d'horitzó i el mateix
+ *            ran d'horitzó a la fase central (motor: la Corunya 12,0° i Maó
+ *            1,8° el 2026; Huelva 8,0°, Sevilla 7,3°, València 2,4°, Barcelona
+ *            0,2° i Girona −0,4° el 2028), on el cel serè dona des d'uns
+ *            17.000 lux fins a menys de 2.000 arran d'horitzó i el mateix
  *            percentatge tapat deixa molta menys llum en valor absolut. Aquest
  *            fitxer les cita com el que són —la referència de migdia— i al
  *            costat hi posa les del cas espanyol, que surten del model del
  *            projecte (`src/core/sky/illuminance.ts` amb la taula obscuració →
- *            flux de `solarDisc.ts`; amb el Sol a 60° dona 97.400 lux de cel
- *            serè, uns 570 al 99% d'obscuració i 7,1 a la totalitat — el 99%
+ *            flux de `solarDisc.ts`; amb el Sol a 60° dona 97.330 lux de cel
+ *            serè, 571 al 99% d'obscuració i 7,10 a la totalitat — el 99%
  *            queda per sota dels 1.000 de l'AAS perquè la Lluna acaba tapant
  *            el centre del disc, que brilla més que el limbe).
  *            El guió de la totalitat no n'escriu cap a mà: les demana al model
@@ -355,8 +377,13 @@ function guideCa(): GuideSection[] {
           kind: 'defs',
           items: [
             {
+              // El «entorn d'una hora i quart» que hi havia era la xifra del
+              // 2028 aplicada als tres. El motor dona C1→C2: el 2026, 56,7 min
+              // a la Corunya, 55,1 a Burgos, 54,1 a València i 53,0 a Palma;
+              // el 2027, 64,7 min a Cadis; el 2028, 77,8 min a Sevilla i 74,3
+              // a València. L'hora i quart només és certa per a l'anular.
               term: 'C1 — primer contacte',
-              text: 'La vora de la Lluna toca la vora del Sol i comença la mossegada. A ull nu no es nota res; amb el filtre veus una osca minúscula. Des d’aquí fins a C2 passa entorn d’una hora i quart.',
+              text: 'La vora de la Lluna toca la vora del Sol i comença la mossegada. A ull nu no es nota res; amb el filtre veus una osca minúscula. Des d’aquí fins a C2 passa entre cinquanta-cinc minuts (el 2026) i una hora i quart llarga (el 2028).',
             },
             {
               term: 'C2 — segon contacte',
@@ -367,8 +394,17 @@ function guideCa(): GuideSection[] {
               text: 'Reapareix el primer punt de Sol per l’altra banda. S’acaba la totalitat o l’anularitat. Els filtres han d’estar posats ABANS que arribi.',
             },
             {
+              // AQUÍ HI HAVIA UNA MITJA VERITAT que val la pena escriure: «una
+              // altra hora llarga després de C3». El motor dona C3→C4 de 50 a
+              // 53 min el 2026, 71 min el 2027 i 65-68 min el 2028. Però el
+              // que faltava és més gros: el 2026 i el 2028 el Sol es pon
+              // ABANS de C4 gairebé a tot arreu. Altura del Sol a C4 segons el
+              // motor — 2026: la Corunya +2,7°, Burgos −0,4°, València −4,2°,
+              // Palma −6,0°; 2028: Sevilla −5,1°, València −9,6°, Barcelona
+              // −11,7°. Prometre un C4 que la meitat de la gent no veurà és
+              // exactament el tipus de frase que aquesta auditoria busca.
               term: 'C4 — quart contacte',
-              text: 'La Lluna deixa el disc solar. Fi de l’eclipsi. Una altra hora llarga després de C3.',
+              text: 'La Lluna deixa el disc solar. Fi de l’eclipsi. Entre cinquanta minuts (el 2026) i poc més d’una hora (el 2027 i el 2028) després de C3. Compte: el 2026 i el 2028 el Sol es pon abans d’arribar-hi a gairebé tota la franja — a València el 2026 C4 cauria amb el Sol 4° per sota de l’horitzó, i a Barcelona el 2028, gairebé 12° per sota. El teu eclipsi s’acaba a la posta, no a C4.',
             },
             {
               term: 'Magnitud',
@@ -383,9 +419,13 @@ function guideCa(): GuideSection[] {
         {
           kind: 'p',
           // Xifres del motor amb el Sol a 12°: eclipseIlluminance(
-          // luminousFractionFromObscuration(0,90 | 0,99), 12) → 1.240 i 99,5
-          // lux; cel serè 16.791 lux. No són proporcionals al percentatge
-          // perquè la taula de solarDisc.ts descompta l'enfosquiment de limbe.
+          // luminousFractionFromObscuration(0,90 | 0,99), 12).totalLux →
+          // 1.240,1 i 99,5 lux; clearSkyIlluminanceLux(12) → 16.778,9. (Aquest
+          // comentari deia 16.791; recomprovat el 3-8-2026 dona 16.778,9. La
+          // diferència no arriba al 0,1 % i no toca el text, que diu «uns
+          // 17 000», però una xifra escrita ha de ser la que surt de córrer-ho.)
+          // No són proporcionals al percentatge perquè la taula de
+          // solarDisc.ts descompta l'enfosquiment de limbe.
           text: 'Una obscuració del 90% sona a molt i visualment no és res. Les xifres que se citen sempre —100 000 lux amb el Sol ple, 1 000 lux al 99% d’obscuració— són de migdia, amb el Sol ben alt. Els eclipsis espanyols del 2026 i el 2028 no són així: el Sol és a pocs graus de l’horitzó i tot el rang baixa d’un cop. A Astúries, amb el Sol a 12°, el cel serè dona uns 17 000 lux; al 90% tapat en queden uns 1 200, i al 99%, un centenar. No és la regla de tres que esperaves: la Lluna acaba tapant el centre del disc, que és la part que més brilla. El percentatge enganya igual, però des de molt més avall.',
         },
         {
@@ -396,10 +436,13 @@ function guideCa(): GuideSection[] {
           kind: 'callout',
           tone: 'info',
           title: 'Tota la caiguda és als últims segons',
-          // Motor: amb el Sol a 60°, del 99% (571 lux) a la totalitat (7,1)
-          // hi ha un factor ~80; amb el Sol a 12°, de 99,5 lux a 2,2, un
-          // factor ~45. D'aquí el «entre cinquanta i cent vegades».
-          text: 'Del 99% a la totalitat la llum encara es divideix entre cinquanta i cent vegades, concentrat en menys d’un minut: molt més ràpid del que l’ull es pot adaptar. Amb el Sol alt es passa d’uns 570 lux a uns 7; amb el Sol espanyol a 12°, d’un centenar a poc més de 2, que ja és fons de cel de nit. La caiguda relativa és semblant i el salt es nota igual. Per això la totalitat no “arriba”, sinó que et cau a sobre. I per això un 99% i un 100% són experiències diferents, no la mateixa amb un pèl més o menys. Les xifres del teu punt, amb la teva altura del Sol, les calcula el compte enrere.',
+          // Motor: amb el Sol a 60°, del 99% (571,0 lux) a la totalitat (7,10)
+          // hi ha un factor 80,4; amb el Sol a 12°, de 99,5 lux a 2,22, un
+          // factor 44,9; a 4°, 41,2; a 2°, 40,4. Aquí hi deia «entre cinquanta
+          // i cent vegades» i el cas espanyol —que és el que ens importa—
+          // queda per SOTA de cinquanta: la forquilla honesta és quaranta a
+          // vuitanta, i el sostre de cent no el toca cap dels nostres casos.
+          text: 'Del 99% a la totalitat la llum encara es divideix entre quaranta i vuitanta vegades, concentrat en menys d’un minut: molt més ràpid del que l’ull es pot adaptar. Amb el Sol alt es passa d’uns 570 lux a uns 7; amb el Sol espanyol a 12°, d’un centenar a poc més de 2, que ja és fons de cel de nit. La caiguda relativa és semblant i el salt es nota igual. Per això la totalitat no “arriba”, sinó que et cau a sobre. I per això un 99% i un 100% són experiències diferents, no la mateixa amb un pèl més o menys. Les xifres del teu punt, amb la teva altura del Sol, les calcula el compte enrere.',
         },
       ],
     },
@@ -441,8 +484,14 @@ function guideCa(): GuideSection[] {
               text: 'El motiu del viatge. Un halo nacrat i estructurat, amb serpentines que poden arribar a diversos radis solars de distància. Cap fotografia se li assembla: el rang dinàmic que veu l’ull no cap en cap sensor. Mira-la a ull nu i després amb prismàtics.',
             },
             {
+              // «Un centenar de quilòmetres» era tres vegades massa poc.
+              // Mesurat amb el motor caminant perpendicularment a la franja
+              // des de la línia central fins que la totalitat s'apaga: el 2026
+              // la franja fa ~305 km a Astúries, ~305 a la meseta i ~295 al
+              // Mediterrani; el 2027, ~240 km a l'Estret. La idea (ets sota una
+              // taca petita comparada amb l'horitzó) no canvia; la xifra sí.
               term: 'Crepuscle de 360°',
-              text: 'Aparta la vista del Sol un moment i gira sobre tu mateix: tot l’horitzó té color de posta de sol, en totes direccions alhora, perquè estàs sota una ombra de només un centenar de quilòmetres i fora d’ella encara és de dia.',
+              text: 'Aparta la vista del Sol un moment i gira sobre tu mateix: tot l’horitzó té color de posta de sol, en totes direccions alhora, perquè estàs sota una ombra de dos-cents o tres-cents quilòmetres d’amplada —el 2026 en fa uns 305 sobre Espanya— i fora d’ella encara és de dia.',
             },
             {
               term: 'Planetes i estrelles',
@@ -458,7 +507,13 @@ function guideCa(): GuideSection[] {
           kind: 'callout',
           tone: 'warn',
           title: 'Reserva els deu últims segons per no fer res',
-          text: 'La totalitat de 2026 durarà entre un minut i mig i dos minuts segons on siguis. Si te’ls passes comprovant l’enfocament, te l’hauràs perdut. Decideix per endavant quins segons dediques a la càmera i quins a mirar, i quan arribi C3, para.',
+          // «Entre un minut i mig i dos minuts» era generós pels dos costats.
+          // El motor sobre la línia central, allà on entra a terra per la
+          // costa asturiana, dona 110 s: el màxim d'Espanya és 1 min 50 s, no
+          // dos minuts. I a sota, la caiguda és molt més ràpida del que
+          // suggeria: València 62 s, Maó 68 s, Tarragona 58 s, Santander 60 s,
+          // Vitòria 60 s. Un minut i mig NO és el mínim, és gairebé el màxim.
+          text: 'La totalitat de 2026 és curta i on siguis mana molt: el màxim sobre terra espanyola és 1 min 50 s, a la línia central per on entra a Astúries, i baixa de pressa cap a les vores — a València són 62 segons, a Maó 68 i a Tarragona 58. Si te’ls passes comprovant l’enfocament, te l’hauràs perdut. Decideix per endavant quins segons dediques a la càmera i quins a mirar, i quan arribi C3, para.',
         },
       ],
     },
@@ -471,19 +526,37 @@ function guideCa(): GuideSection[] {
       blocks: [
         {
           kind: 'p',
-          // Rangs del motor a la fase central: 2026 la Corunya 12°, Oviedo
-          // 10,3°, Burgos 8,3°, Maó 1,8°; 2028 Sevilla 7,3°, València 2,4°.
-          text: 'El 12 d’agost de 2026 la totalitat passa al capvespre, amb el Sol entre uns 12° i poc més d’1° sobre l’horitzó segons on siguis: com més a l’est de la península, més baix. El 26 de gener de 2028 l’anularitat arriba amb el Sol entre uns 7° i amb prou feines 2° a ponent: com més al nord-est de la franja, més baix. En tots dos casos el problema no és el cel: és el que tens al davant.',
+          // Rangs recalculats el 3-8-2026 sobre tota la franja, no sobre dos
+          // punts. 2026: Malpica 12,3°, la Corunya 12,0°, Oviedo 10,3°, Burgos
+          // 8,3°, València 4,6°, Palma 2,6°, Maó 1,8°, Illa de l'Aire 1,7°.
+          // 2028: Ayamonte 8,4°, Huelva 8,0°, Sevilla 7,3°, València 2,4°,
+          // Tarragona 0,8°, Barcelona 0,16°, Palma 0,4°, Girona −0,4°, Maó
+          // −0,7°, cap de Creus −0,8°. Deia «poc més d'1°» (el mínim real
+          // arrodoneix a 2°) i «amb prou feines 2°» per al 2028, quan al
+          // nord-est el Sol ja s'ha post durant l'anularitat.
+          text: 'El 12 d’agost de 2026 la totalitat passa al capvespre, amb el Sol de 12° a menys de 2° sobre l’horitzó segons on siguis: com més a l’est de la franja, més baix — 12° a la Corunya, 8° a Burgos, 4,6° a València, 1,8° a Maó. El 26 de gener de 2028 l’anularitat arriba encara més baixa: 8° a Huelva, 7° a Sevilla, 2,4° a València, i a Barcelona el Sol es pon durant l’anularitat mateixa (0,2° al màxim), mentre que a Girona i a Maó ja s’ha post abans d’arribar-hi. En tots dos casos el problema no és el cel: és el que tens al davant.',
         },
         {
           kind: 'callout',
           tone: 'warn',
           title: 'No n’hi ha prou que es vegi el disc del Sol',
-          text: 'El que vas a veure no és el disc: és la corona, que s’escampa al seu voltant. Les serpentines coronals arriben habitualment a quatre o sis radis solars, i com que el radi del Sol fa uns 0,27°, això vol dir un halo d’un grau i mig o dos de radi. Sumant-hi que el Sol continua baixant durant la totalitat i que a poca altura l’extinció atmosfèrica ja se’n menja bona part, la regla pràctica és deixar uns 3° lliures per damunt de l’obstacle, no zero. Un turó que “només” tapa fins a 2° et deixa veure el Sol i et roba mitja corona.',
+          // L'aritmètica no quadrava. El motor dona R☉ = 0,2631° el 12-8-2026,
+          // 0,2627° el 2-8-2027 i 0,2707° el 26-1-2028 (l'agost la Terra és a
+          // prop de l'afeli i el Sol es veu més petit). Amb 0,26°, quatre a sis
+          // radis solars fan de 1,05° a 1,58°, no «un grau i mig o dos», que
+          // demanaria set radis. Es corregeix la xifra i es manté la regla dels
+          // 3°, que no en depèn: hi entra el descens del Sol durant la
+          // totalitat i l'extinció arran d'horitzó.
+          text: 'El que vas a veure no és el disc: és la corona, que s’escampa al seu voltant. Les serpentines coronals arriben habitualment a quatre o sis radis solars, i com que el radi del Sol fa uns 0,26° a l’agost, això vol dir un halo d’entre un grau i un grau i mig de radi. Sumant-hi que el Sol continua baixant durant la totalitat i que a poca altura l’extinció atmosfèrica ja se’n menja bona part, la regla pràctica és deixar uns 3° lliures per damunt de l’obstacle, no zero. Un turó que “només” tapa fins a 2° et deixa veure el Sol i et roba mitja corona.',
         },
         {
           kind: 'p',
-          text: 'Tres graus són molt més del que sembla des de terra. Un edifici de sis plantes a cent metres ja ocupa uns 10°. Una serra a deu quilòmetres que s’aixequi 500 m per damunt teu també. El puny tancat amb el braç estirat fa uns 10°: si des d’on penses posar-te la silueta de l’oest queda per sota de mig puny, vas just.',
+          // «Una serra a deu quilòmetres que s'aixequi 500 m també [ocupa 10°]»
+          // era fals per un factor 3,5: arctan(500/10.000) = 2,9°. Per ocupar
+          // 10° a deu quilòmetres caldrien 1.760 m per damunt teu. I resulta
+          // que la xifra correcta és MILLOR exemple que la falsa, perquè 2,9°
+          // és exactament el marge de 3° del paràgraf anterior.
+          text: 'Tres graus són molt més del que sembla des de terra. Un edifici de sis plantes a cent metres ja n’ocupa 10. Una serra a deu quilòmetres que s’aixequi 500 m per damunt teu n’ocupa 2,9 — i encara n’hi has de deixar tres més lliures per damunt d’ella. El puny tancat amb el braç estirat fa uns 10°: si des d’on penses posar-te la silueta de l’oest queda per sota de mig puny, vas just.',
         },
         {
           kind: 'list',
@@ -534,7 +607,7 @@ function guideCa(): GuideSection[] {
             },
             {
               term: 'Focal recomanada',
-              text: 'Entre 200 i 500 mm tens la corona amb marge i l’enquadrament no és crític, que amb dos minuts de temps és el que importa. Si portes dos cossos, el segon amb un gran angular fix apuntat a l’escena, gravant vídeo, capta les cares i la llum ambiental — que és el que després recordes.',
+              text: 'Entre 200 i 500 mm tens la corona amb marge i l’enquadrament no és crític, que amb un o dos minuts de temps és el que importa. Si portes dos cossos, el segon amb un gran angular fix apuntat a l’escena, gravant vídeo, capta les cares i la llum ambiental — que és el que després recordes.',
             },
             {
               term: 'Enquadrament amb Sol baix',
@@ -558,7 +631,11 @@ function guideCa(): GuideSection[] {
           kind: 'callout',
           tone: 'warn',
           title: 'La regla que t’estalviarà el penediment',
-          text: 'Si és el teu primer eclipsi total, no facis fotos, o fes-ne amb la càmera automatitzada i sense mirar-la. La totalitat dura dos minuts i mai la recuperaràs; fotografies de la corona n’hi ha milions de millors que la teva. Mira-la amb els ulls.',
+          // «La totalitat dura dos minuts» no és certa de cap dels dos totals:
+          // el motor dona com a màxim 110 s sobre terra espanyola el 2026 (i
+          // 62 s a València) i 277 s a Tarifa el 2027. Dir-ho amb els dos
+          // números fa la frase MÉS punyent, no menys.
+          text: 'Si és el teu primer eclipsi total, no facis fotos, o fes-ne amb la càmera automatitzada i sense mirar-la. La totalitat del 2026 dura un minut o poc més —1 min 50 s al millor punt d’Espanya, 62 segons a València— i la del 2027, quatre minuts i mig a l’Estret. No la recuperaràs mai; fotografies de la corona n’hi ha milions de millors que la teva. Mira-la amb els ulls.',
         },
       ],
     },
@@ -705,8 +782,10 @@ function guideEs(): GuideSection[] {
           kind: 'defs',
           items: [
             {
+              // Mirall castellà: C1→C2 pel motor — 2026, 56,7 min a la Corunya
+              // i 53,0 a Palma; 2027, 64,7 a Cadis; 2028, 77,8 a Sevilla.
               term: 'C1 — primer contacto',
-              text: 'El borde de la Luna toca el borde del Sol y empieza el mordisco. A simple vista no se nota nada; con el filtro ves una muesca minúscula. De aquí a C2 pasa alrededor de una hora y cuarto.',
+              text: 'El borde de la Luna toca el borde del Sol y empieza el mordisco. A simple vista no se nota nada; con el filtro ves una muesca minúscula. De aquí a C2 pasan entre cincuenta y cinco minutos (en 2026) y una hora y cuarto larga (en 2028).',
             },
             {
               term: 'C2 — segundo contacto',
@@ -717,8 +796,11 @@ function guideEs(): GuideSection[] {
               text: 'Reaparece el primer punto de Sol por el otro lado. Se acaba la totalidad o la anularidad. Los filtros deben estar puestos ANTES de que llegue.',
             },
             {
+              // Mirall castellà: C3→C4 de 50-53 min el 2026, 71 el 2027 i
+              // 65-68 el 2028; i el Sol a C4 sota l'horitzó gairebé a tota la
+              // franja del 2026 (València −4,2°) i del 2028 (Barcelona −11,7°).
               term: 'C4 — cuarto contacto',
-              text: 'La Luna abandona el disco solar. Fin del eclipse. Otra hora larga después de C3.',
+              text: 'La Luna abandona el disco solar. Fin del eclipse. Entre cincuenta minutos (en 2026) y poco más de una hora (en 2027 y 2028) después de C3. Ojo: en 2026 y 2028 el Sol se pone antes de llegar en casi toda la franja — en Valencia, en 2026, C4 caería con el Sol 4° por debajo del horizonte, y en Barcelona, en 2028, casi 12° por debajo. Tu eclipse acaba en la puesta, no en C4.',
             },
             {
               term: 'Magnitud',
@@ -733,7 +815,7 @@ function guideEs(): GuideSection[] {
         {
           kind: 'p',
           // Mirall castellà del paràgraf català: mateixes xifres del motor
-          // (Sol a 12°: 16.791 lux serè; 1.240 al 90%; 99,5 al 99%).
+          // (Sol a 12°: 16.778,9 lux serè; 1.240,1 al 90%; 99,5 al 99%).
           text: 'Una oscuración del 90% suena a mucho y visualmente no es nada. Las cifras que siempre se citan —100 000 lux con el Sol pleno, 1 000 lux al 99% de oscuración— son de mediodía, con el Sol bien alto. Los eclipses españoles de 2026 y 2028 no son así: el Sol está a pocos grados del horizonte y todo el rango baja de golpe. En Asturias, con el Sol a 12°, el cielo despejado da unos 17 000 lux; al 90% tapado quedan unos 1 200, y al 99%, un centenar. No es la regla de tres que esperabas: la Luna acaba tapando el centro del disco, que es la parte que más brilla. El porcentaje engaña igual, pero desde mucho más abajo.',
         },
         {
@@ -744,9 +826,10 @@ function guideEs(): GuideSection[] {
           kind: 'callout',
           tone: 'info',
           title: 'Toda la caída está en los últimos segundos',
-          // Mirall castellà: motor a 60° → 571 → 7,1 lux (×~80); a 12° →
-          // 99,5 → 2,2 lux (×~45).
-          text: 'Del 99% a la totalidad la luz todavía se divide entre cincuenta y cien veces, concentrado en menos de un minuto: mucho más rápido de lo que el ojo puede adaptarse. Con el Sol alto se pasa de unos 570 lux a unos 7; con el Sol español a 12°, de un centenar a poco más de 2, que ya es fondo de cielo nocturno. La caída relativa es parecida y el salto se nota igual. Por eso la totalidad no «llega», sino que se te echa encima. Y por eso un 99% y un 100% son experiencias distintas, no la misma con un poco más o menos. Las cifras de tu punto, con tu altura del Sol, las calcula la cuenta atrás.',
+          // Mirall castellà: motor a 60° → 571,0 → 7,10 lux (×80,4); a 12° →
+          // 99,5 → 2,22 lux (×44,9); a 4° ×41,2; a 2° ×40,4. El cas espanyol
+          // queda per sota de cinquanta: la forquilla és 40-80, no 50-100.
+          text: 'Del 99% a la totalidad la luz todavía se divide entre cuarenta y ochenta veces, concentrado en menos de un minuto: mucho más rápido de lo que el ojo puede adaptarse. Con el Sol alto se pasa de unos 570 lux a unos 7; con el Sol español a 12°, de un centenar a poco más de 2, que ya es fondo de cielo nocturno. La caída relativa es parecida y el salto se nota igual. Por eso la totalidad no «llega», sino que se te echa encima. Y por eso un 99% y un 100% son experiencias distintas, no la misma con un poco más o menos. Las cifras de tu punto, con tu altura del Sol, las calcula la cuenta atrás.',
         },
       ],
     },
@@ -789,7 +872,9 @@ function guideEs(): GuideSection[] {
             },
             {
               term: 'Crepúsculo de 360°',
-              text: 'Aparta la vista del Sol un momento y gira sobre ti mismo: todo el horizonte tiene color de puesta de sol, en todas direcciones a la vez, porque estás bajo una sombra de apenas un centenar de kilómetros y fuera de ella todavía es de día.',
+              // Mirall castellà: ~305 km d'amplada el 2026 sobre Espanya i
+              // ~240 el 2027, mesurats caminant perpendicularment a la franja.
+              text: 'Aparta la vista del Sol un momento y gira sobre ti mismo: todo el horizonte tiene color de puesta de sol, en todas direcciones a la vez, porque estás bajo una sombra de doscientos o trescientos kilómetros de ancho —en 2026 mide unos 305 sobre España— y fuera de ella todavía es de día.',
             },
             {
               term: 'Planetas y estrellas',
@@ -805,7 +890,9 @@ function guideEs(): GuideSection[] {
           kind: 'callout',
           tone: 'warn',
           title: 'Reserva los diez últimos segundos para no hacer nada',
-          text: 'La totalidad de 2026 durará entre un minuto y medio y dos minutos según dónde estés. Si te los pasas comprobando el enfoque, te la habrás perdido. Decide de antemano qué segundos dedicas a la cámara y cuáles a mirar, y cuando llegue C3, para.',
+          // Mirall castellà: màxim 110 s a la línia central asturiana;
+          // València 62 s, Maó 68 s, Tarragona 58 s.
+          text: 'La totalidad de 2026 es corta y dónde estés manda mucho: el máximo sobre tierra española es 1 min 50 s, en la línea central por donde entra en Asturias, y baja deprisa hacia los bordes — en Valencia son 62 segundos, en Mahón 68 y en Tarragona 58. Si te los pasas comprobando el enfoque, te la habrás perdido. Decide de antemano qué segundos dedicas a la cámara y cuáles a mirar, y cuando llegue C3, para.',
         },
       ],
     },
@@ -818,19 +905,24 @@ function guideEs(): GuideSection[] {
       blocks: [
         {
           kind: 'p',
-          // Mirall castellà: rangs del motor (2026: 12° → 1,8°; 2028: 7,3° →
-          // 2,4° entre Sevilla i València).
-          text: 'El 12 de agosto de 2026 la totalidad ocurre al atardecer, con el Sol entre unos 12° y poco más de 1° sobre el horizonte según dónde estés: cuanto más al este de la península, más bajo. El 26 de enero de 2028 la anularidad llega con el Sol entre unos 7° y apenas 2° al oeste: cuanto más al noreste de la franja, más bajo. En ambos casos el problema no es el cielo: es lo que tienes delante.',
+          // Mirall castellà dels rangs recalculats el 3-8-2026 sobre tota la
+          // franja (2026: 12,3° Malpica → 1,7° Illa de l'Aire; 2028: 8,4°
+          // Ayamonte → −0,8° cap de Creus).
+          text: 'El 12 de agosto de 2026 la totalidad ocurre al atardecer, con el Sol de 12° a menos de 2° sobre el horizonte según dónde estés: cuanto más al este de la franja, más bajo — 12° en A Coruña, 8° en Burgos, 4,6° en Valencia, 1,8° en Mahón. El 26 de enero de 2028 la anularidad llega todavía más baja: 8° en Huelva, 7° en Sevilla, 2,4° en Valencia, y en Barcelona el Sol se pone durante la anularidad misma (0,2° en el máximo), mientras que en Girona y en Mahón ya se ha puesto antes de llegar. En ambos casos el problema no es el cielo: es lo que tienes delante.',
         },
         {
           kind: 'callout',
           tone: 'warn',
           title: 'No basta con que se vea el disco del Sol',
-          text: 'Lo que vas a ver no es el disco: es la corona, que se extiende a su alrededor. Las serpentinas coronales llegan habitualmente a cuatro o seis radios solares, y como el radio del Sol mide unos 0,27°, eso significa un halo de grado y medio o dos de radio. Sumando que el Sol sigue bajando durante la totalidad y que a poca altura la extinción atmosférica ya se come buena parte, la regla práctica es dejar unos 3° libres por encima del obstáculo, no cero. Una colina que «solo» tapa hasta 2° te deja ver el Sol y te roba media corona.',
+          // Mirall castellà: R☉ = 0,2631° (2026), 0,2627° (2027), 0,2707°
+          // (2028) segons el motor; 4-6 R☉ = 1,05°-1,58°.
+          text: 'Lo que vas a ver no es el disco: es la corona, que se extiende a su alrededor. Las serpentinas coronales llegan habitualmente a cuatro o seis radios solares, y como el radio del Sol mide unos 0,26° en agosto, eso significa un halo de entre un grado y grado y medio de radio. Sumando que el Sol sigue bajando durante la totalidad y que a poca altura la extinción atmosférica ya se come buena parte, la regla práctica es dejar unos 3° libres por encima del obstáculo, no cero. Una colina que «solo» tapa hasta 2° te deja ver el Sol y te roba media corona.',
         },
         {
           kind: 'p',
-          text: 'Tres grados son mucho más de lo que parece desde el suelo. Un edificio de seis plantas a cien metros ya ocupa unos 10°. Una sierra a diez kilómetros que se eleve 500 m por encima de ti, también. El puño cerrado con el brazo estirado mide unos 10°: si desde donde piensas ponerte la silueta del oeste queda por debajo de medio puño, vas justo.',
+          // Mirall castellà: arctan(500/10.000) = 2,9°, no 10°. Per ocupar 10°
+          // a deu quilòmetres caldrien 1.760 m.
+          text: 'Tres grados son mucho más de lo que parece desde el suelo. Un edificio de seis plantas a cien metros ya ocupa 10. Una sierra a diez kilómetros que se eleve 500 m por encima de ti ocupa 2,9 — y todavía tienes que dejar tres más libres por encima de ella. El puño cerrado con el brazo estirado mide unos 10°: si desde donde piensas ponerte la silueta del oeste queda por debajo de medio puño, vas justo.',
         },
         {
           kind: 'list',
@@ -881,7 +973,7 @@ function guideEs(): GuideSection[] {
             },
             {
               term: 'Focal recomendada',
-              text: 'Entre 200 y 500 mm tienes la corona con margen y el encuadre no es crítico, que con dos minutos de tiempo es lo que importa. Si llevas dos cuerpos, el segundo con un gran angular fijo apuntado a la escena, grabando vídeo, capta las caras y la luz ambiental, que es lo que luego recuerdas.',
+              text: 'Entre 200 y 500 mm tienes la corona con margen y el encuadre no es crítico, que con uno o dos minutos de tiempo es lo que importa. Si llevas dos cuerpos, el segundo con un gran angular fijo apuntado a la escena, grabando vídeo, capta las caras y la luz ambiental, que es lo que luego recuerdas.',
             },
             {
               term: 'Encuadre con Sol bajo',
@@ -905,7 +997,9 @@ function guideEs(): GuideSection[] {
           kind: 'callout',
           tone: 'warn',
           title: 'La regla que te ahorrará el arrepentimiento',
-          text: 'Si es tu primer eclipse total, no hagas fotos, o hazlas con la cámara automatizada y sin mirarla. La totalidad dura dos minutos y nunca la recuperarás; fotografías de la corona hay millones mejores que la tuya. Mírala con los ojos.',
+          // Mirall castellà: 110 s màxim sobre terra el 2026 (62 s a València)
+          // i 277 s a Tarifa el 2027. «Dos minutos» no era cert de cap.
+          text: 'Si es tu primer eclipse total, no hagas fotos, o hazlas con la cámara automatizada y sin mirarla. La totalidad de 2026 dura un minuto o poco más —1 min 50 s en el mejor punto de España, 62 segundos en Valencia— y la de 2027, cuatro minutos y medio en el Estrecho. No la recuperarás nunca; fotografías de la corona hay millones mejores que la tuya. Mírala con los ojos.',
         },
       ],
     },
@@ -1003,14 +1097,16 @@ const HIGHLIGHTS: Record<string, Record<Locale, EclipseHighlight>> = {
     ca: {
       tone: 'warn',
       title: 'Total, al capvespre i amb el Sol molt baix',
-      // El 12°–1° surt del motor: la Corunya 12° i Maó 1,8° a la totalitat.
-      text: 'Durant la totalitat, i només llavors, et pots treure el filtre. Però el Sol estarà entre 12° i poc més d’1° sobre l’horitzó: el lloc que triïs, i què tinguis cap a ponent, decideix si ho veus o no. Llegeix la secció de Sol baix abans de decidir on vas.',
+      // El rang surt del motor sobre la franja sencera: 12,3° a Malpica de
+      // Bergantiños i 12,0° a la Corunya per dalt, 1,8° a Maó i 1,7° a l'Illa
+      // de l'Aire per baix. Deia «poc més d'1°»; el mínim arrodoneix a 2°.
+      text: 'Durant la totalitat, i només llavors, et pots treure el filtre. Però el Sol estarà de 12° a menys de 2° sobre l’horitzó: el lloc que triïs, i què tinguis cap a ponent, decideix si ho veus o no. Llegeix la secció de Sol baix abans de decidir on vas.',
     },
     es: {
       tone: 'warn',
       title: 'Total, al atardecer y con el Sol muy bajo',
-      // Mirall castellà del 12°–1° del motor (la Corunya 12°, Maó 1,8°).
-      text: 'Durante la totalidad, y solo entonces, puedes quitarte el filtro. Pero el Sol estará entre 12° y poco más de 1° sobre el horizonte: el sitio que elijas, y qué tengas hacia poniente, decide si lo ves o no. Lee la sección de Sol bajo antes de decidir a dónde vas.',
+      // Mirall castellà del rang del motor (Malpica 12,3°, Maó 1,8°).
+      text: 'Durante la totalidad, y solo entonces, puedes quitarte el filtro. Pero el Sol estará de 12° a menos de 2° sobre el horizonte: el sitio que elijas, y qué tengas hacia poniente, decide si lo ves o no. Lee la sección de Sol bajo antes de decidir a dónde vas.',
     },
   },
   '2027-08-02': {
@@ -1032,14 +1128,19 @@ const HIGHLIGHTS: Record<string, Record<Locale, EclipseHighlight>> = {
     ca: {
       tone: 'bad',
       title: 'ANULAR: el filtre no es treu en cap moment',
-      // El 7°–2° surt del motor: Sevilla 7,3° i València 2,4° al màxim.
-      text: 'Aquest eclipsi NO és total. Queda sempre un anell de Sol visible i crema igual que el Sol sencer. A diferència del 2026 i el 2027, aquí no hi ha ni un segon en què es pugui mirar sense filtre homologat — ni durant l’anularitat. A sobre, el Sol serà entre uns 7° i amb prou feines 2° sobre l’horitzó de ponent, així que també et cal l’horitzó lliure.',
+      // El «7°–2°» d'abans eren Sevilla i València: dos punts de mig país
+      // presentats com si fossin els extrems. El motor sobre la franja sencera
+      // dona 8,4° a Ayamonte i 8,0° a Huelva per dalt, i per baix el Sol ja
+      // s'ha post — Barcelona 0,16° al màxim (es pon entre el màxim i C3),
+      // Palma 0,38°, Girona −0,39°, Maó −0,69°, cap de Creus −0,78°.
+      text: 'Aquest eclipsi NO és total. Queda sempre un anell de Sol visible i crema igual que el Sol sencer. A diferència del 2026 i el 2027, aquí no hi ha ni un segon en què es pugui mirar sense filtre homologat — ni durant l’anularitat. A sobre, el Sol serà entre uns 8° al sud-oest de la franja i ran d’horitzó al nord-est: a Barcelona es pon durant l’anularitat mateixa, i a Girona i a Maó ja s’ha post abans que comenci. L’horitzó lliure aquí no és un consell, és la condició.',
     },
     es: {
       tone: 'bad',
       title: 'ANULAR: el filtro no se quita en ningún momento',
-      // Mirall castellà del 7°–2° del motor (Sevilla 7,3°, València 2,4°).
-      text: 'Este eclipse NO es total. Siempre queda un anillo de Sol visible y quema igual que el Sol entero. A diferencia de 2026 y 2027, aquí no hay ni un segundo en que se pueda mirar sin filtro homologado — ni durante la anularidad. Además, el Sol estará entre unos 7° y apenas 2° sobre el horizonte de poniente, así que también necesitas el horizonte despejado.',
+      // Mirall castellà: 8,4° Ayamonte / 8,0° Huelva per dalt; Barcelona 0,16°,
+      // Girona −0,39°, Maó −0,69° per baix.
+      text: 'Este eclipse NO es total. Siempre queda un anillo de Sol visible y quema igual que el Sol entero. A diferencia de 2026 y 2027, aquí no hay ni un segundo en que se pueda mirar sin filtro homologado — ni durante la anularidad. Además, el Sol estará entre unos 8° en el suroeste de la franja y el ras del horizonte en el noreste: en Barcelona se pone durante la anularidad misma, y en Girona y en Mahón ya se ha puesto antes de que empiece. Aquí el horizonte despejado no es un consejo, es la condición.',
     },
   },
 };

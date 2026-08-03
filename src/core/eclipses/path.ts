@@ -30,6 +30,19 @@
  *    segons UT. La longitud geogràfica surt de la longitud referida al
  *    "meridià efemèride" més la rotació terrestre durant ΔT. Amb ΔT mal posat,
  *    tota la franja llisca en longitud: 4 s de ΔT ja són ~50 km.
+ *
+ * 3. LA FRANJA NO ÉS «LÍMIT NORD + LÍMIT SUD». Ho és mentre l'ombra és estreta i
+ *    travessera, i deixa de ser-ho als dos extrems del recorregut, on l'ombra
+ *    arriba de gairell i la petjada queda tallada pel TERMINADOR. Allà la vora
+ *    és la ratlla de la posta —o de l'alba— i s'ha de calcular a part: són les
+ *    TAPES. Tancar el polígon amb una recta entre els dos límits, que és el que
+ *    es feia, dibuixava una corda de 810 km al 12-08-2026 que deixava València,
+ *    Castelló, Peníscola i les Balears FORA d'una franja on tenen entre un
+ *    minut i un minut i mig de totalitat. Vegeu `capPointsAt`.
+ *
+ * La franja, doncs, té QUATRE corbes de vora i no dues: `northLimit`,
+ * `southLimit`, `startCap` i `endCap`. `band-agreement.test.ts` comprova que el
+ * polígon que en surt i el motor de circumstàncies locals diguin el mateix.
  */
 
 import { BESSELIAN, evalPoly, type BesselianElements } from './besselian';
@@ -243,7 +256,7 @@ function fundamentalCoords(
   deltaT: number,
   lat: number,
   lon: number,
-): { xi: number; eta: number; zeta: number } {
+): { xi: number; eta: number; zeta: number; zeta1: number } {
   const u = Math.atan(POLAR_RATIO * Math.tan(lat * DEG));
   const rhoCos = Math.cos(u);
   const rhoSin = POLAR_RATIO * Math.sin(u);
@@ -254,6 +267,22 @@ function fundamentalCoords(
     xi: rhoCos * Math.sin(theta),
     eta: rhoSin * ev.cosD - rhoCos * cosTheta * ev.sinD,
     zeta: rhoSin * ev.sinD + rhoCos * cosTheta * ev.cosD,
+    /*
+     * ζ₁: la mateixa component, però al sistema APLANAT, on la Terra és
+     * l'esfera unitat. És el que diu si al punt hi toca el Sol: positiu de
+     * dia, zero al terminador, negatiu de nit.
+     *
+     * NO serveix la ζ de sobre, i la diferència no és cosmètica: al terminador
+     * la ζ geocèntrica val ~1,6·10⁻³ i no pas zero, perquè el terminador d'un
+     * el·lipsoide és on la NORMAL de la superfície és perpendicular a l'eix de
+     * l'ombra, no on ho és el radi vector. Són ~0,2° d'altura del Sol, unes
+     * desenes de km sobre el terreny.
+     *
+     * Tampoc no serveix `1 − ξ² − η₁²`, que val ζ₁² i per tant no canvia mai de
+     * signe: amb aquell criteri la derivada al terminador surt del soroll de
+     * segon ordre i les tapes es cusen a l'atzar. Ja va passar.
+     */
+    zeta1: (rhoSin / POLAR_RATIO) * ev.sinD1 + rhoCos * cosTheta * ev.cosD1,
   };
 }
 
@@ -313,6 +342,21 @@ export function centralLineAt(eclipseId: string, utcMs: number): PathPoint | nul
  * per als eclipsis del 2026 i del 2028, el tram que passa per Espanya. Amb la ζ
  * de l'eix com a llavor això no passa, perquè l'ombra fa tot just uns pocs
  * centèsims de radi terrestre d'amplada.
+ *
+ * I QUAN L'EIX JA NO TOCA LA TERRA no queda aquella llavor, i el problema torna
+ * amplificat: el radi del con varia un 56 % entre ζ = 0 i ζ = 1 (de 0,0081 a
+ * 0,0127 radis terrestres el 2026), o sigui que una llavor dolenta llença un
+ * iterat fora del disc i fa avortar la cerca encara que l'arrel hi sigui. Això
+ * deixava el límit nord del 12-08-2026 mort a les 18:30:10 quan la tangència
+ * viu fins a les 18:30:18 — set segons que, amb l'ombra rasant, són 186 km de
+ * vora. La solució no és aquí sinó a qui crida: `pathLimitsAt` amb
+ * `trackToLimb` passa la ζ d'un angle ψ al següent, que és la millor llavor que
+ * hi pot haver perquè el contorn és continu en ψ.
+ *
+ * (Es va provar també una escala de llavors de recanvi per a quan la iteració
+ * avorta. No canviava CAP número mesurable —ni la graella de veritat, ni els
+ * daurats, ni els 41 punts de `band-agreement.test.ts`— i es va treure: la
+ * continuació sola ja ho resol i val més un sol mecanisme que dos.)
  */
 function umbraEdgePoint(
   el: BesselianElements,
@@ -385,9 +429,29 @@ interface LimitPoint {
   tangency: boolean;
 }
 
+/**
+ * `trackToLimb` demana que el contorn de l'ombra se segueixi FINS AL LIMBE, amb
+ * la llavor de la iteració passada d'un angle ψ al següent. Vegeu el comentari
+ * de `carrySeed`: sense això, la tangència es perd uns segons abans d'arribar al
+ * terminador i la vora es queda curta.
+ *
+ * NO és el comportament per defecte, i la raó és de contenció, no de
+ * conveniència. `pathLimitsAt` és pública i, a més dels tests contra les taules
+ * del GSFC, la fa servir `core/astro/uncertainty.ts` per localitzar el límit
+ * PUBLICAT més proper. Aquella cerca és molt sensible al darrer minut del
+ * recorregut —allà la resposta ja no és cap tangència sinó un tall de limbe, i
+ * salta de branca fins a 200 km d'un segon al següent, també amb el codi
+ * antic—, i amb el seguiment activat el punt que en treu per a València el
+ * 26-01-2028 passa de 163,6 km a 142,9 km, contra els 162,1 que en diu el
+ * gradient del marge. Fer-ho bé demana revisar aquella cerca sencera i
+ * revalidar-la contra l'IGN, que és una altra feina i no aquesta. Mentrestant,
+ * qui dibuixa la franja demana el seguiment i qui busca el límit publicat es
+ * queda amb la resposta de sempre, bit a bit.
+ */
 function limitsAt(
   eclipseId: string,
   utcMs: number,
+  trackToLimb = false,
 ): { north: LimitPoint | null; south: LimitPoint | null } {
   const el = elementsFor(eclipseId);
   const tdtHours = utcMsToTdtHours(eclipseId, el, utcMs);
@@ -402,14 +466,31 @@ function limitsAt(
   const axis = surfacePoint(ev, el.deltaT, ev.x, ev.y);
   const seedZeta = axis === null ? 0 : axis.zeta;
 
+  /*
+   * LA LLAVOR ES PASSA D'UN ANGLE AL SEGÜENT.
+   *
+   * Quan l'eix ja no toca la Terra no hi ha cap ζ de l'eix per llavor, i la que
+   * queda (zero) és justament la dolenta: prop del limbe l'iterat se'n va fora
+   * del disc i la cerca avorta encara que l'arrel hi sigui. El contorn de
+   * l'ombra, en canvi, és continu en ψ, i la ζ del punt anterior és sempre una
+   * llavor excel·lent del següent.
+   *
+   * Amb això, el contorn del 12-08-2026 a les 18:30:15 arriba fins a 5,99°E en
+   * lloc de quedar-se a 4,40°E: 135 km més de contorn, que és on viu la
+   * tangència nord d'aquells segons. Sense la continuació, el límit nord moria
+   * a les 18:30:11 i la vora quedava 186 km curta.
+   */
+  let carrySeed = seedZeta;
+
   /**
    * Derivada temporal de la funció d'ombra en un punt FIX de la Terra, per
    * diferència centrada d'un segon. La funció és suau i l'error de truncament
    * queda molt per sota del que ens importa.
    */
   const rateAt = (psi: number): { point: SurfacePoint; rate: number } | null => {
-    const point = umbraEdgePoint(el, ev, psi, seedZeta);
+    const point = umbraEdgePoint(el, ev, psi, trackToLimb ? carrySeed : seedZeta);
     if (point === null) return null;
+    if (trackToLimb) carrySeed = point.zeta;
     const a = shadowFunction(el, evBefore, point.lat, point.lon);
     const b = shadowFunction(el, evAfter, point.lat, point.lon);
     return { point, rate: (b - a) / (2 * DERIVATIVE_STEP_HOURS) };
@@ -480,7 +561,7 @@ function limitsAt(
       // minut, que és quan la franja travessa la Península.
       const inside = previous === null ? psi : previousPsi;
       const outside = previous === null ? previousPsi : psi;
-      const edge = refineLimbCrossing(el, ev, seedZeta, inside, outside);
+      const edge = refineLimbCrossing(el, ev, trackToLimb ? carrySeed : seedZeta, inside, outside);
 
       const known = previous ?? current;
       const edgeRate = edge === null ? null : rateAt(edge.psi);
@@ -741,18 +822,27 @@ const TERMINATOR_SCAN_HALF_WIDTH = 0.08;
 const TERMINATOR_SCAN_STEPS = 320;
 
 /**
- * Punt de la TAPA en un instant: el tall de l'ombra amb el terminador que és
- * vora de la unió. Null quan en aquell instant l'ombra no toca el terminador
- * (que és el cas de gairebé tot el recorregut).
+ * Els DOS talls de l'ombra amb el terminador en un instant, separats per quin
+ * costat del centre de l'ombra cauen. Null on no n'hi ha.
  *
- * `side` tria quin dels dos extrems del recorregut es busca: 'set' és la posta
- * (el punt es fa fosc, dm/dt < 0) i 'rise' l'alba.
+ * PER QUÈ DOS I NO UN. Quan l'ombra comença a sortir per la nit, el seu contorn
+ * talla el terminador en dos punts que neixen junts i se separen. Tots dos
+ * dibuixen vora de la franja, cadascun cap a un límit: mesurat al 26-01-2028,
+ * neixen a (40,96 / 2,67) a les 16:53:22 i d'allà una branca puja fins a
+ * trobar la tangència nord a les 16:56:02 i l'altra baixa fins a la sud a les
+ * 16:57:40. Amb una sola branca, la tapa del 2028 es deixava 240 km de vora i
+ * el polígon no tancava. Al 12-08-2026 la branca curta fa només ~35 km —
+ * l'ombra és tres vegades més estreta i frega el terminador molt menys estona—,
+ * i per això el defecte hi passava més desapercebut.
+ *
+ * `side` tria l'extrem del recorregut: 'set' és la posta (el punt es fa fosc,
+ * dζ₁/dt < 0) i 'rise' l'alba.
  */
-function capPointAt(
+function capPointsAt(
   eclipseId: string,
   utcMs: number,
   side: 'rise' | 'set',
-): PathPoint | null {
+): { before: PathPoint | null; after: PathPoint | null } {
   const el = elementsFor(eclipseId);
   const tdtHours = utcMsToTdtHours(eclipseId, el, utcMs);
   const ev = evaluateAt(el, tdtHours);
@@ -763,15 +853,15 @@ function capPointAt(
   // talls, si n'hi ha, hi són a tocar.
   const phi0 = Math.atan2(ev.y / ev.rho1, ev.x);
 
-  /** Quant de dia li queda al punt: positiu de dia, zero al terminador. */
-  const daylight = (e: EvaluatedElements, point: SurfacePoint): number => {
-    const p = fundamentalCoords(e, el.deltaT, point.lat, point.lon);
-    const eta1 = p.eta / e.rho1;
-    return 1 - p.xi * p.xi - eta1 * eta1;
-  };
+  /** Positiu si al punt hi toca el Sol; zero al terminador. */
+  const daylight = (e: EvaluatedElements, point: SurfacePoint): number =>
+    fundamentalCoords(e, el.deltaT, point.lat, point.lon).zeta1;
 
-  let best: PathPoint | null = null;
-  let bestRate = 0;
+  const found: { before: PathPoint | null; after: PathPoint | null } = {
+    before: null,
+    after: null,
+  };
+  const rate = { before: 0, after: 0 };
 
   let previous = terminatorPoint(el, ev, phi0 - TERMINATOR_SCAN_HALF_WIDTH);
   for (let i = 1; i <= TERMINATOR_SCAN_STEPS; i++) {
@@ -789,9 +879,11 @@ function capPointAt(
       let hi = phi;
       let loPositive = previous.f > 0;
       let root = current;
+      let rootPhi = phi;
       for (let k = 0; k < 50 && hi - lo > 1e-14; k++) {
         const mid = (lo + hi) / 2;
         root = terminatorPoint(el, ev, mid);
+        rootPhi = mid;
         if (root.f > 0 === loPositive) {
           lo = mid;
           loPositive = root.f > 0;
@@ -811,19 +903,21 @@ function capPointAt(
       const onBoundary = dDaylight * dShadow > 0;
       const rightEnd = dDaylight * wantedSign > 0;
 
-      // Entre dos candidats vàlids (només passa a l'instant en què l'ombra toca
-      // el terminador per primer cop, quan les dues arrels encara són la
-      // mateixa) es queda el més decidit, que és el més estable numèricament.
-      if (onBoundary && rightEnd && Math.abs(dShadow) >= bestRate) {
-        bestRate = Math.abs(dShadow);
-        best = { lat: root.point.lat, lon: root.point.lon, timeMs: utcMs };
+      // La branca es tria pel costat del centre de l'ombra on cau l'arrel. Les
+      // dues arrels neixen juntes a φ₀ i se'n separen cadascuna cap a la seva
+      // banda, o sigui que el signe de (φ − φ₀) és una etiqueta estable al
+      // llarg de tot el recorregut de la tapa.
+      const branch = rootPhi < phi0 ? 'before' : 'after';
+      if (onBoundary && rightEnd && Math.abs(dShadow) >= rate[branch]) {
+        rate[branch] = Math.abs(dShadow);
+        found[branch] = { lat: root.point.lat, lon: root.point.lon, timeMs: utcMs };
       }
     }
 
     previous = current;
   }
 
-  return best;
+  return found;
 }
 
 // ---------------------------------------------------------------------------
@@ -974,6 +1068,42 @@ function sampleCurve(
   }
   const last = evaluate(endMs);
   if (last !== null) points.push(last);
+  if (points.length === 0) return points;
+
+  /*
+   * ELS CAPS DE LA CORBA TAMBÉ S'HAN DE BUSCAR.
+   *
+   * El mostreig uniforme deixa la corba acabada a l'última mostra que ha sortit
+   * bé, i la següent —la que ja no existeix— pot ser un pas sencer més enllà.
+   * Amb l'ombra rasant, un pas de 60 s val centenars de km: el límit nord del
+   * 12-08-2026 mor a les 18:30:18 i la mostra bona més tardana era la de les
+   * 18:30:06, o sigui 245 km abans d'on de veritat s'acaba. La tapa començava
+   * igual de tard i entre les dues hi quedava un forat que després es cosia amb
+   * una recta — el mateix defecte, un ordre de magnitud més petit.
+   *
+   * Es bisecta dins de l'últim pas, on la validesa sí que és un interval.
+   */
+  const findEdge = (validMs: number, emptyMs: number): PathPoint | null => {
+    let good = validMs;
+    let bad = emptyMs;
+    let found: PathPoint | null = null;
+    while (Math.abs(bad - good) > MIN_REFINE_MS) {
+      const mid = (good + bad) / 2;
+      const p = evaluate(mid);
+      if (p === null) bad = mid;
+      else {
+        good = mid;
+        found = p;
+      }
+    }
+    return found;
+  };
+
+  const head = findEdge(points[0].timeMs, Math.max(startMs - stepMs, points[0].timeMs - stepMs));
+  if (head !== null && head.timeMs < points[0].timeMs) points.unshift(head);
+  const tailFrom = points[points.length - 1].timeMs;
+  const tail = findEdge(tailFrom, Math.min(endMs + stepMs, tailFrom + stepMs));
+  if (tail !== null && tail.timeMs > tailFrom) points.push(tail);
 
   for (let pass = 0; pass < 16 && points.length < MAX_POINTS; pass++) {
     const refined: PathPoint[] = [];
@@ -1109,6 +1239,25 @@ export function computeEclipsePath(eclipseId: string, options: PathOptions = {})
     toMs: number,
   ) => unwrap(sampleCurve(pick, fromMs, toMs, stepMs));
 
+  /*
+   * LA GRAELLA DE MOSTREIG S'ANCORA A `startMs`, NO AL PRINCIPI DE LA FINESTRA.
+   *
+   * Els límits ara es mostregen sobre la finestra de l'OMBRA, que comença abans
+   * que la de l'eix (116 s abans al 2026). Si es comencés a comptar des d'allà,
+   * TOTES les mostres quedarien desplaçades mig pas respecte de les d'abans:
+   * la corba seria la mateixa però els vèrtexs, uns altres, i qualsevol mesura
+   * de distància a la polilínia canviaria uns centenars de metres. No és cap
+   * hipòtesi — el mirador «Alto de la Mora» (40,5801 / −4,27327) és a 20,1 km
+   * del límit sud del 2026, just al llindar dels 20 km amb què es publiquen els
+   * miradors, i el desplaçament de la graella el feia saltar a fora.
+   *
+   * Ancorant la graella a `startMs`, tots els instants que es mostrejaven abans
+   * se segueixen mostrejant i els nous només s'hi afegeixen. El canvi és
+   * estrictament additiu: cap distància a la polilínia no pot créixer.
+   */
+  const alignedStart = (fromMs: number): number =>
+    startMs - Math.ceil((startMs - fromMs) / stepMs) * stepMs;
+
   // La línia central existeix només mentre l'EIX toca la Terra: la seva
   // finestra no es toca, i és la que fixen les taules del GSFC.
   const center = sample((t) => centralLineAt(eclipseId, t), startMs, endMs);
@@ -1130,18 +1279,55 @@ export function computeEclipsePath(eclipseId: string, options: PathOptions = {})
    * `capPointAt`).
    */
   const tangencyOnly = (side: 'north' | 'south') => (t: number) => {
-    const limit = limitsAt(eclipseId, t)[side];
+    const limit = limitsAt(eclipseId, t, true)[side];
     return limit === null || !limit.tangency ? null : limit.point;
   };
 
   const northLimit = trimRetrogradeEnds(
-    sample(tangencyOnly('north'), umbraStartMs, umbraEndMs),
+    sample(tangencyOnly('north'), alignedStart(umbraStartMs), umbraEndMs),
     center,
   );
   const southLimit = trimRetrogradeEnds(
-    sample(tangencyOnly('south'), umbraStartMs, umbraEndMs),
+    sample(tangencyOnly('south'), alignedStart(umbraStartMs), umbraEndMs),
     center,
   );
+
+  /*
+   * LA TAPA, COSIDA PEL PUNT ON LES DUES BRANQUES ES TOQUEN.
+   *
+   * Les branques neixen juntes i se separen —o se separen i es tornen a
+   * trobar—, i quin dels dos casos toca depèn de l'extrem del recorregut: a la
+   * CUA neixen a l'instant en què l'ombra arriba al terminador i divergeixen; al
+   * CAP convergeixen a l'instant en què l'ombra hi acaba d'entrar (al 26-01-2028
+   * es troben a les 13:22:00, a 26 km l'una de l'altra). Encadenar-les sempre en
+   * el mateix ordre cosia el cap per l'extrem equivocat i hi obria un forat de
+   * 360 km.
+   *
+   * Per no haver de saber quin cas toca, es proven les quatre maneres
+   * d'encadenar-les i es queda la que deixa el salt més petit al mig: la
+   * geometria decideix sola.
+   */
+  const cap = (side: 'rise' | 'set'): PathPoint[] => {
+    const branch = (which: 'before' | 'after') =>
+      sample((t) => capPointsAt(eclipseId, t, side)[which], alignedStart(umbraStartMs), umbraEndMs);
+    const first = branch('before');
+    const second = branch('after');
+    if (first.length === 0) return second;
+    if (second.length === 0) return first;
+
+    let best: PathPoint[] = [];
+    let bestGap = Infinity;
+    for (const a of [first, [...first].reverse()]) {
+      for (const b of [second, [...second].reverse()]) {
+        const gap = approxDistanceKm(a[a.length - 1], b[0]);
+        if (gap < bestGap) {
+          bestGap = gap;
+          best = [...a, ...b];
+        }
+      }
+    }
+    return best;
+  };
 
   return {
     eclipseId,
@@ -1149,8 +1335,8 @@ export function computeEclipsePath(eclipseId: string, options: PathOptions = {})
     center,
     northLimit,
     southLimit,
-    startCap: sample((t) => capPointAt(eclipseId, t, 'rise'), umbraStartMs, umbraEndMs),
-    endCap: sample((t) => capPointAt(eclipseId, t, 'set'), umbraStartMs, umbraEndMs),
+    startCap: cap('rise'),
+    endCap: cap('set'),
     startMs,
     endMs,
   };
@@ -1185,7 +1371,9 @@ export interface EclipsePathGeoJson {
   limits: Feature<MultiLineString, EclipsePathProperties>;
 }
 
-const toCoords = (points: PathPoint[]): [number, number][] =>
+// `readonly` a posta: les tapes arriben com a llistes immutables i aquesta
+// funció només llegeix. Demanar-les mutables obligava a copiar-les per no res.
+const toCoords = (points: readonly PathPoint[]): [number, number][] =>
   points.map((p) => [p.lon, p.lat]);
 
 /**
@@ -1267,30 +1455,81 @@ export function eclipsePathToGeoJson(path: EclipsePath): EclipsePathGeoJson {
   const south = longestRun(toCoords(path.southLimit));
 
   /*
-   * LES TAPES ES COSEN PER PROXIMITAT, no per l'ordre en què s'han mostrejat.
+   * LES TAPES ES COSEN PER PROXIMITAT, i només si de veritat tanquen.
    *
    * Cada tapa surt ordenada en el temps, però quin dels seus dos extrems toca
    * el límit nord i quin el sud depèn de quina tangència mor primer, i això
-   * canvia d'eclipsi a eclipsi. Es gira la tapa quan el seu darrer punt queda
-   * més a prop del final del nord que no pas el primer: així el recorregut de
-   * l'anell (nord endavant → tapa final → sud enrere → tapa inicial) no es
-   * creua mai. Si la tapa és buida no s'hi afegeix res i queda la corda d'abans
-   * — que és el que ha de passar quan de veritat no n'hi ha.
+   * canvia d'eclipsi a eclipsi. Es gira perquè el seu primer punt sigui el del
+   * costat nord; així el recorregut de l'anell (nord endavant → tapa final →
+   * sud enrere → tapa inicial) no es creua mai.
+   *
+   * I s'hi posa NOMÉS si de veritat cau ENTRE els dos extrems: cada un dels dos
+   * trossets que queden per cosir ha de ser més curt que la corda que hi hauria
+   * sense tapa. És un criteri sense cap constant en quilòmetres —s'escala sol
+   * amb la mida de la franja— i rebutja l'únic cas real on la tapa no toca:
+   * el cap del 2026, que passa pel pol. Allà el retall de Mercator deixa els
+   * límits tallats a 80° de latitud i la tapa es queda a l'altra banda del pol,
+   * a 3.700 km; la corda del retall és la resposta honesta, perquè no és cap
+   * vora de la franja sinó el tall del mapa.
+   *
+   * (Es va provar abans amb «si escurça el tancament sumant els dos trossets»,
+   * i no serveix: hi va haver un estat del codi on al 2028 la suma donava
+   * 431 km contra una corda de 439 i la tapa entrava per un 2 %, i un altre on
+   * al 2026 donava 327 contra 271 i la tapa NO entrava —justament la que porta
+   * la franja a les Balears—. Un criteri que decideix per la longitud total és
+   * massa fàcil de fer bascular; el que ha de valdre és si la tapa cau entre
+   * els dos extrems.)
+   *
+   * Els trossets que queden avui, mesurats: 47 i 143 km al 2026, 51 i 219 km al
+   * 2027, 104 i 117 km al 2028. Són trams on la tangència mor uns segons abans
+   * d'arribar al terminador, i allà la vora real ja és gairebé recta: la corda
+   * se n'aparta 0,4 km al 2026, 0,2 km al costat nord del 2028 i 1,3 km al sud
+   * — per sota dels 2,9 km amb què els dos motors del projecte situen la franja
+   * (ESTAT.md §5), o sigui invisible i honest.
    */
-  const orient = (
-    cap: [number, number][],
+  const spliceCap = (
+    points: readonly PathPoint[],
     from: [number, number] | undefined,
+    to: [number, number] | undefined,
   ): [number, number][] => {
-    if (cap.length < 2 || from === undefined) return cap;
-    const head = coordDistanceKm(from, cap[0]);
-    const tail = coordDistanceKm(from, cap[cap.length - 1]);
-    return tail < head ? [...cap].reverse() : cap;
+    const cap = longestRun(toCoords(points));
+    if (cap.length < 2 || from === undefined || to === undefined) return [];
+    const forward =
+      coordDistanceKm(from, cap[0]) + coordDistanceKm(cap[cap.length - 1], to);
+    const backward =
+      coordDistanceKm(from, cap[cap.length - 1]) + coordDistanceKm(cap[0], to);
+    const oriented = backward < forward ? [...cap].reverse() : cap;
+    const chord = coordDistanceKm(from, to);
+    const gapIn = coordDistanceKm(from, oriented[0]);
+    const gapOut = coordDistanceKm(oriented[oriented.length - 1], to);
+    return gapIn < chord && gapOut < chord ? oriented : [];
   };
 
-  const endCap = orient(longestRun(toCoords(path.endCap)), north[north.length - 1]);
-  const startCap = orient(longestRun(toCoords(path.startCap)), north[0]);
+  const endCap = spliceCap(path.endCap, north[north.length - 1], south[south.length - 1]);
+  const startCap = spliceCap(path.startCap, north[0], south[0]);
 
-  const ring = [...north, ...endCap, ...south.reverse(), ...startCap.reverse()];
+  /*
+   * LES TRES CAPES SURTEN D'AQUÍ, I NOMÉS D'AQUÍ.
+   *
+   * El mapa pinta el farciment (`band`), les vores (`limits`) i la central
+   * (`centerLine`) com a capes separades. Si les vores es calculen a part del
+   * polígon, n'hi ha prou que una es retalli i l'altra no perquè quedi un tros
+   * de vora surant sense res a sota: va passar exactament això —un arc taronja
+   * sol enmig del Mediterrani, cap a 38,5°N 5°E— quan la tapa es dibuixava com
+   * a límit però no s'havia arribat a cosir dins de l'anell.
+   *
+   * Per això `pieces` es calcula UN COP: l'anell és la concatenació d'aquests
+   * trossos i `limits` són aquests mateixos trossos, ni un més. Si un tros no
+   * entra al polígon, tampoc no es pinta com a vora.
+   */
+  const pieces = [north, endCap, south, startCap].filter((piece) => piece.length > 1);
+
+  const ring = [
+    ...north,
+    ...endCap,
+    ...[...south].reverse(),
+    ...[...startCap].reverse(),
+  ];
   // Un anell de GeoJSON ha de ser explícitament tancat.
   if (ring.length > 0) ring.push(ring[0]);
 
@@ -1308,20 +1547,9 @@ export function eclipsePathToGeoJson(path: EclipsePath): EclipsePathGeoJson {
     limits: {
       type: 'Feature',
       properties,
-      geometry: {
-        type: 'MultiLineString',
-        // Els límits també: una línia que passa pel pol es dibuixa igual de
-        // malament que un polígon que hi passa.
-        coordinates: [
-          ...drawableRuns(toCoords(path.northLimit)),
-          ...drawableRuns(toCoords(path.southLimit)),
-          // Les tapes també són vora de la franja, no cap artefacte de
-          // tancament: dibuixar-les és dir la veritat, i a més tapa el forat
-          // que abans hi deixava la corda no pintada.
-          ...drawableRuns(toCoords(path.startCap)),
-          ...drawableRuns(toCoords(path.endCap)),
-        ],
-      },
+      // Exactament els trossos de què està fet l'anell, cadascun com una línia.
+      // Res que no sigui vora del polígon no es pinta com a vora.
+      geometry: { type: 'MultiLineString', coordinates: pieces },
     },
   };
 }

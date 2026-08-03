@@ -51,6 +51,22 @@ import {
 } from '../../core/eclipses/path';
 import { ensureHillshade, removeHillshade } from './layers/hillshade';
 import { applyViewCone, type ViewConeData } from './layers/viewCone';
+import { applyHeatmap, removeHeatmap, setBandFillForHeatmap } from './layers/heatmap';
+import { applyPois, POI_INTERACTIVE_LAYERS, removePois } from './layers/pois';
+import {
+  applyViewpoints,
+  removeViewpoints,
+  VIEWPOINT_INTERACTIVE_LAYERS,
+} from './layers/viewpoints';
+import { applyClouds, removeClouds } from './layers/clouds';
+import { applyEdgeUncertainty, type EdgeUncertaintyData } from './layers/edgeUncertainty';
+import { applyMoveArrow, type MoveArrowData } from './layers/moveArrow';
+import type { HeatCellValue } from '../../core/heat/compute';
+import type { HeatViewport } from './useHeatmap';
+import type { ObservationPoint } from '../../data/observation-points/catalog';
+import type { Viewpoint } from '../../core/places/viewpoints';
+import type { ClimCell } from '../../core/weather/climGrid';
+import type { CloudMapTexture } from '../../core/weather/mapMode';
 
 interface Props {
   eclipseId: string;
@@ -127,6 +143,31 @@ interface Props {
    * quan no hi ha punt o la capa està apagada.
    */
   cone?: ViewConeData | null;
+
+  /* --- les capes de dades. Nul vol dir «no la pintis», sempre. --- */
+
+  /** Cel·les del mapa de calor de visibilitat. */
+  heatCells?: readonly HeatCellValue[] | null;
+  /** Sostre de la rampa del mapa de calor, en segons. */
+  heatMaxSec?: number;
+  /** L'enquadrament, a cada `moveend`: és el que alimenta el mapa de calor. */
+  onViewportChange?: (viewport: HeatViewport) => void;
+
+  /** Punts d'observació oficials, amb la seva font. */
+  pois?: readonly ObservationPoint[] | null;
+  onPickPoi?: (point: ObservationPoint) => void;
+  /** Miradors i cims d'OpenStreetMap. */
+  viewpoints?: readonly Viewpoint[] | null;
+  onPickViewpoint?: (viewpoint: Viewpoint) => void;
+
+  /** Graella de nuvolositat i quina cara ha de fer (climatologia o previsió). */
+  cloudCells?: readonly ClimCell[] | null;
+  cloudTexture?: CloudMapTexture;
+
+  /** La vora d'incertesa del caire de la franja. */
+  edge?: EdgeUncertaintyData | null;
+  /** La fletxa de cap on caminar per guanyar segons. */
+  moveArrow?: MoveArrowData | null;
 }
 
 /** Atribució d'OSM, obligatòria per llicència. */
@@ -324,6 +365,17 @@ export function EclipseMap({
   hillshade = false,
   sunAzimuthDeg = null,
   cone = null,
+  heatCells = null,
+  heatMaxSec = 0,
+  onViewportChange,
+  pois = null,
+  onPickPoi,
+  viewpoints = null,
+  onPickViewpoint,
+  cloudCells = null,
+  cloudTexture = 'hatch',
+  edge = null,
+  moveArrow = null,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -357,8 +409,28 @@ export function EclipseMap({
    * viu en referències i una sola funció (`syncLayers`) el reconcilia, tant
    * des del `style.load` com des dels efectes de canvi.
    */
-  const layersRef = useRef({ hillshade, sunAzimuthDeg, cone });
-  layersRef.current = { hillshade, sunAzimuthDeg, cone };
+  const wantedLayers = {
+    hillshade,
+    sunAzimuthDeg,
+    cone,
+    heatCells,
+    heatMaxSec,
+    pois,
+    onPickPoi,
+    viewpoints,
+    onPickViewpoint,
+    cloudCells,
+    cloudTexture,
+    edge,
+    moveArrow,
+  };
+  const layersRef = useRef(wantedLayers);
+  layersRef.current = wantedLayers;
+
+  // El callback de l'enquadrament també per referència: es registra un sol cop
+  // amb el mapa i el pare el pot canviar a cada render.
+  const onViewportRef = useRef(onViewportChange);
+  onViewportRef.current = onViewportChange;
 
   const syncLayers = useCallback((map: MapLibreMap): void => {
     const wanted = layersRef.current;
@@ -374,6 +446,56 @@ export function EclipseMap({
       removeHillshade(map);
     }
     applyViewCone(map, PALETTE, wanted.cone);
+
+    /*
+     * L'ORDRE DE LES CAPES ÉS LA JERARQUIA DE LA RESPOSTA, i per això es
+     * declara aquí i no a cada mòdul:
+     *
+     *   relleu i núvols  → CONTEXT: van sota la franja i no la poden tapar mai
+     *   mapa de calor    → DADA: sota la vora ambre, que és qui diu el veredicte
+     *   franja           → LA RESPOSTA, i l'únic ambre de la pantalla
+     *   xinxetes         → LLOCS: a sobre de tot, perquè es puguin tocar
+     *
+     * Amb el mapa de calor encès el farciment ambre baixa de 0,16 a 0,06: a
+     * 0,16 embruta tots els verds i els fa il·legibles. La VORA no es toca.
+     */
+    const underBand = map.getLayer('band-fill') !== undefined ? 'band-fill' : undefined;
+
+    if (wanted.cloudCells !== null) {
+      applyClouds(map, PALETTE, wanted.cloudCells, wanted.cloudTexture, {
+        beforeId: underBand,
+      });
+    } else {
+      removeClouds(map);
+    }
+
+    const heatOn = (wanted.heatCells?.length ?? 0) > 0;
+    if (heatOn) {
+      applyHeatmap(map, PALETTE, wanted.heatCells ?? [], {
+        maxSec: wanted.heatMaxSec,
+        beforeId: map.getLayer('band-edge') !== undefined ? 'band-edge' : undefined,
+      });
+    } else {
+      removeHeatmap(map);
+    }
+    setBandFillForHeatmap(map, heatOn);
+
+    applyEdgeUncertainty(map, PALETTE, wanted.edge, underBand);
+    applyMoveArrow(map, PALETTE, wanted.moveArrow);
+
+    // Els oficials per damunt dels miradors: són pocs, curats i porten font.
+    if (wanted.viewpoints !== null) {
+      applyViewpoints(map, PALETTE, wanted.viewpoints, {
+        onPick: wanted.onPickViewpoint ?? null,
+      });
+    } else {
+      removeViewpoints(map);
+    }
+    if (wanted.pois !== null) {
+      applyPois(map, PALETTE, wanted.pois, { onPick: wanted.onPickPoi ?? null });
+    } else {
+      removePois(map);
+    }
   }, []);
 
   // --- Creació del mapa (una sola vegada) ---
@@ -497,6 +619,8 @@ export function EclipseMap({
     const apply = (): void => {
       applyPath(map, geojsonRef.current);
       syncLayers(map);
+      // El primer enquadrament ha d'arribar sense esperar cap gest.
+      emitViewport();
     };
     map.on('style.load', apply);
     if (map.isStyleLoaded()) apply();
@@ -531,7 +655,51 @@ export function EclipseMap({
       setMapError({ reason: 'tiles' });
     });
 
+    /*
+     * L'ENQUADRAMENT, A CADA `moveend` I NO A CADA `move`.
+     *
+     * Amb `move` seria un esdeveniment per fotograma. `useHeatmap` ja escanya
+     * amb 400 ms, però fer-li arribar seixanta claus per segon és fer treballar
+     * React per no res. L'oest i l'est es pincen a ±180°: amb el mapa allunyat,
+     * `getBounds()` pot tornar còpies del món (oest a −220°) i la graella
+     * descartaria l'enquadrament sencer.
+     */
+    const emitViewport = (): void => {
+      if (onViewportRef.current === undefined) return;
+      const b = map.getBounds();
+      const west = Math.max(-180, b.getWest());
+      const east = Math.min(180, b.getEast());
+      if (!(east > west)) return;
+      onViewportRef.current({
+        bbox: { west, south: b.getSouth(), east, north: b.getNorth() },
+        zoom: map.getZoom(),
+      });
+    };
+    map.on('moveend', emitViewport);
+
     map.on('click', (event) => {
+      /*
+       * SI EL TOC ANAVA A UNA XINXETA, AQUÍ NO S'HI FA RES.
+       *
+       * MapLibre reparteix el MATEIX esdeveniment als escoltadors de capa i
+       * als globals: sense aquesta porta, tocar un punt oficial obriria la
+       * seva fitxa I mouria el punt de l'usuari a la coordenada del dit —
+       * dues respostes per a un sol gest. No es pot resoldre amb
+       * `defaultPrevented`, perquè l'ordre de crida depèn de l'ordre de
+       * registre i aquí NO és estable: a producció l'estil carrega dins del
+       * constructor i les capes es registren abans; en desenvolupament, al
+       * revés (vegeu el comentari de `style.load`).
+       */
+      const interactive = [...POI_INTERACTIVE_LAYERS, ...VIEWPOINT_INTERACTIVE_LAYERS].filter(
+        (id) => map.getLayer(id) !== undefined,
+      );
+      if (
+        interactive.length > 0 &&
+        map.queryRenderedFeatures(event.point, { layers: interactive }).length > 0
+      ) {
+        return;
+      }
+
       const { lat, lng } = event.lngLat;
       // La longitud pot venir de una còpia del món si l'usuari ha arrossegat
       // fora de ±180°; es normalitza abans de calcular res.
@@ -564,7 +732,22 @@ export function EclipseMap({
     // l'estil no ha carregat i el `style.load` ja cridarà `syncLayers`.
     if (map === null || map.getSource(BAND_SOURCE) === undefined) return;
     syncLayers(map);
-  }, [hillshade, sunAzimuthDeg, cone, syncLayers]);
+  }, [
+    hillshade,
+    sunAzimuthDeg,
+    cone,
+    heatCells,
+    heatMaxSec,
+    pois,
+    onPickPoi,
+    viewpoints,
+    onPickViewpoint,
+    cloudCells,
+    cloudTexture,
+    edge,
+    moveArrow,
+    syncLayers,
+  ]);
 
   // --- La diana del punt tocat, sincronitzada amb la propietat ---
   useEffect(() => {

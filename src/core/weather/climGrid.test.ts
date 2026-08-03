@@ -9,12 +9,17 @@
  * s'entén sol; un mapa amb colors d'una física antiga enganya en silenci.
  *
  * La fixture és minúscula i escrita a mà a posta. Amb la graella de veritat
- * (855 cel·les) es podria comprovar que el codi no peta, però no que faci el
+ * (888 cel·les) es podria comprovar que el codi no peta, però no que faci el
  * que ha de fer: aquí es pot dir exactament quina cel·la ha de sortir a cada
  * enquadrament i què ha de passar quan una columna ve trencada.
+ *
+ * I al final del fitxer hi ha el bloc que sí que mira la graella publicada: no
+ * per repetir-hi aquestes proves, sinó per les que només tenen sentit sobre
+ * dades de debò —caselles repetides, columnes que no lliguen entre elles, i
+ * sobretot que el fitxer no anunciï més anys dels que porta a dins.
  */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -317,6 +322,132 @@ describe.skipIf(published.length === 0)('les graelles publicades', () => {
       // mateixa puntuació, el que hi hauria darrere seria un error, no un cel.
       const scores = new Set(grid.cells.score);
       expect(scores.size).toBeGreaterThan(5);
+    });
+
+    /**
+     * Cap casella repetida.
+     *
+     * Sembla impossible i no ho és. L'script pot REPRENDRE una generació a
+     * mitges, i el punt de control s'identifica per la casella de la malla
+     * justament perquè la llista de cel·les canvia quan es retoca la franja. Si
+     * aquella migració s'equivoqués i encavalqués dues entrades, el fitxer
+     * sortiria amb dues cel·les al mateix lloc: la segona taparia la primera al
+     * mapa i `climCellAt` en tornaria una de les dues sense dir mai quina.
+     */
+    it(`${entry.id} no repeteix cap casella de la malla`, () => {
+      const grid = parseCloudClimGrid(JSON.parse(readFileSync(entry.file, 'utf8')));
+      const seen = new Set(grid.cells.ix.map((ix, i) => `${ix},${grid.cells.iy[i]}`));
+      expect(seen.size).toBe(grid.cells.ix.length);
+    });
+
+    /**
+     * Tot són enters, i no per estalviar bytes: `parseCloudClimGrid` només
+     * comprova que siguin números finits dins de rang, o sigui que un 63,4999
+     * hi passaria i el fitxer creixeria el doble sense que res ho digués.
+     */
+    it(`${entry.id} publica enters a totes les columnes`, () => {
+      const grid = parseCloudClimGrid(JSON.parse(readFileSync(entry.file, 'utf8')));
+      for (const [name, column] of Object.entries(grid.cells)) {
+        const broken = column.findIndex((value: number) => !Number.isInteger(value));
+        expect(`${name}[${broken}]`).toBe(`${name}[-1]`);
+      }
+    });
+
+    /**
+     * Les xifres han de ser coherents ENTRE ELLES, que és el que no mira cap
+     * validació de rang. Un 0-100 per columna es compleix igual de bé amb les
+     * columnes barrejades entre si; això no.
+     */
+    it(`${entry.id} té les columnes coherents entre elles`, () => {
+      const grid = parseCloudClimGrid(JSON.parse(readFileSync(entry.file, 'utf8')));
+      const { clear, cloudy, low, mid, high, total, years, samples } = grid.cells;
+
+      for (let i = 0; i < clear.length; i++) {
+        // «Net» i «tapat» són dues bandes disjuntes de la mateixa sèrie: el que
+        // sobra és el «depèn». Si sumessin més de cent, s'hauria comptat alguna
+        // observació dues vegades.
+        expect(clear[i] + cloudy[i]).toBeLessThanOrEqual(100);
+
+        // La cobertura total surt de la superposició aleatòria de les tres
+        // capes (vegeu `layers.ts`), i per tant no pot ser menor que cap
+        // d'elles. La tolerància d'un punt és l'arrodoniment a enter.
+        expect(total[i]).toBeGreaterThanOrEqual(Math.max(low[i], mid[i], high[i]) - 1);
+
+        /*
+         * Les mostres són les hores de la finestra, i el sostre es pot comptar
+         * exacte: la finestra és de ±1 h al voltant del màxim, o sigui com a
+         * molt TRES hores per dia (les dues que l'envolten més la de l'hora
+         * justa, quan el màxim cau clavat a l'hora), per 2·windowDays+1 dies.
+         * Per al 2026 en surten 22 per any, perquè el màxim cau a les 18:29 i
+         * només hi ha dues hores a menys d'una hora.
+         *
+         * El sostre és el que importa: si un any s'hagués integrat dues
+         * vegades, aquesta xifra es doblaria i cap validació de rang no ho
+         * veuria — les puntuacions seguirien sent de 0 a 100 i els percentils
+         * seguirien quadrant.
+         */
+        expect(samples[i] / years[i]).toBeGreaterThan(2 * grid.windowDays + 1);
+        expect(samples[i] / years[i]).toBeLessThanOrEqual(3 * (2 * grid.windowDays + 1));
+      }
+    });
+
+    /**
+     * LA PROVA D'HONESTEDAT, que és la raó de ser d'aquest fitxer.
+     *
+     * L'script pot quedar-se a mitges —els sostres d'Open-Meteo hi arriben
+     * sovint— i llavors les cel·les tenen menys anys darrere. Això és
+     * acceptable; el que no ho és és que la capçalera del fitxer segueixi
+     * anunciant la sèrie sencera. Si algú publica una climatologia de dotze
+     * anys, el fitxer ho ha de dir ell sol, perquè d'aquí a sis mesos ningú no
+     * tindrà la consola d'aquella execució.
+     *
+     * Es comproven les dues direccions, perquè les dues maneres d'enganyar
+     * existeixen: `source` no pot prometre més anys dels que la cel·la més
+     * pobra porta, ni menys dels que porta la més rica. I cap cel·la no pot
+     * tenir més anys dels que el rang `firstYear`-`lastYear` permet encabir.
+     */
+    it(`${entry.id} no anuncia més anys dels que té`, () => {
+      const grid = parseCloudClimGrid(JSON.parse(readFileSync(entry.file, 'utf8')));
+      const declared = grid.lastYear - grid.firstYear + 1;
+
+      expect(Math.max(...grid.cells.years)).toBeLessThanOrEqual(declared);
+
+      // «12 anys» quan totes en tenen els mateixos, «12-13 anys» quan no.
+      const said = /(\d+)(?:-(\d+))?\s+anys/.exec(grid.source);
+      expect(said, `«${grid.source}» no diu quants anys porta`).not.toBeNull();
+      const lo = Number(said?.[1]);
+      const hi = said?.[2] === undefined ? lo : Number(said[2]);
+
+      expect(Math.min(...grid.cells.years)).toBe(lo);
+      expect(Math.max(...grid.cells.years)).toBe(hi);
+    });
+
+    /**
+     * El punt tocat al mapa ha de tornar la cel·la que s'hi ha pintat.
+     *
+     * `climCellAt` arrodoneix les coordenades a la malla i `cellAt` fa el camí
+     * invers. Amb un signe canviat en un dels dos, el mapa pintaria bé i la
+     * fitxa obriria la cel·la del costat —o la simètrica respecte del meridià
+     * zero, que amb una franja que passa per Espanya cau a l'aigua.
+     */
+    it(`${entry.id} torna la mateixa cel·la que s’hi ha pintat`, () => {
+      const grid = parseCloudClimGrid(JSON.parse(readFileSync(entry.file, 'utf8')));
+      for (const cell of allClimCells(grid)) {
+        const found = climCellAt(grid, cell.lat, cell.lon);
+        expect(`${found?.ix},${found?.iy}`).toBe(`${cell.ix},${cell.iy}`);
+      }
+    });
+
+    /**
+     * I el pes, perquè aquest fitxer se'l baixa qui prepari la sortida sense
+     * cobertura (`eclipsi-dades-v1`, vegeu `offline/config.ts`). El sostre no
+     * és rodó per gust: la graella del 2026 pesa uns 50 kB i el que aquí es
+     * vigila és l'ordre de magnitud, no el kB. Si algun dia es baixa el pas de
+     * la malla —que multiplicaria les cel·les per catorze— això ha de saltar
+     * abans que el fitxer arribi a la motxilla de ningú.
+     */
+    it(`${entry.id} cap dins del pressupost de dades offline`, () => {
+      expect(statSync(entry.file).size).toBeLessThan(250 * 1024);
     });
   }
 });

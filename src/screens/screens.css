@@ -688,6 +688,16 @@
   border: none;
 }
 
+/*
+ * La mostra del mapa de calor: més ampla que les altres perquè ha d'ensenyar
+ * un DEGRADAT, no un color. El degradat el posa el component en línia, des de
+ * la mateixa taula que pinta el llenç.
+ */
+.mapscreen__swatch--heat {
+  width: var(--sp-9);
+  border: var(--bw-hair) solid var(--border-hairline);
+}
+
 /* El con de visió: el mateix to corona del llenç, en versió farcida. */
 .mapscreen__swatch--cone {
   background: color-mix(in srgb, var(--corona-100) 14%, transparent);
@@ -737,6 +747,14 @@
  */
 .mapscreen__layerpanel .ui-switch__input:checked + .ui-switch__track {
   background: var(--corona-100);
+}
+
+.mapscreen__layernote {
+  margin: 0;
+  padding-top: var(--sp-3);
+  border-top: var(--bw-hair) solid var(--border-hairline);
+  font: var(--text-body-sm);
+  color: var(--text-muted);
 }
 
 .mapscreen__layerpanel {

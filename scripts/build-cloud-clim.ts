@@ -11,16 +11,17 @@
  * JSON encara que hi falti feina; vegeu més avall per què no és el defecte).
  *
  * ATENCIÓ: NO ACABA EN UNA ESTONA, I POT NO ACABAR AVUI. La graella del 2026
- * val unes 8.100 crides d'API i el pla gratuït en deixa 5.000 per hora i 10.000
+ * val unes 8.486 crides d'API i el pla gratuït en deixa 5.000 per hora i 10.000
  * per dia. Dues coses que se'n deriven i que val més saber abans de començar:
  *
  *  - El mínim absolut són dues hores llargues, per la quota horària.
  *  - Si el dia ja portava quota gastada —proves, una execució anterior, l'app
  *    mateixa mentre es desenvolupa—, NO hi cabrà. La primera generació d'aquest
- *    fitxer va acabar amb «Daily API request limit exceeded» a 369 lots de 645
- *    després de dues hores i mitja, amb nou dels quinze anys ja desats.
- *  - Les tres graelles del catàleg juntes (8.100 + 5.300 + 8.900 ≈ 22.300) són
- *    tres dies de pla gratuït. No es poden fer d'una tirada.
+ *    fitxer va acabar amb «Daily API request limit exceeded» amb nou dels quinze
+ *    anys desats (la graella tenia llavors 855 cel·les i 645 lots).
+ *  - Les tres graelles del catàleg juntes (8.486 + 5.280 + 8.863 ≈ 22.600) són
+ *    tres dies de pla gratuït. No es poden fer d'una tirada. Mesurat amb
+ *    `--dry-run` per als tres identificadors del catàleg.
  *
  * Res d'això és un problema perquè el punt de control ho recorda tot: talla-ho
  * quan vulguis, torna-hi demà amb la mateixa ordre i continua per on anava. El
@@ -31,7 +32,7 @@
  *
  * `src/core/weather/outlook.ts` respon «què sol fer el cel AQUÍ» amb quinze
  * peticions a l'arxiu d'Open-Meteo, una per any. Per a un punt està bé. Per a
- * una capa de mapa de vuit-centes cel·les serien dotze mil peticions cada
+ * una capa de mapa de nou-centes cel·les serien tretze mil peticions cada
  * vegada que algú obre el mapa: inviable, abusiu contra una API gratuïta sense
  * clau, i innecessari, perquè la climatologia no canvia — el mateix
  * `CLIMATOLOGY_TTL_MS` ja diu cent vuitanta dies. Es calcula un cop, es publica
@@ -60,12 +61,12 @@
  * cosa que després va resultar falsa. Deia que agrupar punts era necessari per
  * no passar-se de quota. No ho és: la quota d'Open-Meteo no compta peticions,
  * compta VOLUM (vegeu el bloc del ritme, més avall), i vint punts en una
- * petició valen exactament el mateix que vint peticions d'un punt. Les 12.825
- * consultes punt-any d'aquesta graella costen unes 8.100 crides d'API tant si
+ * petició valen exactament el mateix que vint peticions d'un punt. Les 13.320
+ * consultes punt-any d'aquesta graella costen unes 8.486 crides d'API tant si
  * es demanen d'una en una com de vint en vint.
  *
- * El que l'agrupació estalvia de veritat és TEMPS: 12.825 connexions HTTP en
- * comptes de 645. A poc més d'un segon de resposta cadascuna i amb dues en
+ * El que l'agrupació estalvia de veritat és TEMPS: 13.320 connexions HTTP en
+ * comptes de 675. A poc més d'un segon de resposta cadascuna i amb dues en
  * paral·lel, són prop de dues hores de latència pura que s'estalvien i que no
  * aporten res a ningú, ni a nosaltres ni al servidor de l'altra banda.
  *
@@ -91,10 +92,14 @@
  * `node_modules` sencer i s'endú el punt de control, i amb ell les hores de
  * quota que hi ha a dins. Si has deixat una graella a mig fer, copia'l abans.
  *
- * Es compta per LOT I ANY, no per any sencer: un
- * lot que es perd es torna a demanar la propera vegada i no es pot comptar dos
- * cops. Si la xarxa cau o l'API talla, es torna a executar i continua on era.
- * Amb `--fresh` es comença de zero.
+ * Es compta per CEL·LA I ANY, i la cel·la s'identifica per la seva casella de
+ * la malla —no per la seva posició dins d'una llista que la franja decideix. La
+ * diferència no és teòrica: un ajust al límit nord de la franja vora Menorca va
+ * passar la graella de 855 cel·les a 888 i, amb el progrés comptat per lots,
+ * hauria llençat 369 lots ja baixats (unes 4.600 crides d'API) per 33 cel·les
+ * noves. Ara es migra: el que ja hi era es reaprofita, el que és nou es baixa i
+ * el que ha quedat fora de la franja s'oblida. Si la xarxa cau o l'API talla,
+ * es torna a executar i continua on era. Amb `--fresh` es comença de zero.
  *
  * I SI FALTA FEINA, NO S'ESCRIU EL JSON. Publicar una graella incompleta com si
  * fos definitiva vol dir cel·les amb menys anys darrere dels que sembla —una
@@ -163,16 +168,23 @@ const DAY_MS = 86_400_000;
  *
  * MESURAT, PERQUÈ LA SUPOSICIÓ ERA FALSA. La idea de partida era que 0,25° fos
  * la malla d'ERA5 i que baixar-ne més fos fingir detall. Es va comprovar contra
- * l'API abans d'escriure res: demanant latituds separades 0,02°, l'arxiu torna
- * coordenades separades 0,0703° —7,8 km— i valors de nuvolositat diferents a
- * cada salt (Burgos, 12-11-2024, 09-10 UTC: 83 %, 95 % i 100 % en tres cel·les
- * consecutives). La font resol tres vegades i mitja més fi del que publiquem.
+ * l'API abans d'escriure res, i s'ha tornat a comprovar en generar la graella
+ * de debò: demanant latituds separades 0,02°, l'arxiu torna coordenades
+ * enganxades a una malla de 0,0703125° —7,8 km— i valors de nuvolositat
+ * diferents gairebé a cada salt.
+ *
+ * LA SEGONA MESURA ÉS LA QUE TANCA EL DUBTE, perquè la primera no distingia
+ * entre dada nova i interpolació. Un transsecte de 20 punts a 0,0703° sobre
+ * Burgos (−3,70°, del 41,58° al 42,92°, 12-11-2024) dona 10 valors diferents de
+ * 20 a les 09 UTC, amb trams iguals d'1,25 cel·les de mitjana: 0,088°. Si el
+ * que hi ha a sota fos una malla de 0,25° interpolada, els trams durarien 3,5
+ * cel·les i es veurien esglaons de 0,25°. No s'hi veuen.
  *
  * Es queda a 0,25° per cost, i el cost està comptat: a 0,0703° la franja del
- * 2026 passaria de 855 cel·les a unes deu mil vuit-centes (creixen amb el
- * quadrat del pas), i les 8.100 crides d'API d'aquesta graella passarien a més
+ * 2026 passaria de 888 cel·les a unes onze mil dues-centes (creixen amb el
+ * quadrat del pas), i les 8.486 crides d'API d'aquesta graella passarien a més
  * de cent mil — deu dies sencers del límit diari del pla gratuït. El JSON, de
- * ~50 kB a més d'un megabyte que l'usuari s'ha de baixar per anar sense
+ * ~55 kB a més d'un megabyte que l'usuari s'ha de baixar per anar sense
  * cobertura.
  *
  * La distinció que importa i que no s'ha de perdre mai: 0,25° no INVENTA res
@@ -232,7 +244,7 @@ const MAX_RETRIES = 4;
  * Exactament el límit que va saltar. Agrupar punts, doncs, estalvia connexions
  * i temps de latència, però NO estalvia quota: la quota és la dada.
  *
- * Amb aquest comptador, la graella sencera del 2026 val 645 × 14 ≈ 8.100
+ * Amb aquest comptador, la graella sencera del 2026 val 675 × 12,6 ≈ 8.486
  * crides. Cap dins del límit diari de 10.000 però no dins de l'horari de 5.000,
  * o sigui que el mínim honest són dues hores llargues. No hi ha drecera: la
  * mateixa dada no es pot demanar més barata.
@@ -299,7 +311,7 @@ interface Cell {
    * NO es criden les circumstàncies locals completes: la diferència entre el
    * màxim exacte d'una cel·la i el pas de la central que té al davant és d'un
    * parell de minuts, i la reanàlisi és HORÀRIA. Resoldre els contactes de
-   * vuit-centes cel·les per afinar minuts dins d'una casella d'una hora seria
+   * nou-centes cel·les per afinar minuts dins d'una casella d'una hora seria
    * pagar per res.
    *
    * I VAL LA PENA DEIXAR ESCRIT EL NÚMERO, perquè contradiu el que semblava.
@@ -422,6 +434,17 @@ interface Accumulator {
   samples: number;
   clear: number;
   cloudy: number;
+  /**
+   * Anys ja INTENTATS en aquesta cel·la. És la clau del progrés, i viu aquí i
+   * no en una llista de lots per la raó que explica la capçalera: el lot és una
+   * agrupació de transport que canvia amb la franja, i la cel·la no.
+   */
+  folded: number[];
+  /**
+   * Anys que han donat alguna mostra útil. NO és `folded.length`: un any pot
+   * baixar-se sencer i tornar només forats, i llavors s'ha d'intentar un sol
+   * cop però no s'ha de comptar mai. És aquest número el que es publica.
+   */
   years: number;
 }
 
@@ -435,6 +458,7 @@ function emptyAccumulator(): Accumulator {
     samples: 0,
     clear: 0,
     cloudy: 0,
+    folded: [],
     years: 0,
   };
 }
@@ -533,7 +557,9 @@ function foldYear(
   accumulator.high += mean.high * yearLayers.length;
   accumulator.total += mean.total * yearLayers.length;
   accumulator.samples += yearLayers.length;
-  accumulator.years++;
+  // `years` i `folded` els porta qui crida: aquesta funció no sap de quin any
+  // és la sèrie que li han donat, i el compte d'anys amb dades i el d'anys
+  // intentats són dues coses diferents que s'han d'escriure cadascuna al seu lloc.
   return true;
 }
 
@@ -863,26 +889,40 @@ async function runWithLimit<T>(
 /* ------------------------------------------------------------ punt de control */
 
 /**
- * El progrés es compta per LOT I ANY, no per any sencer.
+ * El progrés es compta per CEL·LA I ANY, i la cel·la s'identifica per la seva
+ * casella de la malla.
  *
- * La primera versió marcava l'any com a fet encara que se n'hagués perdut algun
- * lot pel camí. Sonava tolerant i era just el contrari: aquelles cel·les es
- * quedaven amb un any menys per sempre, i com que la xifra es publicava
- * igualment, ningú no ho hauria sabut mai. Ara cada lot té la seva clau; el que
- * no ha entrat es torna a demanar la propera vegada i no es pot comptar dos
- * cops, perquè la clau s'apunta al mateix instant síncron en què les dades
- * entren a l'acumulador.
+ * DUES VERSIONS ANTERIORS I DUES LLIÇONS. La primera marcava l'any com a fet
+ * encara que se n'hagués perdut algun lot pel camí: aquelles cel·les es
+ * quedaven amb un any menys per sempre i, com que la xifra es publicava
+ * igualment, ningú no ho hauria sabut mai. La segona ho va arreglar comptant per
+ * LOT i any, amb una signatura de la graella que invalidava el punt de control
+ * sencer si la franja canviava.
+ *
+ * Això últim va costar una tarda de quota. El lot és una agrupació de
+ * transport —vint punts que caben en una petició— i el seu contingut depèn de
+ * quines cel·les hi ha i en quin ordre; qualsevol retoc a la geometria de la
+ * franja, encara que sigui a l'altra punta del mapa, en canvia la composició i
+ * deixa les claus desades sense significat. Va passar de debò: un ajust al
+ * límit nord vora Menorca va passar la graella de 855 cel·les a 888 i hauria
+ * llençat 369 lots ja baixats —unes 4.600 crides d'API— per 33 cel·les noves.
+ *
+ * La cel·la, en canvi, no depèn de res: `ix`/`iy` són índexs ABSOLUTS sobre la
+ * malla de 0,25° (vegeu `climGrid.ts`). Una cel·la baixada el mes passat parla
+ * exactament del mateix tros de món que la d'avui. Per això el punt de control
+ * desa la llista de caselles i, quan la franja canvia, MIGRA: el que ja hi era
+ * es reaprofita, el que és nou es baixa i el que ha deixat de caure dins de la
+ * franja s'oblida. I com que cada acumulador porta la seva pròpia llista d'anys
+ * integrats, comptar dos cops el mateix any a la mateixa cel·la és impossible
+ * per construcció, no per disciplina.
  */
 interface Checkpoint {
   eclipseId: string;
   scoringVersion: number;
   stepDeg: number;
   bufferKm: number;
-  batchSize: number;
-  /** Signatura de la graella. Si canvia, el punt de control ja no hi lliga. */
-  cellSignature: string;
-  /** Claus `any:lot` ja integrades. */
-  done: string[];
+  /** Identitat de cada acumulador: la seva casella de la malla, `[ix, iy]`. */
+  cells: [number, number][];
   accumulators: Accumulator[];
   /** Quota gastada recentment, perquè reprendre no reseteji el ritme. */
   rate: RateSample[];
@@ -893,37 +933,67 @@ function checkpointPath(eclipseId: string): string {
   return resolve(here, `../node_modules/.tmp/clouds-clim-${eclipseId}.progress.json`);
 }
 
-function cellSignature(cells: readonly Cell[]): string {
-  return `${cells.length}:${cells[0].ix},${cells[0].iy}:${cells[cells.length - 1].ix},${cells[cells.length - 1].iy}`;
+/** Resultat de recuperar el punt de control, dit en números per poder-lo explicar. */
+interface Restored {
+  accumulators: Accumulator[];
+  rate: RateSample[];
+  reused: number;
+  fresh: number;
+  forgotten: number;
 }
 
-function readCheckpoint(
-  eclipseId: string,
-  cells: readonly Cell[],
-  batchSize: number,
-): Checkpoint | null {
+/**
+ * Recupera el punt de control i l'encaixa amb la graella d'ARA.
+ *
+ * El que no lliga no fa descartar res: es migra el que es pot i es diu quant
+ * s'ha reaprofitat. Només els paràmetres que canvien el SIGNIFICAT de les
+ * dades —la física de puntuació, el pas de la malla— fan començar de zero,
+ * perquè aleshores el que hi ha desat ja no vol dir el mateix.
+ */
+function readCheckpoint(eclipseId: string, cells: readonly Cell[]): Restored | null {
   const file = checkpointPath(eclipseId);
   if (!existsSync(file)) return null;
   try {
-    const saved = JSON.parse(readFileSync(file, 'utf8')) as Checkpoint;
-    const same =
-      saved.eclipseId === eclipseId &&
-      saved.scoringVersion === SCORING_VERSION &&
-      saved.stepDeg === STEP_DEG &&
-      saved.bufferKm === BUFFER_KM &&
-      // El lot forma part de la clau del progrés: canviar-lo canvia quins punts
-      // hi ha a cada lot i les claus desades deixarien de voler dir res.
-      saved.batchSize === batchSize &&
-      saved.cellSignature === cellSignature(cells) &&
-      Array.isArray(saved.done) &&
-      saved.accumulators?.length === cells.length;
-    if (!same) {
+    const saved = JSON.parse(readFileSync(file, 'utf8')) as Partial<Checkpoint>;
+    if (
+      saved.eclipseId !== eclipseId ||
+      saved.scoringVersion !== SCORING_VERSION ||
+      saved.stepDeg !== STEP_DEG
+    ) {
       process.stdout.write(
-        '  el punt de control desat no lliga amb aquesta graella: es descarta\n',
+        '  el punt de control desat és d’una altra física o d’una altra malla: es descarta\n',
       );
       return null;
     }
-    return saved;
+    if (!Array.isArray(saved.cells) || !Array.isArray(saved.accumulators)) return null;
+    if (saved.cells.length !== saved.accumulators.length) return null;
+
+    const byCell = new Map<string, Accumulator>();
+    for (let i = 0; i < saved.cells.length; i++) {
+      const [ix, iy] = saved.cells[i];
+      const acc = saved.accumulators[i];
+      // Un punt de control d'abans que existís `folded` no es pot fer servir:
+      // sabríem quantes dades hi ha però no de quins anys, i tornar a integrar
+      // un any ja integrat duplicaria les mostres sense que res ho digués.
+      if (!acc || !Array.isArray(acc.folded) || !Array.isArray(acc.histogram)) continue;
+      byCell.set(`${ix},${iy}`, acc);
+    }
+
+    let reused = 0;
+    const accumulators = cells.map((cell) => {
+      const previous = byCell.get(`${cell.ix},${cell.iy}`);
+      if (!previous) return emptyAccumulator();
+      reused++;
+      return previous;
+    });
+
+    return {
+      accumulators,
+      rate: saved.rate ?? [],
+      reused,
+      fresh: cells.length - reused,
+      forgotten: byCell.size - reused,
+    };
   } catch {
     return null;
   }
@@ -936,6 +1006,51 @@ function writeCheckpoint(checkpoint: Checkpoint): void {
 }
 
 /* ------------------------------------------------------------------ sortida */
+
+/**
+ * Anys que de debò hi ha darrere de la graella.
+ *
+ * NO ÉS EL RANG DEL CALENDARI, i la diferència és tota la qüestió. `firstYear`
+ * i `lastYear` es podrien treure de restar quinze a l'últim any d'arxiu, que és
+ * el que es va DEMANAR; però el que es publica ha de dir el que es va OBTENIR.
+ * Amb una execució aturada a mitges —el sostre diari d'Open-Meteo hi arriba
+ * sovint— aquelles dues xifres anunciarien una sèrie de quinze anys damunt de
+ * dades de vuit, i la columna `years`, que sí que diu la veritat cel·la a
+ * cel·la, quedaria contradient la capçalera del mateix fitxer sense que ningú
+ * ho miri. Una climatologia de vuit anys pot ser perfectament útil; el que no
+ * pot fer és presentar-se com una de quinze.
+ */
+function foldedSpan(accumulators: readonly Accumulator[]): {
+  first: number;
+  last: number;
+  count: number;
+} {
+  const seen = new Set<number>();
+  for (const acc of accumulators) for (const year of acc.folded) seen.add(year);
+  const list = [...seen].sort((a, b) => a - b);
+  return { first: list[0] ?? 0, last: list[list.length - 1] ?? 0, count: list.length };
+}
+
+/**
+ * Punt-any que encara falten per baixar dins de la finestra que es demana.
+ *
+ * Es filtra pels dos costats del rang a posta. El punt de control sobreviu
+ * d'un dia per l'altre i la finestra de quinze anys llisca amb el calendari:
+ * un acumulador pot portar anys que avui ja han quedat fora per baix, i
+ * comptar-los faria creure que la feina està més avançada del que és.
+ */
+function pendingCellYears(
+  accumulators: readonly Accumulator[],
+  firstYear: number,
+  lastYear: number,
+): number {
+  let pending = 0;
+  for (const acc of accumulators) {
+    const inWindow = acc.folded.filter((y) => y >= firstYear && y <= lastYear).length;
+    pending += CLIMATOLOGY_YEARS - inWindow;
+  }
+  return pending;
+}
 
 function buildGrid(
   eclipseId: string,
@@ -1011,15 +1126,32 @@ function buildGrid(
 
   const targets = cells.map((c) => c.targetMs);
 
+  /*
+   * QUANTS ANYS PORTA CADA CEL·LA, dit tal com és i no com voldríem.
+   *
+   * Amb la graella sencera totes en porten els mateixos i la frase és curta.
+   * Amb una generació aturada a mig any —el sostre horari d'Open-Meteo hi
+   * arriba— unes quantes cel·les en tenen una de més que la resta, i llavors
+   * dir «13 anys» seria mentir a les que en porten 12 i dir «12» seria
+   * amagar feina feta. Es diu el ventall, i la columna `years` el detalla
+   * cel·la a cel·la per a qui hi vulgui mirar de prop.
+   */
+  const minYears = Math.min(...columns.years);
+  const maxYears = Math.max(...columns.years);
+  const yearsSaid = minYears === maxYears ? `${minYears} anys` : `${minYears}-${maxYears} anys`;
+
   return {
     format: CLIM_GRID_FORMAT,
     eclipseId,
     scoringVersion: SCORING_VERSION,
     builtAtMs: Date.now(),
+    // El nombre d'anys va escrit a la frase i no només implícit al rang: un
+    // 2011-2025 amb un any buit pel mig es llegiria com quinze anys, i qui
+    // compari aquesta xifra amb una altra font ha de saber sobre quantes n'és.
     source:
-      `Arxiu d’Open-Meteo (reanàlisi, ~0,07° a l’origen), ${firstYear}-${lastYear}, ` +
-      `finestra de ±${CLIMATOLOGY_WINDOW_DAYS} dies al voltant del màxim local, ` +
-      `mostrejat al centre de cel·les de ${STEP_DEG}°`,
+      `Arxiu d’Open-Meteo (reanàlisi, ~0,07° a l’origen), ${yearsSaid} ` +
+      `dins de ${firstYear}-${lastYear}, finestra de ±${CLIMATOLOGY_WINDOW_DAYS} dies al ` +
+      `voltant del màxim local, mostrejat al centre de cel·les de ${STEP_DEG}°`,
     attribution: `${OPEN_METEO_ATTRIBUTION.ca} · ${ESPENAK_ATTRIBUTION}`,
     firstYear,
     lastYear,
@@ -1124,21 +1256,22 @@ async function main(): Promise<void> {
     return;
   }
 
-  const accumulators = cells.map(() => emptyAccumulator());
-  const done = new Set<string>();
+  let accumulators = cells.map(() => emptyAccumulator());
 
   if (!fresh) {
-    const saved = readCheckpoint(eclipseId, cells, batchSize);
+    const saved = readCheckpoint(eclipseId, cells);
     if (saved) {
-      for (let i = 0; i < accumulators.length; i++) accumulators[i] = saved.accumulators[i];
-      for (const key of saved.done) done.add(key);
-      gate.restore(saved.rate ?? []);
+      accumulators = saved.accumulators;
+      gate.restore(saved.rate);
       const recent = gate
         .snapshot()
         .filter((s) => s.atMs >= Date.now() - 3_600_000)
         .reduce((sum, s) => sum + s.weight, 0);
       process.stdout.write(
-        `  punt de control: ${num.format(done.size)} lots de ${num.format(requests)} ja fets · ` +
+        `  punt de control: ${num.format(saved.reused)} cel·les recuperades` +
+          (saved.fresh > 0 ? `, ${num.format(saved.fresh)} de noves` : '') +
+          (saved.forgotten > 0 ? `, ${num.format(saved.forgotten)} ja fora de la franja` : '') +
+          ` · queden ${num.format(pendingCellYears(accumulators, firstYear, lastYear))} punt-any · ` +
           `${num.format(Math.round(recent))} crides gastades l’última hora\n`,
       );
     }
@@ -1150,18 +1283,24 @@ async function main(): Promise<void> {
       scoringVersion: SCORING_VERSION,
       stepDeg: STEP_DEG,
       bufferKm: BUFFER_KM,
-      batchSize,
-      cellSignature: cellSignature(cells),
-      done: [...done],
+      cells: cells.map((c) => [c.ix, c.iy]),
       accumulators,
       rate: gate.snapshot(),
     });
   };
 
   for (let year = firstYear; year <= lastYear; year++) {
+    /*
+     * Un lot es demana si li falta aquest any a ALGUNA de les seves cel·les.
+     * Les que ja el tenen el rebran igualment dins de la resposta i no
+     * l'integraran: la porta és `folded`, cel·la a cel·la, i no el fet d'haver
+     * demanat el lot. Amb una graella acabada de migrar això vol dir baixar
+     * alguna cel·la de més —el lot és indivisible— però mai comptar-la dues
+     * vegades, que és l'error que sí que seria invisible.
+     */
     const pending = batches
       .map((batch, index) => ({ batch, key: `${year}:${index}` }))
-      .filter((job) => !done.has(job.key));
+      .filter((job) => job.batch.some((c) => !accumulators[c.index].folded.includes(year)));
     if (pending.length === 0) continue;
 
     const yearStarted = Date.now();
@@ -1178,24 +1317,26 @@ async function main(): Promise<void> {
           Date.UTC(year, month, day + CLIMATOLOGY_WINDOW_DAYS),
         );
       } catch (error) {
-        // El lot NO es marca: la propera execució el tornarà a demanar. Donar
-        // l'any per bo amb un forat a dins seria publicar una cel·la amb menys
-        // anys dels que diu tenir, i això no ho veuria mai ningú.
+        // Res no es marca: la propera execució tornarà a demanar el que falti.
+        // Donar l'any per bo amb un forat a dins seria publicar una cel·la amb
+        // menys anys dels que diu tenir, i això no ho veuria mai ningú.
         lost++;
         process.stdout.write(`    lot ${job.key} perdut (${String(error)})\n`);
         return;
       }
 
-      // Aquestes tres coses passen dins del mateix bloc síncron a posta: quan
-      // el punt de control es desa, el que hi ha als acumuladors i el que hi ha
-      // a `done` descriuen exactament la mateixa feina.
+      // La integració i la marca passen dins del mateix bloc síncron a posta:
+      // quan el punt de control es desa, el que hi ha a l'acumulador i el que
+      // diu `folded` descriuen exactament la mateixa feina.
       for (let i = 0; i < job.batch.length; i++) {
         const cell = job.batch[i];
+        const accumulator = accumulators[cell.index];
+        if (accumulator.folded.includes(year)) continue;
         const target = new Date(cell.targetMs);
         const targetHour = target.getUTCHours() + target.getUTCMinutes() / 60;
-        foldYear(accumulators[cell.index], responses[i].hourly, targetHour);
+        if (foldYear(accumulator, responses[i].hourly, targetHour)) accumulator.years++;
+        accumulator.folded.push(year);
       }
-      done.add(job.key);
       // Cada cinc lots i no cada deu: el punt de control també guarda la quota
       // gastada, i si arriba endarrerit, l'execució següent creu tenir més
       // marge del que li queda i xoca amb el límit a la primera petició.
@@ -1217,23 +1358,28 @@ async function main(): Promise<void> {
     if (dailyExhausted) break;
   }
 
+  // El que falta es compta en PUNT-ANY i no en lots: ara que el progrés viu a
+  // la cel·la, el lot ja no és una unitat de feina sinó de transport.
+  const totalCellYears = cells.length * CLIMATOLOGY_YEARS;
+  const missing = pendingCellYears(accumulators, firstYear, lastYear);
+
   if (dailyExhausted) {
     snapshot();
     process.stdout.write(
       `\nSOSTRE DIARI D’OPEN-METEO ESGOTAT.\n` +
-        `  ${num.format(done.size)} lots de ${num.format(requests)} desats al punt de control.\n` +
+        `  Queden ${num.format(missing)} punt-any de ${num.format(totalCellYears)}, ` +
+        'i el que s’ha baixat és al punt de control.\n' +
         '  No és cap error: el pla gratuït en deixa 10.000 al dia i aquesta graella\n' +
-        '  en val unes 8.100. Demà, la mateixa ordre continua per on anava:\n' +
+        '  en val unes 8.500. Demà, la mateixa ordre continua per on anava:\n' +
         `      npx tsx scripts/build-cloud-clim.ts ${eclipseId}\n\n`,
     );
     process.exitCode = 1;
     return;
   }
 
-  const missing = requests - done.size;
   if (missing > 0 && !args.includes('--partial')) {
     process.stdout.write(
-      `\nFALTEN ${num.format(missing)} LOTS de ${num.format(requests)}.\n` +
+      `\nFALTEN ${num.format(missing)} PUNT-ANY de ${num.format(totalCellYears)}.\n` +
         '  NO s’escriu el JSON. Una climatologia a mitges publicada com a definitiva\n' +
         '  seria una xifra amb menys anys dels que sembla i ningú no ho notaria.\n' +
         `  Torna-hi (el punt de control ho recorda):  npx tsx scripts/build-cloud-clim.ts ${eclipseId}\n` +
@@ -1243,7 +1389,21 @@ async function main(): Promise<void> {
     return;
   }
 
-  const grid = buildGrid(eclipseId, cells, accumulators, firstYear, lastYear);
+  /*
+   * El rang que s'ESCRIU al fitxer és el dels anys que de debò s'han integrat,
+   * no el que s'havia demanat. Amb la graella sencera les dues coses
+   * coincideixen; amb `--partial` no, i llavors el fitxer ha de dir la veritat
+   * pel seu compte, perquè ningú no llegirà aquesta consola d'aquí a sis mesos.
+   */
+  const span = foldedSpan(accumulators);
+  if (span.count !== CLIMATOLOGY_YEARS) {
+    process.stdout.write(
+      `\n  ATENCIÓ: la sèrie té ${span.count} anys (${span.first}-${span.last}) i no ` +
+        `${CLIMATOLOGY_YEARS}. El fitxer ho dirà: no es publica com una climatologia sencera.\n`,
+    );
+  }
+
+  const grid = buildGrid(eclipseId, cells, accumulators, span.first, span.last);
   // Es valida amb el MATEIX lector que farà servir l'app: si el que escrivim
   // aquí no passa la validació d'allà, val més saber-ho ara que al navegador.
   parseCloudClimGrid(JSON.parse(JSON.stringify(grid)));

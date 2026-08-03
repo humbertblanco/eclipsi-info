@@ -20,14 +20,41 @@ import { IconButton, Switch } from '../../ui';
 import type { Locale } from '../../i18n';
 import { s } from '../../screens/strings';
 
+/**
+ * QUÈ ÉS UNA CAPA D'AQUÍ I QUÈ NO.
+ *
+ * Aquí només hi ha les capes TRANSVERSALS: les que tenen sentit mentre mires
+ * qualsevol cosa, perquè no responen cap pregunta de la fitxa sinó que
+ * descriuen el territori. El relleu i el con acompanyen sempre; els punts
+ * oficials i els miradors són llocs que hi són tant si penses en núvols com
+ * si penses en durada.
+ *
+ * Les altres capes del mapa —el mapa de calor de visibilitat, la nuvolositat,
+ * la fletxa del gradient i la vora d'incertesa— NO són aquí a posta: cada una
+ * és la cara cartogràfica d'una vista concreta de la fitxa i s'encén amb
+ * ella. Posar-les també en aquest plafó voldria dir tenir dos comandaments
+ * per a la mateixa cosa, i el dia que discrepessin no hi hauria manera de
+ * saber quin mana.
+ */
 export interface MapLayerState {
   /** Relleu ombrejat amb el model d'elevació. */
   hillshade: boolean;
   /** Con de visió cap al Sol des del punt triat. */
   cone: boolean;
+  /** Punts d'observació oficials, amb la seva font. */
+  official: boolean;
+  /** Miradors i cims d'OpenStreetMap. */
+  viewpoints: boolean;
+  /** Mapa de calor: quants segons sobreviuen al relleu, per cel·la. */
+  heat: boolean;
 }
 
-const STORAGE_KEY = 'eclipsi:mapLayers:v1';
+/*
+ * LA CLAU PUJA DE VERSIÓ CADA COP QUE CANVIA LA FORMA. Un estat desat amb la
+ * forma vella deixaria els camps nous indefinits, i un booleà indefinit no
+ * apaga una capa: la deixa en un tercer estat que ningú no ha triat.
+ */
+const STORAGE_KEY = 'eclipsi:mapLayers:v2';
 
 /**
  * L'estat desat, o el defecte que li passin. Exportada perquè `MapScreen`
@@ -40,10 +67,18 @@ export function readStoredLayers(fallback: MapLayerState): MapLayerState {
     const parsed: unknown = JSON.parse(raw);
     if (typeof parsed !== 'object' || parsed === null) return fallback;
     const record = parsed as Record<string, unknown>;
+    // Camp a camp: una versió anterior de la clau no tenia `official` ni
+    // `viewpoints`, i el que hi manqui ha de caure al defecte en comptes de
+    // deixar la capa apagada per sempre a qui ja havia fet servir l'app.
     return {
       hillshade:
         typeof record.hillshade === 'boolean' ? record.hillshade : fallback.hillshade,
       cone: typeof record.cone === 'boolean' ? record.cone : fallback.cone,
+      official:
+        typeof record.official === 'boolean' ? record.official : fallback.official,
+      viewpoints:
+        typeof record.viewpoints === 'boolean' ? record.viewpoints : fallback.viewpoints,
+      heat: typeof record.heat === 'boolean' ? record.heat : fallback.heat,
     };
   } catch {
     // localStorage vetat (mode privat estricte): es viu amb el defecte.
@@ -110,6 +145,43 @@ export function LayerControl({ locale, value, onChange }: Props) {
             label={s('map.layers.cone', locale)}
             description={s('map.layers.coneDesc', locale)}
           />
+          {/*
+            El mapa de calor baixa relleu de debò i triga segons: la
+            descripció ho diu ABANS de tocar l'interruptor, i la pantalla hi
+            posa una porta de cost la primera vegada.
+          */}
+          <Switch
+            checked={value.heat}
+            onChange={(heat) => set({ ...value, heat })}
+            label={s('map.layers.heat', locale)}
+            description={s('map.layers.heatDesc', locale)}
+          />
+          <Switch
+            checked={value.official}
+            onChange={(official) => set({ ...value, official })}
+            label={s('map.layers.official', locale)}
+            description={s('map.layers.officialDesc', locale)}
+          />
+          {/*
+            Els miradors baixen un fitxer de centenars de kB en encendre's, i
+            per això la descripció ho diu ABANS de tocar l'interruptor: en
+            aquesta app res no es demana sense explicar-ho.
+          */}
+          <Switch
+            checked={value.viewpoints}
+            onChange={(viewpoints) => set({ ...value, viewpoints })}
+            label={s('map.layers.viewpoints', locale)}
+            description={s('map.layers.viewpointsDesc', locale)}
+          />
+
+          {/*
+            LA FRASE QUE EXPLICA PER QUÈ NO HI SÓN TOTES.
+            Sense ella, la pregunta òbvia en obrir això és «i la nuvolositat?
+            i la fletxa?». Hi són, però lligades a la seva vista de la fitxa,
+            que és on es fa la pregunta que responen. Dir-ho val una línia i
+            estalvia la sensació que falten coses.
+          */}
+          <p className="mapscreen__layernote">{s('map.layers.byView', locale)}</p>
         </div>
       )}
     </div>

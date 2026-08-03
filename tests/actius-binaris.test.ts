@@ -24,11 +24,20 @@
  *  · QUE NO SIGUI PLANA. Un rectangle d'un sol color passaria el tall anterior
  *    sense ser res. Es demana desviació típica, que és el que distingeix «hi ha
  *    corona, costa i lletres» de «hi ha un rectangle».
- *  · QUE NO TINGUI FORATS. Cap píxel amb alfa < 255. Aquest és el tall que
- *    hauria aturat l'error d'origen el mateix dia que es va cometre, i el que
- *    `scripts/png.ts` ja fa impossible per al mini-mapa escrivint RGB sense
- *    canal alfa. La resta d'actius sí que porten canal alfa, i per tant el
- *    necessiten comprovat.
+ *  · QUE NO TINGUI FORATS. Aquest és el tall que hauria aturat l'error d'origen
+ *    el mateix dia que es va cometre, i ara es demana de dues maneres segons
+ *    com estigui feta cada imatge:
+ *
+ *      — Les que cou `scripts/png.ts` (el mini-mapa i, des d'avui, la targeta
+ *        social) NO PORTEN CANAL ALFA. La prova ja no els compta els píxels
+ *        translúcids: n'exigeix el tipus de color 2, que vol dir que aquell
+ *        canal no existeix. És una comprovació més forta que la d'abans i és
+ *        la que de debò tanca la porta —un PNG sense alfa no pot sortir
+ *        transparent ni que algú s'hi esforci—, i a més fa de rodet: si algú
+ *        torna a coure un d'aquests actius a mà en un navegador, en sortirà
+ *        RGBA i la prova ho dirà encara que la imatge es vegi perfecta.
+ *      — Les icones sí que porten alfa (Android i iOS l'esperen), i per a
+ *        aquestes es manté el tall de sempre: cap píxel amb alfa < 255.
  *  · QUE NO MENTEIXI. Les mides que declaren el manifest i les etiquetes Open
  *    Graph s'han de correspondre amb la capçalera IHDR de debò, i el color de
  *    les cantonades amb el `background_color` del manifest. Una icona que diu
@@ -46,11 +55,17 @@
  *
  *     actiu                        mides      màx     mitj    desv
  *     brand/minimapa-iberia.png    725×564    129,0   44,67   27,79
- *     brand/og.png                1200×630    240,1   25,77   48,91
+ *     brand/og.png                1200×630    240,1   21,70   47,22
  *     icons/apple-touch-icon.png   180×180    244,5   17,57   26,59
  *     icons/icon-192.png           192×192    245,4   17,60   26,62
  *     icons/icon-512.png           512×512    247,2   17,59   27,20
  *     icons/icon-maskable-512.png  512×512    246,8   10,81   17,96
+ *
+ * La targeta social feia 25,77 de mitjana quan estava cuita a mà; ara la fa
+ * `scripts/build-og.ts` i en fa 21,70, perquè la corona nova concentra la llum
+ * al limbe en comptes d'escampar una boira per tota la meitat dreta. La xifra
+ * s'ha actualitzat i el llindar no: el que vigila la mitjana és que no caigui
+ * cap a 6,27, no que es quedi on era.
  *
  * El terra de tot plegat és 6,27: la lluminositat del fons del sistema
  * (#05060B). Una pàgina pintada llisa d'aquest color fa mitjana 6,27 i
@@ -92,15 +107,26 @@ interface RasterAsset {
    * cantonades hi ha mar i terra.
    */
   fullBleed: boolean;
+  /**
+   * Com ha d'estar feta la transparència d'aquest actiu.
+   *
+   *  · `cap`  — sense canal alfa (tipus de color 2). És el que escriu
+   *             `scripts/png.ts`, i el que fa impossible per construcció
+   *             l'error d'origen. Els actius que tenen generador van aquí.
+   *  · `opac` — amb canal alfa, però tots els píxels a 255. És el cas de les
+   *             icones, que el porten perquè els sistemes operatius l'esperen.
+   */
+  alpha: 'cap' | 'opac';
 }
 
 const RASTER: RasterAsset[] = [
   {
     path: 'brand/og.png',
-    role: 'targeta social (og:image i twitter:image) — la cara pública de l’enllaç',
+    role: 'targeta social (og:image i twitter:image) — la fa scripts/build-og.ts',
     width: 1200,
     height: 630,
     fullBleed: true,
+    alpha: 'cap',
   },
   {
     path: 'brand/minimapa-iberia.png',
@@ -108,6 +134,7 @@ const RASTER: RasterAsset[] = [
     width: 725,
     height: 564,
     fullBleed: false,
+    alpha: 'cap',
   },
   {
     path: 'icons/icon-192.png',
@@ -115,6 +142,7 @@ const RASTER: RasterAsset[] = [
     width: 192,
     height: 192,
     fullBleed: true,
+    alpha: 'opac',
   },
   {
     path: 'icons/icon-512.png',
@@ -122,6 +150,7 @@ const RASTER: RasterAsset[] = [
     width: 512,
     height: 512,
     fullBleed: true,
+    alpha: 'opac',
   },
   {
     path: 'icons/icon-maskable-512.png',
@@ -129,6 +158,7 @@ const RASTER: RasterAsset[] = [
     width: 512,
     height: 512,
     fullBleed: true,
+    alpha: 'opac',
   },
   {
     path: 'icons/apple-touch-icon.png',
@@ -136,6 +166,7 @@ const RASTER: RasterAsset[] = [
     width: 180,
     height: 180,
     fullBleed: true,
+    alpha: 'opac',
   },
 ];
 
@@ -334,7 +365,17 @@ describe('els actius ràster que es publiquen', () => {
 
       it('no té forats transparents', () => {
         // AQUEST és el tall que hauria aturat l'error d'origen el mateix dia.
-        expect(image.minAlpha).toBe(255);
+        // Vegeu la capçalera: als actius que tenen generador no se'ls compten
+        // els píxels translúcids, se'ls nega el canal on podrien existir.
+        if (asset.alpha === 'cap') {
+          expect(
+            image.colorType,
+            'aquest actiu el cou scripts/png.ts i ha de sortir RGB (tipus 2), sense canal alfa',
+          ).toBe(2);
+        } else {
+          expect(image.colorType, 'aquest actiu porta canal alfa a posta').toBe(6);
+          expect(image.minAlpha).toBe(255);
+        }
       });
 
       it('fa les mides que promet', () => {
@@ -418,7 +459,7 @@ describe('l’inventari', () => {
   /**
    * Aquesta és la prova que converteix les altres en vigilància.
    *
-   * Sense ella, aquest fitxer només diria que els dotze actius de today estan
+   * Sense ella, aquest fitxer només diria que els dotze actius d'avui estan
    * bé, i el tretzè entraria demà sense que ningú li mirés cap píxel — que és
    * exactament com va començar tot. Si suspèn, la resposta NO és treure
    * l'actiu de `public/`: és afegir-lo a `RASTER` o a `VECTOR` de més amunt.

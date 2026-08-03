@@ -529,6 +529,19 @@ export interface BandChunk {
   endMs: number;
   north: PathPoint[];
   south: PathPoint[];
+  /**
+   * Punts de les TAPES que cauen al tram.
+   *
+   * Als extrems del recorregut la franja no està limitada per cap tangència
+   * sinó pel terminador, i allà la vora no és ni el límit nord ni el sud sinó
+   * la tapa (vegeu `eclipses/path.ts`). Al 12-08-2026, el límit nord s'acaba a
+   * les 18:30:17 i la franja encara dura fins a les 18:34:05: tot aquell tram
+   * —Balears incloses— té vora, però no en té de «nord». Sense comptar-hi les
+   * tapes, el darrer tram es descartava sencer per manca de límit nord i Palma
+   * (39,57 / 2,65), amb 96 s de totalitat, no queia dins de cap rectangle de
+   * consulta.
+   */
+  cap: PathPoint[];
   /** Rectangle del tram amb el marge ja afegit, reduït a ±180°. */
   box: BandBox;
 }
@@ -626,13 +639,20 @@ export function bandChunks(path: EclipsePath, options: BandOptions = {}): BandCh
     const south = sliceWithNeighbours(path.southLimit, window.startMs, window.endMs).filter(
       (p) => Math.abs(p.lat) <= latLimit,
     );
-    // Amb menys de dos punts a cada límit no hi ha polígon: és un tram que ja
-    // no es pot ni dibuixar ni comprovar, i per tant tampoc no s'hi busca res.
-    if (north.length < 2 || south.length < 2) continue;
+    const cap = [
+      ...sliceWithNeighbours(path.startCap, window.startMs, window.endMs),
+      ...sliceWithNeighbours(path.endCap, window.startMs, window.endMs),
+    ].filter((p) => Math.abs(p.lat) <= latLimit);
 
-    const box = boxOf([...north, ...south], marginKm);
+    // Amb menys de dos punts de vora no hi ha res que acotar: és un tram que ja
+    // no es pot ni dibuixar ni comprovar, i per tant tampoc no s'hi busca res.
+    // Compten les tres corbes, no només els dos límits: als extrems del
+    // recorregut la vora és la tapa (vegeu `BandChunk.cap`).
+    if (north.length + south.length + cap.length < 2) continue;
+
+    const box = boxOf([...north, ...south, ...cap], marginKm);
     if (box === null) continue;
-    chunks.push({ startMs: window.startMs, endMs: window.endMs, north, south, box });
+    chunks.push({ startMs: window.startMs, endMs: window.endMs, north, south, cap, box });
   }
 
   return chunks;
@@ -704,6 +724,13 @@ export interface BandGeometry {
   ring: readonly [number, number][];
   north: readonly PathPoint[];
   south: readonly PathPoint[];
+  /**
+   * Les dues TAPES: la vora dels extrems del recorregut, on la franja s'acaba
+   * contra el terminador i no contra cap tangència. Compten per al marge igual
+   * que els límits — un mirador vint quilòmetres més enllà de la tapa és tan
+   * útil com un que és vint quilòmetres més enllà del límit nord.
+   */
+  caps: readonly (readonly PathPoint[])[];
   marginKm: number;
 }
 
@@ -712,6 +739,7 @@ export function bandGeometry(path: EclipsePath, marginKm = DEFAULT_MARGIN_KM): B
     ring: eclipsePathToGeoJson(path).band.geometry.coordinates[0] as [number, number][],
     north: path.northLimit,
     south: path.southLimit,
+    caps: [path.startCap, path.endCap],
     marginKm,
   };
 }
@@ -765,7 +793,12 @@ export function insideBand(point: { lat: number; lon: number }, band: BandGeomet
   const toNorth = distanceToCenterLineKm(point, band.north);
   if (toNorth !== null && toNorth <= band.marginKm) return true;
   const toSouth = distanceToCenterLineKm(point, band.south);
-  return toSouth !== null && toSouth <= band.marginKm;
+  if (toSouth !== null && toSouth <= band.marginKm) return true;
+  // I les tapes, que als extrems del recorregut són l'única vora que hi ha.
+  return band.caps.some((cap) => {
+    const km = distanceToCenterLineKm(point, cap);
+    return km !== null && km <= band.marginKm;
+  });
 }
 
 /**
@@ -817,7 +850,7 @@ export function chunkQueryBoxes(
   const lonFrom = Math.floor(chunk.box.minLon / span);
   const lonTo = Math.floor(chunk.box.maxLon / span);
 
-  const vertices = [...chunk.north, ...chunk.south];
+  const vertices = [...chunk.north, ...chunk.south, ...chunk.cap];
   const boxes: BandBox[] = [];
 
   for (let row = latFrom; row <= latTo; row++) {

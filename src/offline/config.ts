@@ -26,6 +26,57 @@ export const CACHE_BASEMAP = 'eclipsi-mapa-v1';
  */
 export const CACHE_DATA = 'eclipsi-dades-v1';
 
+/* ------------------------------------------- els nostres catàlegs de dades */
+
+/**
+ * Carpeta publicada dels catàlegs de `public/data/`, relativa a l'arrel del
+ * desplegament.
+ *
+ * ÉS LA MEITAT QUE EL SERVICE WORKER MIRA. La regla de `runtimeCaching` de
+ * `vite.config.ts` casa `/\/data\/[^/]+\.json$/i`: si algú publiqués un
+ * catàleg en una altra carpeta, aquella regla no el veuria, el fitxer no
+ * entraria a `eclipsi-dades-v1` i la capa seria l'única cosa de l'app que no
+ * funciona sense cobertura — justament la que existeix per funcionar-hi.
+ */
+export const DATA_DIR = 'data/';
+
+/**
+ * URL d'un catàleg de `public/data/`, amb el subdirectori del desplegament.
+ *
+ * `baseUrl` és PARÀMETRE i no es llegeix aquí d'`import.meta.env`, perquè
+ * aquest fitxer també l'importen scripts que corren a Node
+ * (`scripts/build-minimap.ts`), on `import.meta.env` no existeix. Qui el crida
+ * des del navegador li passa `import.meta.env.BASE_URL`, que a eclipsi.info és
+ * `/` i al desplegament de llegat és `/eclipsi/`.
+ */
+export function dataFileUrl(fileName: string, baseUrl = '/'): string {
+  const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  return `${base}${DATA_DIR}${fileName}`;
+}
+
+/**
+ * URL del catàleg de miradors d'un eclipsi.
+ *
+ * EL NOM ES REPETEIX A POSTA, i no és un descuit. Qui mana sobre el nom és
+ * `viewpointsFileName()` de `core/places/viewpoints.ts` (el mateix que fa
+ * servir l'script que l'escriu); aquí no s'importa perquè `src/offline/config`
+ * l'importen scripts de Node i el mapa mateix, i arrossegar-hi mig
+ * `core/places` per una cadena seria pagar-ho al paquet de la primera pintada.
+ * Que les dues bandes diguin el mateix ho vigila `data-agreement.test.ts`, com
+ * ja es fa amb les tessel·les del relleu i amb la cartografia base.
+ */
+export function viewpointsDataUrl(eclipseId: string, baseUrl = '/'): string {
+  return dataFileUrl(`viewpoints-${eclipseId}.json`, baseUrl);
+}
+
+/**
+ * URL de la graella de climatologia de núvols d'un eclipsi. El nom el mana
+ * `climGridFileName()` de `core/weather/climGrid.ts`; vegeu la nota de sobre.
+ */
+export function cloudClimDataUrl(eclipseId: string, baseUrl = '/'): string {
+  return dataFileUrl(`clouds-clim-${eclipseId}.json`, baseUrl);
+}
+
 /**
  * Arrel de les tessel·les d'elevació terrarium (AWS Open Data, sense clau).
  *

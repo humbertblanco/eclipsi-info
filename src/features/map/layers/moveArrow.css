@@ -1,0 +1,26 @@
+/* --- El rètol de la fletxa «cap on caminar» -------------------------------
+   Va amb la capa `moveArrow.ts` i no a `map.css` perquè és seu: qui llegeixi
+   la capa ha de tenir el dibuix sencer a la vora.
+
+   Píndola de vidre amb el número en mono i xifres de amplada fixa, perquè
+   canviar de punt no faci ballar l'etiqueta. Ni ambre ni cap color d'estat: el
+   to corona és el dels senyals del mapa que assenyalen sense cridar, el mateix
+   de la línia central i del con de visió. `pointer-events: none` pel motiu de
+   sempre en aquest mapa: el gest que tria punt és tocar el mapa, i ha de
+   funcionar igual just a sota del rètol.
+   ------------------------------------------------------------------------- */
+
+.map__movetag {
+  padding: var(--sp-1) var(--sp-3);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  color: var(--corona-100);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}

@@ -6,22 +6,25 @@
  * PER QUÈ ÉS ESTÀTIC I CURAT A MÀ, quan tota la resta de l'app es calcula.
  *
  * Primer: no hi ha cap API d'això. Ni una. Cada administració ho publica com
- * pot i com vol, i les set que hi ha aquí dins ho fan de set maneres diferents:
- * Astúries té un endpoint PHP que torna JSON amb `lat`/`lng` (l'únic que
- * s'assembla a una API); Castella i Lleó penja un `.xlsx` amb UTM i graus
+ * pot i com vol, i les vuit que hi ha aquí dins ho fan de vuit maneres
+ * diferents: Astúries té un endpoint PHP que torna JSON amb `lat`/`lng` (l'únic
+ * que s'assembla a una API); Castella i Lleó penja un `.xlsx` amb UTM i graus
  * decimals; la Generalitat de Catalunya els posa dins de l'HTML com a enllaços
  * `google.com/maps?q=lat,lon`; el Govern de Navarra, el d'Aragó, el de les
- * Illes Balears i la Generalitat Valenciana publiquen NOMS DE LLOC i prou. Cap
- * format es manté d'un any per l'altre i cap té versionat. Un carregador
- * automàtic seria un carregador trencat.
+ * Illes Balears i la Generalitat Valenciana publiquen NOMS DE LLOC i prou; i la
+ * Comunitat de Madrid, que és la darrera que hi ha entrat, publica NOMÉS EL
+ * MUNICIPI —ni recinte ni adreça— repartit entre una llista a la pàgina web i
+ * un PDF a part amb els que tenen totalitat. Cap format es manté d'un any per
+ * l'altre i cap té versionat. Un carregador automàtic seria un carregador
+ * trencat.
  *
  * Segon, i decisiu: el 12 d'agost a les 20.29 la xarxa mòbil estarà saturada
  * exactament a sobre d'aquests punts, que és on s'hi haurà concentrat la gent.
  * Una dada que només serveix el dia de l'eclipsi no es pot anar a buscar el dia
- * de l'eclipsi. Va al paquet, i s'acaba la conversa. Són 119 kB de JSON abans
+ * de l'eclipsi. Va al paquet, i s'acaba la conversa. Són 160 kB de JSON abans
  * de minificar — cars, però és el preu de no dependre de ningú quan compta.
  *
- * LES DUES REGLES QUE NO ES TOQUEN.
+ * LES TRES REGLES QUE NO ES TOQUEN.
  *
  * 1. LA FONT SEMPRE VISIBLE. Cada punt porta qui l'ha anunciat i l'URL on ho
  *    diu. Qui no s'ho cregui ha de poder anar-hi a mirar en dos tocs. No hi ha
@@ -32,9 +35,9 @@
  *    la font només dona un nom de lloc i la coordenada l'hem hagut de buscar a
  *    OpenStreetMap (el node del poble, la platja o el recinte): pot ballar un
  *    quilòmetre llarg i la interfície ho ha de dir amb totes les lletres
- *    ("ubicació estimada"). De 222 punts, 162 són exactes i 60 estimats.
+ *    ("ubicació estimada"). De 274 punts, 162 són exactes i 112 estimats.
  *
- *    Aquestes 60 coordenades són dades d'OpenStreetMap i, per ODbL, demanen
+ *    Aquestes 112 coordenades són dades d'OpenStreetMap i, per ODbL, demanen
  *    atribució al panell de crèdits — la mateixa que ja hi ha per als noms de
  *    lloc (`PLACES_ATTRIBUTION_URL`, `core/places/photon.ts`).
  *
@@ -43,24 +46,70 @@
  *    Arguedas i Sendaviva eren a més de deu quilòmetres del seu lloc. A ull no
  *    n'hi ha prou ni per a un poble que et penses que coneixes.
  *
- * QUÈ NO HI HA I PER QUÈ. Els punts que les administracions recomanen però que
- * queden FORA de la franja de centralitat no hi entren. La Junta de Castilla y
- * León, per exemple, en publica vuit a la província de Salamanca: són bons per
- * veure-hi l'eclipsi parcial, però el marge umbral hi és de +5,4″ a +18,7″ i la
- * línia central passa entre 175 i 237 km enllà. Pintar-los al mapa al costat
- * dels altres seria convidar algú a conduir tres hores per no veure la
- * totalitat. `catalog.test.ts` ho comprova punt per punt amb el motor.
+ * 3. UN PUNT DE PARCIALITAT NO ES BARREJA MAI AMB UN DE DINS DE LA FRANJA.
+ *    `phase: 'central'` vol dir que des d'allà s'hi veu la totalitat (o
+ *    l'anularitat); `phase: 'partial'`, que no, encara que la font sigui igual
+ *    d'oficial. Ho ha de saber qui mira el mapa ABANS de tocar el punt, no
+ *    després d'obrir la fitxa.
  *
- * Tampoc no hi ha Galícia, i no per oblit: el portal de la Xunta remet als
- * ajuntaments i no publica cap llista pròpia de punts amb nom. Quan la publiqui
- * s'hi afegeix; inventar-se-la seria pitjor que no tenir-ne.
+ * PER QUÈ ARA HI HA PUNTS FORA DE LA FRANJA, quan la primera tanda els
+ * prohibia. La regla vella deia que un punt oficial fora de la franja no hi
+ * entrava, i el cas d'escola eren els vuit de Salamanca de la Junta de Castilla
+ * y León (marge umbral de +5,4″ a +18,7″, línia central de 175 a 237 km enllà).
+ * Es va escriure per una por raonable: que algú conduís tres hores per no veure
+ * la totalitat.
  *
- * ELS ALTRES DOS ECLIPSIS SÓN LLISTES BUIDES, A POSTA. A l'agost del 2026, per
- * al total del 2027 i l'anular del 2028 encara no hi ha cap punt oficial
- * anunciat per cap administració (la Junta d'Andalusia només ha comptat els 115
- * municipis dins de la franja del 2027, que no és el mateix). Un fitxer buit és
- * una resposta honesta; omplir-lo amb "llocs bonics" seria fer passar una
- * recomanació nostra per una decisió d'un govern.
+ * La por era raonable i la conclusió, equivocada. A Madrid el 12 d'agost del
+ * 2026 el Sol queda tapat al 99,97 % i hi viuen tres milions de persones; la
+ * Comunitat de Madrid hi ha habilitat punts oficials i la gent hi anirà. Negar
+ * que existeixen no fa que ningú es mogui cap a la franja: fa que qui no es pot
+ * moure no trobi res. I el motor ja diu la veritat de cada punt sense
+ * embellir-la — a Brunete dirà "parcial, 99,88 %, zero segons de totalitat".
+ * Amb aquesta frase a la vista, ensenyar el punt no enganya ningú. El que
+ * enganyava era amagar-lo.
+ *
+ * Els vuit de Salamanca, doncs, hi poden tornar el dia que algú els repassi:
+ * ja no els exclou cap regla, només que ningú no els ha tornat a picar.
+ *
+ * Tampoc no hi ha Galícia ni Euskadi, i no per oblit: el portal de la Xunta
+ * (`eclipse.xunta.gal`) i el d'Euskadi (`eklipsea.euskadi.eus`) publiquen mapes
+ * de zones i remeten al visor de l'IGN, però cap dels dos no dona una llista de
+ * punts amb nom. Comprovat el 3 d'agost del 2026. Quan la publiquin s'hi
+ * afegeix; inventar-se-la seria pitjor que no tenir-ne.
+ *
+ * ELS ALTRES DOS ECLIPSIS SÓN LLISTES BUIDES, A POSTA. Repassat font a font el
+ * 3 d'agost del 2026 i continuen sense un sol punt oficial publicat. Queda
+ * escrit ON s'ha mirat, perquè el proper que hi torni comenci per on toca i no
+ * repeteixi la cerca sencera:
+ *
+ * - `https://trioeclipses.es/puntos-de-observacion` és el portal del Govern de
+ *   l'Estat (Comissió Interministerial per al Trio d'Eclipsis) i, malgrat el
+ *   nom de la secció, NO publica cap punt: enllaça els portals autonòmics. Els
+ *   onze que hi enllaça (Aragó, Astúries, Balears, Castella i Lleó,
+ *   Castella-la Manxa, Catalunya, Euskadi, Galícia, Madrid, Navarra i València)
+ *   parlen només del 12 d'agost del 2026. Andalusia, que és qui té la franja
+ *   del 2027, no hi surt.
+ * - Andalusia encara està DECIDINT on posar-los, i ho diu ella mateixa: el 2
+ *   d'agost del 2026 va fer una jornada d'assaig sobre el terreny —accessos,
+ *   aparcaments, serveis bàsics, assistència sanitària— precisament per triar
+ *   emplaçaments, i l'Oficina Tècnica dels Eclipsis d'Andalusia (Fundación
+ *   Descubre) té un cercador de punts ANUNCIAT, no publicat. El que sí que hi
+ *   ha és el recompte dels municipis dins de la franja del 2027: 115, que són
+ *   10 a Almeria, 16 a Granada, 31 a Cadis i 58 a Màlaga. Un municipi NO és un
+ *   punt, i el motor ho diu amb números: al centre de Màlaga hi ha 100,0 s de
+ *   totalitat, a la platja de la Misericòrdia 110,3 s, al Puerto de la Torre
+ *   72,3 s i set quilòmetres al nord del centre, cap ni un — el límit nord de
+ *   la franja creua aquell meridià a 36,78516 N. Dir "Màlaga" no col·loca
+ *   ningú enlloc.
+ * - Per a l'anular del 2028, Múrcia —que té la franja creuant-li tot el
+ *   territori— ha muntat una comissió (Tri-E) que declara que "estudia" els
+ *   espais d'observació. Estudiar no és publicar. Cap llista, enlloc.
+ * - Al nord d'Àfrica i a Egipte, on hi ha els 6 min 23 s del 2027, tot el que
+ *   surt publicat són paquets d'agències de viatges amb el recinte inclòs al
+ *   preu. No és una font institucional i per la regla 1 no hi entra.
+ *
+ * Un fitxer buit és una resposta honesta; omplir-lo amb "llocs bonics" seria
+ * fer passar una recomanació nostra per una decisió d'un govern.
  */
 
 import points2026 from './2026-08-12.json';
@@ -84,6 +133,25 @@ export type ObservationPrecision = 'exact' | 'estimated';
  * - `observatory`: observatori o planetari amb jornada de portes obertes.
  */
 export type ObservationKind = 'official' | 'event' | 'observatory';
+
+/**
+ * Si des del punt s'hi veu la fase central de l'eclipsi o només la parcial.
+ * Vegeu la regla 3 de la capçalera.
+ *
+ * PER QUÈ ÉS UN CAMP DESAT I NO ES DERIVA EN VIU, que era l'altra opció i té
+ * l'avantatge evident de no poder quedar mai desactualitzada.
+ *
+ * Perquè costa massa allà on caldria: `computeLocalCircumstances` triga 4,36 ms
+ * per punt (mesurat, 969 ms per als 222 punts de la primera tanda), i el mapa
+ * pinta els 274 de cop. Són 1,2 s de fil principal bloquejat cada vegada que
+ * s'obre el mapa, per una dada que entre dos desplegaments no canvia mai.
+ *
+ * I l'argument de quedar desactualitzat no s'aguanta aquí, perquè
+ * `catalog.test.ts` compara aquest camp amb el motor punt per punt a cada
+ * execució de la suite. Si algú mou una coordenada i no toca el `phase`, la
+ * suite peta. És exactament el mateix tracte que té `precision`.
+ */
+export type ObservationPhase = 'central' | 'partial';
 
 export interface LocalizedText {
   ca: string;
@@ -113,6 +181,12 @@ export interface ObservationPoint {
   precision: ObservationPrecision;
   source: ObservationSource;
   kind: ObservationKind;
+  /**
+   * Totalitat/anularitat o només parcial. Obligatori a posta: un punt sense
+   * aquest camp seria un punt que el mapa pintaria com si fos de dins de la
+   * franja, que és justament l'error que la regla 3 vol impedir.
+   */
+  phase: ObservationPhase;
   /** Context curt: comarca, si cal entrada, per què la coordenada és estimada. */
   note?: LocalizedText;
 }
@@ -148,7 +222,7 @@ export function pointsForEclipse(eclipseId: string): readonly ObservationPoint[]
 
 /**
  * Les fonts d'un eclipsi, sense repetits i en ordre alfabètic, per al panell de
- * crèdits. Set administracions per al 2026; cap per als altres dos.
+ * crèdits. Vuit administracions per al 2026; cap per als altres dos.
  */
 export function observationSourcesFor(eclipseId: string): readonly ObservationSource[] {
   const byUrl = new Map<string, ObservationSource>();

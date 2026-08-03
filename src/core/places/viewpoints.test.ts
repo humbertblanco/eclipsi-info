@@ -331,12 +331,33 @@ describe('la franja del 12 d’agost de 2026', () => {
   const chunks = bandChunks(path, { marginKm: 20, chunkKm: 220 });
 
   it('la franja es talla en trams i cap no és buit', () => {
+    /*
+     * AQUEST TEST DEMANAVA ABANS DOS PUNTS DE LÍMIT NORD I DOS DE SUD A CADA
+     * TRAM, i aquella condició era falsa i amagava el defecte.
+     *
+     * Als extrems del recorregut la franja no està limitada per cap tangència
+     * sinó pel terminador: la vora d'allà és la TAPA (vegeu `eclipses/path.ts`).
+     * Al 12-08-2026 el límit nord s'acaba a les 18:30:17 i la franja encara dura
+     * fins a les 18:34:05 — tot el tram de les Balears té vora, però no en té de
+     * «nord». Exigint límit nord, aquell tram es descartava sencer i Palma
+     * (39,57 / 2,65), amb 96 s de totalitat, no queia dins de cap rectangle de
+     * consulta: cap mirador de Mallorca no s'hi arribava a demanar mai.
+     *
+     * El que ha de valdre, doncs, és que cada tram tingui VORA —de la mena que
+     * sigui— i un rectangle amb àrea.
+     */
     expect(chunks.length).toBeGreaterThan(5);
     for (const chunk of chunks) {
-      expect(chunk.north.length).toBeGreaterThanOrEqual(2);
-      expect(chunk.south.length).toBeGreaterThanOrEqual(2);
+      const edge = chunk.north.length + chunk.south.length + chunk.cap.length;
+      expect(edge, `tram ${chunk.startMs} sense vora`).toBeGreaterThanOrEqual(2);
       expect(chunk.box.maxLat).toBeGreaterThan(chunk.box.minLat);
     }
+    // I el gruix del recorregut sí que ha de tenir els dos límits: si això
+    // s'ensorra, el que s'ha trencat és `pathLimitsAt`, no les tapes.
+    const withBothLimits = chunks.filter(
+      (c) => c.north.length >= 2 && c.south.length >= 2,
+    );
+    expect(withBothLimits.length).toBeGreaterThan(chunks.length / 2);
   });
 
   it('Sòria hi és a dins; Sevilla, Barcelona i el mig del Cantàbric, no', () => {

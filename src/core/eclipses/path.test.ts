@@ -509,4 +509,15 @@ describe('la vora de la franja és una corba llisa, sense dents de serra', () =>
     expect(north!.lon).toBeGreaterThan(4.2);
     expect(north!.lon).toBeLessThan(4.5);
   });
+
+  it('2026: la tangència nord se segueix fins que arriba al terminador', () => {
+    // La regressió que de veritat importa d'aquell tram: si la llavor per
+    // continuació es perd, el límit nord torna a morir a les 18:30:11 a
+    // (40,31 / 4,35) i el polígon s'ha de cosir amb 186 km de recta.
+    const path = computeEclipsePath('2026-08-12');
+    const last = path.northLimit[path.northLimit.length - 1];
+    expect(last.timeMs).toBeGreaterThan(Date.parse('2026-08-12T18:30:15Z'));
+    expect(last.lon, `el límit nord acaba a ${last.lat.toFixed(3)}/${last.lon.toFixed(3)}`)
+      .toBeGreaterThan(5.5);
+  });
 });

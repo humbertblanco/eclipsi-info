@@ -14,7 +14,27 @@ export interface EclipseEntry {
   kind: 'total' | 'annular';
   /** Etiquetes multilingües per a la interfície. */
   label: { ca: string; es: string };
-  /** Resum de la franja sobre territori espanyol. */
+  /**
+   * Resum de la franja sobre territori espanyol.
+   *
+   * ÉS L'ÚNIC CAMP D'AQUEST FITXER AMB XIFRES, i és una excepció que es paga
+   * amb un test. No pot ser d'una altra manera: una llista de llocs és una
+   * afirmació sobre la geografia de la franja, no sobre el punt de qui
+   * llegeix, i el motor no la pot generar sola perquè cap càlcul sap quins
+   * topònims reconeix la gent.
+   *
+   * EL QUE VA PASSAR PER NO TENIR AQUEST TEST: la frase del 2026 va viure
+   * mesos deixant València fora de la franja quan el motor li dona 62 s de
+   * totalitat, i anomenant «Galícia» sencera una comunitat de la qual la
+   * franja només agafa la punta nord. Ningú no ho va veure perquè ningú no
+   * comparava mai el text amb el codi.
+   *
+   * REGLA, DES DEL 3-8-2026: cada lloc anomenat aquí i cada altura o
+   * percentatge escrit surt de `computeLocalCircumstances`, i
+   * `tests/afirmacions-del-text.test.ts` els torna a calcular tots. Si el
+   * motor canvia, el test es posa vermell i el text s'actualitza — no al
+   * revés.
+   */
   spain: { ca: string; es: string };
   /** Sèrie de Saros. */
   saros: number;
@@ -62,9 +82,41 @@ export const ECLIPSES: EclipseEntry[] = [
       ca: 'Eclipsi total del 12 d’agost de 2026',
       es: 'Eclipse total del 12 de agosto de 2026',
     },
+    /*
+     * LA FRASE QUE DEIXAVA VALÈNCIA FORA (corregida el 3-8-2026).
+     *
+     * Aquí hi deia «Galícia, Astúries, Lleó, Burgos, Sòria, Saragossa,
+     * Peníscola i Balears», i era la frase que llegeix algú per decidir si es
+     * mou. Tenia dos errors, tots dos comprovats amb `computeLocalCircumstances`
+     * damunt de seixanta localitats:
+     *
+     *  1. OMETIA LA CIUTAT MÉS GRAN DE LA FRANJA. València té 62 s de totalitat
+     *     (marge umbral −6,5″, ben endins), i és el municipi més poblat que
+     *     la franja travessa. També hi faltaven Castelló 94 s, Valladolid 89 s,
+     *     Santander 60 s, Vitòria 60 s, Logronyo 79 s, Tarragona 58 s.
+     *  2. DEIA «GALÍCIA» SENCERA I NO HI ÉS. El motor deixa fora Vigo (99,40 %
+     *     d'obscuració), Pontevedra (99,62 %), Ourense (99,89 %) i Santiago
+     *     (99,98 %, marge +1,5″: dins de la incertesa de les efemèrides). Una
+     *     comunitat entera com a etiqueta convidava mitja Galícia a quedar-se
+     *     a casa amb una parcial. Ara s'hi diuen ciutats, que és el que la gent
+     *     pot comprovar.
+     *
+     * NO HI POSEM Bilbao (23 s, marge −0,8″), Lleida (20 s, −0,6″) ni Zamora
+     * (30 s, −1,3″): el motor els dona totalitat però amb `edgeUncertain`, i
+     * una llista publicada no és el lloc per jugar-se una moneda a l'aire.
+     *
+     * I S'HI DIU QUI EN QUEDA FORA PER POC, que és informació que ningú no
+     * dona: Barcelona es queda al 99,80 %, Madrid al 99,98 %. Sense dir-ho,
+     * un barceloní llegeix la llista, no s'hi troba, i no sap si és per 10 km
+     * o per 300.
+     *
+     * L'altura: dins de la franja i sobre terra el motor va de 12,3° (Malpica
+     * de Bergantiños) i 12,0° (A Coruña) fins a 1,8° a Maó i 1,7° a l'Illa de
+     * l'Aire. Deia «entre 12° i 1°»; el mínim real arrodoneix a 2°, no a 1°.
+     */
     spain: {
-      ca: 'Franja de NO a SE: Galícia, Astúries, Lleó, Burgos, Sòria, Saragossa, Peníscola i Balears. Al capvespre, amb el Sol entre 12° i 1° sobre l’horitzó.',
-      es: 'Franja de NO a SE: Galicia, Asturias, León, Burgos, Soria, Zaragoza, Peñíscola y Baleares. Al atardecer, con el Sol entre 12° y 1° sobre el horizonte.',
+      ca: 'Franja de NO a SE: A Coruña, Oviedo i Gijón, Santander, Lleó, Burgos, Valladolid, Logronyo, Vitòria, Sòria, Saragossa, Tarragona, Castelló, València i les Balears. Al capvespre, amb el Sol de 12° a menys de 2° sobre l’horitzó. Barcelona, Madrid, Pamplona i Vigo en queden fora per poc: parcial del 99 %, que no és el mateix.',
+      es: 'Franja de NO a SE: A Coruña, Oviedo y Gijón, Santander, León, Burgos, Valladolid, Logroño, Vitoria, Soria, Zaragoza, Tarragona, Castellón, Valencia y Baleares. Al atardecer, con el Sol de 12° a menos de 2° sobre el horizonte. Barcelona, Madrid, Pamplona y Vigo se quedan fuera por poco: parcial del 99 %, que no es lo mismo.',
     },
     saros: 126,
     lowSunOverSpain: true,
@@ -95,6 +147,15 @@ export const ECLIPSES: EclipseEntry[] = [
      * dona ~4 min i mig (Tarifa 4 min 37 s), que ja dobla el 2026. La
      * totalitat més llarga visible des de terra fins al 3 de juny de 2114
      * és una afirmació de l'ECLIPSI sencer, i així s'escriu.
+     *
+     * REVERIFICAT EL 3-8-2026 contra el motor, i les dues xifres aguanten:
+     * escombrant la línia central sencera amb `centralLineAt`, el màxim de
+     * durada surt de 383,1 s = 6 min 23,1 s a 26,83 N / 31,11 E — la vall del
+     * Nil, Egipte. I `computeLocalCircumstances` dona Tarifa 277,3 s (4 min
+     * 37 s), Ceuta 287,7 s, Algesires 264,5 s: «uns 4 min i mig» és exacte.
+     * Els quatre llocs de la frase tenen totalitat de sobres (Cadis 167,5 s,
+     * Màlaga 100,0 s, Ceuta 287,7 s, Melilla 275,6 s). Sevilla (98,30 %) i
+     * Granada (99,17 %) en queden fora, i per això no hi són.
      */
     spain: {
       ca: 'Franja per l’estret de Gibraltar: Cadis, Màlaga, Ceuta i Melilla. Al matí i amb el Sol alt — l’eclipsi fàcil dels tres. I el gran: cap totalitat visible des de terra el superarà fins al 2114 (6 min 23 s al màxim, a Egipte; des de l’Estret, uns 4 min i mig).',
@@ -123,9 +184,30 @@ export const ECLIPSES: EclipseEntry[] = [
       ca: 'Eclipsi anular del 26 de gener de 2028',
       es: 'Eclipse anular del 26 de enero de 2028',
     },
+    /*
+     * QUATRE CIUTATS PER A UNA FRANJA QUE TRAVESSA MIG PAÍS (corregit el
+     * 3-8-2026, mateixa passada que el 2026). El motor dona anularitat a
+     * vint-i-cinc de les vint-i-vuit localitats provades: la franja d'aquest
+     * eclipsi fa ~1.170 km d'amplada sobre la península —quatre vegades la del
+     * 2026— i n'hi cabien Huelva 432 s, Còrdova 433 s, Albacete 426 s,
+     * Granada 318 s, Alacant 299 s, Cadis 400 s, Jaén 411 s, Castelló 421 s,
+     * Tarragona 372 s i Barcelona 378 s, cap de les quals hi era.
+     *
+     * ELS QUE EN QUEDEN FORA són Madrid (+10,9″), Almeria (+10,6″) i
+     * Saragossa (+16,6″): els tres amb un 82 % de parcial. Val la pena
+     * dir-ho perquè són les tres úniques capitals importants d'aquesta meitat
+     * del país que es queden a fora, i el mapa mental de la gent no ho endevina.
+     *
+     * L'ALTURA DEL SOL: dins de la franja el motor va de 8,4° (Ayamonte) i
+     * 8,0° (Huelva) al sud-oest fins a per sota de l'horitzó al nord-est —
+     * Barcelona 0,16° al màxim (el Sol es pon entre el màxim i C3), Palma
+     * 0,38°, Girona −0,39° i Maó −0,69°, on l'anularitat ja arriba amb el Sol
+     * post. La guia deia «entre uns 7° i amb prou feines 2°», que no cobreix
+     * cap dels dos extrems.
+     */
     spain: {
-      ca: 'Franja de SO a NE: Sevilla, Màlaga, Múrcia i València. A Barcelona i Palma el Sol es pon durant l’anularitat.',
-      es: 'Franja de SO a NE: Sevilla, Málaga, Murcia y Valencia. En Barcelona y Palma el Sol se pone durante la anularidad.',
+      ca: 'Franja de SO a NE: Huelva, Sevilla, Cadis, Còrdova, Jaén, Granada, Màlaga, Albacete, Múrcia, Alacant, València, Castelló, Tarragona, Barcelona i les Balears. Al capvespre, amb el Sol de 8° al sud-oest fins a ran d’horitzó al nord-est: a Barcelona i Palma es pon durant l’anularitat, i a Girona i Maó ja s’ha post. Madrid, Saragossa i Almeria en queden fora.',
+      es: 'Franja de SO a NE: Huelva, Sevilla, Cádiz, Córdoba, Jaén, Granada, Málaga, Albacete, Murcia, Alicante, Valencia, Castellón, Tarragona, Barcelona y Baleares. Al atardecer, con el Sol de 8° en el suroeste hasta el ras del horizonte en el noreste: en Barcelona y Palma se pone durante la anularidad, y en Girona y Mahón ya se ha puesto. Madrid, Zaragoza y Almería se quedan fuera.',
     },
     saros: 141,
     lowSunOverSpain: true,

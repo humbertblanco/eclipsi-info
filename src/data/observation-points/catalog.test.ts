@@ -6,10 +6,50 @@
  * els URL siguin https, que les coordenades tinguin els cinc decimals de
  * `SHARE_DECIMALS` i cap més. Són barates i atrapen errors de dit.
  *
- * L'última és la que val de debò: que cap punt no quedi FORA de la franja de
- * centralitat del seu eclipsi. Un punt oficial mal col·locat no és una errada
+ * L'última és la que val de debò: que el que el fitxer DIU de cada punt sigui
+ * el que el motor en calcula. Un punt oficial mal col·locat no és una errada
  * cosmètica — és algú que fa tres hores de cotxe, s'hi planta amb la cadira i
  * es queda sense totalitat.
+ *
+ * ---
+ *
+ * PER QUÈ AQUESTA PROVA JA NO DIU "DINS DE LA FRANJA", I QUÈ VIGILA ARA.
+ *
+ * Abans exigia que cap punt no quedés fora de la franja de centralitat. Aquella
+ * regla acotava la recollida de dades sense voler: van quedar fora Madrid,
+ * Barcelona i Sevilla, que tenen punts oficials, milions d'habitants i
+ * obscuracions del 99,97 %, el 99,80 % i el 94,62 %. La decisió nova és que un
+ * punt oficial hi entra encara que només hi hagi parcial, i que el fitxer ho
+ * declari amb `phase` (vegeu la regla 3 de `catalog.ts`).
+ *
+ * La regla vella, però, feia una feina real: caçar la coordenada mal picada. No
+ * es pot treure sense posar-hi res, i abans de decidir què s'hi posa vaig
+ * mesurar QUÈ CAÇA CADA CANDIDATA. 1.918 mutacions sobre els 274 punts (signe
+ * canviat, lat i lon intercanviades, ±1° i ±2° en cada eix):
+ *
+ *   caçades pel bbox d'Espanya .................. 296
+ *   caçades per canvi de fase (central↔parcial) . 522
+ *   caçades per obscuració < 90 % ................. 0
+ *   se n'escapen a totes ........................ 548
+ *
+ * EL ZERO ÉS LA DADA IMPORTANT i va contra la intuïció: el 12 d'agost del 2026
+ * NO hi ha cap racó del bbox per sota del 90 % d'obscuració. Tota la península
+ * i les Balears passen del 92 %, o sigui que un llindar d'obscuració no caça ni
+ * un sol error de dit d'aquell eclipsi. Es queda igualment, però sabent per què:
+ * és una GARANTIA SEMÀNTICA ("d'aquí s'hi veu un eclipsi de debò"), no una
+ * xarxa antierrades, i sí que mossega als altres dos, on la franja no cobreix
+ * tot el territori — el 2027 Galícia es queda entre el 73,3 % i el 77,9 %, i el
+ * 2028 entre el 70,0 % i el 72,7 %. Un punt de Cadis picat a Galícia hi cau.
+ *
+ * El llindar és el 80 %, i no més amunt per una raó que no és arbitrària: el
+ * 2028 és ANULAR, i al bell mig de la seva franja l'obscuració màxima és del
+ * 82,7 %. Qualsevol llindar per sobre d'això deixaria fora punts perfectament
+ * bons de l'eclipsi que menys Sol tapa per naturalesa.
+ *
+ * I els 548 que s'escapen de tot? Són desplaçaments d'1° que cauen dins de la
+ * mateixa franja. Cap invariant barata els distingeix, i la regla vella tampoc
+ * no els caçava (permetia 160 km). La defensa contra això no és una prova: és
+ * que cada punt porta l'URL de qui l'ha publicat i es pot anar a mirar.
  *
  * ---
  *
@@ -47,9 +87,16 @@
  * mapa. Serveix de xarxa contra la mena d'error que el marge umbral no atrapa
  * de manera llegible — una coordenada copiada amb el signe canviat o amb dos
  * dígits ballats no cau "una mica" fora, cau a centenars de quilòmetres. Dels
- * 222 punts del catàleg, el més allunyat de la línia central n'és a 147,0 km
- * (l'ombra és molt ampla al capvespre); els de Salamanca, que vam treure, hi
- * eren de 174,9 a 236,9 km. El llindar de 160 km cau còmodament entremig.
+ * 262 punts CENTRALS del catàleg, el més allunyat de la línia central n'és a
+ * 147,0 km (l'ombra és molt ampla al capvespre) i el punt central de Madrid que
+ * hi arriba més lluny, Hoyo de Manzanares, a 145,1 km. El llindar de 160 km cau
+ * còmodament per sobre.
+ *
+ * Aquesta comprovació val NOMÉS per als punts de `phase: 'central'`, i és
+ * deliberat: als de parcialitat la distància a la línia central no vol dir res
+ * —San Martín de Valdeiglesias, oficial i legítim, n'és a 191,8 km— i exigir-hi
+ * un màxim tornaria a prohibir per la porta del darrere el que la regla nova
+ * acaba de permetre.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -75,10 +122,22 @@ const ECLIPSE_IDS = ECLIPSES.map((e) => e.id);
 const SPAIN_BOUNDS = { minLat: 35.5, maxLat: 44.2, minLon: -9.6, maxLon: 4.6 };
 
 /** Els punts que hi ha a `2026-08-12.json` no s'han de perdre per accident. */
-const EXPECTED_2026_COUNT = 222;
+const EXPECTED_2026_COUNT = 274;
 
-/** Vegeu la capçalera: 147,0 km és el màxim mesurat; 160 deixa marge sense colar-hi Salamanca. */
+/** D'aquests, els que veuen la totalitat i els que només veuen la parcial. */
+const EXPECTED_2026_CENTRAL = 262;
+const EXPECTED_2026_PARTIAL = 12;
+
+/** Vegeu la capçalera: 147,0 km és el màxim mesurat entre els centrals; 160 deixa marge. */
 const MAX_CENTER_LINE_KM = 160;
+
+/**
+ * Obscuració mínima per considerar que d'un punt s'hi veu un eclipsi de debò.
+ *
+ * Vegeu la capçalera per què és el 80 % i no un número més exigent: al centre
+ * de la franja de l'anular del 2028 l'obscuració màxima és del 82,7 %.
+ */
+const MIN_OBSCURATION = 0.8;
 
 function decimalsOf(value: number): number {
   const text = String(value);
@@ -100,9 +159,17 @@ describe('el catàleg de punts oficials', () => {
     expect(pointsForEclipse('2026-08-12')).toHaveLength(EXPECTED_2026_COUNT);
   });
 
+  it('sap quants punts veuen la totalitat i quants només la parcial', () => {
+    const points = pointsForEclipse('2026-08-12');
+    expect(points.filter((p) => p.phase === 'central')).toHaveLength(EXPECTED_2026_CENTRAL);
+    expect(points.filter((p) => p.phase === 'partial')).toHaveLength(EXPECTED_2026_PARTIAL);
+  });
+
   it('encara no té cap punt del 2027 ni del 2028, i això és una resposta', () => {
     // Si algun dia s'omplen, aquesta prova ha de FALLAR i obligar a revisar la
     // capçalera de `catalog.ts`, que explica per què eren buides.
+    // Última repassada de fonts: 3 d'agost del 2026 (portal de l'Estat, els
+    // onze portals autonòmics, Junta d'Andalusia i Múrcia). Continua a zero.
     expect(pointsForEclipse('2027-08-02')).toHaveLength(0);
     expect(pointsForEclipse('2028-01-26')).toHaveLength(0);
   });
@@ -162,6 +229,7 @@ describe('cada punt del catàleg', () => {
     for (const { point } of everyPoint()) {
       expect(['exact', 'estimated']).toContain(point.precision);
       expect(['official', 'event', 'observatory']).toContain(point.kind);
+      expect(['central', 'partial'], point.id).toContain(point.phase);
     }
   });
 
@@ -195,25 +263,91 @@ describe('cada punt del catàleg', () => {
   });
 });
 
-describe('la franja', () => {
-  it('conté tots els punts oficials: cap no es queda fora de la totalitat', () => {
-    const fora: string[] = [];
+describe('el motor i el fitxer', () => {
+  it('de cada punt s’hi veu un eclipsi de debò, no una engruna', () => {
+    // GARANTIA SEMÀNTICA, no xarxa antierrades: vegeu la capçalera, el 2026
+    // aquest llindar no en caça ni un. Serveix perquè cap punt del catàleg no
+    // pugui prometre un eclipsi que des d'allà amb prou feines es nota.
+    const fluixos: string[] = [];
     for (const { eclipseId, point } of everyPoint()) {
       const local = computeLocalCircumstances(eclipseId, {
         lat: point.lat,
         lon: point.lon,
         elevation: 0,
       });
-      if (local.centralDurationSec <= 0 || local.umbralMarginArcsec >= 0) {
-        fora.push(`${point.id} (${point.source.who}): marge ${local.umbralMarginArcsec.toFixed(2)}″`);
+      const obscuration = local.contacts.max.obscuration;
+      if (local.kind === 'none' || obscuration < MIN_OBSCURATION) {
+        fluixos.push(
+          `${point.id} (${point.source.who}): ${local.kind}, obscuració ${(obscuration * 100).toFixed(2)} %`,
+        );
       }
     }
-    expect(fora).toEqual([]);
+    expect(fluixos).toEqual([]);
   });
 
-  it('no té cap punt disparat lluny de la línia central dibuixada', () => {
+  it('el `phase` que hi ha escrit és el que diu el motor', () => {
+    // Aquesta és la que substitueix de debò la regla vella. Si algú mou una
+    // coordenada d'un punt central cap a fora de la franja (o al revés) i no
+    // toca el `phase`, aquí peta. És el que fa que valgui la pena tenir el
+    // camp desat en comptes de derivar-lo cada vegada.
+    const mentides: string[] = [];
+    for (const { eclipseId, point } of everyPoint()) {
+      const local = computeLocalCircumstances(eclipseId, {
+        lat: point.lat,
+        lon: point.lon,
+        elevation: 0,
+      });
+      const segonsMotor = local.centralDurationSec;
+      const esperat = segonsMotor > 0 ? 'central' : 'partial';
+      if (point.phase !== esperat) {
+        mentides.push(
+          `${point.id} (${point.source.who}): el fitxer diu ${point.phase}, el motor ${esperat} (${segonsMotor.toFixed(0)} s, marge ${local.umbralMarginArcsec.toFixed(2)}″)`,
+        );
+      }
+    }
+    expect(mentides).toEqual([]);
+  });
+
+  it('coincideix amb el PDF de la Comunitat de Madrid sobre qui té totalitat', () => {
+    /*
+     * LA MILLOR VALIDACIÓ QUE TENIM DEL MOTOR, i surt de franc.
+     *
+     * La Comunitat de Madrid publica dues coses per separat: la llista dels 52
+     * municipis amb punt d'observació, i un PDF ("Observación de la totalidad
+     * del eclipse") amb els 40 que tenen totalitat i quants segons en tenen.
+     * Els 12 que falten al PDF no hi són perquè no en tenen.
+     *
+     * El motor, sense mirar el PDF, dona EXACTAMENT els mateixos 40. I les
+     * durades quadren dins d'un segon: Somosierra 1:29 al PDF i 88 s aquí,
+     * Buitrago del Lozoya 1:19 i 80 s, Ambite 0:26 i 27 s, Hoyo de Manzanares
+     * 0:19 i 20 s. Dos càlculs independents, la mateixa resposta.
+     *
+     * Si un dia això falla, abans de tocar res: mirar si el que ha canviat és
+     * una coordenada nostra (probable) o el motor (greu).
+     */
+    const senseTotalitat = [
+      'mad-brunete',
+      'mad-chapineria',
+      'mad-chinchon',
+      'mad-navas-del-rey',
+      'mad-perales-de-tajuna',
+      'mad-robledo-de-chavela',
+      'mad-san-lorenzo-de-el-escorial',
+      'mad-san-martin-de-valdeiglesias',
+      'mad-santa-maria-de-la-alameda',
+      'mad-torrejon-de-la-calzada',
+      'mad-villamantilla',
+      'mad-villarejo-de-salvanes',
+    ];
+    const madrid = pointsForEclipse('2026-08-12').filter((p) => p.id.startsWith('mad-'));
+    expect(madrid).toHaveLength(52);
+    const parcials = madrid.filter((p) => p.phase === 'partial').map((p) => p.id);
+    expect([...parcials].sort()).toEqual([...senseTotalitat].sort());
+  });
+
+  it('cap punt central no queda disparat lluny de la línia central dibuixada', () => {
     for (const eclipseId of ECLIPSE_IDS) {
-      const points = pointsForEclipse(eclipseId);
+      const points = pointsForEclipse(eclipseId).filter((p) => p.phase === 'central');
       if (points.length === 0) continue;
       const path = computeEclipsePath(eclipseId);
       for (const point of points) {
@@ -226,9 +360,9 @@ describe('la franja', () => {
 });
 
 describe('les fonts', () => {
-  it('són set administracions per al 2026, sense repetits i ordenades', () => {
+  it('són vuit administracions per al 2026, sense repetits i ordenades', () => {
     const sources = observationSourcesFor('2026-08-12');
-    expect(sources).toHaveLength(7);
+    expect(sources).toHaveLength(8);
     expect(new Set(sources.map((s) => s.url)).size).toBe(sources.length);
     const noms = sources.map((s) => s.who);
     expect([...noms].sort((a, b) => a.localeCompare(b, 'ca'))).toEqual(noms);

@@ -139,6 +139,31 @@ function precacheExtensions(): string[] {
   return (inner?.[1] ?? '').split(',').map((e) => e.trim());
 }
 
+/**
+ * Els `globIgnores` del build, com a expressions regulars sobre el camí.
+ *
+ * Es tradueix el glob a mà perquè només se n'admet la forma que fem servir:
+ * `**` per a qualsevol prefix de carpetes i `*` dins d'un sol tram. Si algú hi
+ * posa una forma més exòtica, val més que això peti aquí que no pas que la
+ * prova hi passi per sobre i deixi de vigilar el que vigila.
+ */
+function precacheIgnores(): RegExp[] {
+  const block = viteConfigSource.match(/globIgnores:\s*\[([^\]]*)\]/);
+  if (block === null) return [];
+  return [...block[1].matchAll(/'([^']+)'/g)].map(([, glob]) => {
+    const source = glob
+      .split('/')
+      .map((part) =>
+        part === '**'
+          ? '(?:.*)'
+          : part.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*'),
+      )
+      .join('/')
+      .replace(/\(\?:\.\*\)\//g, '(?:.*/)?');
+    return new RegExp(`^${source}$`);
+  });
+}
+
 /** Els `urlPattern:` del `runtimeCaching`, com a expressions regulars de debò. */
 function runtimeCachingPatterns(): RegExp[] {
   const literals = [
@@ -295,13 +320,22 @@ describe('el pressupost del precache', () => {
      *
      * `sw.js` i el seu propi temps d'execució queden fora a posta: Workbox no
      * es precacheja a si mateix.
+     *
+     * I EL QUE ES DEIXA FORA A MÀ TAMPOC NO COMPTA. `globIgnores` és una
+     * exclusió DECLARADA —avui, `brand/og.png`, la targeta social de 320 kB
+     * que només baixen els rastrejadors i que la interfície no pinta mai— i
+     * el que aquesta prova vigila és el descart EN SILENCI. Llegir-lo del
+     * mateix fitxer que el `globPatterns` és el que fa que treure un fitxer
+     * del precache segueixi sent una decisió escrita i no un accident.
      */
     const manifest = new Set(precacheManifest());
     const extensions = precacheExtensions();
+    const ignored = precacheIgnores();
     const missing = walk(DIST).filter(
       (file) =>
         extensions.includes(file.split('.').pop() ?? '') &&
         !manifest.has(file) &&
+        !ignored.some((pattern) => pattern.test(file)) &&
         file !== 'sw.js' &&
         !/^workbox-[\da-f]+\.js$/.test(file),
     );

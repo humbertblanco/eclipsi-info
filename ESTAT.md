@@ -102,6 +102,29 @@ d'aquests tests es posa vermell, **no el toquis: has trencat alguna cosa**.
 5. **Un horitzó a mitges no es publica.** Amb una tessel·la de cent cinquanta,
    el perfil surt pla i optimista i l'app diu «102,1 s de 102,1» on la realitat
    és zero. El llindar és el 95 % a `core/horizon/raycast.ts`.
+7. **Un actiu binari no es revisa llegint el diff: se'n miren els PÍXELS.**
+   `public/brand/minimapa-iberia.png` es va publicar amb 1296×1008 píxels a
+   (0,0,0,0) —transparent i negre alhora— i va arribar al lloc publicat: el
+   mini-mapa de la portada ensenyava la franja surant damunt del no-res i el
+   `filter: brightness(1.9)` del CSS no hi podia fer res, perquè 1,9 per zero
+   segueix sent zero. Ara la imatge la fa `scripts/build-minimap.ts` (RGB sense
+   canal alfa a posta: així aquell error és impossible per construcció) i hi ha
+   dues proves que miren píxels de veritat, `features/map/minimap-asset.test.ts`
+   i `tests/actius-binaris.test.ts`. La segona tanca l'inventari: tot PNG o SVG
+   publicat ha d'estar declarat.
+8. **Cap frase per a l'usuari neix a `src/core`.** El nucli dona CODIS amb les
+   seves xifres (`core/horizon/errors.ts`, `core/spots/errors.ts`,
+   `SpotSearchProgress.stage`) i la frase la munta la capa de vista, que és
+   l'única que sap en quin idioma s'està parlant. Hi havia errors i canals de
+   progrés escrits en català que arribaven tal qual a qui llegeix en castellà.
+9. **Tota URL que l'app demani surt de `src/offline/config.ts` i té regla al
+   service worker.** L'invariant 4 s'amplia més enllà de la cartografia: també
+   les tessel·les d'elevació del relleu ombrejat
+   (`offline/terrain-agreement.test.ts`) i els catàlegs de `public/data/`
+   (`offline/budget.test.ts`), que no van al precache sinó a `eclipsi-dades-v1`
+   perquè pesen centenars de kB i només els necessita qui encén aquelles capes.
+   Un JSON orfe no dona error ni avís: al camp, l'usuari només veu una capa que
+   no hi és.
 6. **El calibratge de la focal es reinicia en aplicar-se.** Si no, el guany es
    mesura contra una focal i s'aplica a una altra, i el camp de visió cau de 50°
    a 25° en tres segons — i es desa.
@@ -165,6 +188,33 @@ mapa a mòbil amb trio de xifres + línia C1–C4 dins del 45dvh; noms per
 davant de coordenades a Dateline, portada i capçalera; el peu reduït a
 signatura + privacitat + meta (les fonts, senceres a «Com funciona» i al
 diàleg del mapa); l'aparador de la càmera a la portada.
+
+**EL 3 D'AGOST, LA RESPOSTA AL MAPA DE LA COMPETÈNCIA.** app.treseclipses.es
+(freemium, 9,99 €) té una cosa que semblava relleu i és un **mapa de calor de
+qualitat d'observació** sobre ombrejat, amb punts oficials, 22.000 miradors,
+nuvolositat històrica i una línia de temps 1x-600x. La ironia era que
+nosaltres ja teníem el motor que ells venen —horitzó 360° per DEM,
+`computeVisibility`, `core/spots`, la incertesa del caire— i el mapa pintava un
+raster pla que no ho ensenyava. El que s'ha tancat:
+
+- **Relleu ombrejat** amb LES MATEIXES tessel·les terrarium que ja baixava
+  l'horitzó (cap dada nova, memòria cau compartida), i amb la llum posada a
+  l'azimut del Sol al màxim del teu punt i ancorada al MAPA, no a la pantalla:
+  els vessants foscos són els que estaran a contrallum aquella tarda. El primer
+  intent no es veia —ombra negra sobre mapa negre—; qui dibuixa el relleu aquí
+  és la llum.
+- **Con de visió** de C1 a C4, amb el radi fins a l'obstacle que et fa
+  d'horitzó en aquell rumb, i **control de capes** que recorda la tria.
+- **La fitxa diu cap on miraràs i amb quant de marge sobre el terreny.** A
+  Tafalla: oest 283,7°, 6,9°. Les mateixes xifres que dona la competència, més
+  els segons visibles que ells no donen.
+- **Analítica d'ús** (`core/analytics` + `analytics/gtag.ts`) amb la porta de
+  privadesa escrita com a codi: només passen paraules d'una llista tancada,
+  cap número mai. Una latitud és un número. El retall de l'adreça és
+  paràmetre GLOBAL perquè la mesura millorada de GA4 envia vistes pel seu
+  compte a cada `replaceState`, i aquesta app en fa un a cada toc al mapa.
+- **Rellotge de simulació** reutilitzable (`core/timeline`) amb el seu
+  reproductor, que distingeix sempre simulació de temps real.
 
 ### Mitjà
 

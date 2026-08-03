@@ -273,6 +273,41 @@ const STRINGS = {
     ca: 'El sector que tindràs davant, del primer contacte a l’últim.',
     es: 'El sector que tendrás delante, del primer contacto al último.',
   },
+  'map.layers.byView': {
+    ca: 'La nuvolositat, la fletxa de durada i el caire de la franja s’encenen amb la seva pestanya.',
+    es: 'La nubosidad, la flecha de duración y el borde de la franja se encienden con su pestaña.',
+  },
+  'map.layers.heat': { ca: 'Mapa de visibilitat', es: 'Mapa de visibilidad' },
+  'map.layers.heatDesc': {
+    ca: 'Quants segons sobreviuen al relleu a cada punt. Baixa relleu i triga uns segons.',
+    es: 'Cuántos segundos sobreviven al relieve en cada punto. Descarga relieve y tarda unos segundos.',
+  },
+  'map.heat.legend': {
+    ca: 'Segons visibles darrere el relleu (fins a {max})',
+    es: 'Segundos visibles tras el relieve (hasta {max})',
+  },
+  'map.heat.estimate': {
+    ca: 'Els quadres esvaïts són estimació sense relleu. El veredicte fi és el del teu punt.',
+    es: 'Los cuadros desvaídos son estimación sin relieve. El veredicto fino es el de tu punto.',
+  },
+  'map.layers.official': {
+    ca: 'Punts d’observació oficials',
+    es: 'Puntos de observación oficiales',
+  },
+  'map.layers.officialDesc': {
+    ca: 'Convocatòries d’administracions i agrupacions, amb la font a la fitxa.',
+    es: 'Convocatorias de administraciones y agrupaciones, con la fuente en la ficha.',
+  },
+  'map.layers.viewpoints': { ca: 'Miradors i cims', es: 'Miradores y cumbres' },
+  'map.layers.viewpointsDesc': {
+    ca: 'D’OpenStreetMap. En encendre’ls es baixen un cop i queden desats.',
+    es: 'De OpenStreetMap. Al encenderlos se descargan una vez y quedan guardados.',
+  },
+  'map.layers.officialPartial': {
+    ca: 'Aquí l’eclipsi és parcial: fora de la franja de centralitat.',
+    es: 'Aquí el eclipse es parcial: fuera de la franja de centralidad.',
+  },
+  'map.layers.source': { ca: 'Font', es: 'Fuente' },
   'map.pickHint': {
     ca: 'Toca qualsevol punt del mapa i tot es recalcula des d’allà.',
     es: 'Toca cualquier punto del mapa y todo se recalcula desde allí.',

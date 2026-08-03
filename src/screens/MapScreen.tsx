@@ -29,6 +29,13 @@ import {
   type MapLayerState,
 } from '../features/map/LayerControl';
 import { clampConeRadiusKm, type ViewConeData } from '../features/map/layers/viewCone';
+import { useHeatmap, type HeatViewport } from '../features/map/useHeatmap';
+import { heatLegendGradient } from '../features/map/layers/heatmap';
+import { moveArrowFrom } from '../features/map/layers/moveArrow';
+import { pointsForEclipse } from '../data/observation-points/catalog';
+import { loadViewpoints } from '../features/map/layers/viewpoints';
+import type { Viewpoint } from '../core/places/viewpoints';
+import { readPalette } from '../styles/palette';
 import { horizonDistanceAt } from '../core/horizon/profile';
 import { track } from '../core/analytics';
 import { TrajectoryThumb } from '../features/sim/TrajectoryThumb';
@@ -227,8 +234,58 @@ export function MapScreen({
    */
   const desktop = useMediaQuery('(min-width: 900px) and (min-height: 500px)');
   const [layers, setLayers] = useState<MapLayerState>(() =>
-    readStoredLayers({ hillshade: desktop, cone: true }),
+    readStoredLayers({
+      hillshade: desktop,
+      cone: true,
+      // Els punts oficials són contingut, són pocs i porten font: encesos.
+      official: true,
+      // Els miradors baixen un fitxer de centenars de kB: apagats fins que
+      // algú els demani. Res no es baixa sense que es demani.
+      viewpoints: false,
+      // El mapa de calor baixa relleu i triga segons. Apagat SEMPRE per
+      // defecte, també a l'escriptori: es paga en dades de l'usuari.
+      heat: false,
+    }),
   );
+
+  /*
+   * L'ENQUADRAMENT VIU AQUÍ perquè el mapa de calor el necessita i el mapa
+   * és qui el sap. `EclipseMap` l'emet a cada `moveend` i a la primera
+   * pintada; el hook ja escanya i cancel·la la passada anterior.
+   */
+  const [viewport, setViewport] = useState<HeatViewport | null>(null);
+  const heat = useHeatmap({ eclipseId, enabled: layers.heat, viewport });
+
+  /*
+   * Els punts oficials són un catàleg estàtic: es llegeixen del mòdul i prou.
+   * Els miradors són un fitxer de centenars de kB i es baixen NOMÉS quan
+   * s'encén la capa (`loadViewpoints` ja té la seva memòria de mòdul i el seu
+   * calaix al service worker).
+   */
+  const pois = useMemo(
+    () => (layers.official ? pointsForEclipse(eclipseId) : null),
+    [layers.official, eclipseId],
+  );
+
+  const [viewpoints, setViewpoints] = useState<readonly Viewpoint[] | null>(null);
+  useEffect(() => {
+    if (!layers.viewpoints) {
+      setViewpoints(null);
+      return;
+    }
+    let alive = true;
+    void loadViewpoints(eclipseId, { baseUrl: import.meta.env.BASE_URL })
+      .then((file) => {
+        if (alive) setViewpoints(file.viewpoints);
+      })
+      .catch(() => {
+        // El detall el diu la capa; aquí només cal no deixar-hi res a mitges.
+        if (alive) setViewpoints(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [layers.viewpoints, eclipseId]);
 
   /*
    * Si la navegació torna a demanar una vista amb el mapa ja obert —l'enrere
@@ -346,6 +403,12 @@ export function MapScreen({
     [view, eclipseId, location],
   );
 
+  /** L'etiqueta de la fletxa del mapa: la mateixa xifra que diu la fitxa. */
+  const arrowLabel =
+    gradient !== null
+      ? `+${formatDecimal(gradient.secondsPerKm, 1, locale)} s/km`
+      : '';
+
   /*
    * TOT EL QUE JA SABEM DEL PUNT DE L'USUARI, I NO ENSENYÀVEM.
    *
@@ -432,6 +495,25 @@ export function MapScreen({
             */
             sunAzimuthDeg={contacts?.max.sun.azimuth ?? null}
             cone={cone}
+            heatCells={layers.heat ? heat.cells : null}
+            heatMaxSec={heat.maxSec}
+            onViewportChange={setViewport}
+            pois={pois}
+            onPickPoi={(poi) => {
+              // Un punt oficial es tria com qualsevol altre punt: el motor en
+              // calcula les circumstàncies de debò, que és el que hi afegim
+              // nosaltres i la competència no.
+              setFocus(null);
+              onPickLocation(poi.lat, poi.lon);
+            }}
+            viewpoints={viewpoints}
+            onPickViewpoint={(spot) => {
+              setFocus(null);
+              onPickLocation(spot.lat, spot.lon);
+            }}
+            {...(view === 'move'
+              ? { moveArrow: moveArrowFrom(location, gradient, arrowLabel) }
+              : {})}
             onPickLocation={(loc) => {
               // Tocar el mapa tanca el capítol de la cerca: el punt triat ja
               // té el seu marcador propi i el rètol del resultat només faria
@@ -501,6 +583,21 @@ export function MapScreen({
                   aria-hidden="true"
                 />
                 {s('map.layers.cone', locale)}
+              </span>
+            )}
+            {layers.heat && heat.cells.length > 0 && (
+              <span className="mapscreen__legenditem">
+                {/*
+                  El degradat de la mostra surt de la MATEIXA taula que pinta
+                  el mapa (`heatLegendGradient`), en línia i no en CSS: és
+                  l'única manera que llegenda i llenç no puguin divergir.
+                */}
+                <span
+                  className="mapscreen__swatch mapscreen__swatch--heat"
+                  aria-hidden="true"
+                  style={{ background: heatLegendGradient(readPalette()) }}
+                />
+                {s('map.heat.legend', locale, { max: formatDuration(heat.maxSec) })}
               </span>
             )}
           </div>

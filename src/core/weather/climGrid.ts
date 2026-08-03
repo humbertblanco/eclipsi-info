@@ -26,20 +26,22 @@
  * La graella es publica a 0,25° (uns 25 km). La creença de partida era que
  * aquella era la malla d'ERA5 i que baixar-ne més seria fingir detall. S'ha
  * mesurat i NO ÉS AIXÒ: demanant a l'arxiu d'Open-Meteo latituds separades
- * 0,02°, les coordenades que torna se separen de 0,0703° en 0,0703° —7,8 km— i
- * la nuvolositat canvia a cada salt (Burgos, 12-11-2024: 83 %, 95 %, 100 % en
- * tres cel·les consecutives). O sigui que la font resol tres vegades i mitja
- * més fi del que aquí es publica.
+ * 0,02°, les coordenades que torna estan enganxades a una malla de 0,0703125°
+ * —7,8 km— i la nuvolositat canvia gairebé a cada salt. Un transsecte de 20
+ * punts sobre Burgos (12-11-2024, 09 UTC) dona 10 valors diferents de 20, amb
+ * trams iguals de 0,088° de mitjana: si a sota hi hagués una malla de 0,25°
+ * interpolada, els trams farien 0,25°. O sigui que la font resol tres vegades i
+ * mitja més fi del que aquí es publica, i amb informació de debò.
  *
  * Es publica a 0,25° igualment, i per raons de cost, no de física: a 0,0703° la
- * franja del 2026 tindria unes deu mil vuit-centes cel·les en comptes de 855
+ * franja del 2026 tindria unes onze mil dues-centes cel·les en comptes de 888
  * —creixen amb el quadrat del pas—, generar-la costaria més de cent mil crides
- * a Open-Meteo en comptes de vuit mil (deu dies sencers del límit diari del pla
- * gratuït) i el JSON passaria d'uns 50 kB a més d'un megabyte que l'usuari s'ha
- * de baixar per anar sense cobertura. La diferència entre les dues coses
- * importa: 0,25° no INVENTA res —cap cel·la ensenya més detall del que la font
- * en sap— però tampoc no és el límit de la font, i qui llegeixi aquest fitxer
- * ha de saber que hi ha marge si algun dia val la pena pagar-lo.
+ * a Open-Meteo en comptes de vuit mil i mig (deu dies sencers del límit diari
+ * del pla gratuït) i el JSON passaria d'uns 55 kB a més d'un megabyte que
+ * l'usuari s'ha de baixar per anar sense cobertura. La diferència entre les dues
+ * coses importa: 0,25° no INVENTA res —cap cel·la ensenya més detall del que la
+ * font en sap— però tampoc no és el límit de la font, i qui llegeixi aquest
+ * fitxer ha de saber que hi ha marge si algun dia val la pena pagar-lo.
  *
  * Conseqüència directa que la interfície no pot amagar: el valor d'una cel·la
  * és el del seu CENTRE, no la mitjana del rectangle. Es pinta uniforme perquè
@@ -78,8 +80,8 @@ export const CLIM_GRID_FORMAT = 'eclipsi.clouds-clim.v1';
 /**
  * Columnes de la graella, en format columnar i no com a llista d'objectes.
  *
- * Amb vuit-centes cel·les i dotze camps, la llista d'objectes repetiria dotze
- * noms de clau vuit-centes vegades: el JSON passa de ~40 kB a ~180 kB. En una
+ * Amb nou-centes cel·les i tretze camps, la llista d'objectes repetiria tretze
+ * noms de clau nou-centes vegades: el JSON passa de ~55 kB a ~200 kB. En una
  * app que es baixa sencera per funcionar sense cobertura, això són 140 kB que
  * l'usuari es carrega a la motxilla per res. Totes les columnes tenen la
  * mateixa llargada, i `parseCloudClimGrid` ho comprova abans que ningú les faci
