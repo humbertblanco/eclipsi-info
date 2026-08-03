@@ -339,8 +339,13 @@ describe('la franja ha de ser DIBUIXABLE, no només correcta', () => {
     const iberian = band.geometry.coordinates[0].filter(
       ([lon, lat]) => lon > -12 && lon < 5 && lat > 34 && lat < 45,
     );
-    // Abans de retallar n'hi havia 109. Retallar el pol no en pot treure cap.
-    expect(iberian.length).toBeGreaterThanOrEqual(100);
+    // Retallar el pol no en pot treure cap. El llindar es va calibrar a 100
+    // quan la vora encara duia la dent del sud-est de Menorca: d'aquells punts,
+    // una quinzena eren mostres espúries del límit nord (i el refinament les
+    // densificava). Amb la vora sana n'hi queden 93 de reals; 90 vigila la
+    // mateixa regressió —que el retall polar no es mengi la Península— sense
+    // exigir que la dent torni.
+    expect(iberian.length).toBeGreaterThanOrEqual(90);
   });
 
   it('les línies dels límits tampoc no salten pel pol', () => {
@@ -351,5 +356,157 @@ describe('la franja ha de ser DIBUIXABLE, no només correcta', () => {
         expect(Math.abs(line[i][0] - line[i - 1][0])).toBeLessThan(90);
       }
     }
+  });
+});
+
+describe('la vora de la franja és una corba llisa, sense dents de serra', () => {
+  /*
+   * EL BUG QUE VIGILA AIXÒ, vist en una captura del mapa: la franja del
+   * 12-08-2026 duia una DENT al límit nord al sud-est de Menorca. Entre les
+   * 18:30:10 i les 18:30:33 UT la vora queia de cop de (40,31°N 4,36°E) a
+   * (39,97°N 4,22°E) —quaranta quilòmetres al sud, i enrere en longitud—,
+   * baixava per una branca falsa fins a (39,59°N 4,27°E) i tornava a pujar
+   * d'un salt a (40,18°N 4,52°E): una V invertida que físicament no pot
+   * existir, perquè el límit és una corba llisa fins a l'extrem.
+   *
+   * La causa era la TRIA del candidat quan el contorn de l'ombra queda tallat
+   * pel terminador: dels dos punts de tall, tots dos al costat nord de l'eix,
+   * guanyava el primer en l'ordre d'escombrat en comptes del transversalment
+   * més extrem (vegeu `pathLimitsAt`). El mateix mecanisme feia banyes de
+   * ~170° als extrems del recorregut del 2028.
+   *
+   * El test mesura el gir entre segments consecutius de cada límit, per trams
+   * dibuixables (els mateixos talls que fa el GeoJSON: |lat| ≤ 80 i sense
+   * salts de longitud) i després de fondre els vèrtexs a menys de 5 km,
+   * perquè el que busquem són articulacions a escala de quilòmetres, no
+   * soroll de mostreig submètric.
+   *
+   * CALIBRATGE del llindar, mesurat sobre les corbes reals: amb la geometria
+   * sana, el gir màxim dels tres eclipsis és de 15,8° (el relleu suau
+   * tangència → terminador del 2026); amb la dent, 151°; amb les banyes del
+   * 2028, 169° i 171°. A 120° hi ha un ordre de magnitud de marge per sota i
+   * un bon coixí per sobre.
+   */
+  const MAX_TURN_DEG = 120;
+  const COLLAPSE_KM = 5;
+  const KM_PER_DEG_LAT = 111.32;
+
+  type LatLon = { lat: number; lon: number };
+
+  /** Trams contigus dibuixables, amb els mateixos talls que el GeoJSON. */
+  function drawableStretches(points: readonly LatLon[]): LatLon[][] {
+    const runs: LatLon[][] = [];
+    let run: LatLon[] = [];
+    for (const p of points) {
+      const usable = Math.abs(p.lat) <= 80;
+      const jumped = run.length > 0 && Math.abs(p.lon - run[run.length - 1].lon) > 90;
+      if (!usable || jumped) {
+        if (run.length > 1) runs.push(run);
+        run = usable ? [p] : [];
+        continue;
+      }
+      run.push(p);
+    }
+    if (run.length > 1) runs.push(run);
+    return runs;
+  }
+
+  /** Fon els vèrtexs a menys de COLLAPSE_KM perquè els girs siguin a escala. */
+  function collapse(points: readonly LatLon[]): LatLon[] {
+    const out: LatLon[] = [];
+    for (const p of points) {
+      const last = out[out.length - 1];
+      if (last && approxDistanceKm(last, p) < COLLAPSE_KM) continue;
+      out.push(p);
+    }
+    return out;
+  }
+
+  /** Gir màxim entre parells de segments consecutius, en graus. */
+  function worstTurnDeg(points: readonly LatLon[]): number {
+    let worst = 0;
+    for (const stretch of drawableStretches(points)) {
+      const c = collapse(stretch);
+      for (let i = 1; i < c.length - 1; i++) {
+        const kmPerDegLon = KM_PER_DEG_LAT * Math.cos((c[i].lat * Math.PI) / 180);
+        const v1x = (c[i].lon - c[i - 1].lon) * kmPerDegLon;
+        const v1y = (c[i].lat - c[i - 1].lat) * KM_PER_DEG_LAT;
+        const v2x = (c[i + 1].lon - c[i].lon) * kmPerDegLon;
+        const v2y = (c[i + 1].lat - c[i].lat) * KM_PER_DEG_LAT;
+        const cos =
+          (v1x * v2x + v1y * v2y) / (Math.hypot(v1x, v1y) * Math.hypot(v2x, v2y));
+        const deg = (Math.acos(Math.min(1, Math.max(-1, cos))) * 180) / Math.PI;
+        worst = Math.max(worst, deg);
+      }
+    }
+    return worst;
+  }
+
+  const IDS = ['2026-08-12', '2027-08-02', '2028-01-26'];
+
+  for (const id of IDS) {
+    it(`${id}: cap límit no gira més de ${MAX_TURN_DEG}° a escala de ${COLLAPSE_KM} km`, () => {
+      const path = computeEclipsePath(id);
+      for (const [name, curve] of [
+        ['nord', path.northLimit],
+        ['sud', path.southLimit],
+        ['central', path.center],
+      ] as const) {
+        const worst = worstTurnDeg(curve);
+        expect(worst, `${id} límit ${name}: gir màxim ${worst.toFixed(1)}°`).toBeLessThan(
+          MAX_TURN_DEG,
+        );
+      }
+    });
+
+    it(`${id}: l'anell del polígon no s'autointerseca`, () => {
+      // Una vora amb dent pot arribar a doblegar-se fins a creuar-se, i un
+      // polígon autointersecat es pinta amb forats imprevisibles. La prova és
+      // O(n²) sobre uns pocs centenars de segments: barata en un test.
+      const { band } = eclipsePathToGeoJson(computeEclipsePath(id));
+      const ring = band.geometry.coordinates[0];
+
+      const crosses = (
+        a: readonly number[], b: readonly number[],
+        c: readonly number[], d: readonly number[],
+      ): boolean => {
+        const orient = (o: readonly number[], p: readonly number[], q: readonly number[]) =>
+          (p[0] - o[0]) * (q[1] - o[1]) - (p[1] - o[1]) * (q[0] - o[0]);
+        const d1 = orient(c, d, a);
+        const d2 = orient(c, d, b);
+        const d3 = orient(a, b, c);
+        const d4 = orient(a, b, d);
+        return (
+          ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+          ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))
+        );
+      };
+
+      // El darrer vèrtex duplica el primer: es recorre sense ell i el parell
+      // (primer, últim segment) es salta perquè són adjacents pel tancament.
+      const n = ring.length - 1;
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 2; j < n; j++) {
+          if (i === 0 && j === n - 1) continue;
+          expect(
+            crosses(ring[i], ring[i + 1], ring[j], ring[j + 1]),
+            `segments ${i} i ${j} es creuen`,
+          ).toBe(false);
+        }
+      }
+    });
+  }
+
+  it('2026: el límit nord es manté a la branca bona dins la finestra de la dent', () => {
+    // El punt exacte on la captura ensenyava la dent. Amb el bug, a les
+    // 18:30:20 UT el límit nord queia a (39,81°N 4,18°E), la branca falsa;
+    // la corba bona hi passa per (40,29°N 4,35°E). Mig grau de latitud de
+    // diferència: cap tolerància raonable no els confon.
+    const north = pathLimitsAt('2026-08-12', Date.parse('2026-08-12T18:30:20Z')).north;
+    expect(north).not.toBeNull();
+    expect(north!.lat).toBeGreaterThan(40.2);
+    expect(north!.lat).toBeLessThan(40.4);
+    expect(north!.lon).toBeGreaterThan(4.2);
+    expect(north!.lon).toBeLessThan(4.5);
   });
 });

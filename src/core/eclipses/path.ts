@@ -367,13 +367,20 @@ export function pathLimitsAt(
     return { point, rate: (b - a) / (2 * DERIVATIVE_STEP_HOURS) };
   };
 
-  let north: PathPoint | null = null;
-  let south: PathPoint | null = null;
+  /**
+   * Candidats a límit, amb el seu desplaçament transversal signat respecte de
+   * l'eix (negatiu = costat nord) i amb la memòria de QUÈ és cadascun: arrel
+   * de tangència (dF/dt = 0) o tall del contorn amb el limbe. La distinció no
+   * és decorativa: a la tria final la tangència mana sobre el limbe.
+   */
+  const candidates: { point: SurfacePoint; offset: number; tangency: boolean }[] = [];
 
-  const assign = (point: SurfacePoint) => {
-    const candidate: PathPoint = { lat: point.lat, lon: point.lon, timeMs: utcMs };
-    if (isNorthOfPath(el, ev, evBefore, evAfter, point)) north ??= candidate;
-    else south ??= candidate;
+  const consider = (point: SurfacePoint, tangency: boolean) => {
+    candidates.push({
+      point,
+      tangency,
+      offset: transverseOffset(el, ev, evBefore, evAfter, point),
+    });
   };
 
   /** Busca el zero de dF/dt entre dos angles on la derivada canvia de signe. */
@@ -398,7 +405,7 @@ export function pathLimitsAt(
       }
     }
 
-    if (solution !== null) assign(solution);
+    if (solution !== null) consider(solution, true);
   };
 
   /**
@@ -441,9 +448,63 @@ export function pathLimitsAt(
     previous = current;
   }
 
-  for (const point of limbPoints) assign(point);
+  for (const point of limbPoints) consider(point, false);
 
-  return { north, south };
+  /*
+   * LA TRIA, en dos esglaons per a cada costat.
+   *
+   * 1) MENTRE HI HA TANGÈNCIA, MANA LA TANGÈNCIA. dF/dt = 0 és la definició
+   *    mateixa de l'envolupant: mentre l'arrel viu, el límit és ella, i cap
+   *    tall de limbe no la pot desbancar. Semblava que el criteri de l'extrem
+   *    transversal ja ho garantia sol, i el 26-01-2028 va demostrar que no: a
+   *    les 16:57:08 UT, amb la tangència sud ben viva a 36,77°N −3,10°E,
+   *    l'extrem posterior de l'arc de terminador eclipsat (39,04°N 2,85°E,
+   *    650 km més enllà i interior de la franja) la superava en desplaçament
+   *    transversal per 2·10⁻⁶ radis terrestres — tretze metres. I és que el
+   *    desplaçament es mesura respecte de la recta del moviment LOCAL de cada
+   *    punt: entre punts separats centenars de quilòmetres sobre un camí
+   *    corbat, la comparació de magnituds ja no ordena res. El límit sud
+   *    saltava 650 km d'un segon al següent i es posava a recular, i la cerca
+   *    del límit publicat d'`uncertainty.ts`, en refinar el tram del salt, es
+   *    quedava el punt de la branca equivocada: 283 km de València en lloc
+   *    dels 162 de l'arrel de veritat.
+   *
+   * 2) SENSE TANGÈNCIA AL COSTAT, EL MÉS EXTREM DELS TALLS DE LIMBE. És el
+   *    cas de la dent del 2026: entre les 18:30:10 i les 18:30:33 UT del
+   *    12-08-2026 la tangència nord llisca fora del disc terrestre i el
+   *    contorn queda tallat pel terminador en DOS punts, tots dos al costat
+   *    nord. Un és la continuació real del límit (18:30:12: 40,31°N 4,34°E,
+   *    amb dF/dt +4,2·10⁻⁴, la tangència perduda just a l'altra banda del
+   *    limbe); l'altre és l'extrem posterior de l'arc eclipsat del terminador
+   *    (39,94°N 4,18°E, dF/dt −7,4·10⁻³), un punt que un instant després
+   *    queda DINS de l'ombra — interior de la franja, no pas vora. Amb el
+   *    "primer de cada costat" que hi havia abans, quan l'espuri queia abans
+   *    en l'ordre d'escombrat de ψ guanyava ell, i el límit nord saltava
+   *    40 km al sud i tornava: la dent de serra al sud-est de Menorca. Entre
+   *    talls de limbe la comparació sí que és de fiar: tots dos són extrems
+   *    del mateix arc curt, i el transversalment més extrem és la vora de la
+   *    unió d'ombres — qualsevol altre queda entre els dos límits, és a dir,
+   *    dins.
+   */
+  const pick = (side: 1 | -1): PathPoint | null => {
+    let best: { point: SurfacePoint; offset: number; tangency: boolean } | null = null;
+    for (const candidate of candidates) {
+      // El costat nord és el d'offset negatiu; `side` reorienta perquè
+      // "més extrem" sigui sempre "més gran".
+      if (candidate.offset * side <= 0) continue;
+      const wins =
+        best === null ||
+        (candidate.tangency !== best.tangency
+          ? candidate.tangency
+          : candidate.offset * side > best.offset * side);
+      if (wins) best = candidate;
+    }
+    return best === null
+      ? null
+      : { lat: best.point.lat, lon: best.point.lon, timeMs: utcMs };
+  };
+
+  return { north: pick(-1), south: pick(1) };
 }
 
 /**
@@ -477,34 +538,46 @@ function refineLimbCrossing(
 }
 
 /**
- * Distingeix quin dels dos punts de tangència és el límit nord.
+ * Desplaçament transversal signat d'un punt respecte de l'eix de l'ombra, al
+ * pla fonamental: la component del vector eix→punt perpendicular al moviment
+ * del terreny respecte de l'ombra. NEGATIU al costat nord del camí (a
+ * l'esquerra del moviment), positiu al sud.
  *
- * Al pla fonamental l'eix +η apunta cap al pol nord celeste (per al pol nord
- * terrestre, η = (b/a)·cos d > 0). El punt de tangència queda a 90° del vector
- * velocitat del terreny respecte de l'ombra: el que queda a l'esquerra d'aquest
- * moviment és el límit nord. No es pot decidir simplement per latitud, perquè
- * amb el Sol molt baix el punt de tangència "nord" pot estar centenars de
- * quilòmetres per davant i quedar més al sud que la línia central del moment.
+ * No és un simple booleà nord/sud a posta: la MAGNITUD també decideix, però
+ * NOMÉS entre talls de limbe. Quan el contorn de l'ombra queda tallat pel
+ * terminador i cap tangència no viu en un costat, hi pot haver dos talls de
+ * limbe en aquell costat, i llavors el límit de la franja és el
+ * transversalment més extrem — l'altre queda dins (vegeu la tria a
+ * `pathLimitsAt`). Contra una tangència viva, en canvi, la magnitud no és cap
+ * argument: es mesura respecte de la recta del moviment local de cada punt, i
+ * entre punts separats centenars de quilòmetres sobre un camí corbat pot
+ * donar l'ordre equivocat per metres (26-01-2028, 16:57:08). Tampoc no es
+ * pot decidir per latitud: amb el Sol molt baix el punt de tangència "nord"
+ * pot estar centenars de quilòmetres per davant i quedar més al sud que la
+ * línia central del moment.
  */
-function isNorthOfPath(
+function transverseOffset(
   el: BesselianElements,
   ev: EvaluatedElements,
   evBefore: EvaluatedElements,
   evAfter: EvaluatedElements,
   point: SurfacePoint,
-): boolean {
+): number {
   const a = fundamentalCoords(evBefore, el.deltaT, point.lat, point.lon);
   const b = fundamentalCoords(evAfter, el.deltaT, point.lat, point.lon);
 
   // Velocitat del punt del terreny relativa a l'eix de l'ombra.
   const vx = b.xi - evAfter.x - (a.xi - evBefore.x);
   const vy = b.eta - evAfter.y - (a.eta - evBefore.y);
+  const speed = Math.hypot(vx, vy);
+  if (speed === 0) return 0;
 
   const now = fundamentalCoords(ev, el.deltaT, point.lat, point.lon);
   const rx = now.xi - ev.x;
   const ry = now.eta - ev.y;
 
-  return vx * ry - vy * rx < 0;
+  // Producte vectorial normalitzat: distància signada a la recta del moviment.
+  return (vx * ry - vy * rx) / speed;
 }
 
 // ---------------------------------------------------------------------------
@@ -633,6 +706,91 @@ function sampleCurve(
 }
 
 /**
+ * Finestra, a cada extrem del recorregut, dins la qual es vigila que un límit
+ * no reculi, en ms. El reculament només pot passar als trams on la franja ja
+ * no està limitada per una tangència sinó pel terminador, que als tres
+ * eclipsis del catàleg duren ben bé un parell de minuts; cinc minuts els
+ * cobreixen amb marge i mantenen el criteri local (lluny dels extrems, una
+ * trajectòria que dona la volta al món pot tornar a "avançar" respecte de la
+ * direcció final sense que això sigui cap defecte).
+ */
+const TRIM_WINDOW_MS = 5 * 60 * 1000;
+
+/**
+ * Retalla el cap i la cua d'un límit quan es posen a recular.
+ *
+ * EL PERQUÈ. Als extrems del recorregut el límit ja no és cap tangència sinó
+ * l'extrem de l'arc de terminador eclipsat (vegeu `pathLimitsAt`), i aquest
+ * arc creix i s'encongeix a mesura que l'ombra entra i surt de la Terra:
+ *
+ *  - A la CUA, quan l'arc s'encongeix, el seu extrem RETROCEDEIX pel damunt
+ *    de territori que la franja ja ha cobert: al 2028, el límit nord surt
+ *    fins a (42,12°N 1,44°E) i després desfà uns 30 km cap al sud-oest.
+ *    Aquells punts de tornada són interiors de la franja —cada un queda dins
+ *    de la unió d'ombres ja escombrada— i dibuixar-los feia un ganxo de ~180°
+ *    a la vora del polígon.
+ *  - Al CAP passa el mirall exacte: al 2028 el límit nord comença reculant
+ *    40 km cap a l'oest (l'extrem de l'arc de l'alba s'estén enrere) abans
+ *    que la tangència prengui el relleu 650 km més enllà, i la polilínia feia
+ *    una banya amb un gir de ~170° a la punta.
+ *
+ * El criteri és la monotonia del paràmetre de recorregut: es projecta cada
+ * extrem sobre la direcció local de la línia central (que és estrictament
+ * monòtona, perquè l'eix no recula mai) i es talla la cua al punt de
+ * projecció màxima i el cap al de projecció mínima. Amb un extrem sa el
+ * màxim/mínim és l'últim/primer punt i no es retalla res — és el cas del
+ * 2026 i del 2027.
+ */
+function trimRetrogradeEnds(points: PathPoint[], center: PathPoint[]): PathPoint[] {
+  if (points.length < 3 || center.length < 2) return points;
+
+  /** Projecció local en km sobre la direcció d'un segment de la central. */
+  const alongTrack = (a: PathPoint, b: PathPoint): ((p: PathPoint) => number) | null => {
+    const kmPerDegLon = KM_PER_DEG_LAT * Math.cos(b.lat * DEG);
+    let ux = (b.lon - a.lon) * kmPerDegLon;
+    let uy = (b.lat - a.lat) * KM_PER_DEG_LAT;
+    const norm = Math.hypot(ux, uy);
+    if (norm === 0) return null;
+    ux /= norm;
+    uy /= norm;
+    return (p) => (p.lon - b.lon) * kmPerDegLon * ux + (p.lat - b.lat) * KM_PER_DEG_LAT * uy;
+  };
+
+  let first = 0;
+  let last = points.length - 1;
+
+  const tailAlong = alongTrack(center[center.length - 2], center[center.length - 1]);
+  if (tailAlong !== null) {
+    const cutoffMs = points[last].timeMs - TRIM_WINDOW_MS;
+    let best = -Infinity;
+    for (let i = points.length - 1; i >= 0 && points[i].timeMs >= cutoffMs; i--) {
+      const along = tailAlong(points[i]);
+      // Estrictament major: entre empats es queda el punt més tardà, que és
+      // el que ja duu el refinament temporal fet.
+      if (along > best) {
+        best = along;
+        last = i;
+      }
+    }
+  }
+
+  const headAlong = alongTrack(center[0], center[1]);
+  if (headAlong !== null) {
+    const cutoffMs = points[0].timeMs + TRIM_WINDOW_MS;
+    let best = Infinity;
+    for (let i = 0; i <= last && points[i].timeMs <= cutoffMs; i++) {
+      const along = headAlong(points[i]);
+      if (along < best) {
+        best = along;
+        first = i;
+      }
+    }
+  }
+
+  return points.slice(first, last + 1);
+}
+
+/**
  * Franja de centralitat completa de l'eclipsi: línia central, límit nord i
  * límit sud.
  */
@@ -650,12 +808,20 @@ export function computeEclipsePath(eclipseId: string, options: PathOptions = {})
   const sample = (pick: (timeMs: number) => PathPoint | null) =>
     unwrap(sampleCurve(pick, startMs, endMs, stepMs));
 
+  const center = sample((t) => centralLineAt(eclipseId, t));
+
   return {
     eclipseId,
     kind,
-    center: sample((t) => centralLineAt(eclipseId, t)),
-    northLimit: sample((t) => pathLimitsAt(eclipseId, t).north),
-    southLimit: sample((t) => pathLimitsAt(eclipseId, t).south),
+    center,
+    northLimit: trimRetrogradeEnds(
+      sample((t) => pathLimitsAt(eclipseId, t).north),
+      center,
+    ),
+    southLimit: trimRetrogradeEnds(
+      sample((t) => pathLimitsAt(eclipseId, t).south),
+      center,
+    ),
     startMs,
     endMs,
   };
