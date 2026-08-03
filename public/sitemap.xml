@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Una sola URL a propòsit: l'app és una SPA a l'arrel del domini i no hi
+     ha cap altra pàgina indexable. Si mai n'apareixen (guia imprimible,
+     full de seguretat com a pàgina pròpia), s'afegeixen aquí. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://eclipsi.info/</loc>
+    <lastmod>2026-08-02</lastmod>
+  </url>
+</urlset>

@@ -1,0 +1,5 @@
+# eclipsi.info — l'arrel del domini ÉS l'app; tot és rastrejable.
+User-agent: *
+Allow: /
+
+Sitemap: https://eclipsi.info/sitemap.xml

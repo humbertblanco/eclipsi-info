@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Pàgina no trobada — eclipsi.info</title>
+<!--
+  Pàgina òrfena: Apache la serveix quan la ruta demanada no existeix, o
+  sigui que no pot dependre de res de l'app — ni bundles, ni CSS, ni les
+  tipografies autoallotjades. Tot va inline i la lletra és system-ui.
+
+  Els colors són els VALORS dels tokens de src/styles/tokens/colors.css,
+  copiats a mà perquè el fitxer de tokens no hi és:
+    #05060B              → -\-bg-page (-\-ink-950)
+    #FBF8F1              → -\-text-primary (-\-corona-050)
+    #9AA5BC              → -\-text-secondary (-\-slate-300)
+    #FFC257              → -\-text-link (-\-sun-400) — l'ÚNIC ambre de la pantalla
+    #FFE0A8              → -\-text-link-hover (-\-sun-200)
+    rgba(201,209,226,.16) → -\-border-subtle
+  (Els guions dels tokens van escapats perquè dos guions seguits són
+  il·legals dins d'un comentari HTML; als comentaris CSS de sota no cal.)
+-->
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #05060B;            /* valor de --bg-page */
+    color: #FBF8F1;                 /* valor de --text-primary */
+    font-family: system-ui, -apple-system, sans-serif;
+    text-align: center;
+    padding: 2rem 1.5rem;
+  }
+  main { max-width: 26rem; }
+  /* Un disc fosc amb una vora tènue: la totalitat, sense gastar l'ambre.
+     L'únic ambre de la pàgina queda reservat per als enllaços. */
+  .disc {
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 50%;
+    border: 0.09rem solid rgba(201,209,226,.16); /* valor de --border-subtle */
+    margin: 0 auto 2rem;
+  }
+  .codi {
+    font-size: 0.8125rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #9AA5BC;                 /* valor de --text-secondary */
+    margin-bottom: 0.75rem;
+  }
+  h1 {
+    font-size: 1.375rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  p {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: #9AA5BC;                 /* valor de --text-secondary */
+  }
+  p + p { margin-top: 0.75rem; }
+  .castella { font-size: 0.875rem; }
+  a {
+    color: #FFC257;                 /* valor de --text-link */
+    text-decoration: none;
+  }
+  a:hover, a:focus-visible {
+    color: #FFE0A8;                 /* valor de --text-link-hover */
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="disc" aria-hidden="true"></div>
+  <p class="codi">404</p>
+  <h1>Aquesta pàgina no existeix</h1>
+  <p>Potser l&rsquo;adreça ha canviat o s&rsquo;ha escrit malament. <a href="/">Torna a l&rsquo;inici</a>.</p>
+  <p class="castella" lang="es">Esta página no existe. <a href="/">Vuelve al inicio</a>.</p>
+</main>
+</body>
+</html>

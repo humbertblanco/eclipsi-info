@@ -1,0 +1,4 @@
+# El vhost és Apache (Plesk). Sense aquesta línia, una ruta inexistent
+# ensenyaria la pàgina d'error genèrica del servidor en comptes de la
+# nostra 404 fosca i bilingüe.
+ErrorDocument 404 /404.html
