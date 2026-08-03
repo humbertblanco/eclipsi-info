@@ -1,7 +1,33 @@
 import { formatObscurationPercent } from '../core/astro/obscuration';
 import { lazy, Suspense, useMemo, useState } from 'react';
-import { Badge, Card, SegmentedControl, Stat, VisibilityMeter, type Tone } from '../ui';
+import {
+  Badge,
+  Button,
+  Card,
+  Dialog,
+  IconButton,
+  Input,
+  SegmentedControl,
+  Stat,
+  VisibilityMeter,
+  type Tone,
+} from '../ui';
 import { EclipseMap } from '../features/map/EclipseMap';
+import { TrajectoryThumb } from '../features/sim/TrajectoryThumb';
+/*
+ * La cerca de topònims és LA MATEIXA que la de la fulla d'ubicació: mateix
+ * hook, mateixos missatges tipats de degradació, mateixa atribució de dades.
+ * Aquí només canvia què fa triar un resultat: enquadra el mapa, no el punt.
+ */
+import {
+  ls,
+  PLACES_ATTRIBUTION,
+  usePlaceSearch,
+  type PlaceHit,
+  type PlaceSearchApi,
+} from '../features/location';
+import { CREDITS, PRIVACY_NOTE, SOURCES_HEADING } from './SiteFooter';
+import type { GeoLocation } from '../core/astro/types';
 import { CloudPanel, useCloudOutlook } from '../features/weather';
 import {
   bearingToCardinal,
@@ -21,6 +47,7 @@ import type { Locale } from '../i18n';
 import { s } from './strings';
 import {
   formatAge,
+  formatCoords,
   formatDecimal,
   formatDegrees,
   formatDuration,
@@ -76,6 +103,11 @@ export interface MapScreenProps extends EclipseContext {
    * dins del component.
    */
   onPickLocation: (lat: number, lon: number) => void;
+  /**
+   * Porta al compte enrere, que és on viu la simulació sencera. L'ofereix la
+   * miniatura de la trajectòria: l'aparador és aquí, la funció és allà.
+   */
+  onOpenCountdown?: () => void;
 }
 
 /** Què respon la fitxa de sota del mapa. */
@@ -132,11 +164,12 @@ function centerLineFor(eclipseId: string): PathPoint[] {
  *    que a més ho fa amb la cota del model i el perfil del terreny — coses que
  *    la fitxa de previsualització, calculada al nivell del mar, no tenia.
  *
- *  · No hi ha camp de cerca de llocs. No tenim geocodificador, i un camp que
- *    accepta un nom de poble i no en sap fer res és pitjor que no tenir-lo. El
- *    gest de triar lloc és tocar el mapa, que sí que funciona i a més funciona
- *    sense xarxa. Les xinxetes de ciutats inventades de la referència tampoc hi
- *    són per la mateixa raó: no tenim base de topònims amb coordenades.
+ *  · La cerca de topònims ENQUADRA, no tria. El geocodificador és el mateix
+ *    que fa servir la fulla d'ubicació (`features/location`), però aquí
+ *    trobar un lloc pel nom només porta la vista del mapa fins a ell: el gest
+ *    que canvia el teu punt continua sent un de sol — tocar el mapa—, que a
+ *    més funciona sense xarxa. Dues portes al mateix canvi d'estat des de la
+ *    mateixa pantalla és com es fabriquen els canvis de punt accidentals.
  *
  *  · Un sol accent ambre: és la franja pintada al mapa. Per això cap element
  *    d'aquesta pantalla porta `tone="accent"` ni cap botó `solid`.
@@ -150,8 +183,38 @@ export function MapScreen({
   verdict,
   horizon,
   onPickLocation,
+  onOpenCountdown,
 }: MapScreenProps) {
   const [view, setView] = useState<View>('band');
+  const [creditsOpen, setCreditsOpen] = useState(false);
+
+  /*
+   * ON HA D'ENQUADRAR-SE EL MAPA quan es tria un resultat de la cerca. És un
+   * objecte NOU a cada tria, a posta: `EclipseMap` reacciona a la identitat,
+   * i triar el mateix lloc dues vegades ha de tornar-hi encara que les
+   * coordenades no hagin canviat, perquè entremig pots haver mogut el mapa.
+   */
+  const [focus, setFocus] = useState<{
+    location: GeoLocation;
+    label: string | null;
+  } | null>(null);
+
+  // El biaix de la cerca és el teu punt, per la mateixa raó que a la fulla
+  // d'ubicació: hi ha tres Cervera a la península, i la que vols és la del
+  // tros de mapa que estàs mirant, no la més poblada.
+  const search = usePlaceSearch({ biasLat: location?.lat, biasLon: location?.lon });
+
+  const frameHit = (hit: PlaceHit) => {
+    // El nom viatja amb el punt: el marcador del mapa l'ensenya perquè
+    // l'enquadrament no deixi l'usuari buscant a ull què ha trobat la cerca.
+    setFocus({
+      location: { lat: hit.lat, lon: hit.lon, elevation: 0 },
+      label: hit.name,
+    });
+    // La llista es replega: el resultat ja és al mapa, que és on s'ha de
+    // mirar; deixar-la oberta taparia justament el que s'acaba de demanar.
+    search.reset();
+  };
 
   const contacts = circumstances?.contacts ?? null;
   const central = circumstances?.kind === 'total' || circumstances?.kind === 'annular';
@@ -222,7 +285,14 @@ export function MapScreen({
             locale={locale}
             observer={location}
             picked={location}
-            onPickLocation={(loc) => onPickLocation(loc.lat, loc.lon)}
+            focus={focus}
+            onPickLocation={(loc) => {
+              // Tocar el mapa tanca el capítol de la cerca: el punt triat ja
+              // té el seu marcador propi i el rètol del resultat només faria
+              // soroll damunt del gest important.
+              setFocus(null);
+              onPickLocation(loc.lat, loc.lon);
+            }}
           />
 
           {/* Llegenda pròpia. La d'`EclipseMap` viu sota el llenç i aquí el
@@ -245,15 +315,78 @@ export function MapScreen({
 
       <div className="screen__col screen__col--side">
         <Card tone="glass" className="mapscreen__sheet">
+          {/*
+            LA CERCA DE TOPÒNIMS, QUE «NO TENÍEM» I SÍ QUE TENÍEM.
+
+            Un comentari d'aquí deia que no hi havia geocodificador; feia
+            temps que era fals (`features/location/geocoder.ts`) i la fulla
+            d'ubicació ja el feia servir. Va DAMUNT del commutador i no dins
+            de cap vista perquè no respon a la fitxa: serveix el MAPA, en
+            qualsevol vista. Triar un resultat només enquadra; el punt es
+            canvia tocant el mapa, com sempre.
+
+            La llista reutilitza les classes `loc-list` de
+            `features/location/location.css`, que és al paquet principal
+            perquè `App` importa la fulla estàticament: mateixa cerca, mateix
+            aspecte, zero CSS duplicat.
+          */}
+          <div className="mapscreen__search">
+            <Input
+              icon="search"
+              type="search"
+              label={ls('search.label', locale)}
+              placeholder={ls('search.placeholder', locale)}
+              value={search.query}
+              onChange={search.setQuery}
+            />
+            {searchNote(search, locale) !== null && (
+              <p className="screen__note">{searchNote(search, locale)}</p>
+            )}
+            {search.hits.length > 0 && (
+              <>
+                <ul className="loc-list">
+                  {search.hits.map((hit) => (
+                    <li key={hit.id} className="loc-list__item">
+                      <button
+                        type="button"
+                        className="loc-list__main"
+                        onClick={() => frameHit(hit)}
+                      >
+                        <span className="loc-list__name">{hit.name}</span>
+                        <span className="loc-list__meta">
+                          {/* El tipus davant del context, com a la fulla: el
+                              coll i el poble homònims es distingeixen abans
+                              de llegir la comarca. */}
+                          {hit.kind === 'peak' && `${ls('kind.peak', locale)} · `}
+                          {hit.detail ?? formatCoords(hit.lat, hit.lon)}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                {/* Atribució obligatòria per llicència de les dades, al
+                    costat del que atribueix, igual que a la fulla. */}
+                <p className="screen__note">{PLACES_ATTRIBUTION}</p>
+              </>
+            )}
+          </div>
+
           <SegmentedControl
             value={view}
             onChange={setView}
             /*
-              CINC OPCIONS NO CABEN EN UNA FILA de 256 px, que és el que fa la
-              fitxa a l'escriptori. Sense `wrap`, «Franja» es llegia «Fr…» i
-              «Enquadra», «E…». Amb `wrap` baixen a una segona fila senceres.
+              CINC OPCIONS NO CABEN EN UNA FILA de la fitxa d'escriptori. Sense
+              `wrap`, «Franja» es llegia «Fr…» i «Enquadra», «E…»; i el salt
+              automàtic de `wrap` les partia en un quatre-més-una accidental
+              que semblava un error. `wrap` treu les columnes en línia del
+              control i `mapscreen__views` (`screens.css`) hi declara el
+              trencament a posta: tres a dalt i dues a sota repartint-se
+              l'amplada. Les cinc es queden al commutador perquè les cinc són
+              modes de la fitxa — «Enquadra» obre un panell (`AlignPanel`) com
+              qualsevol altre, no és una acció puntual.
             */
             wrap
+            className="mapscreen__views"
             label={s('map.compare', locale)}
             options={[
               { value: 'band', label: s('map.view.band', locale) },
@@ -317,6 +450,34 @@ export function MapScreen({
                 <p className="screen__note">{s('map.edgeNote', locale)}</p>
               )}
               {!central && <p className="screen__note">{s('map.noCentral', locale)}</p>}
+
+              {/*
+                La trajectòria en miniatura: com hi passa el Sol i què li tapa
+                el terreny, sense sortir del mapa. La simulació SENCERA —amb
+                barra de temps i cel pintat— es queda al compte enrere; això
+                és l'aparador que hi porta, no una segona simulació.
+              */}
+              {location !== null && (
+                <div className="mapscreen__block">
+                  <span className="screen__overline">{s('map.traj', locale)}</span>
+                  <TrajectoryThumb
+                    circumstances={circumstances}
+                    location={location}
+                    horizon={horizon}
+                    locale={locale}
+                  />
+                  {onOpenCountdown !== undefined && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon="timer"
+                      onClick={onOpenCountdown}
+                    >
+                      {s('map.trajCta', locale)}
+                    </Button>
+                  )}
+                </div>
+              )}
 
               {/* Les hores dels cinc contactes, per a AQUEST punt. */}
               <div className="mapscreen__block">
@@ -432,11 +593,90 @@ export function MapScreen({
             <MoveAdvice gradient={gradient} locale={locale} />
           )}
 
-          <p className="screen__note">{s('map.attribution', locale)}</p>
+          {/*
+            L'ÚLTIMA LÍNIA DE LA FITXA: l'atribució curta de sempre i, al
+            costat, el botó que obre els crèdits sencers. El peu de pàgina no
+            arriba mai en aquesta pantalla —és full-bleed, decisió correcta— i
+            l'ODbL exigeix que la llicència sigui accessible des d'on es fa
+            servir la dada: aquest botó és aquell accés.
+          */}
+          <div className="mapscreen__foot">
+            <p className="screen__note">{s('map.attribution', locale)}</p>
+            <IconButton
+              icon="info"
+              variant="ghost"
+              size="sm"
+              label={s('map.credits.open', locale)}
+              onClick={() => setCreditsOpen(true)}
+            />
+          </div>
         </Card>
       </div>
+
+      {creditsOpen && (
+        <MapCreditsDialog locale={locale} onClose={() => setCreditsOpen(false)} />
+      )}
     </div>
   );
+}
+
+/**
+ * Els crèdits, oberts des del mapa.
+ *
+ * LA LLISTA ÉS LA DEL PEU (`SiteFooter.CREDITS`), exportada i no copiada: si
+ * una font canvia, canvia aquí i al peu alhora. S'hi afegeix només el que el
+ * mapa deu i el peu no diu amb aquestes paraules: l'ODbL d'OpenStreetMap.
+ */
+function MapCreditsDialog({ locale, onClose }: { locale: Locale; onClose: () => void }) {
+  return (
+    <Dialog
+      title={s('map.credits.open', locale)}
+      onClose={onClose}
+      closeLabel={s('map.credits.close', locale)}
+    >
+      <div className="map-credits">
+        <p className="screen__note">{PRIVACY_NOTE[locale]}</p>
+
+        <div>
+          <p className="screen__overline">{SOURCES_HEADING[locale]}</p>
+          <ul className="map-credits__list">
+            {CREDITS.map((credit) => (
+              <li key={credit.url}>
+                <span className="map-credits__what">{credit.what[locale]}</span>
+                <a href={credit.url} target="_blank" rel="noreferrer noopener">
+                  {credit.who}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="screen__note">{s('map.credits.odbl', locale)}</p>
+      </div>
+    </Dialog>
+  );
+}
+
+/**
+ * La frase que acompanya la cerca. CALCADA de la de `LocationSheet` i tipada
+ * contra els mateixos estats del geocodificador: sense xarxa o amb el servei
+ * caigut, aquesta cerca ha de degradar amb les mateixes paraules que la de la
+ * fulla d'ubicació, perquè per a l'usuari són la mateixa cerca.
+ */
+function searchNote(search: PlaceSearchApi, locale: Locale): string | null {
+  if (search.loading) return ls('search.searching', locale);
+  switch (search.outcome) {
+    case 'offline':
+      return ls('search.offline', locale);
+    case 'failed':
+      return ls('search.failed', locale);
+    case 'empty':
+      return ls('search.empty', locale);
+    default:
+      // `ok` no diu res —els resultats parlen sols— i `superseded` tampoc:
+      // vol dir que n'hi ha una altra de camí.
+      return null;
+  }
 }
 
 /** El to de la insígnia de franja. El caire no és ni un sí ni un no. */

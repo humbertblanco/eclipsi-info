@@ -48,8 +48,14 @@ const STRINGS = {
   'title.map': { ca: 'Mapa de la franja', es: 'Mapa de la franja' },
   'title.sky': { ca: 'El cel ara mateix', es: 'El cielo ahora mismo' },
   'title.guide': { ca: 'Guia de l’eclipsi', es: 'Guía del eclipse' },
+  'title.about': { ca: 'Com funciona', es: 'Cómo funciona' },
   'shell.eclipse': { ca: 'Tria l’eclipsi', es: 'Elige el eclipse' },
-  'shell.open': { ca: 'Dades obertes · MIT', es: 'Datos abiertos · MIT' },
+  /*
+   * Sense «· MIT»: la llicència del codi encara NO està decidida (ho diu el
+   * README, a la secció final). Anunciar-la a la capçalera era prometre una
+   * cosa que ningú ha signat; el dia que es decideixi, es torna a dir aquí.
+   */
+  'shell.open': { ca: 'Dades obertes', es: 'Datos abiertos' },
   'shell.band': { ca: 'Franja de centralitat', es: 'Franja de centralidad' },
   'shell.crashed': {
     ca: 'Aquesta pantalla ha fallat. La resta de l’app segueix funcionant: pots canviar de pestanya o tornar-ho a provar.',
@@ -145,6 +151,17 @@ const STRINGS = {
     ca: 'No s’ha pogut calcular el perfil del terreny. El veredicte serà optimista, perquè assumeix horitzó pla.',
     es: 'No se ha podido calcular el perfil del terreno. El veredicto será optimista, porque asume horizonte plano.',
   },
+  /*
+   * Quan el càlcul SAP per què ha fallat, es diu: «comprova la connexió» i
+   * «alguna cosa ha petat» són dues converses diferents i el genèric les
+   * aplanava totes dues. La causa arriba tal com l'ha dita qui ha fallat
+   * (una frase sencera, amb punt), i per això va al final, darrere de dos
+   * punts, on una frase sencera no trenca la nostra.
+   */
+  'horizon.failedDetail': {
+    ca: 'No s’ha pogut calcular el perfil del terreny. El veredicte serà optimista, perquè assumeix horitzó pla. Causa: {error}',
+    es: 'No se ha podido calcular el perfil del terreno. El veredicto será optimista, porque asume horizonte plano. Causa: {error}',
+  },
   'horizon.retry': { ca: 'Torna-ho a provar', es: 'Vuelve a intentarlo' },
 
   /* --- mapa --- */
@@ -197,6 +214,14 @@ const STRINGS = {
   },
   'map.inBand': { ca: 'Dins la franja', es: 'Dentro de la franja' },
   'map.contacts': { ca: 'Hores en aquest punt', es: 'Horas en este punto' },
+  'map.traj': {
+    ca: 'El Sol des d’aquest punt',
+    es: 'El Sol desde este punto',
+  },
+  'map.trajCta': {
+    ca: 'Obre-ho al compte enrere',
+    es: 'Ábrelo en la cuenta atrás',
+  },
   'map.toLimit': {
     ca: 'Al límit {side}',
     es: 'Al límite {side}',
@@ -218,6 +243,20 @@ const STRINGS = {
   'map.edgeNote': {
     ca: 'Ets tan a prop del límit que les efemèrides no ho poden decidir. Mou-te cap al centre de la franja.',
     es: 'Estás tan cerca del límite que las efemérides no pueden decidirlo. Muévete hacia el centro de la franja.',
+  },
+  /* --- mapa: crèdits i llicències ---
+   *
+   * El peu de pàgina (SiteFooter) només es renderitza al compte enrere i a la
+   * guia; el Mapa i el Cel són pantalles senceres i no el porten, a posta.
+   * Però l'atribució ODbL d'OpenStreetMap ha de poder-se obrir des d'on es fa
+   * servir la dada, i la dada és justament aquesta cartografia: d'aquí el
+   * botó d'informació del panell, que obre els crèdits del peu en un diàleg.
+   */
+  'map.credits.open': { ca: 'Crèdits i llicències', es: 'Créditos y licencias' },
+  'map.credits.close': { ca: 'Tanca', es: 'Cerrar' },
+  'map.credits.odbl': {
+    ca: 'La cartografia i els topònims són dades d’OpenStreetMap, sota la llicència ODbL.',
+    es: 'La cartografía y los topónimos son datos de OpenStreetMap, bajo la licencia ODbL.',
   },
   'map.compare': { ca: 'Compara llocs', es: 'Compara lugares' },
   'map.compareNote': {
@@ -683,6 +722,9 @@ const STRINGS = {
     es: 'El aviso solo suena con la app abierta. No hay notificaciones del sistema.',
   },
   'guide.alertAt': { ca: 'Sonarà a les {time}', es: 'Sonará a las {time}' },
+  /* L'etiqueta de la nav de l'índex de la guia, i res més: els títols de les
+     seccions ja arriben traduïts des de `content/guide.ts`. */
+  'guide.toc': { ca: 'Índex', es: 'Índice' },
   /*
    * El títol de l'avís porta una XIFRA, com exigeix el sistema: la gent obeeix
    * un número i ignora un «vés amb compte». La xifra és la durada REAL de la

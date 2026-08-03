@@ -41,8 +41,14 @@ interface Credit {
  *
  * L'ordre és el de la importància per a l'usuari, no el alfabètic: primer el
  * que decideix les xifres, després el que decideix el que veu.
+ *
+ * EXPORTADA, I NO NOMÉS DEL PEU: el peu només es renderitza al compte enrere
+ * i a la guia, però la cartografia es fa servir al Mapa, que és pantalla
+ * sencera i no en porta. El diàleg de crèdits del panell del mapa
+ * (`MapScreen`) ensenya AQUESTA llista, no una còpia: si una font canvia,
+ * canvia als dos llocs alhora.
  */
-const CREDITS: Credit[] = [
+export const CREDITS: Credit[] = [
   {
     what: { ca: 'Efemèrides', es: 'Efemérides' },
     who: 'astronomy-engine',
@@ -80,16 +86,30 @@ const CREDITS: Credit[] = [
   },
 ];
 
+/**
+ * La frase de privadesa i el títol de les fonts, exportats pel mateix motiu
+ * que `CREDITS`: el diàleg de crèdits del mapa diu exactament el mateix que
+ * el peu, i han de ser LA MATEIXA dada, no dues frases bessones que un dia
+ * divergeixen.
+ */
+export const PRIVACY_NOTE: Record<Locale, string> = {
+  ca: 'Els càlculs es fan al teu dispositiu. La teva ubicació no surt d’aquí.',
+  es: 'Los cálculos se hacen en tu dispositivo. Tu ubicación no sale de aquí.',
+};
+
+export const SOURCES_HEADING: Record<Locale, string> = {
+  ca: 'D’on surten les dades',
+  es: 'De dónde salen los datos',
+};
+
 const TEXT = {
-  what: {
-    ca: 'Els càlculs es fan al teu dispositiu. La teva ubicació no surt d’aquí.',
-    es: 'Los cálculos se hacen en tu dispositivo. Tu ubicación no sale de aquí.',
-  },
-  sources: { ca: 'D’on surten les dades', es: 'De dónde salen los datos' },
+  what: PRIVACY_NOTE,
+  sources: SOURCES_HEADING,
   code: { ca: 'Codi obert', es: 'Código abierto' },
   version: { ca: 'Versió', es: 'Versión' },
   by: { ca: 'Fet per', es: 'Hecho por' },
   and: { ca: 'i', es: 'y' },
+  about: { ca: 'Com funciona · Premsa', es: 'Cómo funciona · Prensa' },
 } as const;
 
 const REPO_URL = 'https://github.com/humbertblanco/eclipsi-info';
@@ -155,6 +175,12 @@ export function SiteFooter({ locale }: { locale: Locale }) {
       </ul>
 
       <p className="sitefoot__meta eclipsi-data">
+        {/*
+          Enllaç d'àncora i no botó: el canvi de hash el recull el popstate de
+          l'App i la pantalla «Com funciona» s'obre com qualsevol altra ruta.
+        */}
+        <a href="#/com-funciona">{TEXT.about[locale]}</a>
+        {' · '}
         <a href={REPO_URL} target="_blank" rel="noreferrer noopener">
           {TEXT.code[locale]}
         </a>

@@ -109,6 +109,59 @@
   cursor: pointer;
 }
 
+/* --- Resultat de la cerca de topònims ------------------------------------
+   Punt blau amb el nom a sobre. Blau d'estat (--status-info) i no ambre pel
+   mateix motiu que les barres de progrés: informa d'on és una cosa, no és ni
+   una acció ni un veredicte. `pointer-events: none` perquè el gest que mana
+   —tocar el mapa per triar punt— funcioni igual just sota el rètol.
+   ------------------------------------------------------------------------- */
+
+.map__focus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  pointer-events: none;
+}
+
+.map__focusdot {
+  width: var(--sp-4);
+  height: var(--sp-4);
+  border-radius: var(--r-pill);
+  border: var(--bw-thick) solid var(--status-info);
+  background: var(--bg-scrim);
+}
+
+.map__focustag {
+  max-width: 26ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: var(--sp-2) var(--sp-4);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--surface-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  font: var(--text-body-sm);
+  color: var(--text-primary);
+}
+
+/* --- La trajectòria en miniatura, dins la fitxa ---------------------------
+   El llenç és el mateix dibuix `mini` de la targeta de compartir. L'alçada és
+   una constant de composició (com --h-canvas-traj): prou per llegir la carena,
+   poca per no fer créixer la fitxa — que a mòbil ja competeix amb el mapa.
+   ------------------------------------------------------------------------- */
+
+.trajthumb {
+  display: block;
+  width: 100%;
+  height: calc(var(--sp-13) + var(--sp-4));
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
 /* --- Convit inicial ------------------------------------------------------ */
 
 .map__hint {
@@ -150,6 +203,67 @@
 .map__footnote {
   margin: var(--sp-4) var(--sp-1) 0;
   font: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+/* ============================================================================
+   El panell del mapa: cerca de topònims i crèdits (`MapScreen`).
+
+   Viuen aquí i no a `screens.css` perquè són peces DEL MAPA: la cerca mou la
+   càmera del llenç i els crèdits diuen de qui és la cartografia que hi ha
+   pintada. Les files de resultats no es redefineixen: són les `loc-list` de
+   `features/location/location.css`, perquè és la mateixa cerca que a la fulla
+   d'ubicació i s'ha de veure igual.
+   ========================================================================== */
+
+.mapscreen__search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* L'atribució curta i el botó d'informació comparteixen l'última línia de la
+   fitxa: la nota diu el mínim obligatori i el botó obre la resta. */
+.mapscreen__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+/* --- El diàleg de crèdits ------------------------------------------------
+   Mateixa anatomia que la llista del peu (`.sitefoot__list`), sense heretar-ne
+   les classes: el peu es reordena en dues columnes a pantalla ampla i dins
+   d'una fulla estreta aquella graella no hi té sentit.
+   ------------------------------------------------------------------------- */
+
+.map-credits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.map-credits__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font: var(--text-body-sm);
+}
+
+.map-credits__list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  align-items: baseline;
+}
+
+/* La mateixa amplada mínima que `.sitefoot__what2`: alinea la columna del
+   «què» i es rendeix baixant de línia quan no hi cap. */
+.map-credits__what {
+  min-width: 11rem;
   color: var(--text-muted);
 }
 

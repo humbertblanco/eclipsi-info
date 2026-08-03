@@ -38,6 +38,7 @@ import './maplibreWorker';
 import './map.css';
 
 import { Icon } from '../../ui';
+import { readPalette } from '../../styles/palette';
 import type { GeoLocation } from '../../core/astro/types';
 import { getEclipse } from '../../core/eclipses/catalog';
 import type { Locale } from '../../i18n';
@@ -81,6 +82,23 @@ interface Props {
    * dessincronitzar.
    */
   picked?: GeoLocation | null;
+  /**
+   * Punt on ENQUADRAR la vista, i res més: mou la càmera del mapa sense tocar
+   * ni el punt de l'observador ni la diana. El fa servir la cerca de topònims
+   * del panell (`MapScreen`): trobar «Peníscola» pel nom porta la VISTA fins
+   * allà, i el gest que canvia el teu punt continua sent un de sol — tocar el
+   * mapa.
+   *
+   * ES REACCIONA A LA IDENTITAT DE L'OBJECTE, no a les coordenades: triar el
+   * mateix resultat dues vegades ha de tornar a enquadrar-lo, perquè entremig
+   * pots haver arrossegat el mapa a l'altra punta.
+   *
+   * PORTA EL NOM A SOBRE: enquadrar sense marcar deixava l'usuari buscant a
+   * ull què havia trobat la cerca. El marcador és informatiu (blau d'estat,
+   * no ambre: no és cap acció ni cap veredicte) i no atrapa el dit — el gest
+   * de triar punt continua sent tocar el mapa, també just a sota del rètol.
+   */
+  focus?: { location: GeoLocation; label: string | null } | null;
 }
 
 /** Atribució d'OSM, obligatòria per llicència. */
@@ -146,21 +164,32 @@ const LIMITS_SOURCE = 'eclipse-limits';
 const CENTER_SOURCE = 'eclipse-center';
 
 /*
- * Els colors del sistema de disseny, repetits aquí perquè MapLibre pinta en
- * WebGL i no veu les variables de CSS. Han de coincidir amb els tokens.
+ * Els colors del sistema de disseny. MapLibre pinta en WebGL i no veu les
+ * variables de CSS; abans es repetien aquí els hexadecimals a pèl i quedaven
+ * orfes quan els tokens es movien. Ara surten de la paleta, que els llegeix
+ * una vegada del document: canviar un token canvia també el mapa.
  *
  * Un sol accent ambre per pantalla: aquí és la franja, que és l'única cosa del
  * mapa que respon la pregunta del producte. La línia central va en to corona i
  * no en un segon color, i el tipus d'eclipsi (total o anular) es diu amb
  * lletres al panell en comptes de codificar-lo amb un color més.
  */
-/** --sun-500 */
-const COLOR_BAND = '#FFA51F';
-/** --corona-100 */
-const COLOR_CENTER = '#F5F0E4';
+const PALETTE = readPalette();
+
+/** L'accent ambre (--accent, que és --sun-500). */
+const COLOR_BAND = PALETTE.accent;
+/** El to corona (--corona-100). */
+const COLOR_CENTER = PALETTE.corona100;
 
 /** Marc de referència: Península, Balears i el llindar de l'Estret. */
 const IBERIA_BOUNDS = new LngLatBounds([-10.2, 34.8], [4.6, 44.2]);
+
+/**
+ * Zoom mínim de l'enquadrament per cerca: prou a prop per reconèixer el nucli
+ * i el seu entorn immediat, prou lluny perquè la franja segueixi donant
+ * context — que és la pregunta per la qual algú busca un lloc aquí.
+ */
+const FOCUS_ZOOM = 9;
 
 /**
  * Enquadrament que ensenya LA FRANJA, no el país.
@@ -262,6 +291,7 @@ export function EclipseMap({
   onPickLocation,
   observer = null,
   picked = null,
+  focus = null,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -488,6 +518,47 @@ export function EclipseMap({
       markerRef.current.setLngLat([picked.lon, picked.lat]);
     }
   }, [picked]);
+
+  // --- L'enquadrament demanat des de fora (la cerca de topònims) ---
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map === null || focus === null) return;
+    /*
+     * `flyTo` i no `easeTo`: el salt pot ser de centenars de quilòmetres i el
+     * vol —allunyar, viatjar, tornar a acostar— és l'única animació que deixa
+     * veure per on t'has mogut respecte de la franja. I el zoom no baixa mai
+     * del que ja tenies: a qui ha apropat el mapa a mà, una cerca no li ha
+     * d'arrabassar l'apropament.
+     */
+    map.flyTo({
+      center: [focus.location.lon, focus.location.lat],
+      zoom: Math.max(map.getZoom(), FOCUS_ZOOM),
+    });
+
+    /*
+     * El rètol es construeix amb `textContent`, mai amb HTML: el nom ve d'un
+     * servei extern (Photon) i aquí s'escriu tal qual, sense interpretar-lo.
+     * El marcador viu i mor amb el focus: en triar un altre resultat es refà,
+     * i en desmuntar la neteja el treu — cap resta penjada sobre el llenç.
+     */
+    const element = document.createElement('div');
+    element.className = 'map__focus';
+    if (focus.label !== null && focus.label !== '') {
+      const tag = document.createElement('span');
+      tag.className = 'map__focustag';
+      tag.textContent = focus.label;
+      element.append(tag);
+    }
+    const dot = document.createElement('span');
+    dot.className = 'map__focusdot';
+    element.append(dot);
+    const marker = new Marker({ element, anchor: 'bottom' })
+      .setLngLat([focus.location.lon, focus.location.lat])
+      .addTo(map);
+    return () => {
+      marker.remove();
+    };
+  }, [focus]);
 
   const annular = eclipse.kind === 'annular';
   const central = s(annular ? 'map.centralAnnular' : 'map.centralTotal', locale);
