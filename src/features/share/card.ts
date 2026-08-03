@@ -1,11 +1,18 @@
 /**
- * La targeta compartible: la mateixa imatge de la miniatura, en gran, amb les
+ * La targeta compartible: el cel del màxim vist des del TEU punt, amb les
  * tres xifres que decideixen alguna cosa.
+ *
+ * QUINA IMATGE HI VA. El que la pantalla de simulació ensenya a l'instant del
+ * màxim: el creixent o la corona amb el color de cel que el motor calcula,
+ * dibuixat per `renderEclipseSky` amb la MATEIXA crida que fa `SimulationView`
+ * a cada tic. No és una il·lustració: és el que veuràs, a escala angular real,
+ * des del punt que la targeta anuncia. El diagrama de trajectòria —que era la
+ * imatge d'abans— queda de recanvi per si el render del cel fallés en calent:
+ * una targeta tècnica val més que cap targeta.
  *
  * PER QUÈ 1200 × 630. És la mida que WhatsApp, Telegram, Signal, Mastodon i els
  * previsualitzadors d'enllaços retallen sense tallar res. Una imatge quadrada hi
- * arriba amb els extrems menjats, i justament els extrems d'aquest dibuix són
- * on hi ha la carena que tapa el Sol.
+ * arriba amb els extrems menjats.
  *
  * QUÈ HI POSA I QUÈ NO. Hi va el nom del lloc, l'hora del màxim i els segons de
  * fase central que SOBREVIUEN AL RELLEU, que és l'única xifra que aquesta app
@@ -38,8 +45,10 @@ import {
   formatDuration,
 } from '../../screens/format';
 import { canvasFont, readPalette, withAlpha, type Palette } from '../../styles/palette';
+import { renderEclipseSky } from '../sim/renderSky';
 import { renderTrajectory } from '../sim/renderTrajectory';
 import { TRAJECTORY_SAMPLES, trajectorySamples } from '../sim/samples';
+import { buildShareLink } from './link';
 import { sh } from './strings';
 import {
   buildThumbnailModel,
@@ -59,6 +68,19 @@ export const CARD_HEIGHT = 630;
  * justament la part baixa del dibuix, que és on hi ha la silueta del terreny.
  */
 const IMAGE_HEIGHT = 372;
+
+/**
+ * Camp de visió de la franja del cel, en graus d'amplada.
+ *
+ * ÉS EL MATEIX 3,2 QUE `SimulationView` passa a `renderEclipseSky`, i no és
+ * negociable per separat: la targeta promet «això és el que veuràs» i la
+ * pantalla de simulació promet el mateix; si cadascuna retallés el cel a la
+ * seva mida, el creixent de la targeta i el de l'app serien dos creixents. A
+ * 1200 px d'ample surten 375 px per grau: el disc del Sol (~0,53° de diàmetre)
+ * fa uns 200 px, que és el que fa que la imatge emocioni en un grup de
+ * missatgeria i no sembli un diagrama.
+ */
+const CARD_FOV_DEG = 3.2;
 
 export interface ShareCardModel extends ThumbnailModel {
   eclipseId: string;
@@ -154,13 +176,28 @@ export function cardText(input: CardTextInput): CardText {
 
   const title = input.label ?? coords;
 
+  // El peu és el camí de tornada: l'adreça del punt impresa a la imatge, sense
+  // el protocol («eclipsi.info/?p=…»), perquè una targeta enganxada sola —fora
+  // del missatge que l'acompanyava— ha de dur escrit com tornar-hi. Hi van el
+  // punt i l'eclipsi (`p` i `e`) i NO el nom (`n`): el nom ja és el títol de la
+  // targeta en lletra gran, i cada caràcter de més allunya l'adreça de poder-se
+  // teclejar d'una foto. L'eclipsi sí que hi va: sense `e`, qui tecleges
+  // l'adreça d'una targeta del 2027 obriria l'app amb l'eclipsi per defecte i
+  // miraria xifres d'un altre any sense que res ho digués.
+  const footer = `${sh('card.footer', locale)}/${buildShareLink({
+    lat: place.lat,
+    lon: place.lon,
+    eclipseId: input.eclipseId,
+    label: null,
+  })}`;
+
   return {
     title,
     coords: input.label === null ? null : coords,
     subtitle: getEclipse(input.eclipseId).label[locale],
     figures,
     caveat: terrain === 'assumed' ? sh('card.terrainAssumed', locale) : null,
-    footer: sh('card.footer', locale),
+    footer,
   };
 }
 
@@ -262,10 +299,11 @@ function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number):
 /**
  * Pinta la targeta sencera en un context ja dimensionat a 1200 × 630.
  *
- * La imatge de dalt és `renderTrajectory` en mode `mini`: exactament el mateix
- * dibuix que la miniatura de l'historial, a una altra mida. Que la targeta i la
- * fila de l'historial ensenyin la mateixa silueta no és estètica; és el que fa
- * que qui rep la imatge i qui té l'app estiguin mirant la mateixa cosa.
+ * La imatge de dalt és el cel a l'instant del màxim: `renderEclipseSky` amb la
+ * mateixa crida que fa `SimulationView` a cada tic, executada un sol cop amb la
+ * mostra de `contacts.max`. Que la targeta i la pantalla de simulació surtin
+ * del mateix renderitzador no és estètica; és el que fa que qui rep la imatge i
+ * qui obre l'app estiguin mirant el mateix cel.
  */
 export function drawShareCard(
   ctx: CanvasRenderingContext2D,
@@ -287,12 +325,34 @@ export function drawShareCard(
   ctx.beginPath();
   ctx.rect(0, 0, CARD_WIDTH, IMAGE_HEIGHT);
   ctx.clip();
-  renderTrajectory(ctx, model.circumstances, model.samples, CARD_WIDTH, IMAGE_HEIGHT, {
-    locale,
-    chrome: 'mini',
-    terrain: model.terrain,
-    horizonProfile: horizonSampler(model.profile),
-  });
+  try {
+    // El cel del màxim des d'aquest punt. La mostra és `contacts.max` —que ja
+    // és una `EclipseSample` sencera, la mateixa que la simulació ensenya quan
+    // la barra és al mig— i l'atmosfera és la de les circumstàncies, que és la
+    // que va calcular aquella mostra (la lliçó de `sim/samples.ts`: contactes
+    // amb una atmosfera i dibuix amb una altra és la discrepància que no es
+    // veu fins que algú toca el valor per defecte). El perfil d'horitzó mai és
+    // `null` aquí: quan el terreny està per calcular, `resolveThumbnailTerrain`
+    // ja ha posat l'horitzó pla de reserva i el text de sota ho diu.
+    renderEclipseSky(ctx, model.circumstances.contacts.max, CARD_WIDTH, IMAGE_HEIGHT, {
+      fovDeg: CARD_FOV_DEG,
+      atmosphere: model.circumstances.atmosphere,
+      showHorizon: true,
+      horizonProfile: horizonSampler(model.profile),
+    });
+  } catch {
+    // Si el cel no s'ha pogut pintar —un gradient que el canvas del navegador
+    // de torn no sap fer, qualsevol cosa—, es cau al diagrama de trajectòria
+    // d'abans, que repinta la franja sencera (comença amb un `fillRect` de tot
+    // el llenç). Una targeta tècnica val més que cap targeta, i sobretot val
+    // més que una targeta a mig pintar.
+    renderTrajectory(ctx, model.circumstances, model.samples, CARD_WIDTH, IMAGE_HEIGHT, {
+      locale,
+      chrome: 'mini',
+      terrain: model.terrain,
+      horizonProfile: horizonSampler(model.profile),
+    });
+  }
   ctx.restore();
 
   // Franja de text.
@@ -331,20 +391,33 @@ export function drawShareCard(
     ctx.fillText(fitText(ctx, figure.value, columnWidth - 16), x, IMAGE_HEIGHT + 196);
   });
 
-  // L'avís del terreny sense calcular, si cal. En blau informatiu i no en
-  // ambre: l'ambre del sistema és d'una xifra per imatge i aquí la té la
-  // durada. Un avís de configuració no li pot disputar el color.
-  ctx.font = canvasFont(palette, 18, { weight: 400, mono: false });
-  if (text.caveat) {
-    ctx.fillStyle = palette.statusInfo;
-    ctx.fillText(fitText(ctx, text.caveat, maxTextWidth - 160), margin, IMAGE_HEIGHT + 232);
-  }
-
+  // El peu —l'adreça del punt— es pinta ABANS que l'avís i es mesura: els dos
+  // comparteixen línia i el que no es pot retallar és l'adreça, que és el camí
+  // de tornada quan la imatge viatja sola. Va amb la mida i el to dels rètols
+  // de les xifres (15 px, mono, muted): prou discreta per no competir amb res
+  // i prou llegible per teclejar-la d'una foto.
   ctx.textAlign = 'right';
-  ctx.font = canvasFont(palette, 18, { weight: 500, mono: true });
+  ctx.font = canvasFont(palette, 15, { weight: 500, mono: true });
   ctx.fillStyle = withAlpha(palette.textMuted, 0.9);
-  ctx.fillText(text.footer, CARD_WIDTH - margin, IMAGE_HEIGHT + 232);
+  const footer = fitText(ctx, text.footer, maxTextWidth);
+  const footerWidth = ctx.measureText(footer).width;
+  ctx.fillText(footer, CARD_WIDTH - margin, IMAGE_HEIGHT + 232);
   ctx.textAlign = 'left';
+
+  // L'avís del terreny sense calcular, si cal, retallat a l'espai que l'adreça
+  // li deixa (el text de `card.terrainAssumed` és curt a posta perquè hi càpiga
+  // sencer). En blau informatiu i no en ambre: l'ambre del sistema és d'una
+  // xifra per imatge i aquí la té la durada. Un avís de configuració no li pot
+  // disputar el color.
+  if (text.caveat) {
+    ctx.font = canvasFont(palette, 18, { weight: 400, mono: false });
+    ctx.fillStyle = palette.statusInfo;
+    ctx.fillText(
+      fitText(ctx, text.caveat, maxTextWidth - footerWidth - 48),
+      margin,
+      IMAGE_HEIGHT + 232,
+    );
+  }
 }
 
 /**

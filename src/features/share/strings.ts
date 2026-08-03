@@ -53,13 +53,19 @@ const STRINGS = {
     ca: 'El relleu se’n menja {lost} de {total}',
     es: 'El relieve se come {lost} de {total}',
   },
+  /* Curt a posta: comparteix la línia del peu amb l'adreça impresa del punt,
+     i una frase llarga acabaria retallada amb punts suspensius justament on
+     diu la part que importa. «Per calcular» és el vocabulari de
+     `thumb.pending`, no una fórmula nova. */
   'card.terrainAssumed': {
-    ca: 'El terreny d’aquest punt encara no s’ha calculat: les xifres no descompten cap muntanya.',
-    es: 'El terreno de este punto todavía no se ha calculado: las cifras no descuentan ninguna montaña.',
+    ca: 'El terreny està per calcular: les xifres no descompten cap muntanya.',
+    es: 'El terreno está por calcular: las cifras no descuentan montañas.',
   },
 
-  /* Peu de la targeta. No és una signatura decorativa: una imatge que viatja
-     per missatgeria ha de dir d'on surt i per a quin punt val. */
+  /* El domini que encapçala el peu. El peu sencer és l'adreça del punt
+     («eclipsi.info/?p=…»), muntada a `cardText` amb `buildShareLink`: una
+     imatge que viatja per missatgeria i sobreviu sola a qualsevol conversa
+     ha de dur escrit el camí de tornada, no només d'on surt. */
   'card.footer': { ca: 'eclipsi.info', es: 'eclipsi.info' },
 
   /* --- compartir ---------------------------------------------------------- */
@@ -73,7 +79,19 @@ const STRINGS = {
    * evita que ningú l'enviï pensant que comparteix l'aplicació.                */
   'button.share': { ca: 'Comparteix el punt', es: 'Comparte el punto' },
   'button.preparing': { ca: 'Preparant la imatge…', es: 'Preparando la imagen…' },
+  /*
+   * El feedback del porta-retalls diu la veritat de què hi ha quedat, i per
+   * això són tres frases i no una: si el porta-retalls porta l'adreça I la
+   * targeta, es diu; si només ha entrat l'adreça, no es promet cap imatge; i
+   * si tot ha fallat i la targeta s'ha descarregat com a fitxer, es diu això
+   * i no cap «copiat» que no ha passat.
+   */
+  'button.copiedBoth': {
+    ca: 'Enllaç i simulació copiats',
+    es: 'Enlace y simulación copiados',
+  },
   'button.copied': { ca: 'Enllaç copiat', es: 'Enlace copiado' },
+  'button.downloaded': { ca: 'Targeta descarregada', es: 'Tarjeta descargada' },
   'button.failed': {
     ca: 'No s’ha pogut compartir. L’adreça de la barra ja porta el punt: copia-la.',
     es: 'No se ha podido compartir. La dirección de la barra ya lleva el punto: cópiala.',
