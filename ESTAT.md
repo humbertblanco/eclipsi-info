@@ -148,6 +148,24 @@ ja va passar), el contrast AA del distintiu ennuvolat, els ~17 tokens
 fantasmes d'`align.css`, el desempat del geocodificador (ciutat/municipi) i el
 llindar 20→40 s de `gate-invariant`.
 
+**La segona onada del mateix dia** (reports de camp de l'usuari, tot amb test):
+la DENT de 40 km al límit nord del 2026 vora Menorca (pathLimitsAt triava el
+tall de limbe espuri; ara la tangència mana mentre viu i el més extrem només
+desempata talls — el mateix criteri va salvar la derivació d'incertesa, que
+per 13 metres transversals entre punts a 650 km saltava de branca al 2028);
+«Ubica'm» que no responia (el timeout del GPS no corre amb el diàleg de
+permís descartat: gos guardià de 18 s, errors en caixa `--status-danger` que
+el mode compacte no pot plegar, la fulla es tanca en èxit); la fulla «On
+seràs» amb el cercador com a camp universal (entén coordenades enganxades,
+comes decimals incloses; el camp tècnic, plegat); topònims, xinxetes
+numerades i «Comparteix» amb enllaç propi a cada lloc candidat; la targeta
+de compartir ensenya EL CEL DEL MÀXIM (renderEclipseSky) amb l'adreça
+impresa, i el porta-retalls surt amb enllaç i imatge alhora; la fitxa del
+mapa a mòbil amb trio de xifres + línia C1–C4 dins del 45dvh; noms per
+davant de coordenades a Dateline, portada i capçalera; el peu reduït a
+signatura + privacitat + meta (les fonts, senceres a «Com funciona» i al
+diàleg del mapa); l'aparador de la càmera a la portada.
+
 ### Mitjà
 
 - **Cap component de React té cap test.** `vitest.config.ts` només inclou
