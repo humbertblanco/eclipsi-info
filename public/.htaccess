@@ -2,3 +2,94 @@
 # ensenyaria la pàgina d'error genèrica del servidor en comptes de la
 # nostra 404 fosca i bilingüe.
 ErrorDocument 404 /404.html
+
+# =============================================================================
+# QUANT DURA CADA COSA AL NAVEGADOR
+#
+# ── EL DEFECTE QUE HI HAVIA, I COM ES VA VEURE ──────────────────────────────
+#
+# Aquest servidor no enviava CAP capçalera `Cache-Control`. Ni una. El que es
+# veia a la pràctica (4-8-2026, desplegant el bàner de consentiment): amb el
+# `rsync` fet i el checksum del paquet quadrant per la URL pública, el Chrome
+# seguia carregant `index-BjDCl60u.js` mentre el servidor ja servia
+# `index-DbN6Rdi9.js`. No hi havia cap service worker registrat: era el
+# navegador aplicant cau HEURÍSTICA, que és el que fa quan ningú no li diu res
+# —mira el `Last-Modified` i es guarda el fitxer una estona a ull.
+#
+# Traduït: cada desplegament trigava a arribar a qui ja havia visitat el lloc,
+# i no hi havia manera de saber quant. Amb l'eclipsi a vuit dies, això vol dir
+# gent mirant una versió vella el dia que més importa.
+#
+# El `max-age=14400` que sí que es veia als actius TAMPOC no era nostre: és el
+# valor per defecte de Cloudflare («Browser Cache TTL», 4 hores) quan l'origen
+# calla. O sigui que la política de cau de tot el lloc era, literalment, la que
+# li tocava per defecte a un tercer.
+#
+# ── LES DUES REGLES, QUE SÓN OPOSADES A POSTA ───────────────────────────────
+#
+# Els noms manen. Vite compila els actius amb un hash al nom
+# (`index-DbN6Rdi9.js`): si el contingut canvia, el nom canvia. Per tant, un
+# actiu amb hash no pot quedar mai obsolet i es pot desar PER SEMPRE; i
+# `index.html`, que és qui diu quins noms toquen avui, no es pot desar MAI.
+#
+# Fer-ho al revés —que és el que passava sol— és el pitjor dels dos móns:
+# l'index vell demanant paquets vells, i els paquets nous baixant-se cada
+# quatre hores encara que no hagin canviat.
+#
+# ── AVÍS: CLOUDFLARE POT TENIR L'ÚLTIMA PARAULA ─────────────────────────────
+#
+# El «Browser Cache TTL» del tauler de Cloudflare pot SOBREESCRIURE aquestes
+# capçaleres si no està posat a «Respect Existing Headers». Això no es pot
+# arreglar des d'aquí i s'ha de comprovar mesurant la resposta pública després
+# de desplegar, no llegint aquest fitxer.
+# =============================================================================
+
+<IfModule mod_headers.c>
+
+  # --- L'ESQUELET: MAI DE MEMÒRIA ------------------------------------------
+  #
+  # `no-cache` NO vol dir «no el desis»: vol dir «desa'l, però pregunta'm
+  # sempre si encara val». El navegador es queda la còpia i fa una petició
+  # condicional; si no ha canviat rep un 304 buit i no baixa res. Costa un
+  # viatge d'anada i tornada i estalvia la pantalla vella.
+  #
+  # `must-revalidate` tanca el cas del navegador que decideix servir una còpia
+  # caducada perquè la xarxa va malament — que en aquesta app seria ensenyar
+  # una franja d'eclipsi obsoleta sense dir-ho.
+  <FilesMatch "\.html$">
+    Header always set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  # --- EL SERVICE WORKER: ENCARA MÉS IMPORTANT -----------------------------
+  #
+  # Un `sw.js` desat a la cau és una app CONGELADA: el service worker vell
+  # segueix servint el seu precache antic i el navegador no s'assabenta que
+  # n'hi ha un de nou fins que expira. És el mecanisme que fa obrir una
+  # pestanya privada per veure els canvis propis.
+  #
+  # El manifest va igual: si canvia el nom, les icones o el color, s'ha de
+  # notar sense esperar.
+  <FilesMatch "^(sw\.js|workbox-.*\.js|manifest\.webmanifest)$">
+    Header always set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  # --- ELS ACTIUS AMB HASH: PER SEMPRE -------------------------------------
+  #
+  # Un any i `immutable`. `immutable` és el que evita que el navegador faci la
+  # petició condicional en recarregar: sense ell, cada F5 dispara una tanda de
+  # 304 inútils per a fitxers que, per construcció, no poden haver canviat.
+  #
+  # NOMÉS dins de `/assets/`, que és on Vite posa els noms amb hash. Aplicar-ho
+  # per extensió a tot el lloc marcaria com a etern algun `.js` sense hash i
+  # seria impossible de corregir sense canviar-li el nom.
+  #
+  # La variable d'entorn i el `RewriteRule` són la manera de dir «per camí» a
+  # `mod_headers`, que només sap filtrar per nom de fitxer (`FilesMatch`) i no
+  # per directori.
+  <IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^assets/ - [E=ACTIU_AMB_HASH:1]
+  </IfModule>
+  Header always set Cache-Control "public, max-age=31536000, immutable" env=ACTIU_AMB_HASH
+
+</IfModule>
