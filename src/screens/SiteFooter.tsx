@@ -70,7 +70,23 @@ const TEXT = {
     ca: 'Gratuït, per a tothom i sense ànim de lucre.',
     es: 'Gratuito, para todo el mundo y sin ánimo de lucro.',
   },
-  code: { ca: 'Codi obert', es: 'Código abierto' },
+  /*
+   * NO NOMÉS «CODI OBERT»: UNA INVITACIÓ.
+   *
+   * Deia «Codi obert» i prou, que és una declaració de propietat — diu com és
+   * la llicència i s'acaba aquí. Petició directa de l'usuari (4-8-2026): que
+   * digui que s'hi pot col·laborar. El verb en segona persona és el que
+   * converteix un rètol en una porta; qui llegeix «codi obert» sap que el pot
+   * mirar, qui llegeix «hi pots contribuir» sap que l'hi esperen.
+   *
+   * GitHub s'hi anomena tot i que l'enllaç ja hi va: al peu, un rètol sense
+   * destinació obliga a passar el ratolí per sobre per saber on et porta, i al
+   * mòbil ni això.
+   */
+  code: {
+    ca: 'Codi obert a GitHub: hi pots contribuir',
+    es: 'Código abierto en GitHub: puedes contribuir',
+  },
   version: { ca: 'Versió', es: 'Versión' },
   by: { ca: 'Fet per', es: 'Hecho por' },
   and: { ca: 'i', es: 'y' },
