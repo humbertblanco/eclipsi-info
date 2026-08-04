@@ -67,6 +67,7 @@ import {
   mergeAnchors,
   acceptRefinedPeak,
   SunRefiner,
+  SunTemporalGuide,
 } from './sunAnchor';
 import { composeCapture, canvasToJpegBlob } from './capture';
 import { nakedEyeAllowedAt, type FilterGateInput } from '../../core/timer';
@@ -645,6 +646,8 @@ export function ARView({
   const sessionRef = useRef<AnchorsSeen | null>(null);
   /** Refinador del centroide del Sol a resolució plena. Es reutilitza. */
   const sunRefinerRef = useRef<SunRefiner | null>(null);
+  /** Memòria angular curta per discriminar reflexos sense tancar la cerca. */
+  const sunTemporalGuideRef = useRef(new SunTemporalGuide());
   /** Quan l'àncora de Sol va passar a manar, per al pols de confirmació. */
   const sunLockRef = useRef<number | null>(null);
   /** Misses seguits del lock, per no fer caure el pols per un badall. */
@@ -877,6 +880,7 @@ export function ARView({
     trackLossRef.current?.();
     trackLossRef.current = null;
     frameClockRef.current.detach();
+    sunTemporalGuideRef.current.reset();
     if (videoRef.current) videoRef.current.srcObject = null;
     // I la interfície se n'ha d'assabentar: sense això la pantalla es queda
     // dient que la càmera és oberta damunt d'un vídeo que ja no arriba.
@@ -966,6 +970,7 @@ export function ARView({
          * Esborrar-les faria saltar de nou a la brúixola crua sense necessitat.
          */
         trackerRef.current?.reset();
+        sunTemporalGuideRef.current.reset();
         focalRef.current.reset();
         fusionRef.current.reset();
         sensorAtFrameRef.current = null;
@@ -1010,12 +1015,14 @@ export function ARView({
           // Pausa temporal: el marc és un fotograma congelat. El rastrejador
           // no ho pot prendre per quietud perfecta — fora referència.
           trackerRef.current?.reset();
+          sunTemporalGuideRef.current.reset();
           setCameraPaused(true);
         },
         onUnmute: () => {
           // El món ha continuat mentre el marc dormia: la referència vella
           // apuntaria a un paisatge que ja no és el del vídeo.
           trackerRef.current?.reset();
+          sunTemporalGuideRef.current.reset();
           setCameraPaused(false);
         },
       });
@@ -1304,10 +1311,16 @@ export function ARView({
               ? expectedBrightBody(state.liveSample)
               : null;
           if (body !== null) {
+            // Després de tres fixes concordants projectem amb el biaix angular
+            // après. La detecció continua recorrent TOTA la graella: això
+            // només desempata candidats i no pot empresonar-se en un ROI.
+            const guidedCamera =
+              sunTemporalGuideRef.current.correctedCamera(sensorAtCapture, nowMs) ??
+              sensorAtCapture;
             const predicted = projectToScreen(
               body.body.azimuth,
               body.body.altitudeApparent,
-              sensorAtCapture,
+              guidedCamera,
               state.calibration,
               viewport,
             );
@@ -1353,6 +1366,7 @@ export function ARView({
                     )
                   : null;
           }
+          sunTemporalGuideRef.current.observe(sunFix, nowMs);
           sunFixRef.current = sunFix;
 
           // ── La fusió dels fars i les estampes ────────────────────────────

@@ -140,6 +140,102 @@ export interface SunBlob {
   ambiguous: boolean;
 }
 
+/**
+ * Memòria TEMPORAL del biaix que el Sol acaba de mesurar al sensor.
+ *
+ * No segueix píxels: quan el telèfon gira, el Sol pot travessar tota la
+ * pantalla entre fotogrames i una memòria de (x,y) queda vella de seguida.
+ * El que sí que és gairebé constant és el residual angular entre la postura
+ * del sensor i la que demostra el cos conegut. Reprojectar el cos amb aquest
+ * residual dona una pista bona fins i tot amb roll, canvi d'orientació i un
+ * gest ràpid.
+ *
+ * És deliberadament només una GUIA per triar entre candidats: mai fabrica un
+ * fix, mai conserva una àncora durant una ocultació i mai evita la cerca
+ * global. Calen tres fixes concordants abans que pugui parlar; si calla,
+ * l'algoritme és exactament el d'abans.
+ */
+export class SunTemporalGuide {
+  private deltaAzDeg = 0;
+  private deltaAltDeg = 0;
+  private lastAtMs = 0;
+  private confirmations = 0;
+
+  /** La guia caduca de pressa: darrere d'un núvol mana de nou l'efemèride. */
+  private static readonly MAX_AGE_MS = 650;
+  /** Un salt més gran no és soroll temporal: és candidat nou o sensor canviat. */
+  private static readonly MAX_INNOVATION_DEG = 1.5;
+  /** Tres fotogrames (~100 ms) impedeixen que una primera falsa taca creï lock. */
+  private static readonly MIN_CONFIRMATIONS = 3;
+  /** Un candidat ambigu queda a ≤0,5 a `fitSunFix`: no pot ensenyar la guia. */
+  private static readonly MIN_FIX_CONFIDENCE = 0.6;
+  /** EMA conservadora: el residual és lent, però la brúixola encara pot variar. */
+  private static readonly ALPHA = 0.35;
+
+  reset(): void {
+    this.deltaAzDeg = 0;
+    this.deltaAltDeg = 0;
+    this.lastAtMs = 0;
+    this.confirmations = 0;
+  }
+
+  observe(fix: SkylineFix | null, atMs: number): void {
+    if (
+      fix === null ||
+      fix.altitudeOnly ||
+      fix.confidence < SunTemporalGuide.MIN_FIX_CONFIDENCE ||
+      !Number.isFinite(atMs) ||
+      (this.lastAtMs > 0 && atMs <= this.lastAtMs)
+    ) {
+      return;
+    }
+
+    if (this.confirmations === 0 || atMs - this.lastAtMs > SunTemporalGuide.MAX_AGE_MS) {
+      this.deltaAzDeg = fix.deltaAzimuthDeg;
+      this.deltaAltDeg = fix.deltaAltitudeDeg;
+      this.confirmations = 1;
+      this.lastAtMs = atMs;
+      return;
+    }
+
+    const innovationAz = normalizeDelta(fix.deltaAzimuthDeg - this.deltaAzDeg);
+    const innovationAlt = fix.deltaAltitudeDeg - this.deltaAltDeg;
+    const innovation = Math.hypot(innovationAz, innovationAlt);
+    if (innovation > SunTemporalGuide.MAX_INNOVATION_DEG) {
+      // No arrosseguem el lock vell cap al candidat nou. Aquest passa a ser
+      // una adquisició fresca i haurà de confirmar-se com les altres.
+      this.deltaAzDeg = fix.deltaAzimuthDeg;
+      this.deltaAltDeg = fix.deltaAltitudeDeg;
+      this.confirmations = 1;
+      this.lastAtMs = atMs;
+      return;
+    }
+
+    const alpha = SunTemporalGuide.ALPHA;
+    this.deltaAzDeg = normalizeDelta(this.deltaAzDeg + alpha * innovationAz);
+    this.deltaAltDeg += alpha * innovationAlt;
+    this.confirmations = Math.min(SunTemporalGuide.MIN_CONFIRMATIONS, this.confirmations + 1);
+    this.lastAtMs = atMs;
+  }
+
+  /** Postura corregida amb què projectar el cos; null preserva el camí antic. */
+  correctedCamera(camera: CameraPointing, atMs: number): CameraPointing | null {
+    if (
+      this.confirmations < SunTemporalGuide.MIN_CONFIRMATIONS ||
+      !Number.isFinite(atMs) ||
+      atMs < this.lastAtMs ||
+      atMs - this.lastAtMs > SunTemporalGuide.MAX_AGE_MS
+    ) {
+      return null;
+    }
+    return {
+      ...camera,
+      azimuth: normalizeAngle(camera.azimuth + this.deltaAzDeg),
+      altitude: camera.altitude + this.deltaAltDeg,
+    };
+  }
+}
+
 interface RawBlob {
   area: number;
   sumI: number;

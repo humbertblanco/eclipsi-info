@@ -18,6 +18,7 @@ import {
   expectedBrightBody,
   mergeAnchors,
   acceptRefinedPeak,
+  SunTemporalGuide,
 } from './sunAnchor';
 import {
   projectToScreen,
@@ -226,6 +227,149 @@ describe('la detecció de la taca del Sol', () => {
     expect(blob!.ambiguous).toBe(true);
     const ray = unprojectFromScreen(blob!.screenX, blob!.screenY, camera, CALIBRATION, VIEWPORT);
     expect(angularSeparationDeg(ray.azimuth, ray.altitude, 245, 12)).toBeLessThan(0.3);
+  });
+});
+
+describe('la memòria temporal del Sol', () => {
+  function temporalFix(deltaAzimuthDeg: number, deltaAltitudeDeg: number): SkylineFix {
+    return {
+      azimuthDeg: 250 + deltaAzimuthDeg,
+      altitudeDeg: 10 + deltaAltitudeDeg,
+      deltaAzimuthDeg,
+      deltaAltitudeDeg,
+      rmsPx: 1,
+      used: 6,
+      confidence: 0.8,
+      altitudeOnly: false,
+    };
+  }
+
+  it('no guia fins que tres fotogrames concordants confirmen el lock', () => {
+    const guide = new SunTemporalGuide();
+    const camera = pointing(260, 11, 17);
+    guide.observe(temporalFix(-10, -1), 1_000);
+    guide.observe(temporalFix(-9.9, -1.1), 1_033);
+    expect(guide.correctedCamera(camera, 1_040)).toBeNull();
+
+    guide.observe(temporalFix(-10.1, -0.9), 1_066);
+    const corrected = guide.correctedCamera(camera, 1_070);
+    expect(corrected).not.toBeNull();
+    expect(Math.abs(normalizeDelta(corrected!.azimuth - 250))).toBeLessThan(0.15);
+    expect(Math.abs(corrected!.altitude - 10)).toBeLessThan(0.15);
+    expect(corrected!.roll).toBe(17);
+  });
+
+  it('caduca durant una ocultació i reset elimina qualsevol pista', () => {
+    const guide = new SunTemporalGuide();
+    for (let i = 0; i < 3; i++) guide.observe(temporalFix(4, 0.5), 2_000 + i * 33);
+    expect(guide.correctedCamera(pointing(250, 10), 2_100)).not.toBeNull();
+    expect(guide.correctedCamera(pointing(250, 10), 2_800)).toBeNull();
+
+    for (let i = 0; i < 3; i++) guide.observe(temporalFix(4, 0.5), 3_000 + i * 33);
+    guide.reset();
+    expect(guide.correctedCamera(pointing(250, 10), 3_100)).toBeNull();
+  });
+
+  it('un salt incompatible inicia una adquisició nova en comptes d’arrossegar el lock', () => {
+    const guide = new SunTemporalGuide();
+    for (let i = 0; i < 3; i++) guide.observe(temporalFix(-8, 0), 4_000 + i * 33);
+    expect(guide.correctedCamera(pointing(258, 10), 4_100)).not.toBeNull();
+
+    guide.observe(temporalFix(3, 0), 4_133);
+    expect(guide.correctedCamera(pointing(247, 10), 4_140)).toBeNull();
+    guide.observe(temporalFix(3.1, 0), 4_166);
+    guide.observe(temporalFix(2.9, 0), 4_199);
+    const reacquired = guide.correctedCamera(pointing(247, 10), 4_200);
+    expect(reacquired).not.toBeNull();
+    expect(Math.abs(normalizeDelta(reacquired!.azimuth - 250))).toBeLessThan(0.15);
+  });
+
+  it('els misses no inventen cap observació ni allarguen la frescor', () => {
+    const guide = new SunTemporalGuide();
+    for (let i = 0; i < 3; i++) guide.observe(temporalFix(2, 0), 5_000 + i * 33);
+    guide.observe(null, 5_500);
+    guide.observe(null, 5_700);
+    expect(guide.correctedCamera(pointing(248, 10), 5_800)).toBeNull();
+  });
+
+  it('un candidat ambigu o una mostra fora d’ordre no poden ensenyar la guia', () => {
+    const guide = new SunTemporalGuide();
+    const doubtful = { ...temporalFix(5, 0), confidence: 0.5 };
+    guide.observe(doubtful, 5_000);
+    guide.observe(doubtful, 5_033);
+    guide.observe(doubtful, 5_066);
+    expect(guide.correctedCamera(pointing(245, 10), 5_100)).toBeNull();
+
+    guide.observe(temporalFix(2, 0), 6_000);
+    guide.observe(temporalFix(2, 0), 5_999);
+    guide.observe(temporalFix(2, 0), 6_033);
+    expect(guide.correctedCamera(pointing(248, 10), 6_040)).toBeNull();
+    guide.observe(temporalFix(2, 0), 6_066);
+    expect(guide.correctedCamera(pointing(248, 10), 6_070)).not.toBeNull();
+  });
+
+  it('desempata un reflex nou després del lock sense deixar de cercar tota la imatge', () => {
+    const guide = new SunTemporalGuide();
+    const truth = pointing(250, 10);
+    const sensor = pointing(258, 10);
+    const sun = skyPos(250, 12);
+
+    // Primer, tres fotogrames nets adquireixen el Sol i aprenen els −8° de
+    // biaix. El fix és el mateix camí real que usa ARView, no una drecera.
+    for (let i = 0; i < 3; i++) {
+      const clean = renderSunGray(truth, [
+        { azimuth: sun.azimuth, altitude: sun.altitudeApparent, amplitude: 1, sigmaGridPx: 1 },
+      ]);
+      const blob = detectSunBlob(clean, GEOMETRY, VIEWPORT, null);
+      guide.observe(fitSunFix(blob!, sun, sensor, CALIBRATION, VIEWPORT), 6_000 + i * 33);
+    }
+
+    const guidedCamera = guide.correctedCamera(sensor, 6_100);
+    expect(guidedCamera).not.toBeNull();
+    const expected = projectToScreen(
+      sun.azimuth,
+      sun.altitudeApparent,
+      guidedCamera!,
+      CALIBRATION,
+      VIEWPORT,
+    );
+
+    // Apareix una taca rival just on la brúixola CRUA hauria posat el Sol.
+    // El detector continua veient les dues a la graella completa, però la
+    // predicció temporal fa guanyar la que ha mantingut la trajectòria.
+    const rawExpectedRay = unprojectFromScreen(
+      projectToScreen(sun.azimuth, sun.altitudeApparent, sensor, CALIBRATION, VIEWPORT).x,
+      projectToScreen(sun.azimuth, sun.altitudeApparent, sensor, CALIBRATION, VIEWPORT).y,
+      truth,
+      CALIBRATION,
+      VIEWPORT,
+    );
+    const withRival = renderSunGray(truth, [
+      { azimuth: sun.azimuth, altitude: sun.altitudeApparent, amplitude: 1, sigmaGridPx: 1 },
+      {
+        azimuth: rawExpectedRay.azimuth,
+        altitude: rawExpectedRay.altitude,
+        amplitude: 0.95,
+        sigmaGridPx: 1,
+      },
+    ]);
+    const chosen = detectSunBlob(withRival, GEOMETRY, VIEWPORT, { x: expected.x, y: expected.y });
+    expect(chosen).not.toBeNull();
+    const chosenRay = unprojectFromScreen(
+      chosen!.screenX,
+      chosen!.screenY,
+      truth,
+      CALIBRATION,
+      VIEWPORT,
+    );
+    expect(
+      angularSeparationDeg(
+        chosenRay.azimuth,
+        chosenRay.altitude,
+        sun.azimuth,
+        sun.altitudeApparent,
+      ),
+    ).toBeLessThan(0.3);
   });
 });
 

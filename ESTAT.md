@@ -400,6 +400,13 @@ Perquè no es desfacin per accident.
    nit, la Lluna (assajos). Els fixos de Sol i terreny es FUSIONEN
    (`mergeAnchors`): fallen al revés l'un de l'altre, i als eclipsis d'aquest
    catàleg — Sol arran d'horitzó — el cas normal és tenir tots dos al quadre.
+   Després de tres fixes concordants, `SunTemporalGuide` recorda durant 650 ms
+   el RESIDUAL ANGULAR (mai els píxels) i reprojeta el cos amb aquell biaix per
+   desempatar reflexos: resisteix girs i roll perquè la cerca continua sent
+   global. No fabrica fixes ni manté el lock darrere d'un núvol; caduca sola i
+   es reinicia amb sessió, pausa, canvi de pista, objectiu o zoom. Això és una
+   guia conservadora damunt del detector complet, no el ROI tancat que ja es va
+   descartar perquè podia quedar enganxat a una vora brillant.
 
 La FUSIÓ (`poseFusion`) té dues regles amb física pròpia:
 
