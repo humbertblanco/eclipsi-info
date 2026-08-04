@@ -74,6 +74,7 @@ export interface MixedOptions {
    */
   guide?: {
     label: string;
+    lockedLabel: string;
     distanceDeg: number;
     sunLockedAtMs: number | null;
     nowMs: number;
@@ -238,8 +239,50 @@ function drawSunGuide(
     p.y <= viewport.height - MARGIN;
 
   if (inFrame) {
-    if (guide.sunLockedAtMs !== null) {
-      const sunR = Math.max(4, Math.tan(sample.sun.angularRadius * DEG) * viewport.focalPx);
+    const sunR = Math.max(4, Math.tan(sample.sun.angularRadius * DEG) * viewport.focalPx);
+    const ringR = Math.max(sunR * 2.4, 24);
+    const lockedAtMs = guide.sunLockedAtMs;
+    const locked = lockedAtMs !== null;
+
+    /*
+     * EL SOL SEMPRE ESTÀ MARCAT QUAN ENTRA AL QUADRE.
+     *
+     * Abans la fletxa desapareixia tan bon punt la projecció entrava al marc,
+     * però el reticle només apareixia DESPRÉS del lock. Durant l'adquisició hi
+     * havia, doncs, un buit: l'usuari ja no sabia cap on moure el telèfon i
+     * encara no tenia confirmació. L'anell ambre diu «objectiu calculat»; les
+     * quatre marques verdes i el text només apareixen quan la imatge ha
+     * confirmat el Sol real. Predicció i detecció no comparteixen semàntica.
+     */
+    ctx.save();
+    ctx.strokeStyle = withAlpha(palette.sun400, locked ? 0.78 : 0.58);
+    ctx.lineWidth = locked ? 1.5 : 1.25;
+    if (!locked) ctx.setLineDash([4, 5]);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, ringR, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Etiqueta compacta, fora del disc i sempre dins del marge reservat.
+    const hudLabel = locked ? guide.lockedLabel : guide.label;
+    ctx.font = canvasFont(palette, 10, { mono: true });
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const labelW = ctx.measureText(hudLabel).width + 14;
+    const labelH = 20;
+    const labelY = Math.max(labelH / 2 + 4, p.y - ringR - 14);
+    ctx.fillStyle = withAlpha(palette.bgPage, 0.72);
+    ctx.strokeStyle = withAlpha(locked ? palette.statusClear : palette.sun400, 0.72);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(p.x - labelW / 2, labelY - labelH / 2, labelW, labelH, labelH / 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = locked ? palette.statusClear : palette.sun200;
+    ctx.fillText(hudLabel, p.x, labelY + 0.5);
+    ctx.restore();
+
+    if (lockedAtMs !== null) {
 
       /*
        * EL SEGUIDOR ES QUEDA MENTRE EL SISTEMA TÉ EL SOL, i abans no.
@@ -254,17 +297,12 @@ function drawSunGuide(
        * d'ESTAT.md, el que recupera deu graus d'error de brúixola.
        *
        * Un anell prim amb quatre marques als quadrants: es reconeix com un
-       * seguidor sense llegir res, no tapa el disc (que és el que s'ha de
-       * veure) i no és un segon ambre — és el MATEIX accent que ja porta el
-       * Sol, aquí en to de traç.
+       * seguidor sense llegir res i no tapa el disc (que és el que s'ha de
+       * veure). El verd semàntic separa la CONFIRMACIÓ del reticle solar
+       * ambre: un color diu què busquem i l'altre que ja ho hem trobat.
        */
-      const ringR = Math.max(sunR * 2.4, 24);
       ctx.save();
-      ctx.strokeStyle = withAlpha(palette.accent, 0.75);
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, ringR, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.strokeStyle = withAlpha(palette.statusClear, 0.9);
 
       // Les quatre marques, cap endins: assenyalen el centre sense envair-lo.
       const tick = Math.max(4, ringR * 0.22);
@@ -281,7 +319,7 @@ function drawSunGuide(
 
       // I el pols d'adquisició per damunt, que segueix dient EL MOMENT en què
       // l'ha enganxat. 1,2 s des de la fixació.
-      const t = (guide.nowMs - guide.sunLockedAtMs) / 1200;
+      const t = (guide.nowMs - lockedAtMs) / 1200;
       if (t >= 0 && t <= 1) {
         ctx.save();
         // Del sistema i no escrit a mà: aquí hi havia un `rgba(255,220,150)`

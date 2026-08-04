@@ -1587,6 +1587,7 @@ export function ARView({
             palette: PALETTE,
             guide: {
               label: s('camera.sunArrowLabel', state.locale),
+              lockedLabel: s('camera.sunHudLocked', state.locale),
               distanceDeg: angularSeparationDeg(
                 stable.azimuth + state.calibration.azimuthOffset,
                 stable.altitude + state.calibration.altitudeOffset,

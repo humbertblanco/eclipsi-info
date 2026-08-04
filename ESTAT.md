@@ -413,6 +413,11 @@ Perquè no es desfacin per accident.
    guanya i el pic de validació és el seu, no el màxim aliè del retall. Els
    píxels calents d'àrea 1 es poden abans de triar candidat, perquè no apartin
    un Sol vàlid per acabar rebutjats una línia després.
+   Al HUD, el Sol dins del quadre porta sempre un reticle ambre discontinu
+   (posició calculada); només una detecció real hi afegeix marques verdes i
+   «Sol fixat». La interfície no presenta així una predicció de brúixola com si
+   fos tracking confirmat, i entre la fletxa exterior i el lock ja no queda cap
+   tram sense guia.
 
 La FUSIÓ (`poseFusion`) té dues regles amb física pròpia:
 
