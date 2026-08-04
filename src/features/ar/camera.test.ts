@@ -11,8 +11,8 @@
  * servir add/removeEventListener i dispatch, que és exactament el contracte.
  */
 
-import { describe, expect, it } from 'vitest';
-import { watchTrackLoss } from './camera';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { watchLensChange, watchTrackLoss } from './camera';
 
 function fakeStream(tracks: EventTarget[]): MediaStream {
   return { getVideoTracks: () => tracks } as unknown as MediaStream;
@@ -61,5 +61,96 @@ describe('watchTrackLoss', () => {
     const stop = watchTrackLoss(fakeStream([]), handlers);
     expect(() => stop()).not.toThrow();
     expect(n).toEqual({ ended: 0, mute: 0, unmute: 0 });
+  });
+});
+
+describe('watchLensChange', () => {
+  afterEach(() => vi.useRealTimers());
+
+  function settingsTrack(initial: MediaTrackSettings & { zoom?: number }) {
+    let settings = initial;
+    return {
+      getSettings: () => settings,
+      change: (next: MediaTrackSettings & { zoom?: number }) => { settings = next; },
+    };
+  }
+
+  it('detecta un canvi de zoom encara que la resolució no canviï', () => {
+    vi.useFakeTimers();
+    const track = settingsTrack({ width: 1920, height: 1080, deviceId: 'rear', zoom: 1 });
+    const changes: Array<{ looksUltraWide: boolean; suggestedFovDeg: number }> = [];
+    const stop = watchLensChange(
+      fakeStream([track as unknown as EventTarget]),
+      (info) => changes.push(info),
+    );
+
+    track.change({ width: 1920, height: 1080, deviceId: 'rear', zoom: 0.5 });
+    vi.advanceTimersByTime(1000);
+
+    expect(changes).toHaveLength(1);
+    expect(changes[0].looksUltraWide).toBe(true);
+    expect(changes[0].suggestedFovDeg).toBeGreaterThan(100);
+    stop();
+  });
+
+  it('no avisa si els paràmetres observables continuen iguals', () => {
+    vi.useFakeTimers();
+    const track = settingsTrack({ width: 1280, height: 720, deviceId: 'rear', zoom: 1 });
+    const changed = vi.fn();
+    const stop = watchLensChange(fakeStream([track as unknown as EventTarget]), changed);
+    vi.advanceTimersByTime(3000);
+    expect(changed).not.toHaveBeenCalled();
+    stop();
+  });
+
+  it('no confon una pèrdua transitòria del zoom amb un retorn a la lent principal', () => {
+    vi.useFakeTimers();
+    const track = settingsTrack({ width: 1920, height: 1080, deviceId: 'rear', zoom: 0.5 });
+    const changes: Array<{ zoom: number | null; looksUltraWide: boolean }> = [];
+    const stop = watchLensChange(
+      fakeStream([track as unknown as EventTarget]),
+      (info) => changes.push(info),
+    );
+
+    track.change({ width: 1280, height: 720, deviceId: 'rear' });
+    vi.advanceTimersByTime(1000);
+
+    expect(changes).toHaveLength(1);
+    expect(changes[0]).toMatchObject({
+      zoom: 0.5,
+      looksUltraWide: true,
+      resolutionChanged: true,
+      zoomChanged: true,
+    });
+    stop();
+  });
+
+  it('redueix el camp visual provisional quan entra zoom digital', () => {
+    vi.useFakeTimers();
+    const track = settingsTrack({ width: 1920, height: 1080, zoom: 1 });
+    const changes: Array<{ suggestedFovDeg: number; zoomChanged: boolean }> = [];
+    const stop = watchLensChange(
+      fakeStream([track as unknown as EventTarget]),
+      (info) => changes.push(info),
+    );
+    track.change({ width: 1920, height: 1080, zoom: 2 });
+    vi.advanceTimersByTime(1000);
+
+    expect(changes).toHaveLength(1);
+    expect(changes[0].zoomChanged).toBe(true);
+    expect(changes[0].suggestedFovDeg).toBeGreaterThan(30);
+    expect(changes[0].suggestedFovDeg).toBeLessThan(40);
+    stop();
+  });
+
+  it('la neteja atura el sondeig de canvis', () => {
+    vi.useFakeTimers();
+    const track = settingsTrack({ width: 1280, height: 720, zoom: 1 });
+    const changed = vi.fn();
+    const stop = watchLensChange(fakeStream([track as unknown as EventTarget]), changed);
+    stop();
+    track.change({ width: 1280, height: 720, zoom: 0.5 });
+    vi.advanceTimersByTime(2000);
+    expect(changed).not.toHaveBeenCalled();
   });
 });

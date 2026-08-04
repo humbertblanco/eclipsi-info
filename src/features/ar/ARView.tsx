@@ -568,6 +568,8 @@ export function ARView({
   const trackerRef = useRef<VisualTracker | null>(null);
   const frameClockRef = useRef(new VideoFrameClock());
   const focalRef = useRef(new FocalEstimator());
+  /** Fals quan l'usuari ha triat el FOV: l'automàtic no hi discuteix. */
+  const autoFocalEnabledRef = useRef(true);
   const fusionRef = useRef(new PoseFusion());
   const lensWatchRef = useRef<(() => void) | null>(null);
   const trackLossRef = useRef<(() => void) | null>(null);
@@ -909,6 +911,7 @@ export function ARView({
     try {
       const opened = await openRearCamera();
       setCameraInfo(opened);
+      autoFocalEnabledRef.current = true;
 
       // Si ja hem mesurat el camp de visió d'aquest objectiu en una sessió
       // anterior, la superposició surt calibrada des del primer fotograma. Si
@@ -955,15 +958,45 @@ export function ARView({
       // L'iPhone 15 canvia d'objectiu sol a mitja sessió. Quan passa, tot el
       // que havíem mesurat deixa de valer.
       lensWatchRef.current = watchLensChange(opened.stream, (info) => {
+        /*
+         * Tall entre dues òptiques: punts, focal i increment inertial entre
+         * fotogrames deixen de ser comparables. Les àncores ABSOLUTES de Sol i
+         * terreny, en canvi, es conserven: descriuen una direcció real i són
+         * justament el pont estable mentre la nova imatge torna a adquirir-se.
+         * Esborrar-les faria saltar de nou a la brúixola crua sense necessitat.
+         */
         trackerRef.current?.reset();
         focalRef.current.reset();
         fusionRef.current.reset();
-        const known = loadMeasuredFov(info.width, info.height);
+        sensorAtFrameRef.current = null;
+        autoFocalEnabledRef.current = true;
+        // Una resolució nova pot identificar una lent ja calibrada. Un canvi
+        // de zoom o deviceId amb la MATEIXA clau, en canvi, invalida aquell
+        // valor: carregar-lo seria recuperar exactament la focal anterior.
+        const known = info.zoomChanged || info.deviceChanged
+          ? null
+          : loadMeasuredFov(info.width, info.height);
         measuredFovRef.current = known;
         setCameraInfo((prev) =>
-          prev ? { ...prev, width: info.width, height: info.height } : prev,
+          prev
+            ? {
+                ...prev,
+                width: info.width,
+                height: info.height,
+                looksUltraWide: info.looksUltraWide,
+                suggestedFovDeg: info.suggestedFovDeg,
+                zoomRange: prev.zoomRange && info.zoom !== null
+                  ? { ...prev.zoomRange, current: info.zoom }
+                  : prev.zoomRange,
+              }
+            : prev,
         );
-        if (known !== null) setCalibration((c) => ({ ...c, sensorFovDeg: known }));
+        // Mai no arrosseguem una focal MESURADA per a la lent anterior. Si no
+        // coneixem la nova, tornem a la conjectura segura i la remesurem.
+        setCalibration((c) => ({
+          ...c,
+          sensorFovDeg: known ?? info.suggestedFovDeg,
+        }));
       });
 
       trackLossRef.current = watchTrackLoss(opened.stream, {
@@ -1186,6 +1219,7 @@ export function ARView({
           if (mergedFrames) visual = null;
 
           if (
+            autoFocalEnabledRef.current &&
             visual &&
             sensorStep &&
             visual.confidence >= FOCAL_MIN_CONFIDENCE &&
@@ -1582,7 +1616,7 @@ export function ARView({
       // que es pot desar i el que no depèn de la mida del contenidor.
       const video = videoRef.current;
       const viewport = viewportRef.current;
-      const gain = focalRef.current.gain;
+      const gain = autoFocalEnabledRef.current ? focalRef.current.gain : null;
       let measuredFov = measuredFovRef.current;
 
       if (gain !== null && video && viewport && video.videoWidth > 0) {
@@ -2191,6 +2225,7 @@ export function ARView({
                 // seria discutir-hi.
                 measuredFovRef.current = null;
                 focalRef.current.reset();
+                autoFocalEnabledRef.current = false;
                 setCalibration((c) => ({ ...c, sensorFovDeg: Number(e.target.value) }));
               }}
             />

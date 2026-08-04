@@ -1198,7 +1198,7 @@ export class VisualTracker {
  * focal que s'hi ha posat, comparar-lo amb el que ha vist el sensor en el
  * mateix interval dona directament el factor de correcció:
  *
- *     focal_real = focal_de_referència · (gir_del_sensor / gir_visual)
+ *     focal_real = focal_de_referència · (gir_visual / gir_del_sensor)
  *
  * PER QUÈ S'ACUMULA EN FINESTRES I NO ES FA FOTOGRAMA A FOTOGRAMA. El gir del
  * sensor entre dos fotogrames consecutius és d'un grau escàs i el seu soroll és

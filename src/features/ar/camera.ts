@@ -42,10 +42,32 @@ export interface CameraOpenResult {
   suggestedFovDeg: number;
 }
 
+export interface CameraLensChange {
+  width: number;
+  height: number;
+  /** Zoom efectiu després del canvi, quan el navegador el declara. */
+  zoom: number | null;
+  looksUltraWide: boolean;
+  suggestedFovDeg: number;
+  resolutionChanged: boolean;
+  zoomChanged: boolean;
+  deviceChanged: boolean;
+}
+
 /** Camp típic de la càmera principal d'un mòbil, sobre el costat llarg. */
 const MAIN_LENS_FOV_DEG = 66;
 /** Camp típic d'una ultra-angular de mòbil. */
 const ULTRA_WIDE_FOV_DEG = 118;
+
+/** FOV provisional del flux després d'un canvi de zoom observable. */
+function suggestedFovForZoom(zoom: number | null): number {
+  if (zoom === null) return MAIN_LENS_FOV_DEG;
+  if (zoom < 0.95) return ULTRA_WIDE_FOV_DEG;
+  // Per damunt d'1× és habitualment retall digital de la principal. La focal
+  // es multiplica pel zoom; aquesta és la inversa exacta sobre el costat llarg.
+  const half = (MAIN_LENS_FOV_DEG * Math.PI) / 360;
+  return (2 * Math.atan(Math.tan(half) / zoom) * 180) / Math.PI;
+}
 
 interface ZoomCapableCapabilities extends MediaTrackCapabilities {
   zoom?: { min: number; max: number; step?: number };
@@ -122,17 +144,43 @@ export async function openRearCamera(): Promise<CameraOpenResult> {
  */
 export function watchLensChange(
   stream: MediaStream,
-  onChange: (info: { width: number; height: number }) => void,
+  onChange: (info: CameraLensChange) => void,
 ): () => void {
   const track = stream.getVideoTracks()[0];
   if (!track) return () => {};
 
-  let last = track.getSettings();
+  let last = track.getSettings() as ZoomCapableSettings;
+  let lastKnownZoom = typeof last.zoom === 'number' ? last.zoom : null;
   const id = setInterval(() => {
-    const now = track.getSettings();
-    if (now.width !== last.width || now.height !== last.height) {
+    const now = track.getSettings() as ZoomCapableSettings;
+    /*
+     * La resolució era l'únic delator. iOS també pot mantenir-la mentre canvia
+     * el zoom/objectiu; quan exposa `zoom`, aquest canvi ha d'invalidar la
+     * focal igualment. `deviceId` cobreix els navegadors que sí identifiquen
+     * cada càmera. Si Safari no canvia CAP d'aquests valors, la plataforma no
+     * dona cap senyal observable i l'estimador visual continua essent la xarxa.
+     */
+    const resolutionChanged = now.width !== last.width || now.height !== last.height;
+    const zoomChanged = now.zoom !== last.zoom;
+    const deviceChanged = now.deviceId !== last.deviceId;
+    if (resolutionChanged || zoomChanged || deviceChanged) {
       last = now;
-      onChange({ width: now.width ?? 0, height: now.height ?? 0 });
+      // Alguns Safari perden temporalment `zoom` mentre reconfiguren la pista.
+      // L'absència no vol dir 1×: conserva l'última dada real per no convertir
+      // una ultra-angular en principal durant aquell segon intermedi.
+      const zoom = typeof now.zoom === 'number' ? now.zoom : lastKnownZoom;
+      if (typeof now.zoom === 'number') lastKnownZoom = now.zoom;
+      const looksUltraWide = zoom !== null && zoom < 0.95;
+      onChange({
+        width: now.width ?? 0,
+        height: now.height ?? 0,
+        zoom,
+        looksUltraWide,
+        suggestedFovDeg: suggestedFovForZoom(zoom),
+        resolutionChanged,
+        zoomChanged,
+        deviceChanged,
+      });
     }
   }, 1000);
 
