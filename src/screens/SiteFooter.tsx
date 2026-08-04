@@ -93,16 +93,15 @@ const TEXT = {
   /*
    * L'ÚNICA PORTA CAP A LES FONTS — I CAP A «COM FUNCIONA» SENCERA.
    *
-   * Abans hi havia dos rètols que podien acabar sent dos enllaços a la
-   * mateixa pàgina: «Com funciona · Premsa» i la llista de fonts. Fusionats:
-   * un sol enllaç que diu explícitament que les fonts i atribucions són allà.
-   * La premsa segueix vivint dins de «Com funciona»; qui la busca hi arriba
-   * per la mateixa porta, i el peu no ha de fer d'índex de la pàgina que obre.
+   * Les fonts obren la pàgina pel principi. Premsa té una porta pròpia perquè
+   * ara conté descàrregues editorials i ha d'aterrar al bloc exacte, però les
+   * dues rutes continuen compartint la mateixa pantalla i font de veritat.
    */
   sourcesLink: {
     ca: 'Fonts i atribucions, a «Com funciona»',
     es: 'Fuentes y atribuciones, en «Cómo funciona»',
   },
+  pressLink: { ca: 'Premsa', es: 'Prensa' },
 } as const;
 
 const REPO_URL = 'https://github.com/humbertblanco/eclipsi-info';
@@ -191,6 +190,8 @@ export function SiteFooter({ locale, consentState, onChangeConsent }: SiteFooter
           l'App i la pantalla «Com funciona» s'obre com qualsevol altra ruta.
         */}
         <a href="#/com-funciona">{TEXT.sourcesLink[locale]}</a>
+        {' · '}
+        <a href="#/com-funciona/premsa">{TEXT.pressLink[locale]}</a>
         {' · '}
         <a href={REPO_URL} target="_blank" rel="noreferrer noopener">
           {TEXT.code[locale]}

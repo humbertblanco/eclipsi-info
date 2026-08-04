@@ -127,7 +127,9 @@ export default defineConfig(({ command }) => ({
          * l'usuari no veu mai — i el paga sencer la primera vegada que obre
          * l'app, que sovint és amb dades mòbils.
          */
-        globIgnores: ['**/brand/og.png'],
+        // El material editorial només es baixa quan algú el demana a Premsa;
+        // no ha d'afegir més de 3 MB a la primera instal·lació de tothom.
+        globIgnores: ['**/brand/og.png', '**/press/**'],
         // L'app és una SPA: qualsevol ruta ha de tornar l'esquelet. Ha
         // d'incloure el subdirectori, o el service worker respondria amb una
         // ruta que al servidor no existeix.

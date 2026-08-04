@@ -121,6 +121,22 @@ interface RasterAsset {
 
 const RASTER: RasterAsset[] = [
   {
+    path: 'press/simulacio-eclipsi.png',
+    role: 'imatge editorial de la simulació al mòbil',
+    width: 1122,
+    height: 1402,
+    fullBleed: false,
+    alpha: 'cap',
+  },
+  {
+    path: 'press/vista-escriptori.png',
+    role: 'imatge editorial de la vista d’escriptori',
+    width: 1448,
+    height: 1086,
+    fullBleed: false,
+    alpha: 'cap',
+  },
+  {
     path: 'brand/og.png',
     role: 'targeta social (og:image i twitter:image) — la fa scripts/build-og.ts',
     width: 1200,

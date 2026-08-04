@@ -21,7 +21,7 @@
  * en comptes de prometre el mateix a tothom.
  */
 
-import { centralLineAt } from '../eclipses/path';
+import { centralLineAt, type PathPoint } from '../eclipses/path';
 import { approxDistanceKm, bearingDeg } from '../spots/grid';
 import type { LocalCircumstances } from './types';
 
@@ -48,6 +48,26 @@ const BEARING_LEAD_MS = 60_000;
  * teu pas.
  */
 const SPEED_HALF_WINDOW_MS = 5_000;
+
+/**
+ * Finestra de reculada quan l'eix ja ha deixat de tocar la Terra.
+ *
+ * El 2028 a València l'anularitat local continua uns minuts dins l'antumbra
+ * després que l'EIX geomètric s'hagi aixecat del terminador. Demanar C3+1 min
+ * torna `null`, però l'últim tram dibuixable de la trajectòria continua dient
+ * honestament per on arribava. Sis minuts cobreixen aquell cas sense anar a
+ * buscar una geometria d'una altra part de l'eclipsi.
+ */
+const TERMINATOR_LOOKBACK_MS = 6 * 60_000;
+const TERMINATOR_STEP_MS = 1_000;
+
+function lastCentralLineBefore(eclipseId: string, timeMs: number): PathPoint | null {
+  for (let delta = 0; delta <= TERMINATOR_LOOKBACK_MS; delta += TERMINATOR_STEP_MS) {
+    const point = centralLineAt(eclipseId, timeMs - delta);
+    if (point) return point;
+  }
+  return null;
+}
 
 export interface ShadowMotion {
   /**
@@ -109,7 +129,9 @@ export function computeShadowMotion(
   const { lat, lon } = circumstances.location;
 
   const before = centralLineAt(eclipseId, c2.time.getTime() - BEARING_LEAD_MS);
-  const after = centralLineAt(eclipseId, c3.time.getTime() + BEARING_LEAD_MS);
+  const afterRequestedMs = c3.time.getTime() + BEARING_LEAD_MS;
+  const directAfter = centralLineAt(eclipseId, afterRequestedMs);
+  const after = directAfter ?? lastCentralLineBefore(eclipseId, afterRequestedMs);
   if (!before || !after) return null;
 
   // El rumb cap al punt on és el centre de l'ombra un minut abans de la teva
@@ -120,8 +142,16 @@ export function computeShadowMotion(
 
   // Velocitat instantània: interval curt centrat al màxim.
   const maxMs = max.time.getTime();
-  const s0 = centralLineAt(eclipseId, maxMs - SPEED_HALF_WINDOW_MS);
-  const s1 = centralLineAt(eclipseId, maxMs + SPEED_HALF_WINDOW_MS);
+  let s0 = centralLineAt(eclipseId, maxMs - SPEED_HALF_WINDOW_MS);
+  let s1 = centralLineAt(eclipseId, maxMs + SPEED_HALF_WINDOW_MS);
+  const terminatorFallback = directAfter === null || s0 === null || s1 === null;
+  if (!s0 || !s1) {
+    // Prop del terminador es mesura l'últim interval finit disponible. La
+    // interfície no publicarà la xifra —`speedDiverging` queda cert—, però el
+    // valor manté l'objecte complet per als consumidors que calculen geometria.
+    s1 = lastCentralLineBefore(eclipseId, maxMs + SPEED_HALF_WINDOW_MS);
+    s0 = s1 ? lastCentralLineBefore(eclipseId, s1.timeMs - SPEED_HALF_WINDOW_MS * 2) : null;
+  }
   if (!s0 || !s1) return null;
 
   const km = approxDistanceKm(s0.lat, s0.lon, s1.lat, s1.lon);
@@ -140,7 +170,7 @@ export function computeShadowMotion(
     speedKmh,
     // Per sobre d'aquest llindar la xifra ja no informa de res: som al tram on
     // l'ombra abandona la Terra.
-    speedDiverging: speedKmh > 20_000 || sunAltitudeDeg < 4,
+    speedDiverging: terminatorFallback || speedKmh > 20_000 || sunAltitudeDeg < 4,
     watchFromUtc,
     // Per sota d'uns vuit graus el capvespre ja domina l'horitzó de ponent i
     // la paret d'ombra s'hi confon.

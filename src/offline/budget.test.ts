@@ -234,7 +234,17 @@ function walk(dir: URL, prefix = ''): string[] {
  * de l'app aquest cas el resol el `navigateFallback`. Cap dels quatre no fa
  * falta al camp, i per això queden fora de la comprovació d'orfandat.
  */
-const SERVER_ONLY = new Set(['robots.txt', 'sitemap.xml', '.htaccess', '404.html']);
+const SERVER_ONLY = new Set([
+  'robots.txt',
+  'sitemap.xml',
+  '.htaccess',
+  '404.html',
+  // Material editorial sota demanda: no forma part de l'app de camp i no ha
+  // d'engreixar la instal·lació offline de cada visitant.
+  'press/simulacio-eclipsi.png',
+  'press/vista-escriptori.png',
+  'press/nota-premsa-eclipsi-info.docx',
+]);
 
 const DIST = new URL('dist/', ROOT);
 const SW = new URL('sw.js', DIST);

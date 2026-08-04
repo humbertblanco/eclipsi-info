@@ -256,6 +256,7 @@ const STRINGS = {
   },
   'map.shadowFrom': { ca: 'L’ombra arriba per', es: 'La sombra llega por' },
   'map.shadowSpeed': { ca: 'Velocitat de l’ombra', es: 'Velocidad de la sombra' },
+  'map.shadowVeryFast': { ca: 'Molt ràpida', es: 'Muy rápida' },
   'map.sunAzimuth': { ca: 'El Sol al màxim, cap a', es: 'El Sol en el máximo, hacia' },
   'map.overTerrain': { ca: 'Marge sobre el terreny', es: 'Margen sobre el terreno' },
   'map.terrainBlocksMax': {

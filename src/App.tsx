@@ -298,6 +298,8 @@ function parseHashRoute(hash: string): HashRoute {
   if (hash === HASH_BY_TAB.map) return { tab: 'map', section: null, view: 'band' };
   if (hash === HASH_BY_TAB.sky) return { tab: 'sky', section: null, view: null };
   if (hash === HASH_BY_TAB.about) return { tab: 'about', section: null, view: null };
+  if (hash === `${HASH_BY_TAB.about}/premsa`)
+    return { tab: 'about', section: 'premsa', view: null };
   if (hash === HASH_BY_TAB.guide) return { tab: 'guide', section: null, view: null };
   // La secció viatja SENSE el prefix «guia-» de l'àncora del DOM: el fragment
   // és una adreça pública i el prefix és un detall del marcatge. Si la clau no
@@ -630,7 +632,9 @@ function Shell() {
         return;
       }
       setTab(next.tab);
-      setGuideSection(next.tab === 'guide' ? next.section : null);
+      // `section` també és l'encàrrec d'aterratge de «Premsa». El nom històric
+      // de l'estat es conserva per no escampar un canvi purament mecànic.
+      setGuideSection(next.tab === 'guide' || next.tab === 'about' ? next.section : null);
       // La vista del mapa d'aquella entrada: així «enrere» no torna només a la
       // pestanya sinó a la vista que s'hi estava mirant.
       if (next.view !== null) {
@@ -1117,6 +1121,7 @@ function Shell() {
             <Suspense fallback={<div className="screen screen--full" />}>
               <AboutScreen
                 locale={locale}
+                initialSection={guideSection}
                 /*
                   L'enllaç de seguretat de la pàgina porta a la SECCIÓ de la
                   guia, no a la pestanya a seques: aterrar al principi d'una

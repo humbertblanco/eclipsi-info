@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge, Button, Card } from '../../ui';
 import type { Locale } from '../../i18n';
 import { ab, ABOUT_AUTHORS, type AboutStringKey } from './strings';
@@ -28,6 +28,8 @@ import './about.css';
  */
 export interface AboutScreenProps {
   locale: Locale;
+  /** Secció profunda demanada per l'URL; avui només pot ser `premsa`. */
+  initialSection?: string | null;
   /**
    * Obre la guia per la secció de seguretat ocular. Opcional a posta: sense
    * el cablatge, l'enllaç es renderitza com a `<a href="#/guia/safety">` i la
@@ -42,6 +44,7 @@ export interface AboutScreenProps {
  * App.tsx. Es compon aquí, un sol cop, i no dins del JSX.
  */
 const BRAND_BASE = `${import.meta.env.BASE_URL}brand/`;
+const PRESS_BASE = `${import.meta.env.BASE_URL}press/`;
 
 interface PressAsset {
   file: string;
@@ -106,8 +109,19 @@ function CopyBlock({ label, text, locale }: CopyBlockProps) {
   );
 }
 
-export function AboutScreen({ locale, onOpenGuideSafety }: AboutScreenProps) {
+export function AboutScreen({ locale, initialSection, onOpenGuideSafety }: AboutScreenProps) {
   const safetyLabel = ab('safety.link', locale);
+
+  useEffect(() => {
+    if (initialSection !== 'premsa') return;
+    // Després de muntar la ruta mandrosa, deixa que el navegador col·loqui la
+    // capçalera i aterra directament. En una pàgina llarga, animar des del peu
+    // fins aquí fa perdre el context i deixa les eines assistives "en trànsit".
+    const frame = requestAnimationFrame(() => {
+      document.getElementById('premsa')?.scrollIntoView({ behavior: 'auto', block: 'start' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [initialSection]);
 
   return (
     <div className="screen screen--about">
@@ -202,14 +216,57 @@ export function AboutScreen({ locale, onOpenGuideSafety }: AboutScreenProps) {
       </div>
 
       {/* --- Premsa: la dada, els textos per enganxar, els actius, el contacte. */}
-      <aside className="about__side">
+      <aside id="premsa" className="about__side" aria-labelledby="premsa-title">
         <Card>
           <div className="about__presshead">
             <span className="about__overline">{ab('press.overline', locale)}</span>
             <Badge tone="info">{ab('press.badge', locale)}</Badge>
           </div>
-          <h3 className="about__blocktitle">{ab('press.title', locale)}</h3>
+          <h3 id="premsa-title" className="about__blocktitle">{ab('press.title', locale)}</h3>
           <p className="about__p">{ab('press.fact', locale)}</p>
+
+          <div className="about__mediakit">
+            <span className="about__overline">{ab('media.overline', locale)}</span>
+            <p className="about__assetsnote">{ab('media.note', locale)}</p>
+            <div className="about__mediagrid">
+              <figure className="about__media">
+                <img
+                  src={`${PRESS_BASE}simulacio-eclipsi.png`}
+                  alt={ab('media.simulationAlt', locale)}
+                  width="1122"
+                  height="1402"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <figcaption>
+                  <span>{ab('media.simulation', locale)}</span>
+                  <a href={`${PRESS_BASE}simulacio-eclipsi.png`} download>
+                    {ab('media.download', locale)}
+                  </a>
+                </figcaption>
+              </figure>
+              <figure className="about__media">
+                <img
+                  src={`${PRESS_BASE}vista-escriptori.png`}
+                  alt={ab('media.desktopAlt', locale)}
+                  width="1448"
+                  height="1086"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <figcaption>
+                  <span>{ab('media.desktop', locale)}</span>
+                  <a href={`${PRESS_BASE}vista-escriptori.png`} download>
+                    {ab('media.download', locale)}
+                  </a>
+                </figcaption>
+              </figure>
+            </div>
+            <a className="about__pressrelease" href={`${PRESS_BASE}nota-premsa-eclipsi-info.docx`} download>
+              {ab('media.release', locale)}
+              <span>DOCX</span>
+            </a>
+          </div>
 
           <CopyBlock
             label={ab('press.oneLinerLabel', locale)}

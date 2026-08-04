@@ -59,6 +59,7 @@ import {
 import { CREDITS, PRIVACY_NOTE, SOURCES_HEADING } from './SiteFooter';
 import type { EclipseSample, GeoLocation } from '../core/astro/types';
 import { CloudPanel, useCloudOutlook } from '../features/weather';
+import { BandPosition } from '../features/eclipse-visuals/BandPosition';
 import {
   bearingToCardinal,
   computeDurationGradient,
@@ -962,6 +963,15 @@ export function MapScreen({
                 <EphemerisTable circumstances={circumstances} horizon={horizon} locale={locale} />
               </div>
 
+              {detail?.limit && (
+                <BandPosition
+                  limit={detail.limit}
+                  toCenterKm={detail.toCenterKm}
+                  limitUncertaintyKm={detail.limitUncertaintyKm}
+                  locale={locale}
+                />
+              )}
+
               <LimitBlock
                 limit={detail?.limit ?? null}
                 toCenterKm={detail?.toCenterKm ?? null}
@@ -1434,7 +1444,11 @@ function ShadowBlock({ shadow, locale }: { shadow: ShadowMotion | null; locale: 
       />
       <Stat
         label={s('map.shadowSpeed', locale)}
-        value={`${formatDecimal(shadow.speedKmh, 0, locale)} km/h`}
+        value={
+          shadow.speedDiverging
+            ? s('map.shadowVeryFast', locale)
+            : `${formatDecimal(shadow.speedKmh, 0, locale)} km/h`
+        }
       />
     </div>
   );

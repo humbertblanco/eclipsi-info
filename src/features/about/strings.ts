@@ -127,11 +127,30 @@ const STRINGS = {
     es: 'Descripción de un párrafo',
   },
   'press.paragraph': {
-    ca: 'El 12 d’agost de 2026 un eclipsi total de Sol creuarà la península, el primer amb totalitat visible des d’aquí des del 1905, amb el Sol a pocs graus de l’horitzó. eclipsi.info calcula al mateix dispositiu, per a les coordenades i l’altitud de cadascú, les hores de contacte i els segons reals de totalitat: traça l’horitzó en 360° amb el model del terreny i descompta el que tapa cada carena — que amb el Sol tan baix pot ser la totalitat sencera. Funciona sense connexió un cop preparat, no envia la ubicació enlloc i és de codi obert. Fet per Humbert Blanco i Damos en el Blanco.',
-    es: 'El 12 de agosto de 2026 un eclipse total de Sol cruzará la península, el primero con totalidad visible desde aquí desde 1905, con el Sol a pocos grados del horizonte. eclipsi.info calcula en el propio dispositivo, para las coordenadas y la altitud de cada uno, las horas de contacto y los segundos reales de totalidad: traza el horizonte en 360° con el modelo del terreno y descuenta lo que tapa cada sierra — que con el Sol tan bajo puede ser la totalidad entera. Funciona sin conexión una vez preparado, no envía la ubicación a ningún sitio y es de código abierto. Hecho por Humbert Blanco y Damos en el Blanco.',
+    ca: 'El 12 d’agost de 2026 un eclipsi total de Sol creuarà la península, el primer amb totalitat visible des d’aquí des del 1905, amb el Sol a pocs graus de l’horitzó. eclipsi.info calcula al mateix dispositiu, per a les coordenades i l’altitud de cadascú, les hores de contacte i els segons reals de totalitat: traça l’horitzó en 360° amb el model del terreny i descompta el que tapa cada carena — que amb el Sol tan baix pot ser la totalitat sencera. Funciona sense connexió un cop preparat, no desa la ubicació fora del dispositiu i només la comparteix amb els serveis necessaris per posar nom al lloc i donar la previsió. És de codi obert. Fet per Humbert Blanco i Damos en el Blanco.',
+    es: 'El 12 de agosto de 2026 un eclipse total de Sol cruzará la península, el primero con totalidad visible desde aquí desde 1905, con el Sol a pocos grados del horizonte. eclipsi.info calcula en el propio dispositivo, para las coordenadas y la altitud de cada uno, las horas de contacto y los segundos reales de totalidad: traza el horizonte en 360° con el modelo del terreno y descuenta lo que tapa cada sierra — que con el Sol tan bajo puede ser la totalidad entera. Funciona sin conexión una vez preparado, no guarda la ubicación fuera del dispositivo y solo la comparte con los servicios necesarios para poner nombre al lugar y dar la previsión. Es de código abierto. Hecho por Humbert Blanco y Damos en el Blanco.',
   },
   'press.copy': { ca: 'Copia', es: 'Copia' },
   'press.copied': { ca: 'Copiat', es: 'Copiado' },
+
+  /* --- material editorial --------------------------------------------------- */
+  'media.overline': { ca: 'Material de premsa', es: 'Material de prensa' },
+  'media.note': {
+    ca: 'Imatges en alta resolució i nota de premsa, preparades per a ús editorial.',
+    es: 'Imágenes en alta resolución y nota de prensa, preparadas para uso editorial.',
+  },
+  'media.simulation': { ca: 'Simulació de l’eclipsi al mòbil', es: 'Simulación del eclipse en el móvil' },
+  'media.simulationAlt': {
+    ca: 'Mòbil amb el recorregut simulat de l’eclipsi sobre una plaça',
+    es: 'Móvil con el recorrido simulado del eclipse sobre una plaza',
+  },
+  'media.desktop': { ca: 'Vista de l’aplicació a l’escriptori', es: 'Vista de la aplicación en escritorio' },
+  'media.desktopAlt': {
+    ca: 'Pantalla d’escriptori amb el compte enrere i la durada visible de l’eclipsi',
+    es: 'Pantalla de escritorio con la cuenta atrás y la duración visible del eclipse',
+  },
+  'media.download': { ca: 'Descarrega', es: 'Descarga' },
+  'media.release': { ca: 'Descarrega la nota de premsa', es: 'Descarga la nota de prensa' },
 
   /* --- actius de marca ------------------------------------------------------- */
   'assets.overline': { ca: 'Actius de marca', es: 'Activos de marca' },

@@ -18,6 +18,9 @@ import { ClockDriftNotice } from '../features/clock';
 import { ShareButton } from '../features/share';
 import { CountdownView } from '../features/countdown';
 import { useCloudOutlook } from '../features/weather';
+import { EclipseFingerprint } from '../features/eclipse-visuals/EclipseFingerprint';
+import { ShadowApproach } from '../features/eclipse-visuals/ShadowApproach';
+import { computeShadowMotion } from '../core/astro/shadow';
 import { Countdown } from '../ui/eclipse/Countdown';
 import { skyStateFromSample, toCss } from '../core/sky';
 import { getEclipse } from '../core/eclipses/catalog';
@@ -213,6 +216,13 @@ export function CountdownScreen({
     return toCss(horizon);
   }, [contacts]);
 
+  // Com tots els ganxos d'aquesta pantalla, viu abans del retorn sense lloc:
+  // la ubicació arriba després de la primera pintada i l'ordre no pot canviar.
+  const shadowMotion = useMemo(
+    () => (circumstances ? computeShadowMotion(eclipseId, circumstances) : null),
+    [eclipseId, circumstances],
+  );
+
   if (!location || !circumstances || !contacts) {
     return (
       <div className="screen">
@@ -336,12 +346,36 @@ export function CountdownScreen({
           />
         </Card>
 
-        {/* La simulació completa i el veredicte llarg. Qui hi arriba ja vol el detall. */}
+        {/*
+          L'ombra i la franja són UNA SOLA EXPLICACIÓ. El gràfic respon «des
+          d'on arriba» i la frase següent tradueix aquell moviment al territori
+          que travessa. Separats en columnes semblaven dues dades independents;
+          junts es llegeixen en l'ordre causal correcte.
+        */}
+        {shadowMotion && (
+          <ShadowApproach
+            motion={shadowMotion}
+            circumstances={circumstances}
+            locale={locale}
+          />
+        )}
+        <p className="screen__note">{eclipse.spain[locale]}</p>
+
+        {/* La simulació converteix l'explicació anterior en una imatge. */}
         <SimulationView
           location={location}
           eclipseId={eclipseId}
           locale={locale}
           horizon={horizon}
+        />
+
+        {/* L'empremta TANCA la columna. És el resum personal que queda després
+            d'haver entès les dades, l'arribada de l'ombra i la simulació. */}
+        <EclipseFingerprint
+          circumstances={circumstances}
+          horizon={horizon}
+          verdict={verdict}
+          locale={locale}
         />
       </div>
 
@@ -464,7 +498,6 @@ export function CountdownScreen({
             </span>
           )}
         </p>
-        <p className="screen__note">{eclipse.spain[locale]}</p>
         <p className="screen__note">{s('home.sources', locale)}</p>
       </div>
     </div>

@@ -168,6 +168,73 @@ button.about__guidelink {
   flex-wrap: wrap;
 }
 
+/* La capçalera sticky no ha de tapar el títol quan s'hi arriba des del peu. */
+#premsa { scroll-margin-top: calc(var(--sp-13) + var(--sp-4)); }
+
+.about__mediakit { margin-top: var(--sp-6); }
+
+.about__mediagrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.about__media {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-sm);
+  background: var(--surface-card-hover);
+}
+
+.about__media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.about__media:first-child img { object-position: center 32%; }
+
+.about__media figcaption {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  font-size: var(--fs-micro);
+  line-height: var(--lh-normal);
+  color: var(--text-secondary);
+}
+
+.about__media a,
+.about__pressrelease { color: var(--text-link); }
+
+.about__pressrelease {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-top: var(--sp-3);
+  padding: var(--sp-4);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-sm);
+  background: var(--surface-card-hover);
+  font-size: var(--fs-caption);
+  text-decoration: none;
+}
+
+.about__pressrelease span {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
+}
+
+.about__pressrelease:hover { border-color: var(--border-strong); }
+
 /* Text per copiar: un esglaó de superfície per damunt de la targeta
    (ink-700), com els requadres de la guia — és un objecte, no un paràgraf. */
 .about__copyblock {
@@ -250,6 +317,10 @@ button.about__guidelink {
   .screen.screen--about {
     max-width: calc(var(--sp-13) * 5 + 2 * var(--gutter-web));
   }
+}
+
+@media (max-width: 420px) {
+  .about__mediagrid { grid-template-columns: 1fr; }
 }
 
 /* ------------------------------------------------- escriptori: >= 1180 */

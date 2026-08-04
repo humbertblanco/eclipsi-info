@@ -50,6 +50,8 @@ import { renderTrajectory } from '../sim/renderTrajectory';
 import { TRAJECTORY_SAMPLES, trajectorySamples } from '../sim/samples';
 import { buildShareLink } from './link';
 import { sh } from './strings';
+import { buildFingerprintModel } from '../eclipse-visuals/model';
+import { drawFingerprint } from '../eclipse-visuals/drawFingerprint';
 import {
   buildThumbnailModel,
   resolveThumbnailTerrain,
@@ -357,6 +359,17 @@ export function drawShareCard(
     });
   }
   ctx.restore();
+
+  // Segell del punt. Comparteix model amb l'SVG de la portada: el cel gran
+  // continua sent la imatge principal i l'empremta només el signa. Viu sobre
+  // la imatge —on una superfície translúcida sí que té sentit— i deixa lliure
+  // el centre, que és on `renderEclipseSky` situa el Sol.
+  const fingerprint = buildFingerprintModel(
+    model.circumstances,
+    model.terrain === 'measured' ? model.profile : null,
+    model.verdict,
+  );
+  drawFingerprint(ctx, fingerprint, CARD_WIDTH - 92, 82, 132, palette);
 
   // Franja de text.
   ctx.fillStyle = palette.bgPage;
