@@ -45,16 +45,38 @@
  * amb la seva idea de què és una pantalla, són pitjor que cap. Si algun dia
  * s'ha de moure aquí, s'ha de treure d'allà en el mateix commit.
  *
- * No demana consentiment ni el canvia. El consentiment va DENEGAT per defecte
- * des d'`index.html` (sense cookies, sense senyals publicitaris) i és una
- * decisió de producte, no un detall d'implementació: aquesta app no posa un
- * bàner de cookies perquè no en fa servir cap.
+ * No DEMANA consentiment: qui el demana és `features/consent/`, que és qui té
+ * paraules i idioma. Aquest fitxer només l'APLICA, amb `updateConsent()`, i ho
+ * fa perquè la frase de dalt segueixi sent certa — si la crida a
+ * `gtag('consent', …)` visqués al component del bàner, hi hauria dos fitxers
+ * que saben que Google Analytics existeix i el dia que es canviï de proveïdor
+ * caldria trobar-los tots dos.
+ *
+ * ── EL BÀNER: QUÈ HI HAVIA ABANS I PER QUÈ HA CANVIAT ───────────────────────
+ *
+ * Fins al 4 d'agost de 2026 aquí hi deia que aquesta app no posava bàner de
+ * cookies «perquè no en fa servir cap», i era veritat: consentiment denegat per
+ * defecte i pings sense galeta. El preu, que no s'havia escrit enlloc, era que
+ * la xifra d'«Usuaris» de GA4 no eren persones sinó càrregues de pàgina, perquè
+ * sense galeta no hi ha `client_id` que duri d'una visita a l'altra.
+ *
+ * La decisió nova és tenir la xifra de persones i pagar el bàner. El que NO ha
+ * canviat: `allow_google_signals` segueix a fals i els senyals publicitaris
+ * segueixen denegats per sempre i sense pregunta, perquè d'això no se'n demana
+ * permís — simplement no es fa. L'única casella que el bàner pot obrir és
+ * `analytics_storage`.
+ *
+ * I EL PER DEFECTE SEGUEIX SENT DENEGAT, a `index.html`, abans que carregui res.
+ * Això és el que fa que la galeta no existeixi fins que algú digui que sí, i
+ * l'ordre importa: si el valor per defecte es posés després de carregar
+ * `gtag.js`, hi hauria una finestra de mil·lisegons amb galeta.
  */
 
 import {
   installAnalytics,
   safePageLocation,
   type AnalyticsEventName,
+  type ConsentChoice,
   type RejectionReason,
 } from '../core/analytics';
 
@@ -65,7 +87,16 @@ import {
  * la de Google, pot ser un tros de codi que hi ha posat una extensió, o pot no
  * ser-hi. Les tres coses són normals.
  */
-type GtagFn = (command: 'event', name: string, params: Record<string, string>) => void;
+interface GtagFn {
+  (command: 'event', name: string, params: Record<string, string>): void;
+  /**
+   * La segona i última ordre que fem servir. `'update'` i mai `'default'`: el
+   * valor per defecte el posa `index.html` abans de carregar res, i tornar-lo a
+   * declarar des d'aquí seria declarar-lo TARD, que és precisament el forat que
+   * el Consent Mode existeix per tapar.
+   */
+  (command: 'consent', action: 'update', params: Record<string, string>): void;
+}
 
 /**
  * Els globals que ens interessen, llegits de `globalThis` i no de `window`.
@@ -91,6 +122,49 @@ function readGtag(): GtagFn | null {
 function readHref(): string | null {
   const href = scope().location?.href;
   return typeof href === 'string' ? href : null;
+}
+
+/**
+ * Aplica una resposta de l'usuari al Consent Mode de Google, en calent.
+ *
+ * ── PER QUÈ «EN CALENT» I NO «A LA PRÒXIMA CÀRREGA» ─────────────────────────
+ *
+ * Perquè si no, el sí de l'usuari no serviria per a la sessió en què l'ha dit:
+ * hauria d'acceptar, tancar l'app i tornar-hi perquè comencés a comptar. Amb
+ * `consent update`, gtag.js escriu la galeta i reenvia el que tenia en cua al
+ * moment, sense recarregar res.
+ *
+ * ── NOMÉS TOCA UNA CASELLA, I ÉS A POSTA ────────────────────────────────────
+ *
+ * `analytics_storage` i cap més. `ad_storage`, `ad_user_data` i
+ * `ad_personalization` es queden denegats per sempre des d'`index.html` i el
+ * bàner ni tan sols els menciona, perquè no s'ofereix cap tracte on s'activin:
+ * un bàner que demana permís per a coses que no penses fer és un bàner que
+ * menteix.
+ *
+ * ── I FALLA CALLANT, COM LA RESTA DEL FITXER ────────────────────────────────
+ *
+ * Sense `gtag` no hi ha res a fer i no és cap error (bloquejador, xarxa
+ * caiguda, script que encara no ha arribat). El que NO pot passar és que un
+ * bloquejador que substitueix `gtag` per codi que llança s'endugui la pantalla
+ * quan l'usuari acaba de prémer un botó — per això el `try`.
+ *
+ * Compte amb una cosa que aquesta funció NO fa: desar la resposta. Qui la desa
+ * és `features/consent/useConsent.ts`. Si es desés aquí, la clau de
+ * localStorage quedaria escrita per un fitxer que pot no arribar a executar-se
+ * mai (vegeu el `return` de dalt) i hi hauria consentiments donats que no es
+ * recordarien.
+ */
+export function updateConsent(choice: ConsentChoice): void {
+  const gtag = readGtag();
+  if (gtag === null) return;
+
+  try {
+    gtag('consent', 'update', { analytics_storage: choice });
+  } catch {
+    // Mateix motiu que a `send()`: hi ha bloquejadors que no treuen `gtag`,
+    // el substitueixen per un tros de codi que llança.
+  }
 }
 
 export interface GtagAnalyticsOptions {

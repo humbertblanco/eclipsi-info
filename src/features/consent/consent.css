@@ -1,0 +1,188 @@
+/* ============================================================================
+   El bàner de cookies.
+
+   TRES DECISIONS QUE VAN LLIGADES I NO ES PODEN TOCAR PER SEPARAT:
+
+   1. VA A BAIX I ENGANXAT A LA FINESTRA (`position: fixed`), no a dalt. A dalt
+      hi ha l'avís de versió nova i la capçalera, i a la portada la meitat de
+      dalt és on hi ha la xifra de segons de totalitat — que és el producte.
+
+   2. PER DAMUNT DE TOT (z-index 70). L'avís de versió és el 60 i la capçalera
+      el 20. Si quedés per sota de la barra de pestanyes, els botons serien
+      inabastables al mòbil.
+
+   3. I DEIXA LLOC A LA BARRA DE PESTANYES, que també és fixa i també és a
+      baix. Sense el `bottom` calculat, el bàner se la menja i no es pot
+      navegar amb ell obert — que seria convertir-lo en un modal per accident,
+      exactament el que ConsentBanner.tsx explica que no vol ser.
+
+   CAP AMBRE, ENLLOC. Regla 3 del projecte: l'ambre és de la xifra que decideix.
+   Els dos botons són idèntics —mateixa vora, mateix fons, mateixa mida, mateix
+   pes— i això no és mandra de disseny: si «Accepta» cridés més que «No,
+   gràcies», el consentiment no seria lliure i no valdria legalment.
+   ========================================================================== */
+
+.consent {
+  position: fixed;
+  left: 0;
+  right: 0;
+  /* Per damunt de l'avís de versió (60) i de la capçalera (20). */
+  z-index: 70;
+
+  /*
+    L'ALÇADA DE LA BARRA DE PESTANYES, tal com la calcula `.shell` una sola
+    vegada a `screens.css`. `--bar-bottom` JA porta l'osca de la pantalla a
+    dins (`env(safe-area-inset-bottom)`): tornar-la a sumar aquí aixecaria el
+    bàner un dit per damunt de la barra a cada iPhone amb osca.
+
+    De propina, en mode immersiu (la càmera oberta) `.shell--immersive` posa
+    `--bar-bottom: 0px` i el bàner baixa sol fins al fons, sense cap regla
+    pròpia i sense saber què és el mode immersiu.
+
+    El `0px` de reserva és per si algun dia es pinta fora de `.shell`: sense
+    ell, una variable buida deixaria la declaració invàlida i el bàner se
+    n'aniria a `bottom: auto`, que és enmig de la pantalla.
+  */
+  bottom: var(--bar-bottom, 0px);
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+
+  padding: var(--sp-5);
+  border-top: var(--bw-hair) solid var(--border-subtle);
+  /* Opac i no translúcid, pel mateix motiu que `.off-update`: a sota hi passa
+     el contingut que es desplaça, i amb vidre el text es llegia damunt de les
+     xifres. */
+  background: var(--bg-elevated);
+  box-shadow: var(--sh-2);
+}
+
+.consent__text {
+  /*
+    EL TEXT ES QUEDA L'ESPAI SOBRANT, ELS BOTONS NOMÉS EL SEU. Amb `flex: 1 1
+    auto` als dos, en pantalles estretes els botons li prenien amplada que el
+    text necessitava més.
+
+    QUI PARTEIX LES LÍNIES, PERÒ, ÉS EL `max-width`, NO AIXÒ. Que la frase de
+    la ubicació ocupi dues línies a l'escriptori és el comportament CORRECTE i
+    volgut: 62 caràcters és la mesura on una línia es llegeix d'una passada, i
+    una frase de 108 caràcters n'ha d'ocupar dues. Queda buit a la dreta i està
+    bé — l'alternativa és una línia de text de mig metre.
+  */
+  flex: 1 1 20rem;
+  max-width: 62ch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/*
+ * EL TÍTOL, EN RÈTOL PETIT I NO EN TITULAR.
+ *
+ * Diu «Cookies» i prou. En cos de titular, una sola paraula genèrica es
+ * menjaria la jerarquia del bàner i competiria amb la xifra de segons que hi ha
+ * a la pantalla de darrere — que és el producte. Aquí fa d'etiqueta de secció:
+ * situa, i se n'aparta.
+ */
+.consent__title {
+  margin: 0;
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.consent__body {
+  margin: 0;
+  font: var(--text-body-sm);
+  color: var(--text-body);
+}
+
+/*
+ * LA GARANTIA, QUE ÉS QUI ES QUEDA EL PES.
+ *
+ * Va en el color del text principal i no en gris apagat, i és l'única línia del
+ * bàner que no és de segon pla. Ordre deliberat de la jerarquia: el rètol diu
+ * de què va, el cos diu què es fa, i això diu què NO es fa — que és l'única
+ * part que algú d'aquesta app llegirà si només en llegeix una.
+ */
+.consent__promise {
+  margin: 0;
+  font: var(--text-label);
+  color: var(--text-primary);
+}
+
+.consent__actions {
+  display: flex;
+  gap: var(--sp-3);
+  /* Només el seu ample: qui s'estira és el text (vegeu `.consent__text`). */
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
+
+.consent__btn {
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-6);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-body);
+  font: var(--text-label);
+  cursor: pointer;
+  transition: var(--t-color);
+}
+.consent__btn:hover { background: var(--surface-card-hover); }
+
+@media (max-width: 640px) {
+  .consent { align-items: stretch; }
+  /* Aquí sí que ocupen la línia sencera: quan cauen a sota, dos botons
+     arrapats a la dreta amb un pam de buit a l'esquerra no es toquen bé amb el
+     polze. I a mitges EXACTES, que és el que impedeix que cap dels dos sembli
+     el principal. */
+  .consent__actions { flex: 1 1 100%; justify-content: stretch; }
+  .consent__btn { flex: 1 1 0; }
+}
+
+/*
+ * ESCRIPTORI: LA BARRA DE PESTANYES DEIXA DE SER INFERIOR.
+ *
+ * A partir d'aquí `screens.css` converteix `.shell__nav` en un carril VERTICAL
+ * a l'esquerra (`width: var(--rail-w)`, de dalt a baix). Dues conseqüències que
+ * s'han d'arreglar totes dues o no se n'arregla cap:
+ *
+ *   1. Ja no hi ha res a baix, però `--bar-bottom` segueix valent l'alçada de
+ *      la barra del mòbil —no es posa a zero aquí— i el bàner quedaria surant
+ *      a mig pam del fons. Va a `bottom: 0`.
+ *   2. El carril ocupa l'esquerra, i un bàner que arrenca a `left: 0` li
+ *      passaria per sobre tapant les pestanyes.
+ *
+ * El punt de tall és el MATEIX que el de `screens.css` (900 px d'ample i 500
+ * d'alçada), i ha de continuar sent-ho: si divergissin, hi hauria una franja de
+ * mides on el bàner es pensa que hi ha carril i el carril no hi és.
+ */
+@media (min-width: 900px) and (min-height: 500px) {
+  .consent {
+    bottom: 0;
+    left: var(--rail-w, 0px);
+    padding: var(--sp-5) var(--gutter-web);
+    align-items: center;
+  }
+}
+
+/* --- el botó del peu per canviar d'opinió ---------------------------------
+   Ha de semblar el que és: un enllaç més de la línia de meta del peu, ni més
+   ni menys visible que «Codi obert». Per això calca l'aparença d'un enllaç en
+   comptes de portar la del botó.                                            */
+.consent-change {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--text-link);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.consent-change:hover { color: var(--text-link-hover); }

@@ -174,9 +174,21 @@
             fragment (#/mapa…), que és el que de debò diu quina pantalla es
             mira.
 
-         2) SENSE COOKIES NI SENYALS PUBLICITARIS. Consentiment denegat per
-            defecte (Consent Mode: pings sense cookie) i google_signals
-            fora: audiència agregada sense bàner de cookies ni perfilat.
+         2) SENSE GALETA FINS QUE ALGÚ DIGUI QUE SÍ, I MAI CAP SENYAL
+            PUBLICITARI. El consentiment arrenca DENEGAT (Consent Mode: pings
+            sense galeta) i google_signals queda fora per sempre.
+
+            AIXÒ VA CANVIAR EL 4 D'AGOST DE 2026 i aquí hi deia «sense bàner de
+            cookies». Hi havia bàner zero perquè no hi havia galeta cap, i el
+            preu era que la xifra d'«Usuaris» de GA4 no eren persones sinó
+            càrregues de pàgina: sense galeta no hi ha client_id que duri d'una
+            visita a l'altra, i qui torna dimecres compta com algú nou. Ara hi
+            ha bàner (features/consent/) i la galeta existeix NOMÉS si s'accepta.
+
+            El que NO s'ha mogut ni es mou: ad_storage, ad_user_data i
+            ad_personalization es queden denegats per sempre i el bàner ni els
+            menciona, perquè d'això no se'n demana permís — simplement no es fa.
+            L'única casella que el sí de l'usuari pot obrir és analytics_storage.
 
          El script extern no és al precache: sense xarxa simplement no
          carrega i l'app no se n'assabenta. -->
@@ -190,6 +202,47 @@
         ad_user_data: 'denied',
         ad_personalization: 'denied'
       });
+      // EL SÍ QUE JA ESTAVA DONAT, APLICAT ABANS DE LA PRIMERA VISTA.
+      //
+      // PER QUÈ AQUÍ I NO AL BUNDLE. El `gtag('config')` de sota envia el
+      // primer `page_view` immediatament, i el bundle de React encara triga
+      // centenars de mil·lisegons a arrencar. Si el consentiment s'apliqués
+      // només des de `features/consent/`, la PRIMERA vista de cada sessió
+      // sortiria sense galeta: l'usuari que ja va dir que sí es tornaria a
+      // comptar com a persona nova a cada visita, que és exactament el
+      // problema que el bàner venia a resoldre.
+      //
+      // AIXÒ ÉS UN MIRALL, I EL MIRALL TÉ VIGILANT. La font de la veritat és
+      // `src/core/analytics/consent.ts`; aquestes línies en són una còpia
+      // mínima perquè han de córrer abans que existeixi cap mòdul. Perquè les
+      // dues no divergeixin en silenci hi ha `src/analytics/consent-agreement.test.ts`,
+      // que llegeix AQUEST fitxer i compara la clau i els terminis amb els del
+      // nucli. Si toques un número d'aquí, el test peta; és la seva feina.
+      //
+      // I FALLA TANCADA, com el nucli: qualsevol cosa rara —sense clau, JSON
+      // trencat, data absent, data al futur, consentiment caducat— es queda amb
+      // el `denied` per defecte de dalt.
+      try {
+        var eclipsiRaw = localStorage.getItem('eclipsi.consent');
+        if (eclipsiRaw) {
+          var eclipsiSaved = JSON.parse(eclipsiRaw);
+          var eclipsiAge = Date.now() - eclipsiSaved.at;
+          if (
+            eclipsiSaved.choice === 'granted' &&
+            typeof eclipsiSaved.at === 'number' &&
+            isFinite(eclipsiSaved.at) &&
+            eclipsiAge > -300000 &&
+            eclipsiAge <= 31536000000
+          ) {
+            gtag('consent', 'update', { analytics_storage: 'granted' });
+          }
+        }
+      } catch (e) {
+        // localStorage pot llançar (Safari privat, política d'empresa) i un
+        // JSON trencat també. Cap de les dues coses pot endur-se la pàgina per
+        // una mètrica: sense consentiment aplicat, es mesura sense galeta.
+      }
+
       gtag('js', new Date());
       function eclipsiPage() {
         return location.origin + location.pathname + location.hash;

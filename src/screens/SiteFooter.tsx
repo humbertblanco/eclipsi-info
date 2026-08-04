@@ -22,8 +22,11 @@
  */
 
 import type { Locale } from '../i18n';
+import type { ConsentState } from '../core/analytics';
 import { PRIVACY_NOTE } from '../features/about/credits';
+import { cs } from '../features/consent/strings';
 import './screens.css';
+import '../features/consent/consent.css';
 
 /*
  * LA LLISTA DE FONTS JA NO S'ESCRIU AQUÍ, I ES REEXPORTA D'AQUÍ.
@@ -114,7 +117,33 @@ const AUTHORS: Author[] = [
   { name: 'Damos en el Blanco', url: 'https://damosenelblanco.com' },
 ];
 
-export function SiteFooter({ locale }: { locale: Locale }) {
+export interface SiteFooterProps {
+  locale: Locale;
+  /*
+   * L'ESTAT DEL CONSENTIMENT I COM CANVIAR-LO.
+   *
+   * Tots dos OPCIONALS, i no per comoditat: el peu s'ha de poder pintar en una
+   * prova o en una captura de premsa sense muntar l'estat del consentiment
+   * sencer. Quan no hi són, l'enllaç de cookies no existeix — que és el
+   * comportament correcte, perquè sense `onChangeConsent` seria un enllaç que
+   * no fa res.
+   */
+  consentState?: ConsentState;
+  onChangeConsent?: () => void;
+}
+
+export function SiteFooter({ locale, consentState, onChangeConsent }: SiteFooterProps) {
+  /*
+   * L'ENLLAÇ NOMÉS SURT QUAN JA S'HA CONTESTAT.
+   *
+   * Amb el bàner obert a la pantalla, un enllaç al peu que obre el bàner no és
+   * una segona porta: és el mateix comandament dues vegades, que és exactament
+   * el que ESTAT.md diu del commutador de la fitxa i el plafó de capes. Quan
+   * l'estat és `'unknown'` el bàner ja hi és (o hi serà en tancar la porta de
+   * la ubicació) i aquí no hi ha res a oferir.
+   */
+  const canChangeConsent =
+    onChangeConsent !== undefined && consentState !== undefined && consentState !== 'unknown';
   return (
     <footer className="sitefoot">
       <p className="sitefoot__by">
@@ -150,6 +179,32 @@ export function SiteFooter({ locale }: { locale: Locale }) {
         <a href={REPO_URL} target="_blank" rel="noreferrer noopener">
           {TEXT.code[locale]}
         </a>
+        {/*
+          Botó i no enllaç, perquè no navega enlloc: torna a obrir el bàner. Es
+          disfressa d'enllaç a `consent.css` perquè al peu ha de pesar el mateix
+          que «Codi obert» — ni més (seria cridar l'atenció sobre les cookies
+          més que sobre les fonts) ni menys (retirar el consentiment ha de ser
+          tan fàcil com donar-lo).
+
+          L'`aria-label` diu QUÈ hi ha contestat ara mateix: qui no veu el bàner
+          ha de poder saber-ho sense obrir-lo.
+        */}
+        {canChangeConsent && (
+          <>
+            {' · '}
+            <button
+              type="button"
+              className="consent-change"
+              onClick={onChangeConsent}
+              aria-label={cs(
+                consentState === 'granted' ? 'footer.granted' : 'footer.denied',
+                locale,
+              )}
+            >
+              {cs('footer.change', locale)}
+            </button>
+          </>
+        )}
         {BUILD_VERSION !== '' && (
           <>
             {' · '}

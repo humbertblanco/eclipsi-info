@@ -51,6 +51,20 @@ export {
 } from './track';
 
 export {
+  CONSENT_STORAGE_KEY,
+  CONSENT_MAX_AGE_MS,
+  CONSENT_FUTURE_TOLERANCE_MS,
+  isConsentChoice,
+  serializeConsent,
+  parseConsent,
+  needsDecision,
+  analyticsStorage,
+  type ConsentChoice,
+  type ConsentState,
+  type StoredConsent,
+} from './consent';
+
+export {
   waitBucket,
   durationBucket,
   terrainBucket,

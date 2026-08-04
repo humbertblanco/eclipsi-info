@@ -97,6 +97,8 @@ import { ECLIPSES } from './core/eclipses/catalog';
 import { buildShareLink, parseShareLink, type SharedPoint } from './features/share';
 import { useObserver } from './state/useObserver';
 import { UpdatePrompt } from './offline/UpdatePrompt';
+import { ConsentBanner } from './features/consent/ConsentBanner';
+import { useConsent } from './features/consent/useConsent';
 import { ConnectionBadge } from './offline/ConnectionBadge';
 import { useOnlineStatus } from './offline/useOnlineStatus';
 import { LOCALES } from './i18n';
@@ -380,6 +382,14 @@ function Shell() {
    */
   const [route] = useState(readInitialRoute);
   const [tab, setTab] = useState<Tab>(route.tab);
+  /*
+   * EL CONSENTIMENT DE COOKIES. Viu aquí i no dins del bàner perquè el peu
+   * també l'ha de tocar: qui ja ha contestat necessita poder canviar d'opinió,
+   * i un consentiment que no es pot retirar tan fàcilment com es dona no és
+   * vàlid. Dos components, un sol estat — que és la mateixa lliçó del
+   * commutador de la fitxa i el plafó de capes del mapa.
+   */
+  const consent = useConsent();
   /*
    * La secció de guia demanada pel fragment (`#/guia/safety`). És un encàrrec
    * d'ATERRATGE, no l'estat dels <details> —d'aquell n'és amo el navegador
@@ -793,6 +803,17 @@ function Shell() {
     </>
   );
 
+  /*
+   * LA PORTA DE LA UBICACIÓ ÉS OBERTA?
+   *
+   * Es calcula un sol cop i la fan servir DOS llocs: la porta mateixa i el
+   * bàner de cookies, que no ha de sortir mentre aquella hi és. La condició
+   * estava escrita en línia dins del JSX i s'ha pujat aquí precisament perquè
+   * ara la necessita algú altre: dues còpies de la mateixa condició són dues
+   * coses que un dia discreparan.
+   */
+  const introOpen = observer.needsIntro && observer.fix === null;
+
   return (
     <div
       className={
@@ -1118,7 +1139,18 @@ function Shell() {
           reduiria la imatge. Aquí baixa amb el contingut de les pantalles que
           es desplacen i no existeix a les que no.
         */}
-        {tab !== 'sky' && tab !== 'map' && <SiteFooter locale={locale} />}
+        {tab !== 'sky' && tab !== 'map' && (
+          <SiteFooter
+            locale={locale}
+            /*
+              LA PORTA PER CANVIAR D'OPINIÓ. Només es pinta quan ja hi ha una
+              resposta desada: mentre el bàner és a la pantalla, un segon
+              comandament que obre el mateix bàner no és res.
+            */
+            consentState={consent.state}
+            onChangeConsent={consent.reopen}
+          />
+        )}
       </main>
 
       {/*
@@ -1126,7 +1158,7 @@ function Shell() {
         i només mentre no hi ha cap lloc: qui torna a obrir l'app ja té el seu i
         no se li ha de tornar a preguntar.
       */}
-      {observer.needsIntro && observer.fix === null && (
+      {introOpen && (
         <LocationGate
           locale={locale}
           onUseGps={() => {
@@ -1163,6 +1195,25 @@ function Shell() {
           onClose={() => setSheetOpen(false)}
           onGoToMap={() => navigateTab('map')}
         />
+      )}
+
+      {/*
+        EL BÀNER DE COOKIES, I LA CONDICIÓ QUE L'ACOMPANYA.
+
+        NO SURT MENTRE HI HA LA PORTA DE LA UBICACIÓ. Aquella és «la primera
+        pregunta» i té pantalla sencera; posar-n'hi una segona a sota seria
+        rebre algú amb dos formularis abans d'haver-li ensenyat ni un segon de
+        totalitat. El bàner espera: sense resposta es mesura sense galeta, que
+        és el cas segur, i la pregunta arriba quan l'app ja ha dit per a què
+        serveix.
+
+        Va DESPRÉS del contingut i de la porta en l'ordre del DOM, i abans de la
+        barra de pestanyes. Amb `position: fixed` això no canvia on es pinta,
+        però sí l'ordre en què ho troba un lector de pantalla i el tabulador: la
+        resposta que ha vingut a buscar l'usuari, primer.
+      */}
+      {consent.asking && !introOpen && (
+        <ConsentBanner locale={locale} onDecide={consent.decide} />
       )}
 
       <div className="shell__nav">
