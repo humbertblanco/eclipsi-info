@@ -346,7 +346,11 @@ export function detectSunBlob(
 
   // Poda: mida i compacitat. Vegeu les constants.
   const valid = blobs.filter((b) => {
-    if (b.area > MAX_BLOB_AREA_PX) return false;
+    // L'àrea mínima s'ha de podar ABANS de triar per distància. `fitSunFix`
+    // ja rebutjava un píxel calent, però si aquell píxel era més a prop de la
+    // predicció podia guanyar aquí, apartar un Sol vàlid i fer que després el
+    // fotograma sencer acabés en null.
+    if (b.area < MIN_BLOB_AREA_PX || b.area > MAX_BLOB_AREA_PX) return false;
     return blobCompactness(b) >= MIN_COMPACTNESS;
   });
   if (valid.length === 0) return null;
@@ -737,40 +741,130 @@ export class SunRefiner {
     ctx.drawImage(video, sx, sy, side, side, 0, 0, S, S);
     const data = ctx.getImageData(0, 0, S, S).data;
 
-    // Màxim del retall i centroide dels píxels del seu sostre.
-    let peak = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      const luma = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-      if (luma > peak) peak = luma;
-    }
-    if (!(peak > 0)) return null;
-    const threshold = peak * SUN_SATURATION_FRACTION;
-
-    let sumI = 0;
-    let sumXI = 0;
-    let sumYI = 0;
-    for (let p = 0, i = 0; p < S * S; p++, i += 4) {
-      const luma = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-      if (luma < threshold) continue;
-      // Pes per excés sobre el llindar: subpíxel, com al detector coarse.
-      const weight = luma - threshold + 1e-6;
-      const x = p % S;
-      const y = (p / S) | 0;
-      sumI += weight;
-      sumXI += x * weight;
-      sumYI += y * weight;
-    }
-    if (!(sumI > 0)) return null;
+    // Si el retall s'ha hagut de cenyir a una vora, el candidat coarse ja no
+    // queda al centre del canvas de treball. Cal conservar la seva posició
+    // exacta per poder triar-ne el component i no un reflex veí.
+    const expectedX = ((videoX - sx) * S) / side - 0.5;
+    const expectedY = ((videoY - sy) * S) / side - 0.5;
+    const refined = refineSunCrop(data, S, S, { x: expectedX, y: expectedY });
+    if (refined === null) return null;
 
     // Retall → vídeo → pantalla.
-    const refinedVideoX = sx + ((sumXI / sumI + 0.5) * side) / S;
-    const refinedVideoY = sy + ((sumYI / sumI + 0.5) * side) / S;
+    const refinedVideoX = sx + ((refined.x + 0.5) * side) / S;
+    const refinedVideoY = sy + ((refined.y + 0.5) * side) / S;
     return {
       x: viewport.width / 2 + (refinedVideoX - vw / 2) * cover,
       y: viewport.height / 2 + (refinedVideoY - vh / 2) * cover,
-      peak,
+      peak: refined.peak,
     };
   }
+}
+
+export interface RefinedSunCrop {
+  /** Centroide del component triat, en píxels del retall. */
+  x: number;
+  y: number;
+  /** Pic DEL COMPONENT triat, no el màxim d'un reflex aliè. */
+  peak: number;
+  areaPx: number;
+}
+
+/**
+ * Refina un candidat dins un retall RGBA sense barrejar taques desconnectades.
+ *
+ * Abans tots els píxels del 3% superior votaven en un sol centroide. Dos
+ * objectes perfectament bons —el Sol i un petit flare, o una escletxa de
+ * núvol— produïen així un punt que NO era cap dels dos. Aquí es fa la mateixa
+ * inundació que al detector coarse i guanya el component amb centroide més
+ * proper al candidat que ja ha superat les portes globals.
+ *
+ * És una funció pura perquè aquest últim metre del tracker es pugui provar
+ * sense vídeo, canvas ni navegador.
+ */
+export function refineSunCrop(
+  rgba: Uint8ClampedArray,
+  width: number,
+  height: number,
+  expected: { x: number; y: number },
+): RefinedSunCrop | null {
+  const n = width * height;
+  if (width <= 0 || height <= 0 || rgba.length < n * 4) return null;
+
+  const luma = new Float32Array(n);
+  let globalPeak = 0;
+  for (let p = 0, i = 0; p < n; p++, i += 4) {
+    const value = 0.299 * rgba[i] + 0.587 * rgba[i + 1] + 0.114 * rgba[i + 2];
+    luma[p] = value;
+    if (value > globalPeak) globalPeak = value;
+  }
+  if (!(globalPeak > 0)) return null;
+  const threshold = globalPeak * SUN_SATURATION_FRACTION;
+
+  const visited = new Uint8Array(n);
+  const stack: number[] = [];
+  let best: RefinedSunCrop | null = null;
+  let bestDistance = Infinity;
+
+  for (let start = 0; start < n; start++) {
+    if (visited[start] || luma[start] < threshold) continue;
+    visited[start] = 1;
+    stack.length = 0;
+    stack.push(start);
+    let areaPx = 0;
+    let sumI = 0;
+    let sumXI = 0;
+    let sumYI = 0;
+    let peak = 0;
+
+    while (stack.length > 0) {
+      const p = stack.pop()!;
+      const x = p % width;
+      const y = (p / width) | 0;
+      const value = luma[p];
+      const weight = value - threshold + 1e-6;
+      areaPx++;
+      sumI += weight;
+      sumXI += x * weight;
+      sumYI += y * weight;
+      if (value > peak) peak = value;
+
+      // Vuit veïns: a 96×96 un disc petit pot quedar connectat només per una
+      // diagonal després del reescalat bilineal. Separar-lo seria quantitzar
+      // el centroide just on aquest refinament havia de guanyar precisió.
+      for (let oy = -1; oy <= 1; oy++) {
+        const ny = y + oy;
+        if (ny < 0 || ny >= height) continue;
+        for (let ox = -1; ox <= 1; ox++) {
+          if (ox === 0 && oy === 0) continue;
+          const nx = x + ox;
+          if (nx < 0 || nx >= width) continue;
+          const q = ny * width + nx;
+          if (!visited[q] && luma[q] >= threshold) {
+            visited[q] = 1;
+            stack.push(q);
+          }
+        }
+      }
+    }
+
+    // Un píxel únic és un hot pixel, no un disc solar. Si només n'hi ha un,
+    // el refinador calla i ARView conserva el centroide coarse ja validat.
+    if (!(sumI > 0) || areaPx < MIN_BLOB_AREA_PX) continue;
+    const x = sumXI / sumI;
+    const y = sumYI / sumI;
+    const distance = Math.hypot(x - expected.x, y - expected.y);
+    // En un empat gairebé exacte mana el component més gran: evita que un
+    // píxel calent guanyi un bloom a la mateixa distància del centre coarse.
+    if (
+      distance < bestDistance - 1e-6 ||
+      (Math.abs(distance - bestDistance) <= 1e-6 && areaPx > (best?.areaPx ?? 0))
+    ) {
+      bestDistance = distance;
+      best = { x, y, peak, areaPx };
+    }
+  }
+
+  return best;
 }
 
 /**

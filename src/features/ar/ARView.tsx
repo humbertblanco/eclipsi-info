@@ -1588,8 +1588,8 @@ export function ARView({
             guide: {
               label: s('camera.sunArrowLabel', state.locale),
               distanceDeg: angularSeparationDeg(
-                stable.azimuth,
-                stable.altitude,
+                stable.azimuth + state.calibration.azimuthOffset,
+                stable.altitude + state.calibration.altitudeOffset,
                 state.currentSample.sun.azimuth,
                 state.currentSample.sun.altitudeApparent,
               ),

@@ -306,9 +306,14 @@ function drawSunGuide(
   if (p.visible) {
     ang = Math.atan2(p.y - cy, p.x - cx);
   } else {
-    const cosAlt = Math.max(0.2, Math.cos(camera.altitude * DEG));
-    const dx = normalizeAngle(sample.sun.azimuth - camera.azimuth) * cosAlt;
-    const dy = sample.sun.altitudeApparent - camera.altitude;
+    // Mateixa direcció efectiva que `projectToScreen`. Ignorar els offsets
+    // només en aquest fallback feia que la fletxa canviés de direcció just
+    // quan el Sol travessava el pla de darrere de la càmera.
+    const effectiveAz = camera.azimuth + calibration.azimuthOffset;
+    const effectiveAlt = camera.altitude + calibration.altitudeOffset;
+    const cosAlt = Math.max(0.2, Math.cos(effectiveAlt * DEG));
+    const dx = normalizeAngle(sample.sun.azimuth - effectiveAz) * cosAlt;
+    const dy = sample.sun.altitudeApparent - effectiveAlt;
     const r = (camera.roll + camera.screenAngle) * DEG;
     const sx = dx * Math.cos(r) + dy * Math.sin(r);
     const sy = -(-dx * Math.sin(r) + dy * Math.cos(r));

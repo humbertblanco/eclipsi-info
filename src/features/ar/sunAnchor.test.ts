@@ -19,6 +19,7 @@ import {
   mergeAnchors,
   acceptRefinedPeak,
   SunTemporalGuide,
+  refineSunCrop,
 } from './sunAnchor';
 import {
   projectToScreen,
@@ -190,6 +191,27 @@ describe('la detecció de la taca del Sol', () => {
       const fix = fitSunFix(blob, skyPos(250, 10), camera, CALIBRATION, VIEWPORT);
       expect(fix).toBeNull();
     }
+  });
+
+  it('un píxel calent prop de la predicció no pot apartar un Sol vàlid', () => {
+    const camera = pointing(250, 10);
+    const gray = renderSunGray(camera, [
+      { azimuth: 244, altitude: 13, amplitude: 1, sigmaGridPx: 1 },
+    ]);
+    const predicted = projectToScreen(250, 10, camera, CALIBRATION, VIEWPORT);
+    const hotGridX = Math.round(
+      (predicted.x - VIEWPORT.width / 2) / GEOMETRY.scaleX + GEOMETRY.gridWidth / 2 - 0.5,
+    );
+    const hotGridY = Math.round(
+      (predicted.y - VIEWPORT.height / 2) / GEOMETRY.scaleY + GEOMETRY.gridHeight / 2 - 0.5,
+    );
+    gray[hotGridY * GEOMETRY.gridWidth + hotGridX] = 1;
+
+    const blob = detectSunBlob(gray, GEOMETRY, VIEWPORT, { x: predicted.x, y: predicted.y });
+    expect(blob).not.toBeNull();
+    expect(blob!.areaPx).toBeGreaterThanOrEqual(2);
+    const ray = unprojectFromScreen(blob!.screenX, blob!.screenY, camera, CALIBRATION, VIEWPORT);
+    expect(angularSeparationDeg(ray.azimuth, ray.altitude, 244, 13)).toBeLessThan(0.3);
   });
 
   it('una vela difusa no passa: el cel cremat sencer no és cap Sol', () => {
@@ -370,6 +392,75 @@ describe('la memòria temporal del Sol', () => {
         sun.altitudeApparent,
       ),
     ).toBeLessThan(0.3);
+  });
+});
+
+describe('el refinament full-resolution', () => {
+  function cropWithDiscs(
+    width: number,
+    height: number,
+    discs: Array<{ x: number; y: number; radius: number; value: number }>,
+  ): Uint8ClampedArray {
+    const rgba = new Uint8ClampedArray(width * height * 4);
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        let value = 40;
+        for (const disc of discs) {
+          if (Math.hypot(x - disc.x, y - disc.y) <= disc.radius) value = disc.value;
+        }
+        const i = (y * width + x) * 4;
+        rgba[i] = value;
+        rgba[i + 1] = value;
+        rgba[i + 2] = value;
+        rgba[i + 3] = 255;
+      }
+    }
+    return rgba;
+  }
+
+  it('tria el component del candidat i mai el punt mig entre Sol i reflex', () => {
+    const rgba = cropWithDiscs(32, 32, [
+      { x: 10, y: 16, radius: 2, value: 255 },
+      { x: 23, y: 16, radius: 2, value: 255 },
+    ]);
+    const refined = refineSunCrop(rgba, 32, 32, { x: 10.5, y: 16 });
+    expect(refined).not.toBeNull();
+    expect(Math.abs(refined!.x - 10)).toBeLessThan(0.1);
+    expect(Math.abs(refined!.y - 16)).toBeLessThan(0.1);
+    expect(refined!.areaPx).toBe(13);
+  });
+
+  it('el pic retornat pertany al component triat, no a una taca aliena', () => {
+    const rgba = cropWithDiscs(32, 32, [
+      { x: 9, y: 14, radius: 2, value: 250 },
+      { x: 24, y: 18, radius: 2, value: 255 },
+    ]);
+    const refined = refineSunCrop(rgba, 32, 32, { x: 9, y: 14 });
+    expect(refined).not.toBeNull();
+    expect(refined!.peak).toBeCloseTo(250, 5);
+    expect(refined!.x).toBeCloseTo(9, 5);
+  });
+
+  it('tolera components units només en diagonal i retalls invàlids callen', () => {
+    const rgba = cropWithDiscs(8, 8, [
+      { x: 3, y: 3, radius: 0, value: 255 },
+      { x: 4, y: 4, radius: 0, value: 255 },
+    ]);
+    const refined = refineSunCrop(rgba, 8, 8, { x: 3.5, y: 3.5 });
+    expect(refined).not.toBeNull();
+    expect(refined!.areaPx).toBe(2);
+    expect(refineSunCrop(new Uint8ClampedArray(3), 8, 8, { x: 4, y: 4 })).toBeNull();
+  });
+
+  it('un píxel calent al centre no guanya el bloom solar del mateix retall', () => {
+    const rgba = cropWithDiscs(32, 32, [
+      { x: 16, y: 16, radius: 0, value: 255 },
+      { x: 21, y: 16, radius: 2, value: 255 },
+    ]);
+    const refined = refineSunCrop(rgba, 32, 32, { x: 16, y: 16 });
+    expect(refined).not.toBeNull();
+    expect(refined!.x).toBeCloseTo(21, 5);
+    expect(refined!.areaPx).toBe(13);
   });
 });
 

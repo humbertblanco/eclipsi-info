@@ -407,6 +407,12 @@ Perquè no es desfacin per accident.
    es reinicia amb sessió, pausa, canvi de pista, objectiu o zoom. Això és una
    guia conservadora damunt del detector complet, no el ROI tancat que ja es va
    descartar perquè podia quedar enganxat a una vora brillant.
+   El refinament full-resolution també conserva components separats: un flare
+   o una escletxa brillant dins del retall de ±2° ja no es barreja amb el Sol
+   en un centroide inventat entre tots dos. El component més proper al coarse
+   guanya i el pic de validació és el seu, no el màxim aliè del retall. Els
+   píxels calents d'àrea 1 es poden abans de triar candidat, perquè no apartin
+   un Sol vàlid per acabar rebutjats una línia després.
 
 La FUSIÓ (`poseFusion`) té dues regles amb física pròpia:
 
