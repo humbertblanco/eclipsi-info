@@ -16,6 +16,16 @@
 export { buildShareLink, parseShareLink, MAX_LABEL_CHARS, SHARE_DECIMALS } from './link';
 export type { SharedPoint, ShareLinkParams } from './link';
 
+export {
+  READABLE_PLACES,
+  buildReadableShareUrl,
+  findReadablePlace,
+  readablePlacePath,
+  readableSlug,
+  resolveReadablePlacePath,
+} from './readable';
+export type { ReadablePlace, ReadablePlaceKind } from './readable';
+
 /* --- la miniatura i la targeta ------------------------------------------- */
 
 export {

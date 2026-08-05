@@ -108,7 +108,16 @@ const TEXT = {
     fr: 'Sources et attributions, dans « Comment ça marche »',
   },
   pressLink: { ca: 'Premsa', es: 'Prensa', en: 'Press', fr: 'Presse' },
+  plan: { ca: 'Planifica els pròxims eclipsis', es: 'Planifica los próximos eclipses', en: 'Plan the next eclipses', fr: 'Préparer les prochaines éclipses' },
+  guides: { ca: 'Guies pràctiques', es: 'Guías prácticas', en: 'Practical guides', fr: 'Guides pratiques' },
 } as const;
+
+const SEO_PATHS: Record<Locale, { eclipse: string; guide: string }> = {
+  ca: { eclipse: '/eclipsi/2026-08-12/', guide: '/guia/seguretat-eclipsi-solar/' },
+  es: { eclipse: '/es/eclipse/2026-08-12/', guide: '/es/guia/seguridad-eclipse-solar/' },
+  en: { eclipse: '/en/eclipse/2026-08-12/', guide: '/en/guide/solar-eclipse-safety/' },
+  fr: { eclipse: '/fr/eclipse/2026-08-12/', guide: '/fr/guide/securite-eclipse-solaire/' },
+};
 
 const REPO_URL = 'https://github.com/humbertblanco/eclipsi-info';
 
@@ -192,6 +201,12 @@ export function SiteFooter({ locale, consentState, onChangeConsent }: SiteFooter
       <p className="sitefoot__what">
         {TEXT.free[locale]} {TEXT.what[locale]}
       </p>
+
+      <nav className="sitefoot__meta" aria-label={TEXT.plan[locale]}>
+        <a href={SEO_PATHS[locale].eclipse}>{TEXT.plan[locale]}</a>
+        {' · '}
+        <a href={SEO_PATHS[locale].guide}>{TEXT.guides[locale]}</a>
+      </nav>
 
       <p className="sitefoot__meta eclipsi-data">
         {/*

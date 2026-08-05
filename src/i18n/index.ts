@@ -44,11 +44,15 @@ export function localeFromPathname(
   const root = `/${base.split('/').filter(Boolean).join('/')}`.replace(/^\/$/, '');
   if (root !== '' && pathname !== root && !pathname.startsWith(`${root}/`)) return null;
   const relative = pathname.slice(root.length).replace(/^\/+|\/+$/g, '');
-  return relative === 'es' || relative === 'en' || relative === 'fr'
-    ? relative
-    : relative === ''
-      ? 'ca'
-      : null;
+  if (relative === '') return 'ca';
+  const firstSegment = relative.split('/')[0];
+  if (firstSegment === 'es' || firstSegment === 'en' || firstSegment === 'fr') {
+    return firstSegment;
+  }
+  // Les pàgines editorials catalanes viuen també sota l'arrel
+  // (`/eclipsi/...`, `/guia/...`, `/lloc/...`). Només els prefixos reservats
+  // dels altres idiomes canvien la llengua.
+  return 'ca';
 }
 
 /** Ruta compartible de cada idioma, compatible amb un BASE subdirectori. */

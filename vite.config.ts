@@ -269,7 +269,25 @@ export default defineConfig(({ command }) => ({
          */
         // El material editorial només es baixa quan algú el demana a Premsa;
         // no ha d'afegir més de 3 MB a la primera instal·lació de tothom.
-        globIgnores: ['**/brand/og.png', '**/press/**'],
+        globIgnores: [
+          '**/brand/og.png',
+          '**/press/**',
+          // Les pàgines SEO són documents HTML independents, generats després
+          // de Workbox. Indexables i compartibles, però no formen part de la
+          // instal·lació offline de l'app ni han d'inflar-ne el precache.
+          '**/eclipsi/**',
+          '**/eclipse/**',
+          '**/ciutat/**',
+          '**/ciudad/**',
+          '**/city/**',
+          '**/ville/**',
+          '**/punt-oficial/**',
+          '**/punto-oficial/**',
+          '**/official-site/**',
+          '**/site-officiel/**',
+          '**/guia/**',
+          '**/guide/**',
+        ],
         // L'app és una SPA: qualsevol ruta ha de tornar l'esquelet. Ha
         // d'incloure el subdirectori, o el service worker respondria amb una
         // ruta que al servidor no existeix.

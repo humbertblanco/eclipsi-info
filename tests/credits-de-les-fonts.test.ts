@@ -96,6 +96,10 @@ const NO_SON_FONTS: Readonly<Record<string, string>> = {
   'damosenelblanco.com': 'el despatx que signa l’app, al peu i al bloc de contacte de premsa',
   'www.w3.org':
     'l’espai de noms de l’SVG (`xmlns`): és un identificador, no s’hi fa cap petició mai',
+  'schema.org':
+    'el vocabulari de les dades estructurades: és un identificador, no s’hi fa cap petició mai',
+  'www.sitemaps.org':
+    'l’espai de noms XML del sitemap: és un identificador, no s’hi fa cap petició mai',
   '127.0.0.1':
     'la màquina mateixa: els guions de premsa (`press-*.ts`) hi parlen amb el Chrome ' +
     'que condueixen i hi serveixen les seves pròpies plantilles. No hi ha cap dada de ' +

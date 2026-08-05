@@ -22,7 +22,11 @@ describe('idioma compartible a la ruta', () => {
     expect(pathnameForLocale('fr', '/eclipsi/')).toBe('/eclipsi/fr/');
   });
 
-  it('no confon altres rutes amb un idioma', () => {
-    expect(localeFromPathname('/especial', '/')).toBeNull();
+  it('reconeix l’idioma en pàgines editorials profundes', () => {
+    expect(localeFromPathname('/eclipsi/12-agost-2026/', '/')).toBe('ca');
+    expect(localeFromPathname('/es/eclipse/12-agosto-2026/', '/')).toBe('es');
+    expect(localeFromPathname('/en/guide/solar-eclipse-safety/', '/')).toBe('en');
+    expect(localeFromPathname('/fr/lieu/tarragone/', '/')).toBe('fr');
+    expect(localeFromPathname('/eclipsi/es/eclipse/2026/', '/eclipsi/')).toBe('es');
   });
 });

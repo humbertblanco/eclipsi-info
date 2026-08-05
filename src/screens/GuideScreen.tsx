@@ -5,11 +5,13 @@ import { GuideView } from '../features/guide/GuideView';
 import { OfflinePanel } from '../offline/OfflinePanel';
 import { ThreeEclipses } from './ThreeEclipses';
 import { getGuide, type GuideSection, type GuideSectionId } from '../content/guide';
+import { EDITORIAL_GUIDE_IDS, getEditorialGuide } from '../content/editorial-guides';
 import type { EclipseContext } from './context';
 import { s } from './strings';
 import { formatClockShort } from './format';
 import { pointsForEclipse } from '../data/observation-points/catalog';
 import { distanceKm } from '../core/places';
+import type { Locale } from '../i18n';
 import './screens.css';
 import '../features/guide/guide.css';
 
@@ -30,6 +32,17 @@ export interface GuideScreenProps extends EclipseContext {
 
 /** Mitja hora abans. És el marge que dona temps a plantar-se i no a arribar-hi. */
 const ALERT_LEAD_MS = 30 * 60 * 1000;
+
+const EDITORIAL_HEADING = {
+  ca: 'Guies per aprofundir', es: 'Guías para profundizar',
+  en: 'In-depth guides', fr: 'Guides approfondis',
+} as const;
+
+function editorialPath(locale: Locale, slug: string): string {
+  const language = locale === 'ca' ? '' : `/${locale}`;
+  const segment = locale === 'ca' || locale === 'es' ? 'guia' : 'guide';
+  return `${language}/${segment}/${slug}/`;
+}
 
 interface GuideTocProps {
   /** `chips` = fila horitzontal al mòbil; `list` = columna al lateral d'escriptori. */
@@ -218,6 +231,9 @@ export function GuideScreen({
   }, [initialSection, openSection]);
 
   const tocLabel = s('guide.toc', locale);
+  const editorialGuides = EDITORIAL_GUIDE_IDS
+    .map((id) => getEditorialGuide(id, locale))
+    .filter((guide) => guide.relatedEclipseIds.includes(eclipseId));
 
   return (
     <div className="screen screen--guide">
@@ -364,6 +380,18 @@ export function GuideScreen({
             pantalla: qui encara no ha passat pels avisos no ha de poder
             saltar-se'ls amb una drecera. */}
         <GuideToc variant="chips" label={tocLabel} sections={tocSections} onOpen={openSection} />
+
+        <Card className="guidearticles">
+          <span className="screen__overline">{EDITORIAL_HEADING[locale]}</span>
+          <ul className="guidearticles__list">
+            {editorialGuides.map((guide) => (
+              <li key={guide.id}>
+                <a href={editorialPath(locale, guide.slug)}>{guide.title}</a>
+                <span>{guide.description}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
 
         <GuideView eclipseId={eclipseId} sunAltitudeDeg={sunAltitudeDeg} />
       </div>

@@ -477,6 +477,31 @@
 
 .guideofficial__list a { font: inherit; }
 
+.guidearticles__list {
+  display: grid;
+  gap: var(--sp-4);
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guidearticles__list li {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.guidearticles__list a {
+  font: var(--text-label);
+  overflow-wrap: anywhere;
+}
+
+.guidearticles__list span {
+  font: var(--text-caption);
+  color: var(--text-muted);
+  line-height: var(--lh-normal);
+}
+
 /* ------------------------------------------------- escriptori: 900-1179 */
 
 @media (min-width: 900px) and (min-height: 500px) {

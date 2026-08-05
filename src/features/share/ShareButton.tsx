@@ -71,7 +71,7 @@ import type { HorizonProfile } from '../../core/horizon/profile';
 import type { VisibilityVerdict } from '../../core/visibility/verdict';
 import type { Locale } from '../../i18n';
 import { formatClock, formatDuration } from '../../screens/format';
-import { buildShareUrl } from './link';
+import { buildReadableShareUrl } from './readable';
 import {
   cardFileName,
   renderShareCardBlob,
@@ -147,9 +147,10 @@ export function ShareButton({
     );
   }
 
-  const url = buildShareUrl(
+  const url = buildReadableShareUrl(
     { lat: location.lat, lon: location.lon, eclipseId, label },
     window.location.href,
+    locale,
   );
 
   /** Pinta l'esglaó on s'ha acabat i torna a `idle` al cap d'un moment. */
