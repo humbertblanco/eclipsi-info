@@ -17,7 +17,7 @@ import type { Locale } from '../i18n';
 export const NO_DATA = '—';
 
 const tag = (locale: Locale): string =>
-  locale === 'en' ? 'en-GB' : locale === 'es' ? 'es-ES' : 'ca-ES';
+  locale === 'en' ? 'en-GB' : locale === 'es' ? 'es-ES' : locale === 'fr' ? 'fr-FR' : 'ca-ES';
 
 /**
  * Hora amb segons.

@@ -22,6 +22,7 @@ import type { GeoLocation } from '../../core/astro/types';
 import {
   CLOUD_ERROR_TEXT,
   CloudOutlookError,
+  type CloudErrorCode,
   type CloudOutlook,
   type WeatherLocale,
 } from '../../core/weather/types';
@@ -70,6 +71,14 @@ const WEATHER_LOCALE: Record<Locale, WeatherLocale> = {
   ca: 'ca',
   es: 'es',
   en: 'en',
+  fr: 'fr',
+};
+
+const CLOUD_ERROR_TEXT_FR: Record<CloudErrorCode, string> = {
+  'partial-points': 'La consultation du ciel a renvoyé un résultat incomplet. Réessaie.',
+  'no-hour': 'La prévision ne couvre pas l’heure de l’éclipse.',
+  'not-enough-years': 'Il n’y a pas assez d’années d’archives à cet endroit pour établir les conditions habituelles.',
+  unknown: 'Impossible d’obtenir la couverture nuageuse.',
 };
 
 function useOnline(): boolean {
@@ -183,10 +192,11 @@ export function useCloudOutlook(params: UseCloudOutlookParams): UseCloudOutlookR
         // El `message` de l'error és sempre català i és per a la consola; el
         // que veu l'usuari surt del codi, que sí que està traduït. Quan l'app
         // acaba de fallar és el pitjor moment per parlar-li en un altre idioma.
+        const code = cause instanceof CloudOutlookError ? cause.code : 'unknown';
         setError(
-          CLOUD_ERROR_TEXT[cause instanceof CloudOutlookError ? cause.code : 'unknown'][
-            weatherLocale
-          ],
+          weatherLocale === 'fr'
+            ? CLOUD_ERROR_TEXT_FR[code]
+            : CLOUD_ERROR_TEXT[code][weatherLocale],
         );
       })
       .finally(() => {

@@ -88,7 +88,7 @@ export function bearingDeg(
  * en creixi una i l'altra no: el mateix defecte que ja ha calgut arreglar amb
  * el veredicte, amb el guió de la totalitat i amb la zona de l'AR.
  */
-const COMPASS: Record<'ca' | 'es' | 'en', readonly string[]> = {
+const COMPASS: Record<'ca' | 'es' | 'en' | 'fr', readonly string[]> = {
   ca: [
     'nord',
     'nord-nord-est',
@@ -143,10 +143,28 @@ const COMPASS: Record<'ca' | 'es' | 'en', readonly string[]> = {
     'northwest',
     'north-northwest',
   ],
+  fr: [
+    'nord',
+    'nord-nord-est',
+    'nord-est',
+    'est-nord-est',
+    'est',
+    'est-sud-est',
+    'sud-est',
+    'sud-sud-est',
+    'sud',
+    'sud-sud-ouest',
+    'sud-ouest',
+    'ouest-sud-ouest',
+    'ouest',
+    'ouest-nord-ouest',
+    'nord-ouest',
+    'nord-nord-ouest',
+  ],
 };
 
 /** Nom del rumb. Per defecte, català: és l'idioma amb què va néixer el mòdul. */
-export function compassName(degrees: number, locale: 'ca' | 'es' | 'en' = 'ca'): string {
+export function compassName(degrees: number, locale: 'ca' | 'es' | 'en' | 'fr' = 'ca'): string {
   const index = Math.round((((degrees % 360) + 360) % 360) / 22.5) % 16;
   return COMPASS[locale][index];
 }

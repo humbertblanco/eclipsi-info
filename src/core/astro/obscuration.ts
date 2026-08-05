@@ -92,6 +92,7 @@ export function partialCaveat(
     ca: "No és una totalitat petita: és una altra cosa. Amb una escletxa de fotosfera visible no es fa fosc, no surt la corona, no es veuen els planetes, i el filtre no se't pot treure en cap moment.",
     es: 'No es una totalidad pequeña: es otra cosa. Con una rendija de fotosfera visible no oscurece, no aparece la corona, no se ven los planetas, y el filtro no te lo puedes quitar en ningún momento.',
     en: 'This is not a smaller totality: it is a different phenomenon. While even a sliver of the photosphere remains visible, the sky does not go dark, the corona and planets do not appear, and you must keep your solar filter on at all times.',
+    fr: 'Ce n’est pas une petite totalité : c’est un phénomène différent. Tant qu’une fente de photosphère reste visible, le ciel ne s’assombrit pas, la couronne et les planètes n’apparaissent pas, et vous devez garder votre filtre solaire à tout moment.',
   };
   return caveats[locale];
 }

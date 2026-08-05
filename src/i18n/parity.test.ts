@@ -35,6 +35,7 @@ import { describe, expect, it } from 'vitest';
 import ca from './ca.json';
 import es from './es.json';
 import en from './en.json';
+import fr from './fr.json';
 import type { Locale } from './index';
 import { s } from '../screens/strings';
 import { os } from '../offline/strings';
@@ -80,6 +81,7 @@ describe('els catàlegs JSON diuen les mateixes coses', () => {
   const caPaths = leafPaths(ca as Node);
   const esPaths = leafPaths(es as Node);
   const enPaths = leafPaths(en as Node);
+  const frPaths = leafPaths(fr as Node);
 
   it('cap clau del català no es queda sense traducció', () => {
     // Una clau que falta no peta: `createTranslator` cau al català i l'usuari
@@ -87,6 +89,7 @@ describe('els catàlegs JSON diuen les mateixes coses', () => {
     expect(caPaths.length).toBeGreaterThan(10);
     expect(esPaths.slice().sort()).toEqual(caPaths.slice().sort());
     expect(enPaths.slice().sort()).toEqual(caPaths.slice().sort());
+    expect(frPaths.slice().sort()).toEqual(caPaths.slice().sort());
   });
 
   it('cap text no és buit', () => {
@@ -94,6 +97,7 @@ describe('els catàlegs JSON diuen les mateixes coses', () => {
       expect(leafAt(ca as Node, path).trim().length, path).toBeGreaterThan(0);
       expect(leafAt(es as Node, path).trim().length, path).toBeGreaterThan(0);
       expect(leafAt(en as Node, path).trim().length, path).toBeGreaterThan(0);
+      expect(leafAt(fr as Node, path).trim().length, path).toBeGreaterThan(0);
     }
   });
 
@@ -107,6 +111,7 @@ describe('els catàlegs JSON diuen les mateixes coses', () => {
       expect(jsonMarkers(leafAt(en as Node, path)), path).toEqual(
         jsonMarkers(leafAt(ca as Node, path)),
       );
+      expect(jsonMarkers(leafAt(fr as Node, path)), path).toEqual(jsonMarkers(leafAt(ca as Node, path)));
     }
   });
 });

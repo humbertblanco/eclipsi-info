@@ -46,7 +46,7 @@
 
 import type { Locale } from '../../i18n';
 
-type Entry = { ca: string; es: string; en: string };
+type Entry = { ca: string; es: string; en: string; fr: string };
 
 const STRINGS = {
   /*
@@ -56,7 +56,7 @@ const STRINGS = {
    * reconeix sense llegir-lo, que és precisament el que es vol: qui no hi vol
    * dedicar temps ha de poder resoldre-ho d'un cop d'ull.
    */
-  'banner.title': { ca: 'Cookies', es: 'Cookies', en: 'Cookies' },
+  'banner.title': { ca: 'Cookies', es: 'Cookies', en: 'Cookies', fr: 'Cookies' },
 
   /*
    * EL COS, UNA FRASE.
@@ -68,6 +68,7 @@ const STRINGS = {
     ca: 'Fem servir una galeta per comptar quanta gent fa servir l’app.',
     es: 'Usamos una cookie para contar cuánta gente usa la app.',
     en: 'We use one cookie to count how many people use the app.',
+    fr: 'Nous utilisons un cookie pour compter le nombre de personnes qui utilisent l’application.',
   },
 
   /*
@@ -90,12 +91,13 @@ const STRINGS = {
     ca: 'No guardem la teva ubicació ni cap dada personal: només un número a l’atzar per no comptar-te dues vegades.',
     es: 'No guardamos tu ubicación ni ningún dato personal: solo un número al azar para no contarte dos veces.',
     en: 'We do not store your location or any personal data: only a random number so we do not count you twice.',
+    fr: 'Nous ne conservons ni votre position ni aucune donnée personnelle : seulement un nombre aléatoire pour ne pas vous compter deux fois.',
   },
 
   /* Les dues respostes. Verb en imperatiu la primera, fórmula educada la
      segona; cap de les dues amaga res ni fa sentir malament qui la tria. */
-  'banner.accept': { ca: 'Accepta', es: 'Acepta', en: 'Accept' },
-  'banner.reject': { ca: 'No, gràcies', es: 'No, gracias', en: 'No, thanks' },
+  'banner.accept': { ca: 'Accepta', es: 'Acepta', en: 'Accept', fr: 'Accepter' },
+  'banner.reject': { ca: 'No, gràcies', es: 'No, gracias', en: 'No, thanks', fr: 'Non, merci' },
 
   /*
    * L'ETIQUETA DEL PEU PER CANVIAR D'OPINIÓ.
@@ -103,7 +105,7 @@ const STRINGS = {
    * Ha d'existir: retirar el consentiment ha de ser tan fàcil com donar-lo, i
    * un sí que no es pot desfer no és vàlid. Va al peu i no a un menú amagat.
    */
-  'footer.change': { ca: 'Cookies', es: 'Cookies', en: 'Cookies' },
+  'footer.change': { ca: 'Cookies', es: 'Cookies', en: 'Cookies', fr: 'Cookies' },
 
   /*
    * L'ESTAT ACTUAL, per al lector de pantalla del botó del peu: qui no veu el
@@ -113,11 +115,13 @@ const STRINGS = {
     ca: 'Cookies de mesura: acceptades. Toca per canviar-ho.',
     es: 'Cookies de medición: aceptadas. Toca para cambiarlo.',
     en: 'Analytics cookies: accepted. Tap to change this.',
+    fr: 'Cookies de mesure d’audience : acceptés. Touchez pour modifier ce choix.',
   },
   'footer.denied': {
     ca: 'Cookies de mesura: rebutjades. Toca per canviar-ho.',
     es: 'Cookies de medición: rechazadas. Toca para cambiarlo.',
     en: 'Analytics cookies: rejected. Tap to change this.',
+    fr: 'Cookies de mesure d’audience : refusés. Touchez pour modifier ce choix.',
   },
 } as const satisfies Record<string, Entry>;
 

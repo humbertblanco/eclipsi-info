@@ -17,7 +17,7 @@
 
 import type { Locale } from '../../i18n';
 
-type Entry = { ca: string; es: string; en: string };
+type Entry = { ca: string; es: string; en: string; fr: string };
 
 const STRINGS = {
   /* --- la miniatura -------------------------------------------------------
@@ -27,35 +27,39 @@ const STRINGS = {
     ca: 'Silueta de l’horitzó d’aquest punt amb el camí del Sol durant l’eclipsi',
     es: 'Silueta del horizonte de este punto con el camino del Sol durante el eclipse',
     en: 'Horizon silhouette at this point with the Sun’s path during the eclipse',
+    fr: 'Silhouette de l’horizon depuis ce point avec la trajectoire du Soleil pendant l’éclipse',
   },
   'thumb.altAssumed': {
     ca: 'El terreny d’aquest punt encara no s’ha calculat: la silueta que es veu és un horitzó pla de reserva',
     es: 'El terreno de este punto todavía no se ha calculado: la silueta que se ve es un horizonte plano de reserva',
     en: 'The terrain at this point has not been calculated yet: the visible silhouette is a fallback flat horizon',
+    fr: 'Le terrain à cet endroit n’a pas encore été calculé : la silhouette visible est un horizon plat de secours',
   },
   /** Etiqueta curta, per si la interfície la vol escriure al costat. */
-  'thumb.pending': { ca: 'Terreny per calcular', es: 'Terreno por calcular', en: 'Terrain not yet calculated' },
+  'thumb.pending': { ca: 'Terreny per calcular', es: 'Terreno por calcular', en: 'Terrain not yet calculated', fr: 'Terrain à calculer' },
 
   /* --- la targeta ---------------------------------------------------------
    * «Fase central» i no «totalitat» perquè la mateixa targeta ha de servir per
    * a l'anular del 2028, on el que passa és una anularitat. La paraula
    * «totalitat» aplicada a un anular és la mena d'error que fa que algú es
    * tregui el filtre.                                                        */
-  'card.max': { ca: 'Màxim', es: 'Máximo', en: 'Maximum' },
-  'card.central': { ca: 'Fase central visible', es: 'Fase central visible', en: 'Central phase visible' },
+  'card.max': { ca: 'Màxim', es: 'Máximo', en: 'Maximum', fr: 'Maximum' },
+  'card.central': { ca: 'Fase central visible', es: 'Fase central visible', en: 'Central phase visible', fr: 'Phase centrale visible' },
   'card.centralTheoretical': {
     ca: 'Fase central (sense terreny)',
     es: 'Fase central (sin terreno)',
     en: 'Central phase (without terrain)',
+    fr: 'Phase centrale (sans le terrain)',
   },
-  'card.obscured': { ca: 'Disc tapat', es: 'Disco tapado', en: 'Solar disc obscured' },
-  'card.noCentral': { ca: 'No hi ha fase central', es: 'No hay fase central', en: 'No central phase' },
+  'card.obscured': { ca: 'Disc tapat', es: 'Disco tapado', en: 'Solar disc obscured', fr: 'Disque occulté' },
+  'card.noCentral': { ca: 'No hi ha fase central', es: 'No hay fase central', en: 'No central phase', fr: 'Pas de phase centrale' },
 
   /* El relleu que et roba segons: la xifra que justifica tota l'app. */
   'card.stolen': {
     ca: 'El relleu se’n menja {lost} de {total}',
     es: 'El relieve se come {lost} de {total}',
     en: 'Terrain blocks {lost} of {total}',
+    fr: 'Le relief masque {lost} sur {total}',
   },
   /* Curt a posta: comparteix la línia del peu amb l'adreça impresa del punt,
      i una frase llarga acabaria retallada amb punts suspensius justament on
@@ -65,25 +69,26 @@ const STRINGS = {
     ca: 'El terreny està per calcular: les xifres no descompten cap muntanya.',
     es: 'El terreno está por calcular: las cifras no descuentan montañas.',
     en: 'Terrain has not been calculated: the figures do not account for any mountains.',
+    fr: 'Le terrain reste à calculer : les données ne tiennent compte d’aucune montagne.',
   },
 
   /* El domini que encapçala el peu. El peu sencer és l'adreça del punt
      («eclipsi.info/?p=…»), muntada a `cardText` amb `buildShareLink`: una
      imatge que viatja per missatgeria i sobreviu sola a qualsevol conversa
      ha de dur escrit el camí de tornada, no només d'on surt. */
-  'card.footer': { ca: 'eclipsi.info', es: 'eclipsi.info', en: 'eclipsi.info' },
+  'card.footer': { ca: 'eclipsi.info', es: 'eclipsi.info', en: 'eclipsi.info', fr: 'eclipsi.info' },
 
   /* --- compartir ---------------------------------------------------------- */
-  'share.title': { ca: 'El meu punt per a l’eclipsi', es: 'Mi punto para el eclipse', en: 'My eclipse viewing point' },
-  'share.fileName': { ca: 'eclipsi', es: 'eclipsi', en: 'eclipse' },
+  'share.title': { ca: 'El meu punt per a l’eclipsi', es: 'Mi punto para el eclipse', en: 'My eclipse viewing point', fr: 'Mon point d’observation de l’éclipse' },
+  'share.fileName': { ca: 'eclipsi', es: 'eclipsi', en: 'eclipse', fr: 'eclipse' },
 
   /* --- el botó -------------------------------------------------------------
    *
    * «Comparteix el punt» i no «Comparteix»: el que viatja és un lloc concret
    * amb les seves coordenades, i qui el rep obrirà l'app situada allà. Dir-ho
    * evita que ningú l'enviï pensant que comparteix l'aplicació.                */
-  'button.share': { ca: 'Comparteix el punt', es: 'Comparte el punto', en: 'Share this point' },
-  'button.preparing': { ca: 'Preparant la imatge…', es: 'Preparando la imagen…', en: 'Preparing image…' },
+  'button.share': { ca: 'Comparteix el punt', es: 'Comparte el punto', en: 'Share this point', fr: 'Partager ce point' },
+  'button.preparing': { ca: 'Preparant la imatge…', es: 'Preparando la imagen…', en: 'Preparing image…', fr: 'Préparation de l’image…' },
   /*
    * El feedback del porta-retalls diu la veritat de què hi ha quedat, i per
    * això són tres frases i no una: si el porta-retalls porta l'adreça I la
@@ -95,13 +100,15 @@ const STRINGS = {
     ca: 'Enllaç i simulació copiats',
     es: 'Enlace y simulación copiados',
     en: 'Link and simulation copied',
+    fr: 'Lien et simulation copiés',
   },
-  'button.copied': { ca: 'Enllaç copiat', es: 'Enlace copiado', en: 'Link copied' },
-  'button.downloaded': { ca: 'Targeta descarregada', es: 'Tarjeta descargada', en: 'Card downloaded' },
+  'button.copied': { ca: 'Enllaç copiat', es: 'Enlace copiado', en: 'Link copied', fr: 'Lien copié' },
+  'button.downloaded': { ca: 'Targeta descarregada', es: 'Tarjeta descargada', en: 'Card downloaded', fr: 'Carte téléchargée' },
   'button.failed': {
     ca: 'No s’ha pogut compartir. L’adreça de la barra ja porta el punt: copia-la.',
     es: 'No se ha podido compartir. La dirección de la barra ya lleva el punto: cópiala.',
     en: 'Could not share. The address bar already contains this point: copy it from there.',
+    fr: 'Le partage a échoué. L’adresse dans la barre contient déjà ce point : copie-la.',
   },
   /*
    * Quan encara no hi ha lloc triat, el botó no desapareix: es queda adormit
@@ -112,6 +119,7 @@ const STRINGS = {
     ca: 'Tria un lloc per poder compartir-lo',
     es: 'Elige un lugar para poder compartirlo',
     en: 'Choose a location before sharing it',
+    fr: 'Choisis un lieu avant de le partager',
   },
   /*
    * El text que acompanya l'enllaç. Porta el nom del lloc perquè, a una
@@ -121,16 +129,19 @@ const STRINGS = {
     ca: 'Aquí és on penso veure l’eclipsi: {place}. {detail} Mira com es veurà des del teu punt amb l’app de l’eclipsi.',
     es: 'Aquí es donde pienso ver el eclipse: {place}. {detail} Mira cómo se verá desde tu punto con la app del eclipse.',
     en: 'This is where I plan to watch the eclipse: {place}. {detail} See what it will look like from your location with the eclipse app.',
+    fr: 'Voici où je compte observer l’éclipse : {place}. {detail} Découvre son apparence depuis ton point avec l’app de l’éclipse.',
   },
   'share.detailCentral': {
     ca: '{duration} de fase central visible; màxim a les {time}.',
     es: '{duration} de fase central visible; máximo a las {time}.',
     en: '{duration} of visible central phase; maximum at {time}.',
+    fr: '{duration} de phase centrale visible ; maximum à {time}.',
   },
   'share.detailPartial': {
     ca: 'Aquí serà parcial; màxim a les {time}.',
     es: 'Aquí será parcial; máximo a las {time}.',
     en: 'The eclipse will be partial here; maximum at {time}.',
+    fr: 'L’éclipse sera partielle ici ; maximum à {time}.',
   },
 } as const satisfies Record<string, Entry>;
 

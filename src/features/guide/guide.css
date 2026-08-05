@@ -79,22 +79,30 @@
   padding: var(--sp-4) var(--sp-5);
   list-style: none;
   user-select: none;
+  min-width: 0;
+}
+
+.guide__summary:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
 }
 
 /* Amaga el triangle natiu per poder posar-hi el nostre indicador. */
 .guide__summary::-webkit-details-marker { display: none; }
 
 .guide__summaryhead {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: var(--sp-3);
-  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .guide__title {
   font-size: var(--fs-body);
   font-weight: var(--fw-semibold);
-  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* Indicador d'obert/tancat, alineat a la dreta del títol. */
@@ -103,7 +111,7 @@
   color: var(--text-muted);
   font-size: var(--fs-body-lg);
   line-height: 1;
-  flex: 0 0 auto;
+  grid-column: 3;
 }
 
 .guide__section[open] .guide__summaryhead::after { content: '−'; }
@@ -120,7 +128,10 @@
   border: var(--bw-hair) solid var(--border-subtle);
   border-radius: var(--r-pill);
   padding: var(--sp-1) var(--sp-3);
-  flex: 0 0 auto;
+  grid-column: 2;
+  max-width: min(16rem, 42vw);
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .guide__lead {
@@ -129,11 +140,40 @@
   font-size: var(--fs-caption);
   line-height: var(--lh-normal);
   color: var(--text-muted);
+  overflow-wrap: anywhere;
 }
 
 .guide__body {
   padding: 0 var(--sp-5) var(--sp-5);
   border-top: var(--bw-hair) solid var(--border-hairline);
+  min-width: 0;
+}
+
+@media (max-width: 479px) {
+  .guide__summary {
+    padding: var(--sp-4);
+  }
+
+  .guide__summaryhead {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .guide__summaryhead::after {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .guide__badge {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: start;
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .guide__body {
+    padding: 0 var(--sp-4) var(--sp-4);
+  }
 }
 
 .guide__p {

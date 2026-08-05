@@ -271,22 +271,38 @@ const EXPOSURE_LABELS: Record<Locale, Record<string, string>> = {
     corona4: 'Outer corona (4 R☉)',
     corona8: 'Earthshine and distant corona (8 R☉)',
   },
+  fr: {
+    partial5: 'Phase partielle ou annulaire, filtre ND 5,0',
+    partial4: 'Phase partielle, filtre ND 4,0',
+    beads: 'Grains de Baily et anneau de diamant',
+    chromo: 'Chromosphère',
+    prom: 'Protubérances',
+    corona01: 'Couronne interne (0,1 R☉)',
+    corona02: 'Couronne (0,2 R☉)',
+    corona05: 'Couronne moyenne (0,5 R☉)',
+    corona1: 'Couronne (1 R☉)',
+    corona2: 'Couronne externe (2 R☉)',
+    corona4: 'Couronne externe (4 R☉)',
+    corona8: 'Lumière cendrée et couronne lointaine (8 R☉)',
+  },
 };
 
 const EXPOSURE_HEAD: Record<Locale, string[]> = {
   ca: ['Subjecte', 'Filtre', 'ISO 100 · f/8', 'Q'],
   es: ['Sujeto', 'Filtro', 'ISO 100 · f/8', 'Q'],
   en: ['Subject', 'Filter', 'ISO 100 · f/8', 'Q'],
+  fr: ['Sujet', 'Filtre', 'ISO 100 · f/8', 'Q'],
 };
 
 const EXPOSURE_CAPTION: Record<Locale, string> = {
   ca: 'Calculat amb t = f² / (ISO × 2^Q) i els factors Q de la guia d’exposició de la NASA (RP 1318, F. Espenak). Fes forquilla: ±2 passos a cada costat.',
   es: 'Calculado con t = f² / (ISO × 2^Q) y los factores Q de la guía de exposición de la NASA (RP 1318, F. Espenak). Haz horquilla: ±2 pasos a cada lado.',
   en: 'Calculated with t = f² / (ISO × 2^Q) and the Q factors from NASA’s exposure guide (RP 1318, F. Espenak). Bracket by ±2 stops on either side.',
+  fr: 'Calculé avec t = f² / (ISO × 2^Q) et les facteurs Q du guide d’exposition de la NASA (RP 1318, F. Espenak). Faites un bracketing de ±2 IL de chaque côté.',
 };
 
-const FILTER_YES: Record<Locale, string> = { ca: 'Sí', es: 'Sí', en: 'Yes' };
-const FILTER_NO: Record<Locale, string> = { ca: 'NO', es: 'NO', en: 'NO' };
+const FILTER_YES: Record<Locale, string> = { ca: 'Sí', es: 'Sí', en: 'Yes', fr: 'Oui' };
+const FILTER_NO: Record<Locale, string> = { ca: 'NO', es: 'NO', en: 'NO', fr: 'NON' };
 
 function exposureTable(locale: Locale): TableBlock {
   const labels = EXPOSURE_LABELS[locale];
@@ -1332,9 +1348,268 @@ function guideEn(): GuideSection[] {
   ];
 }
 
+function guideFr(): GuideSection[] {
+  return [
+    {
+      id: 'safety',
+      title: 'Sécurité oculaire',
+      lead: 'La section que vous devez lire même si vous ne lisez rien d\'autre. Une erreur ici ne peut pas être réparée.',
+      defaultOpen: true,
+      blocks: [
+        {
+          kind: 'p',
+          text: 'La rétine n\'a pas de récepteurs de douleur. Une brûlure solaire de la rétine ne fait pas mal au moment où elle se produit : vous la remarquez des heures plus tard, lorsqu\'une tache sombre apparaît au centre de votre champ de vision et ne disparaît pas. Il n\'y a pas de traitement. C\'est pourquoi les règles de cette section n\'autorisent aucune exception et aucun « juste une seconde ».',
+        },
+        {
+          kind: 'callout',
+          tone: 'good',
+          title: 'La seule chose qui fonctionne : ISO 12312-2',
+          text: 'Lunettes Eclipse ou film solaire certifié ISO 12312-2. Ils transmettent au maximum 0,0032 % de la lumière visible, bloquent tous les ultraviolets et au moins 97 % des infrarouges. Avec des lunettes certifiées, le disque solaire devrait être la seule chose que vous puissiez voir : si vous pouvez voir autre chose autour de vous, ils ne sont pas en sécurité.',
+        },
+        {
+          kind: 'list',
+          tone: 'bad',
+          items: [
+            'Les lunettes de soleil, aussi foncées et qualitatives soient-elles, même avec filtre UV. Elles laissent passer des milliers de fois plus de lumière que le seuil de sécurité.',
+            'Film radiographique et film photographique exposé. Les films modernes utilisent des colorants au lieu de l\'argent et n\'offrent aucune protection.',
+            'Verre fumé à la bougie, verre soudé sous l\'abat-jour 12 et miroirs en plastique.',
+            'CD, DVD, disquettes, paquets de chips, plastiques colorés et négatifs : ils ne filtrent pas les infrarouges qui cuisent votre rétine sans que vous vous en rendiez compte.',
+            'Lunettes de cinéma 3D, visières de casque et film teinté pour vitres.',
+            'Filtres d\'appareil photo de densité insuffisante (ND 8, ND 64, polariseurs et même ND 1000), et surtout tout filtre vissé DERRIÈRE l\'objectif ou devant un oculaire de télescope.',
+          ],
+        },
+        {
+          kind: 'p',
+          text: 'L’obscurité d’un matériau n’a rien à voir avec sa protection. Ce qui compte, c\'est ce qu\'il fait aux infrarouges et aux ultraviolets, et vous ne pouvez pas en juger en les regardant.',
+        },
+        {
+          kind: 'callout',
+          tone: 'bad',
+          title: 'Télescopes, jumelles et téléobjectifs : le vrai danger',
+          text: 'Un instrument optique concentre la lumière du soleil. Regarder à travers un télescope ou des jumelles non filtrés détruit la rétine en une fraction de seconde, et les lunettes à éclipse ne vous protégeront PAS : la lumière concentrée les fait fondre. Le filtre doit TOUJOURS être solidement monté sur l\'avant de l\'objectif, jamais au niveau de l\'oculaire ou entre l\'objectif et votre œil, afin qu\'un coup de vent ne puisse pas le déloger. Un filtre oculaire solaire à visser n’est jamais sûr.',
+        },
+        {
+          kind: 'p',
+          text: 'Si vous ne disposez pas de filtre frontal, la projection est sûre et spectaculaire : faites un petit trou dans un morceau de carton et, dos au Soleil, regardez l\'image qu\'il projette sur le sol ou sur une autre carte. Une passoire de cuisine permet de préparer des dizaines de petits croissants de soleil à la fois. Ne regardez jamais le Soleil à travers le trou.',
+        },
+        {
+          kind: 'callout',
+          tone: 'warn',
+          title: 'ÉCLIPSE TOTALE : les deux minutes où il faut regarder sans filtre',
+          text: 'Ce n\'est que si vous êtes À L\'INTÉRIEUR du chemin de la totalité, et seulement entre le deuxième contact (C2) et le troisième contact (C3), que le Soleil est complètement couvert ; alors vous pouvez – et devez – retirer votre filtre et visualiser la couronne à l’œil nu. C\'est la seule façon de le voir : absolument rien n\'est visible à travers un filtre solaire. Retirez le filtre uniquement lorsque le soleil disparaît complètement et que l\'obscurité tombe soudainement. Remettez-le avant qu\'un point de soleil ne réapparaisse au bord de la Lune : à cet instant, vos yeux doivent déjà être couverts.',
+        },
+        {
+          kind: 'callout',
+          tone: 'bad',
+          title: 'ÉCLIPSE ANNULAIRE : il n\'y a jamais de moment sûr. Jamais.',
+          text: 'Lors d’une éclipse annulaire, la Lune est trop petite pour couvrir le Soleil, donc un anneau brillant reste toujours visible. Cet anneau brûle exactement comme le plein Soleil. Il n’y a pas d’instant pendant l’annularité où il est sûr de regarder sans filtre – pas une seconde, pas pour une photographie, et même si le ciel s’est assombri et que l’éblouissement semble plus faible. L\'éclipse du 26 janvier 2028 est annulaire : gardez le filtre de C1 à C4.',
+        },
+        {
+          kind: 'p',
+          text: 'C’est la source de confusion la plus dangereuse de la trilogie des éclipses espagnoles. De nombreuses personnes auront vécu 2026 et 2027 en retirant leurs lunettes pendant la totalité et pourraient instinctivement faire de même en 2028. Ne le faites pas et prévenez les personnes à vos côtés.',
+        },
+        {
+          kind: 'callout',
+          tone: 'warn',
+          title: 'Phase partielle en dehors du chemin',
+          text: 'Si vous êtes en dehors du chemin central, il n\'y a aucun moment de sécurité même si l\'obscurcissement atteint 99 %. Un filtre est obligatoire du début à la fin. La différence entre 99 % et 100 % n’est pas une question de degré : c’est quelque chose de complètement différent.',
+        },
+        {
+          kind: 'list',
+          tone: 'warn',
+          items: [
+            'Inspectez le filtre à contre-jour avant de partir : jetez-le s\'il présente une rayure, un trou d\'épingle ou une fissure.',
+            'Mettez le filtre avant de regarder le Soleil et retirez-le seulement après avoir regardé à nouveau vers le bas.',
+            'Surveillez attentivement les enfants : ce sont eux qui ont le plus d\'accidents parce qu\'ils retournent leurs lunettes ou regardent en dessous.',
+            'Les lunettes à éclipse en carton ne doivent pas être portées en continu : utilisez-les pour regarder le Soleil quelques secondes à la fois.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'phases',
+      title: 'Les phases, expliquées',
+      lead: 'C1, C2, C3, C4, magnitude et obscurcissement : ce que chacun signifie et pourquoi 95 % n\'est pas « presque ».',
+      blocks: [
+        {
+          kind: 'defs',
+          items: [
+            { term: 'C1 — premier contact', text: 'Le bord de la Lune touche le bord du Soleil et la première morsure commence. Vous ne remarquez rien à l’œil nu ; à travers un filtre, vous voyez une petite encoche. De là à C2, il faut entre cinquante-cinq minutes (en 2026) et bien plus d’une heure et quart (en 2028).' },
+            { term: 'C2 — deuxième contact', text: 'La Lune finit de recouvrir le Soleil (ou, lors d\'une éclipse annulaire, se déplace complètement à l\'intérieur et ferme l\'anneau). C’est l’instant des perles de Baily et de la bague en diamant. Lors d’une éclipse totale, c’est à ce moment-là – et pas avant – que on retire les filtres.' },
+            { term: 'C3 — troisième contact', text: 'Le premier point de soleil réapparaît de l’autre côté. La totalité ou l\'annularité prend fin. Les filtres doivent être remis AVANT son arrivée.' },
+            { term: 'C4 — quatrième contact', text: 'La Lune quitte le disque solaire. L\'éclipse se termine. Cela se produit entre cinquante minutes (en 2026) et un peu plus d’une heure (en 2027 et 2028) après C3. Notez qu\'en 2026 et 2028, le Soleil se couche avant C4 sur presque toute la trajectoire — à Valence en 2026, C4 se produirait avec le Soleil 4° sous l\'horizon ; à Barcelone en 2028, près de 12° en dessous. Votre éclipse se termine au coucher du soleil, pas à C4.' },
+            { term: 'Magnitude', text: 'La fraction du DIAMÈTRE du Soleil couverte par la Lune. Il s\'agit d\'un rapport de diamètres et non de surfaces. Il dépasse 1 lors d’une éclipse totale et reste inférieur à 1 lors d’une éclipse annulaire.' },
+            { term: 'Obscurcissement', text: 'La fraction de la SURFACE du disque solaire qui est couverte. C’est ce que l’on appelle le « pourcentage d’éclipse ». Il n’y a pas de relation directe avec la magnitude car la taille apparente de la Lune change le long de son orbite.' },
+          ],
+        },
+        {
+          kind: 'p',
+          text: 'Un obscurcissement de 90% semble beaucoup, mais visuellement ce n\'est rien. Les chiffres habituellement cités — 100 000 lux en plein soleil et 1 000 lux à 99 % d\'obscurcissement — concernent midi avec le soleil haut. Les éclipses espagnoles de 2026 et 2028 sont différentes : le Soleil n’est qu’à quelques degrés au-dessus de l’horizon, déplaçant toute la plage vers le bas. Dans les Asturies, avec le Soleil à 12°, un ciel clair donne environ 17 000 lux ; environ 1 200 restent à 90 % de couverture et environ une centaine à 99 %. Ce n’est pas la proportion simple à laquelle on pourrait s’attendre : la Lune recouvre finalement le centre du disque, sa partie la plus brillante. Le pourcentage est tout aussi trompeur, mais à partir d’un niveau de référence bien inférieur.',
+        },
+        {
+          kind: 'p',
+          text: 'Il y a deux raisons. Premièrement, l’œil réagit de manière logarithmique : chaque réduction décuplé de la lumière ressemble à un petit pas, pas à un plongeon. Deuxièmement, pendant la longue phase partielle, vos pupilles se dilatent progressivement sans que vous vous en rendiez compte — d\'un millimètre à deux, quadruplant la lumière admise — et compensent la perte au fur et à mesure.',
+        },
+        {
+          kind: 'callout',
+          tone: 'info',
+          title: 'Le plongeon entier se produit dans les dernières secondes',
+          text: 'De 99 % à la totalité, la lumière diminue toujours d\'un facteur de quarante à quatre-vingts en moins d\'une minute : bien plus vite que l\'œil ne peut s\'adapter. Avec le Soleil haut, l\'éclairage chute d\'environ 570 lux à environ 7 ; avec le soleil espagnol à 12°, d\'environ cent à un peu plus de 2, déjà un niveau de ciel nocturne. La chute relative est similaire et semble tout aussi dramatique. C\'est pourquoi la totalité n\'« arrive » pas ; elle vous tombe dessus. Et c’est pour cela que 99 % et 100 % sont des expériences différentes, pas la même avec un peu plus ou un peu moins. Le compte à rebours calcule les chiffres de votre emplacement et de votre altitude solaire.',
+        },
+      ],
+    },
+    {
+      id: 'watch',
+      title: 'Que regarder et quand',
+      lead: 'La totalité est courte. Cela vaut la peine d\'arriver en sachant quoi chercher et dans quel ordre.',
+      blocks: [
+        {
+          kind: 'defs',
+          items: [
+            { term: 'Dernières minutes avant la C2', text: 'La lumière devient métallique et les ombres deviennent extraordinairement nettes : le Soleil est devenu une ligne de lumière plutôt qu\'un disque. Regardez les ombres des feuilles au sol : chaque espace entre les feuilles agit comme un trou d’épingle et remplit le sol de croissants.' },
+            { term: 'Bandes d\'ombre', text: 'Une ou deux minutes avant et après la totalité, de légères lignes sombres ondulantes parcourent le sol comme la lumière au fond d\'une piscine. Elles sont provoquées par les turbulences atmosphériques et n’apparaissent pas toujours. Pour les voir, étalez un drap blanc et lisse sur le sol avant le début de l\'éclipse.' },
+            { term: 'Les perles de Baily', text: 'Juste en C2, le dernier fil de lumière solaire se divise en points lumineux séparés : la lumière solaire traverse les vallées le long du bord de la Lune. Cela dure quelques secondes.' },
+            { term: 'Anneau de diamant', text: 'Quand il ne reste plus qu’un point et que la couronne commence déjà à apparaître autour de lui. C\'est l\'image que tout le monde connaît. Cela arrive deux fois : avant C2 et juste après C3.' },
+            { term: 'Chromosphère', text: 'Un arc fin et rose vif autour de la Lune pendant les première et dernière secondes de la totalité. Sa couleur provient de l\'émission d\'hydrogène.' },
+            { term: 'Proéminences', text: 'Langues rougeâtres de plasma dépassant du bord. Elles sont saisissantes aux jumelles (maintenant sans filtres, mais UNIQUEMENT pendant la totalité).' },
+            { term: 'Couronne', text: 'La raison du voyage. Un halo nacré et structuré avec des banderoles pouvant s\'étendre sur plusieurs rayons solaires. Aucune photographie ne lui ressemble : aucun capteur ne peut conserver la plage dynamique vue par l’œil. Regardez d’abord à l’œil nu, puis avec des jumelles.' },
+            { term: 'Crépuscule à 360°', text: 'Détournez-vous un instant du Soleil et retournez-vous : l’horizon tout entier a des couleurs de coucher de soleil dans toutes les directions, car vous êtes sous une ombre de deux ou trois cents kilomètres de large – environ 305 km à travers l’Espagne en 2026 – tandis que la lumière du jour continue à l’extérieur.' },
+            { term: 'Planètes et étoiles', text: 'Avec un ciel à la luminosité du crépuscule civil, Vénus et Jupiter apparaissent facilement, tandis que Mercure et les étoiles les plus brillantes sont visibles par temps clair. Le 12 août 2026, l’éclipse tombe également au sommet des Perséides.' },
+            { term: 'Température et animaux', text: 'La température chute très fortement en quelques secondes, souvent accompagnée d\'une brise soudaine. Les oiseaux se taisent brusquement ou retournent se percher, les grillons se mettent à chanter et le bétail se dirige vers un abri. Cela vaut autant la peine d’écouter que de regarder.' },
+          ],
+        },
+        {
+          kind: 'callout',
+          tone: 'warn',
+          title: 'Gardez les dix dernières secondes pour ne rien faire',
+          text: 'La totalité de 2026 est courte et votre localisation compte énormément : le maximum sur le territoire espagnol est de 1 min 50 s sur la ligne médiane lorsqu\'il atteint les Asturies, tombant rapidement vers les bords : 62 secondes à Valence, 68 à Mahón et 58 à Tarragone. Passez ce temps à vérifier la mise au point et vous la manquerez. Décidez à l\'avance quelles secondes appartiennent à la caméra et lesquelles regarder, et lorsque C3 approche, arrêtez-vous.',
+        },
+      ],
+    },
+    {
+      id: 'lowsun',
+      title: 'Soleil bas : choisir un emplacement',
+      lead: 'En 2026 et 2028, la phase centrale se produit lorsque le Soleil touche presque l\'horizon. Ici, le lieu décide de tout.',
+      criticalFor: ['2026-08-12', '2028-01-26'],
+      blocks: [
+        {
+          kind: 'p',
+          text: 'Le 12 août 2026, la totalité se produit à l\'approche du coucher du soleil, avec le Soleil entre 12° et moins de 2° au-dessus de l\'horizon selon votre position : plus le chemin est à l\'est, plus il est bas : 12° à La Corogne, 8° à Burgos, 4,6° à Valence et 1,8° à Mahón. Le 26 janvier 2028, l\'annularité arrive encore plus bas : 8° à Huelva, 7° à Séville et 2,4° à Valence ; à Barcelone, le Soleil se couche pendant l\'annularité elle-même (0,2° au maximum), tandis qu\'à Gérone et Mahón il s\'est déjà couché avant l\'arrivée de l\'annularité. Dans les deux cas, le problème n’est pas le ciel ; c\'est ce qui se trouve devant vous.',
+        },
+        {
+          kind: 'callout',
+          tone: 'warn',
+          title: 'Voir le disque du Soleil ne suffit pas',
+          text: 'Ce que vous êtes venu voir, ce n’est pas le disque mais la couronne qui s’étend autour de lui. Les banderoles coronales atteignent généralement quatre à six rayons solaires, et comme le rayon du Soleil est d\'environ 0,26° en août, cela signifie un halo de rayon compris entre un et un degré et demi. Ajoutez à cela la descente continue du Soleil pendant la totalité et l’extinction atmosphérique à basse altitude, et la règle pratique est de laisser environ 3° de dégagement au-dessus de tout obstacle, et non zéro. Une colline qui bloque « seulement » le ciel jusqu’à 2° permet de voir le Soleil mais vole la moitié de la couronne.',
+        },
+        {
+          kind: 'p',
+          text: 'Trois degrés, c’est bien plus qu’il n’y paraît vu du sol. Un immeuble de six étages à une centaine de mètres s\'étend déjà sur 10°. Une crête de montagne à dix kilomètres de là, qui s\'élève à 500 m au-dessus de vous, s\'étend sur 2,9° – et il vous faut encore trois degrés clairs au-dessus. Votre poing fermé à bout de bras s\'étend sur environ 10° : si l\'horizon ouest à partir de l\'endroit prévu se situe en dessous d\'un demi-poing, la marge est étroite.',
+        },
+        {
+          kind: 'list',
+          items: [
+            'Le meilleur horizon est la mer ouverte à l’ouest ; viennent ensuite une large vallée orientée vers l\'ouest ou une crête avec le terrain tombant dans cette direction.',
+            'Prendre de l\'altitude n\'est utile que si l\'obstacle est à proximité. Face à une chaîne de montagnes lointaine, grimper une centaine de mètres ne résout rien : il faut se déplacer de côté.',
+            'Attention au brouillard et à la brume : à basse altitude, vous regardez à travers une grande quantité d\'atmosphère, et une brume invisible à 30° peut cacher complètement le Soleil à 2°. La mer produit facilement un faible brouillard nocturne en août.',
+            'La réfraction atmosphérique augmente l’altitude apparente du Soleil, d’autant plus qu’il s’approche de l’horizon. Cela aide, mais ce n’est pas un chiffre de planification : ne comptez pas sur lui pour économiser un demi-degré.',
+            'Recherchez l\'emplacement un jour à l\'avance à la même heure et voyez exactement où le soleil se couche. Avec un Soleil aussi bas, se déplacer d’une centaine de mètres peut changer le résultat.',
+            'Arrivez des heures plus tôt le jour de l\'éclipse. Les meilleurs points de vue vont se remplir, et être coincé sur la route avec un soleil à 5° signifie que le voyage n\'a servi à rien.',
+          ],
+        },
+        {
+          kind: 'callout',
+          tone: 'info',
+          title: 'L\'avantage d\'un soleil bas',
+          text: 'Il y a une récompense à tout cela : la couronne au-dessus d\'un premier plan d\'un paysage, d\'une mer ou d\'une montagne permet de réaliser la plus belle photographie d\'éclipse possible, et elle ne peut pas être réalisée avec le Soleil haut. Les bandes d\'ombre et le crépuscule à 360° sont également bien plus visibles avec le Soleil à l\'horizon.',
+        },
+      ],
+    },
+    {
+      id: 'photo',
+      title: 'Photographie',
+      lead: 'Exposition par phase, distance focale et cadrage – plus un avertissement de ne pas passer la totalité à regarder un écran.',
+      blocks: [
+        {
+          kind: 'callout',
+          tone: 'bad',
+          title: 'Filtre frontal pour tout sauf la totalité',
+          text: 'Pendant chaque phase partielle et tout au long de l\'annularité 2028, la lentille doit avoir un filtre solaire monté sur sa face avant. Sans cela, le Soleil focalisé peut faire fondre le capteur en quelques secondes ; avec un reflex, regarder dans le viseur optique peut faire fondre votre rétine en premier. Retirez le filtre uniquement entre C2 et C3 d\'une éclipse TOTALE, et remplacez-le avant C3.',
+        },
+        exposureTable('fr'),
+        {
+          kind: 'p',
+          text: 'Le tableau est un point de départ, pas un dogme : la couronne a une énorme plage dynamique et aucune exposition ne la capture. Utilisez un bracketing manuel rapide – la même ouverture, avec des vitesses d\'obturation de 1/2000 s à 1 s – et combinez ensuite les images. Programmez et répétez tout avant le jour de l’éclipse.',
+        },
+        {
+          kind: 'defs',
+          items: [
+            { term: 'Taille du Soleil dans le cadre', text: 'Le diamètre de l’image du Soleil en millimètres est approximativement égal à la distance focale divisée par 109. A 400 mm, le Soleil mesure 3,7 mm de diamètre : sur un capteur plein format (24 mm de hauteur), il occupe 15 % de la hauteur du cadre, laissant la couronne bien le remplir.' },
+            { term: 'Distance focale maximale', text: 'Pour l\'ensemble du disque, utilisez au maximum environ 2500 mm en plein format ou 1700 mm en APS-C. Pour le corona avec salle de cadrage, utilisez environ 1000 mm en plein format ou 700 mm en APS-C.' },
+            { term: 'Distance focale recommandée', text: 'Entre 200 et 500 mm donnent de l\'espace autour de la couronne et rendent le cadrage moins critique, ce qui est important lorsque vous ne disposez que d\'une ou deux minutes. Si vous transportez deux corps, quittez le deuxième enregistrement vidéo avec une vue grand angle fixe de la scène : il capture les visages et la lumière ambiante changeante, c\'est ce dont vous vous souviendrez.' },
+            { term: 'Cadrage avec un soleil bas', text: 'En 2026 et 2028, un objectif de 24 à 70 mm montrant le petit Soleil éclipsé au-dessus d\'une silhouette de mer ou de montagne donne une meilleure image qu\'un téléobjectif. Cela supprime également le besoin d’un suivi précis.' },
+            { term: 'Mise au point', text: 'Mise au point manuelle à l\'infini véritable, réglée au préalable à l\'aide du grossissement en direct sur le bord filtré du Soleil ou sur une étoile. Verrouillez-le avec du ruban adhésif. La mise au point automatique échouera pendant la totalité.' },
+            { term: 'Trépied et déclencheur', text: 'Indispensable à partir de 200 mm. Utilisez un déclencheur à distance ou une minuterie de 2 s et désactivez la stabilisation lorsque l\'appareil photo est sur un trépied. Avec un soleil bas, surveillez le vent.' },
+            { term: 'Téléphone', text: 'Un téléphone ne prendra pas une bonne photo de la couronne, mais il peut enregistrer une excellente vidéo de l’atmosphère et du crépuscule à 360°. Utilisez le mode manuel si disponible, verrouillez l\'exposition avant C2 et laissez-le enregistrer sans surveillance sur un petit trépied. Les phases partielles nécessitent également un filtre sur l\'objectif du téléphone.' },
+          ],
+        },
+        {
+          kind: 'callout',
+          tone: 'warn',
+          title: 'La règle qui vous épargnera des regrets',
+          text: 'S’il s’agit de votre première éclipse totale, ne prenez pas de photos – ou automatisez l’appareil photo et ne le regardez pas. En 2026, la totalité ne dure qu’une minute ou un peu plus – 1 min 50 s dans le meilleur endroit d’Espagne, 62 secondes à Valence – et en 2027, elle dure quatre minutes et demie dans le détroit. Vous ne le récupérerez jamais ; des millions de photographies corona sont meilleures que les vôtres. Regardez-le de vos propres yeux.',
+        },
+      ],
+    },
+    {
+      id: 'checklist',
+      title: 'Liste de contrôle et logistique',
+      lead: 'Quoi apporter, comment s\'y rendre et pourquoi l\'application fonctionne sans couverture.',
+      blocks: [
+        {
+          kind: 'list',
+          items: [
+            'Lunettes Eclipse conformes à la norme ISO 12312-2 — plus une paire de rechange, car quelqu\'un vous les demandera ou les vôtres se briseront.',
+            'Un filtre solaire monté à l\'avant pour chaque instrument optique que vous prévoyez d\'utiliser, ainsi qu\'un ruban adhésif pour le fixer.',
+            'Jumelles : la couronne et les protubérances apparaissent spectaculaires dans leur totalité.',
+            'Une torche rouge ou une lampe frontale en mode rouge : très peu de choses sont visibles en totalité, et les lumières blanches dérangent tout le monde.',
+            'Une batterie externe chargée et votre téléphone à 100%. Un réseau saturé et un GPS actif épuisent rapidement la batterie.',
+            'De l\'eau et de la nourriture bien plus longtemps que prévu, ainsi qu\'une chaise pliante.',
+            'Des vêtements chauds : la température chute brutalement en totalité, et l\'éclipse de 2028 a lieu en janvier au coucher du soleil.',
+            'Un drap blanc étalé sur le sol pour visualiser les bandes d\'ombre.',
+            'Insectifuge pour 2026, qui a lieu un soir d\'août, à la période de pointe des moustiques. L\'éclipse de 2027 a également lieu en août mais se produit le matin : la crème solaire et l\'ombre pendant l\'attente comptent davantage là-bas.',
+            'Une boussole ou l\'application, pour savoir exactement où sera le Soleil depuis l\'emplacement choisi.',
+          ],
+        },
+        {
+          kind: 'callout',
+          tone: 'info',
+          title: 'Réseau mobile : supposez qu\'il est mort',
+          text: 'Des dizaines de milliers de personnes concentrées sur quelques kilomètres vont surcharger les mâts jusqu’à les rendre inutilisables. Vous ne pourrez pas rechercher des informations, envoyer des messages ou utiliser des cartes en ligne. Téléchargez des cartes hors ligne de la région avant de partir, convenez à l\'avance d\'un point de rendez-vous avec votre groupe et emportez des instructions écrites. Cette application est conçue pour fonctionner sans connexion précisément pour cette raison.',
+        },
+        {
+          kind: 'callout',
+          tone: 'info',
+          title: 'Trafic et foule',
+          text: 'Le schéma est toujours le même : les gens arrivent toute la journée et tout le monde part en même temps dans les cinq minutes. Attendez-vous ensuite à des heures de files d\'attente. Faites le plein la veille, garez-vous face à la sortie et n\'oubliez pas qu\'un belvédère étroit avec une seule route d\'accès est un piège. De nombreuses municipalités restreindront l\'accès aux sites les plus connus, alors vérifiez au préalable.',
+        },
+        {
+          kind: 'p',
+          text: 'Météo : la décision finale appartient aux dernières 24 heures. Le mois d’août est statistiquement favorable à l’intérieur de l’Espagne et pire sur la côte cantabrique, où le brouillard nocturne est fréquent ; Janvier 2028 est le plus risqué des trois. Préparez deux ou trois sites alternatifs sur le chemin et bien séparés les uns des autres, puis vérifiez les modèles haute résolution et les images satellite le matin même. Être prêt à parcourir cent kilomètres dans la journée est ce qui différencie le fait de le voir du manque.',
+        },
+        {
+          kind: 'callout',
+          tone: 'good',
+          title: 'Et si un nuage le recouvre après tout',
+          text: 'Vous le ressentirez encore : l\'obscurité soudaine, la baisse de température, le silence des animaux et le crépuscule à l\'horizon se produisent de toute façon. Ne continuez pas à regarder le nuage ; regarde autour de toi.',
+        },
+      ],
+    },
+  ];
+}
 /* ------------------------------------------------------------- accessors */
 
-const GUIDES: Record<Locale, () => GuideSection[]> = { ca: guideCa, es: guideEs, en: guideEn };
+const GUIDES: Record<Locale, () => GuideSection[]> = { ca: guideCa, es: guideEs, en: guideEn, fr: guideFr };
 
 /**
  * Guia completa en l'idioma demanat, ja filtrada per l'eclipsi actiu.
@@ -1372,7 +1647,7 @@ export function getGuide(
     }
 
     const degrees = new Intl.NumberFormat(
-      locale === 'es' ? 'es-ES' : locale === 'en' ? 'en-GB' : 'ca-ES', {
+      locale === 'es' ? 'es-ES' : locale === 'en' ? 'en-GB' : locale === 'fr' ? 'fr-FR' : 'ca-ES', {
       maximumFractionDigits: 1,
       },
     ).format(altitude);
@@ -1381,7 +1656,11 @@ export function getGuide(
     const dynamicIntro: ParagraphBlock = {
       kind: 'p',
       text:
-        locale === 'en'
+        locale === 'fr'
+          ? below
+            ? `À votre emplacement, le Soleil sera déjà à ${degrees.replace('-', '')}° sous l’horizon au maximum de l’éclipse. La phase centrale ne sera pas visible, même si la trajectoire de l’éclipse traverse géométriquement ce point.`
+            : `À votre emplacement, le Soleil ne sera qu’à ${degrees}° au-dessus de l’horizon au maximum de l’éclipse. Cette altitude provient du calcul et varie selon le lieu : il vous faut un horizon réellement dégagé dans la direction du Soleil.`
+          : locale === 'en'
           ? below
             ? `At your location, the Sun will already be ${degrees.replace('-', '')}° below the horizon at maximum eclipse. The central phase will not be visible even though the eclipse path geometrically crosses this point.`
             : `At your location, the Sun will be only ${degrees}° above the horizon at maximum eclipse. This altitude comes from the eclipse calculation and changes with location: you need a genuinely clear horizon in the Sun’s direction.`
@@ -1396,7 +1675,9 @@ export function getGuide(
     return {
       ...section,
       lead:
-        locale === 'en'
+        locale === 'fr'
+          ? `Avertissement calculé pour votre emplacement : Soleil à ${degrees}° au maximum de l’éclipse.`
+          : locale === 'en'
           ? `Calculated warning for your location: Sun at ${degrees}° at maximum eclipse.`
           : locale === 'es'
           ? `Aviso calculado para tu ubicación: Sol a ${degrees}° en el máximo.`
@@ -1447,6 +1728,11 @@ const HIGHLIGHTS: Record<string, Record<Locale, EclipseHighlight>> = {
       title: 'Total, at sunset, with the Sun very low',
       text: 'During totality, and only then, you may remove the filter. But the Sun will stand between 12° and less than 2° above the horizon: your chosen location, and whatever lies to the west, determines whether you see it at all. Read the Low Sun section before deciding where to go.',
     },
+    fr: {
+      tone: 'warn',
+      title: 'Totale, au coucher du Soleil, avec le Soleil très bas',
+      text: 'Pendant la totalité, et seulement à ce moment-là, vous pouvez retirer le filtre. Mais le Soleil sera entre 12° et moins de 2° au-dessus de l’horizon : le lieu choisi et ce qui se trouve à l’ouest détermineront si vous la verrez. Lisez la section Soleil bas avant de choisir votre emplacement.',
+    },
   },
   '2027-08-02': {
     ca: {
@@ -1466,6 +1752,11 @@ const HIGHLIGHTS: Record<string, Record<Locale, EclipseHighlight>> = {
       tone: 'good',
       title: 'Total, in the morning, with the Sun high: the easiest of the three',
       text: 'No horizon problems, and the longest totality: no other eclipse visible from land will surpass it until 2114 (about four and a half minutes from the Strait). During totality, and only between C2 and C3, remove the filter and look at the corona. Put it back on at the first point of sunlight.',
+    },
+    fr: {
+      tone: 'good',
+      title: 'Totale, le matin, avec le Soleil haut : la plus facile des trois',
+      text: 'Aucun problème d’horizon, et la totalité la plus longue : aucune autre éclipse visible depuis la terre ferme ne la dépassera avant 2114 (environ quatre minutes et demie depuis le détroit). Pendant la totalité, et seulement entre C2 et C3, retirez le filtre et regardez la couronne. Remettez-le dès le premier point de lumière solaire.',
     },
   },
   '2028-01-26': {
@@ -1490,6 +1781,11 @@ const HIGHLIGHTS: Record<string, Record<Locale, EclipseHighlight>> = {
       tone: 'bad',
       title: 'ANNULAR: never remove the filter',
       text: 'This eclipse is NOT total. A ring of sunlight remains visible throughout and burns just like the full Sun. Unlike 2026 and 2027, there is not a single second when it is safe to look without a certified filter — not even during annularity. The Sun will also range from about 8° in the south-west of the path to the horizon in the north-east: in Barcelona it sets during annularity itself, and in Girona and Mahón it has already set before annularity begins. Here, a clear horizon is not advice; it is the condition for seeing the eclipse.',
+    },
+    fr: {
+      tone: 'bad',
+      title: 'ANNULAIRE : ne retirez jamais le filtre',
+      text: 'Cette éclipse n’est PAS totale. Un anneau de Soleil reste visible et brûle comme le Soleil entier. Contrairement à 2026 et 2027, il n’existe pas une seule seconde où l’observation sans filtre certifié soit sûre — pas même pendant l’annularité. Le Soleil sera aussi à environ 8° au sud-ouest de la trajectoire et au ras de l’horizon au nord-est : à Barcelone, il se couche pendant l’annularité, et à Gérone et Mahón il sera déjà couché avant son début. Ici, un horizon dégagé n’est pas un conseil : c’est la condition pour voir l’éclipse.',
     },
   },
 };

@@ -13,17 +13,17 @@ import type { EclipseKind } from '../astro/types';
 import type { ContactTimesMs, CountdownTarget, LocalisedText } from './types';
 
 const LABELS = {
-  c1: { ca: 'Primer contacte', es: 'Primer contacto', en: 'First contact' },
-  totality: { ca: 'Totalitat', es: 'Totalidad', en: 'Totality' },
-  annularity: { ca: 'Anularitat', es: 'Anularidad', en: 'Annularity' },
-  central: { ca: 'Fase central', es: 'Fase central', en: 'Central phase' },
-  totalityEnd: { ca: 'Fi de la totalitat', es: 'Fin de la totalidad', en: 'End of totality' },
-  annularityEnd: { ca: 'Fi de l’anularitat', es: 'Fin de la anularidad', en: 'End of annularity' },
-  centralEnd: { ca: 'Fi de la fase central', es: 'Fin de la fase central', en: 'End of the central phase' },
-  max: { ca: 'Màxim', es: 'Máximo', en: 'Maximum' },
-  end: { ca: 'Fi de l’eclipsi', es: 'Fin del eclipse', en: 'End of the eclipse' },
-  done: { ca: 'Eclipsi acabat', es: 'Eclipse acabado', en: 'Eclipse finished' },
-  none: { ca: 'Sense eclipsi', es: 'Sin eclipse', en: 'No eclipse' },
+  c1: { ca: 'Primer contacte', es: 'Primer contacto', en: 'First contact', fr: 'Premier contact' },
+  totality: { ca: 'Totalitat', es: 'Totalidad', en: 'Totality', fr: 'Totalité' },
+  annularity: { ca: 'Anularitat', es: 'Anularidad', en: 'Annularity', fr: 'Annularité' },
+  central: { ca: 'Fase central', es: 'Fase central', en: 'Central phase', fr: 'Phase centrale' },
+  totalityEnd: { ca: 'Fi de la totalitat', es: 'Fin de la totalidad', en: 'End of totality', fr: 'Fin de la totalité' },
+  annularityEnd: { ca: 'Fi de l’anularitat', es: 'Fin de la anularidad', en: 'End of annularity', fr: 'Fin de l’annularité' },
+  centralEnd: { ca: 'Fi de la fase central', es: 'Fin de la fase central', en: 'End of the central phase', fr: 'Fin de la phase centrale' },
+  max: { ca: 'Màxim', es: 'Máximo', en: 'Maximum', fr: 'Maximum' },
+  end: { ca: 'Fi de l’eclipsi', es: 'Fin del eclipse', en: 'End of the eclipse', fr: 'Fin de l’éclipse' },
+  done: { ca: 'Eclipsi acabat', es: 'Eclipse acabado', en: 'Eclipse finished', fr: 'Éclipse terminée' },
+  none: { ca: 'Sense eclipsi', es: 'Sin eclipse', en: 'No eclipse', fr: 'Aucune éclipse' },
 } satisfies Record<string, LocalisedText>;
 
 export interface CountdownInput {

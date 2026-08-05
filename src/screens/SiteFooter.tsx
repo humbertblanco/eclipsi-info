@@ -70,6 +70,7 @@ const TEXT = {
     ca: 'Gratuït, per a tothom i sense ànim de lucre.',
     es: 'Gratuito, para todo el mundo y sin ánimo de lucro.',
     en: 'Free, for everyone and not for profit.',
+    fr: 'Gratuit, ouvert à toutes et à tous, sans but lucratif.',
   },
   /*
    * NO NOMÉS «CODI OBERT»: UNA INVITACIÓ.
@@ -88,10 +89,11 @@ const TEXT = {
     ca: 'Codi obert a GitHub: hi pots contribuir',
     es: 'Código abierto en GitHub: puedes contribuir',
     en: 'Open source on GitHub: you can contribute',
+    fr: 'Code source ouvert sur GitHub : vous pouvez contribuer',
   },
-  version: { ca: 'Versió', es: 'Versión', en: 'Version' },
-  by: { ca: 'Fet per', es: 'Hecho por', en: 'Made by' },
-  and: { ca: 'i', es: 'y', en: 'and' },
+  version: { ca: 'Versió', es: 'Versión', en: 'Version', fr: 'Version' },
+  by: { ca: 'Fet per', es: 'Hecho por', en: 'Made by', fr: 'Réalisé par' },
+  and: { ca: 'i', es: 'y', en: 'and', fr: 'et' },
   /*
    * L'ÚNICA PORTA CAP A LES FONTS — I CAP A «COM FUNCIONA» SENCERA.
    *
@@ -103,8 +105,9 @@ const TEXT = {
     ca: 'Fonts i atribucions, a «Com funciona»',
     es: 'Fuentes y atribuciones, en «Cómo funciona»',
     en: 'Sources and attribution, under “How it works”',
+    fr: 'Sources et attributions, dans « Comment ça marche »',
   },
-  pressLink: { ca: 'Premsa', es: 'Prensa', en: 'Press' },
+  pressLink: { ca: 'Premsa', es: 'Prensa', en: 'Press', fr: 'Presse' },
 } as const;
 
 const REPO_URL = 'https://github.com/humbertblanco/eclipsi-info';

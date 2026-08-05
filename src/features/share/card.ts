@@ -130,6 +130,26 @@ export interface CardTextInput {
   locale: Locale;
 }
 
+/** French must use its own Intl locale even while the shared formatter predates `fr`. */
+function formatCardClock(date: Date, locale: Locale): string {
+  if (locale !== 'fr') return formatClock(date, locale);
+  return new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).format(date);
+}
+
+function formatCardCoords(lat: number, lon: number, locale: Locale): string {
+  if (locale !== 'fr') return formatCoords(lat, lon, locale);
+  const number = new Intl.NumberFormat('fr-FR', {
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  });
+  return `${number.format(Math.abs(lat))}° ${lat >= 0 ? 'N' : 'S'}, ${number.format(Math.abs(lon))}° ${lon >= 0 ? 'E' : 'O'}`;
+}
+
 /**
  * Tot el text de la targeta, sense tocar cap canvas.
  *
@@ -143,9 +163,9 @@ export function cardText(input: CardTextInput): CardText {
   const isCentral =
     circumstances.kind === 'total' || circumstances.kind === 'annular';
 
-  const coords = formatCoords(place.lat, place.lon, locale);
+  const coords = formatCardCoords(place.lat, place.lon, locale);
   const figures: CardFigure[] = [
-    { label: sh('card.max', locale), value: formatClock(contacts.max.time, locale) },
+    { label: sh('card.max', locale), value: formatCardClock(contacts.max.time, locale) },
   ];
 
   if (!isCentral) {

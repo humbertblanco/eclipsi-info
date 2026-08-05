@@ -369,6 +369,7 @@ export function useEclipseTimer(options: UseEclipseTimerOptions): EclipseTimerSt
         ca: 'Avisos activats. Deixa el mòbil a la butxaca i mira el cel.',
         es: 'Avisos activados. Deja el móvil en el bolsillo y mira al cielo.',
         en: 'Alerts enabled. Put your phone in your pocket and look at the sky.',
+        fr: 'Alertes activées. Rangez votre téléphone dans votre poche et regardez le ciel.',
       },
       'info',
     );
@@ -386,6 +387,7 @@ export function useEclipseTimer(options: UseEclipseTimerOptions): EclipseTimerSt
         ca: 'Prova de veu. Se sent bé?',
         es: 'Prueba de voz. ¿Se oye bien?',
         en: 'Voice test. Can you hear it clearly?',
+        fr: 'Test vocal. M’entendez-vous clairement ?',
       },
       'info',
     );

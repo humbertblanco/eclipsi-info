@@ -157,6 +157,7 @@ export interface LocalizedText {
   ca: string;
   es: string;
   en: string;
+  fr: string;
 }
 
 export interface ObservationSource {

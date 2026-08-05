@@ -23,11 +23,12 @@ import {
 import ca from './ca.json';
 import es from './es.json';
 import en from './en.json';
+import fr from './fr.json';
 
-export type Locale = 'ca' | 'es' | 'en';
+export type Locale = 'ca' | 'es' | 'en' | 'fr';
 
 /** Ordre d'aparició als selectors d'idioma. */
-export const LOCALES: readonly Locale[] = ['ca', 'es', 'en'];
+export const LOCALES: readonly Locale[] = ['ca', 'es', 'en', 'fr'];
 
 /** Idioma per defecte quan el navegador no diu res útil. */
 export const FALLBACK_LOCALE: Locale = 'ca';
@@ -43,7 +44,7 @@ export function localeFromPathname(
   const root = `/${base.split('/').filter(Boolean).join('/')}`.replace(/^\/$/, '');
   if (root !== '' && pathname !== root && !pathname.startsWith(`${root}/`)) return null;
   const relative = pathname.slice(root.length).replace(/^\/+|\/+$/g, '');
-  return relative === 'es' || relative === 'en'
+  return relative === 'es' || relative === 'en' || relative === 'fr'
     ? relative
     : relative === ''
       ? 'ca'
@@ -66,7 +67,7 @@ export function pathnameForLocale(
  */
 type Dict = { [key: string]: string | Dict };
 
-const DICTS: Record<Locale, Dict> = { ca, es, en };
+const DICTS: Record<Locale, Dict> = { ca, es, en, fr };
 
 export type TranslateVars = Record<string, string | number>;
 
@@ -82,7 +83,7 @@ export interface LocaleContextValue {
 
 /** Cert si el valor és un idioma que tenim traduït. */
 export function isLocale(value: unknown): value is Locale {
-  return value === 'ca' || value === 'es' || value === 'en';
+  return value === 'ca' || value === 'es' || value === 'en' || value === 'fr';
 }
 
 /**

@@ -4,7 +4,7 @@
     "switch": "Idioma",
     "ca": "Catalán",
     "es": "Castellano",
-    "en": "Inglés"
+    "en": "Inglés", "fr": "Francés"
   },
   "guide": {
     "title": "Guía del eclipse",

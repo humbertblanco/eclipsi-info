@@ -1,0 +1,19 @@
+{
+  "locale": { "name": "Français", "switch": "Langue", "ca": "Catalan", "es": "Espagnol", "en": "Anglais", "fr": "Français" },
+  "guide": {
+    "title": "Guide de l’éclipse", "subtitle": "Tout ce qu’il faut savoir avant {{eclipse}}.",
+    "expandAll": "Tout ouvrir", "collapseAll": "Tout fermer", "criticalBadge": "Essentiel pour cette éclipse", "openHint": "Touchez pour ouvrir",
+    "sourcesTitle": "Sources", "sourcesNote": "Données de sécurité et d’exposition vérifiées auprès de l’IGN, de la NASA/GSFC et de l’American Astronomical Society.",
+    "readingTime": "Lisez-le avant de partir : le réseau mobile sera saturé le jour de l’éclipse."
+  },
+  "safety": {
+    "badge": "Sécurité oculaire",
+    "filterRequired": { "title": "Filtre solaire certifié obligatoire", "text": "Ne retirez jamais votre filtre ISO 12312-2 pour regarder le Soleil. La rétine brûle sans douleur et les lésions sont irréversibles." },
+    "totalityNow": { "title": "Vous pouvez maintenant regarder sans filtre", "text": "Vous êtes dans la totalité. Retirez le filtre et observez la couronne à l’œil nu. Remettez-le dès que le premier point lumineux apparaît." },
+    "totalitySoon": { "title": "Gardez le filtre jusqu’au deuxième contact", "text": "Vous êtes encore dans la phase partielle. Ne touchez pas au filtre avant que le Soleil soit entièrement masqué et que l’obscurité tombe brusquement." },
+    "annular": { "title": "Éclipse annulaire : jamais sans filtre", "text": "Il n’existe aucun instant sûr pendant une éclipse annulaire. L’anneau solaire visible brûle autant que le Soleil entier. Gardez le filtre en permanence." },
+    "partial": { "title": "Phase partielle uniquement ici", "text": "Le Soleil n’est jamais entièrement masqué à cet endroit. Un filtre certifié est obligatoire du début à la fin." },
+    "none": { "title": "Aucune éclipse visible", "text": "Même sans éclipse, regarder directement le Soleil ou à travers un objectif sans filtre peut endommager la vue." },
+    "cameraNote": "Utilisez l’écran du téléphone, pas vos yeux."
+  }
+}

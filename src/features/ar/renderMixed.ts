@@ -67,7 +67,7 @@ export interface MixedOptions {
    * mana sobre el cromatge —etiquetes, vores, marques—, no sobre la simulació.
    */
   palette: Palette;
-  locale?: Locale;
+  locale: Locale;
   /**
    * La guia de cerca i la confirmació de fixació. `label` ve localitzat del
    * cridador; `sunLockedAtMs` és l'instant en què l'àncora de Sol va passar a
@@ -193,7 +193,7 @@ export function renderMixed(
       currentTime: sample.time,
       horizonProfile: options.horizonProfile,
       markerRadiusPx: 11,
-      locale: options.locale ?? 'ca',
+      locale: options.locale,
       palette: options.palette,
     });
   }

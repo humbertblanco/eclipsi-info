@@ -362,6 +362,10 @@ export function CountdownScreen({
           />
         </section>
 
+        {/* A mòbil, la càmera és l'acció diferencial: queda immediatament
+            després del compte enrere, abans d'entrar al detall del punt. */}
+        {!desktop && cameraCta}
+
         <section className="home__point">
           <span className="screen__overline">{s('home.fromThisPoint', locale)}</span>
           <Card className="home__phase">
@@ -399,10 +403,6 @@ export function CountdownScreen({
             </Button>
           )}
         </section>
-
-        {/* A mòbil, la càmera és l'acció diferencial i segueix immediatament
-            el resultat que ha de comprovar. */}
-        {!desktop && cameraCta}
 
         {!desktop && weatherCard}
 

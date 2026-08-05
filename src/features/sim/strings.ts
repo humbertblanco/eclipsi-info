@@ -31,7 +31,7 @@ import type { Locale } from '../../i18n';
 import type { HorizonFailureCode, HorizonProgressCode } from './useHorizon';
 import type { HorizonFailure } from '../../core/horizon/errors';
 
-type Entry = { ca: string; es: string; en: string };
+type Entry = { ca: string; es: string; en: string; fr: string };
 
 const STRINGS = {
   /* Un codi d'estat per clau: `progress.<stage>`. */
@@ -39,22 +39,26 @@ const STRINGS = {
     ca: 'Baixant el relleu ({done} de {total} tessel·les)',
     es: 'Descargando el relieve ({done} de {total} teselas)',
     en: 'Downloading terrain ({done} of {total} tiles)',
+    fr: 'Téléchargement du relief ({done} tuiles sur {total})',
   },
   'progress.trace': {
     ca: 'Traçant l’horitzó ({pct} %)',
     es: 'Trazando el horizonte ({pct} %)',
     en: 'Tracing the horizon ({pct}%)',
+    fr: 'Calcul de l’horizon ({pct} %)',
   },
-  'progress.done': { ca: 'Horitzó llest', es: 'Horizonte listo', en: 'Horizon ready' },
+  'progress.done': { ca: 'Horitzó llest', es: 'Horizonte listo', en: 'Horizon ready', fr: 'Horizon prêt' },
   'progress.cache': {
     ca: 'Horitzó recuperat de la memòria',
     es: 'Horizonte recuperado de la memoria',
     en: 'Horizon restored from memory',
+    fr: 'Horizon récupéré depuis la mémoire',
   },
   'progress.preparing': {
     ca: 'Preparant el càlcul de l’horitzó…',
     es: 'Preparando el cálculo del horizonte…',
     en: 'Preparing horizon calculation…',
+    fr: 'Préparation du calcul de l’horizon…',
   },
 
   /* --- la fallada, una clau per codi -------------------------------------
@@ -79,26 +83,31 @@ const STRINGS = {
     ca: 'Falta relleu per baixar ({loaded} de {total} tessel·les) i un horitzó a mitges no és de fiar. Sense el perfil del terreny, la durada que es mostra és la teòrica, amb horitzó pla. Comprova la connexió.',
     es: 'Falta relieve por descargar ({loaded} de {total} teselas) y un horizonte a medias no es fiable. Sin el perfil del terreno, la duración que se muestra es la teórica, con horizonte plano. Comprueba la conexión.',
     en: 'Some terrain is still missing ({loaded} of {total} tiles), and a partial horizon is not reliable. Without the terrain profile, the duration shown is theoretical and assumes a flat horizon. Check your connection.',
+    fr: 'Il manque encore des données de relief ({loaded} tuiles sur {total}) et un horizon incomplet n’est pas fiable. Sans profil du terrain, la durée affichée est théorique et suppose un horizon plat. Vérifiez votre connexion.',
   },
   'failed.tilesIncompleteBare': {
     ca: 'Falta relleu per baixar i un horitzó a mitges no és de fiar. Sense el perfil del terreny, la durada que es mostra és la teòrica, amb horitzó pla. Comprova la connexió.',
     es: 'Falta relieve por descargar y un horizonte a medias no es fiable. Sin el perfil del terreno, la duración que se muestra es la teórica, con horizonte plano. Comprueba la conexión.',
     en: 'Some terrain is still missing, and a partial horizon is not reliable. Without the terrain profile, the duration shown is theoretical and assumes a flat horizon. Check your connection.',
+    fr: 'Il manque encore des données de relief et un horizon incomplet n’est pas fiable. Sans profil du terrain, la durée affichée est théorique et suppose un horizon plat. Vérifiez votre connexion.',
   },
   'failed.noTerrain': {
     ca: 'No ha arribat cap tessel·la del terreny. Sense el perfil del terreny, la durada que es mostra és la teòrica, amb horitzó pla. Comprova la connexió.',
     es: 'No ha llegado ninguna tesela del terreno. Sin el perfil del terreno, la duración que se muestra es la teórica, con horizonte plano. Comprueba la conexión.',
     en: 'No terrain tiles were received. Without the terrain profile, the duration shown is theoretical and assumes a flat horizon. Check your connection.',
+    fr: 'Aucune tuile de relief n’a été reçue. Sans profil du terrain, la durée affichée est théorique et suppose un horizon plat. Vérifiez votre connexion.',
   },
   'failed.worker': {
     ca: 'El càlcul de l’horitzó s’ha aturat sol. Sense el perfil del terreny, la durada que es mostra és la teòrica, amb horitzó pla. Torna-ho a provar; si es repeteix, tanca i torna a obrir l’app.',
     es: 'El cálculo del horizonte se ha parado solo. Sin el perfil del terreno, la duración que se muestra es la teórica, con horizonte plano. Vuelve a intentarlo; si se repite, cierra y vuelve a abrir la app.',
     en: 'The horizon calculation stopped unexpectedly. Without the terrain profile, the duration shown is theoretical and assumes a flat horizon. Try again; if it keeps happening, close and reopen the app.',
+    fr: 'Le calcul de l’horizon s’est interrompu de façon inattendue. Sans profil du terrain, la durée affichée est théorique et suppose un horizon plat. Réessayez ; si le problème persiste, fermez puis rouvrez l’application.',
   },
   'failed.unknown': {
     ca: 'No s’ha pogut calcular l’horitzó d’aquest punt. Sense el perfil del terreny, la durada que es mostra és la teòrica, amb horitzó pla.',
     es: 'No se ha podido calcular el horizonte de este punto. Sin el perfil del terreno, la duración que se muestra es la teórica, con horizonte plano.',
     en: 'The horizon could not be calculated for this point. Without the terrain profile, the duration shown is theoretical and assumes a flat horizon.',
+    fr: 'Impossible de calculer l’horizon pour ce point. Sans profil du terrain, la durée affichée est théorique et suppose un horizon plat.',
   },
 
   /* --- la línia de temps ------------------------------------------------
@@ -111,9 +120,9 @@ const STRINGS = {
    * rellotge de debò quan mira el simulador es pot treure el filtre solar dos
    * minuts abans d'hora.
    */
-  'timeline.live': { ca: 'Temps real', es: 'Tiempo real', en: 'Real time' },
-  'timeline.sim': { ca: 'Simulació', es: 'Simulación', en: 'Simulation' },
-  'timeline.mode': { ca: 'Quin rellotge mires', es: 'Qué reloj miras', en: 'Which clock you are viewing' },
+  'timeline.live': { ca: 'Temps real', es: 'Tiempo real', en: 'Real time', fr: 'Temps réel' },
+  'timeline.sim': { ca: 'Simulació', es: 'Simulación', en: 'Simulation', fr: 'Simulation' },
+  'timeline.mode': { ca: 'Quin rellotge mires', es: 'Qué reloj miras', en: 'Which clock you are viewing', fr: 'Horloge affichée' },
   /*
    * En temps real, la barra no pot dir on ets amb la seva posició: si l'eclipsi
    * és d'aquí a un any, el botó es queda clavat a C1 i sembla que l'estiguis
@@ -124,64 +133,72 @@ const STRINGS = {
     ca: 'l’hora que és ara · l’eclipsi encara no ha començat',
     es: 'la hora que es ahora · el eclipse aún no ha empezado',
     en: 'the current time · the eclipse has not started yet',
+    fr: 'l’heure actuelle · l’éclipse n’a pas encore commencé',
   },
   'timeline.liveDuring': {
     ca: 'l’hora que és ara · l’eclipsi està passant',
     es: 'la hora que es ahora · el eclipse está pasando',
     en: 'the current time · the eclipse is happening now',
+    fr: 'l’heure actuelle · l’éclipse est en cours',
   },
   'timeline.liveAfter': {
     ca: 'l’hora que és ara · l’eclipsi ja s’ha acabat',
     es: 'la hora que es ahora · el eclipse ya ha terminado',
     en: 'the current time · the eclipse has ended',
+    fr: 'l’heure actuelle · l’éclipse est terminée',
   },
   /* Amb signe i unitats, perquè «Simulació» sigui comprovable i no una etiqueta. */
   'timeline.ahead': {
     ca: '{gap} per davant de l’hora real',
     es: '{gap} por delante de la hora real',
     en: '{gap} ahead of real time',
+    fr: '{gap} en avance sur l’heure réelle',
   },
   'timeline.behind': {
     ca: '{gap} enrere de l’hora real',
     es: '{gap} por detrás de la hora real',
     en: '{gap} behind real time',
+    fr: '{gap} en retard sur l’heure réelle',
   },
   'timeline.atNow': {
     ca: 'just a l’hora real, però simulada',
     es: 'justo a la hora real, pero simulada',
     en: 'exactly at the real time, but simulated',
+    fr: 'exactement à l’heure réelle, mais en simulation',
   },
 
-  'timeline.scrub': { ca: 'Instant de l’eclipsi', es: 'Instante del eclipse', en: 'Eclipse time' },
-  'timeline.play': { ca: 'Reprodueix', es: 'Reproduce', en: 'Play' },
-  'timeline.pause': { ca: 'Pausa', es: 'Pausa', en: 'Pause' },
-  'timeline.back': { ca: 'Un minut enrere', es: 'Un minuto atrás', en: 'Back one minute' },
-  'timeline.forward': { ca: 'Un minut endavant', es: 'Un minuto adelante', en: 'Forward one minute' },
-  'timeline.rate': { ca: 'Velocitat', es: 'Velocidad', en: 'Speed' },
+  'timeline.scrub': { ca: 'Instant de l’eclipsi', es: 'Instante del eclipse', en: 'Eclipse time', fr: 'Instant de l’éclipse' },
+  'timeline.play': { ca: 'Reprodueix', es: 'Reproduce', en: 'Play', fr: 'Lire' },
+  'timeline.pause': { ca: 'Pausa', es: 'Pausa', en: 'Pause', fr: 'Pause' },
+  'timeline.back': { ca: 'Un minut enrere', es: 'Un minuto atrás', en: 'Back one minute', fr: 'Reculer d’une minute' },
+  'timeline.forward': { ca: 'Un minut endavant', es: 'Un minuto adelante', en: 'Forward one minute', fr: 'Avancer d’une minute' },
+  'timeline.rate': { ca: 'Velocitat', es: 'Velocidad', en: 'Speed', fr: 'Vitesse' },
 
-  'timeline.contacts': { ca: 'Salta a un contacte', es: 'Salta a un contacto', en: 'Jump to a contact' },
-  'timeline.jump.c1': { ca: 'Salta al primer contacte', es: 'Salta al primer contacto', en: 'Jump to first contact' },
+  'timeline.contacts': { ca: 'Salta a un contacte', es: 'Salta a un contacto', en: 'Jump to a contact', fr: 'Aller à un contact' },
+  'timeline.jump.c1': { ca: 'Salta al primer contacte', es: 'Salta al primer contacto', en: 'Jump to first contact', fr: 'Aller au premier contact' },
   'timeline.jump.c2': {
     ca: 'Salta a l’inici de la fase central',
     es: 'Salta al inicio de la fase central',
     en: 'Jump to the start of the central phase',
+    fr: 'Aller au début de la phase centrale',
   },
-  'timeline.jump.max': { ca: 'Salta al màxim', es: 'Salta al máximo', en: 'Jump to maximum eclipse' },
+  'timeline.jump.max': { ca: 'Salta al màxim', es: 'Salta al máximo', en: 'Jump to maximum eclipse', fr: 'Aller au maximum de l’éclipse' },
   'timeline.jump.c3': {
     ca: 'Salta al final de la fase central',
     es: 'Salta al final de la fase central',
     en: 'Jump to the end of the central phase',
+    fr: 'Aller à la fin de la phase centrale',
   },
-  'timeline.jump.c4': { ca: 'Salta a l’últim contacte', es: 'Salta al último contacto', en: 'Jump to last contact' },
+  'timeline.jump.c4': { ca: 'Salta a l’últim contacte', es: 'Salta al último contacto', en: 'Jump to last contact', fr: 'Aller au dernier contact' },
 
   /* Xifres curtes per a les pastilles. «C1»…«C4» no es tradueixen: són
      nomenclatura astronòmica, igual a totes dues llengües i a totes les taules
      publicades. L'única que canvia és l'abreviatura de màxim. */
-  'timeline.short.c1': { ca: 'C1', es: 'C1', en: 'C1' },
-  'timeline.short.c2': { ca: 'C2', es: 'C2', en: 'C2' },
-  'timeline.short.max': { ca: 'màx', es: 'máx', en: 'max' },
-  'timeline.short.c3': { ca: 'C3', es: 'C3', en: 'C3' },
-  'timeline.short.c4': { ca: 'C4', es: 'C4', en: 'C4' },
+  'timeline.short.c1': { ca: 'C1', es: 'C1', en: 'C1', fr: 'C1' },
+  'timeline.short.c2': { ca: 'C2', es: 'C2', en: 'C2', fr: 'C2' },
+  'timeline.short.max': { ca: 'màx', es: 'máx', en: 'max', fr: 'max' },
+  'timeline.short.c3': { ca: 'C3', es: 'C3', en: 'C3', fr: 'C3' },
+  'timeline.short.c4': { ca: 'C4', es: 'C4', en: 'C4', fr: 'C4' },
 } as const satisfies Record<string, Entry>;
 
 export type SimStringKey = keyof typeof STRINGS;

@@ -337,25 +337,25 @@ const BEARING_TOLERANCE_DEG = 0.002;
  * És el tipus literal i no el `Locale` de `src/i18n` a posta: `core` no importa
  * res de la capa d'interfície. És el mateix que fa `core/astro/gradient.ts`.
  */
-export type AlignmentLocale = 'ca' | 'es' | 'en';
+export type AlignmentLocale = 'ca' | 'es' | 'en' | 'fr';
 
 type Bilingual = Record<AlignmentLocale, string>;
 
 const MOMENT_LABEL: Record<AlignmentMoment, Bilingual> = {
-  c1: { ca: 'al primer contacte', es: 'en el primer contacto', en: 'at first contact' },
-  c2: { ca: 'a l’inici de la fase central', es: 'al inicio de la fase central', en: 'at the start of the central phase' },
-  max: { ca: 'al màxim de l’eclipsi', es: 'en el máximo del eclipse', en: 'at eclipse maximum' },
-  c3: { ca: 'al final de la fase central', es: 'al final de la fase central', en: 'at the end of the central phase' },
-  c4: { ca: 'al quart contacte', es: 'en el cuarto contacto', en: 'at fourth contact' },
+  c1: { ca: 'al primer contacte', es: 'en el primer contacto', en: 'at first contact', fr: 'au premier contact' },
+  c2: { ca: 'a l’inici de la fase central', es: 'al inicio de la fase central', en: 'at the start of the central phase', fr: 'au début de la phase centrale' },
+  max: { ca: 'al màxim de l’eclipsi', es: 'en el máximo del eclipse', en: 'at eclipse maximum', fr: 'au maximum de l’éclipse' },
+  c3: { ca: 'al final de la fase central', es: 'al final de la fase central', en: 'at the end of the central phase', fr: 'à la fin de la phase centrale' },
+  c4: { ca: 'al quart contacte', es: 'en el cuarto contacto', en: 'at fourth contact', fr: 'au quatrième contact' },
 };
 
 /** El mateix instant dit com a nom, per encaixar-lo dins d'una negació. */
 const MOMENT_NOUN: Record<AlignmentMoment, Bilingual> = {
-  c1: { ca: 'primer contacte', es: 'primer contacto', en: 'first contact' },
-  c2: { ca: 'fase central', es: 'fase central', en: 'central phase' },
-  max: { ca: 'màxim', es: 'máximo', en: 'maximum' },
-  c3: { ca: 'fase central', es: 'fase central', en: 'central phase' },
-  c4: { ca: 'quart contacte', es: 'cuarto contacto', en: 'fourth contact' },
+  c1: { ca: 'primer contacte', es: 'primer contacto', en: 'first contact', fr: 'premier contact' },
+  c2: { ca: 'fase central', es: 'fase central', en: 'central phase', fr: 'phase centrale' },
+  max: { ca: 'màxim', es: 'máximo', en: 'maximum', fr: 'maximum' },
+  c3: { ca: 'fase central', es: 'fase central', en: 'central phase', fr: 'phase centrale' },
+  c4: { ca: 'quart contacte', es: 'cuarto contacto', en: 'fourth contact', fr: 'quatrième contact' },
 };
 
 /* ── Geometria pura ───────────────────────────────────────────────────────── */
@@ -1247,7 +1247,7 @@ function failureToOutcome(
  * perquè el dia que n'entri un tercer no s'hagi de descobrir amb un «1.083 m»
  * a la pantalla d'algú.
  */
-const NUM: Record<AlignmentLocale, string> = { ca: 'ca-ES', es: 'es-ES', en: 'en-GB' };
+const NUM: Record<AlignmentLocale, string> = { ca: 'ca-ES', es: 'es-ES', en: 'en-GB', fr: 'fr-FR' };
 
 function decimals(value: number, digits: number, locale: AlignmentLocale): string {
   return new Intl.NumberFormat(NUM[locale], {
@@ -1279,6 +1279,7 @@ function towards(bearingDeg: number, locale: AlignmentLocale): string {
   const name = compassName(bearingDeg, locale);
   if (locale === 'es') return `hacia el ${name}`;
   if (locale === 'en') return `towards the ${name}`;
+  if (locale === 'fr') return `vers le ${name}`;
   return /^[aeiou]/.test(name) ? `cap a l’${name}` : `cap al ${name}`;
 }
 
@@ -1298,6 +1299,11 @@ function of(name: string, locale: AlignmentLocale): string {
   if (locale === 'en') {
     if (/^the /i.test(name)) return `of ${name}`;
     return `of ${name}`;
+  }
+  if (locale === 'fr') {
+    if (/^le /i.test(name)) return `du ${name.slice(3)}`;
+    if (/^les /i.test(name)) return `des ${name.slice(4)}`;
+    return `de ${name}`;
   }
   if (/^el /i.test(name)) return `del ${name.slice(3)}`;
   if (/^els /i.test(name)) return `dels ${name.slice(4)}`;
@@ -1346,6 +1352,21 @@ function impossibleHeadline(
   const sun = detail.sunAltitudeDeg === null ? null : formatDeg(detail.sunAltitudeDeg, locale);
   const maxKm = detail.maxDistanceKm;
   const en = locale === 'en';
+
+  if (locale === 'fr') {
+    switch (problem) {
+      case 'no-elevation': return `Nous ne connaissons pas l’altitude de ${name}. Sans modèle de terrain ni altitude fournie, aucun calcul n’est possible.`;
+      case 'no-contact': {
+        const noun = detail.moment === null ? 'ce contact' : MOMENT_NOUN[detail.moment].fr;
+        return `Il n’y a pas de ${noun} depuis ${name} : l’éclipse n’atteint pas cette phase à cet endroit.`;
+      }
+      case 'sun-below-horizon': return `À cet instant, le Soleil est à ${sun} d’altitude apparente. Sous l’horizon, aucun point ne permet de le placer au-dessus de ${name}.`;
+      case 'target-too-low': return `Avec le Soleil à ${sun}, ${name} ne s’élève pas assez au-dessus du terrain environnant : son sommet est déjà sous le Soleil et aucune distance ne peut le relever.`;
+      case 'out-of-range':
+        if (wouldNeedKm === null) return `Avec le Soleil à ${sun}, le sommet de ${name} reste au-dessus du Soleil à ${maxKm} km. La courbure terrestre abaisse l’élément plus vite que le Soleil ne descend.`;
+        return `Avec le Soleil à ${sun}, il faudrait se placer à environ ${formatKm(wouldNeedKm, locale)} de ${name}, au-delà de la limite demandée de ${maxKm} km.`;
+    }
+  }
 
   switch (problem) {
     case 'no-elevation':
@@ -1494,6 +1515,26 @@ export function describeAlignment(
 
   const terrain = describeTerrain(outcome, locale);
 
+  if (locale === 'fr') {
+    const whenFr = outcome.moment === null ? 'À l’instant demandé' : `${MOMENT_LABEL[outcome.moment].fr.charAt(0).toUpperCase()}${MOMENT_LABEL[outcome.moment].fr.slice(1)}`;
+    const fromTargetFr = `Le point se trouve à ${formatKm(outcome.point.distanceKm, locale)} de ${outcome.targetName}, ${towards(outcome.bearingFromTargetDeg, locale)}, à ${Math.round(outcome.point.groundElevationM)} m d’altitude.`;
+    const approachFr = outcome.fromOrigin === null ? fromTargetFr : `À ${formatKm(outcome.fromOrigin.distanceKm, locale)} de votre position, ${towards(outcome.fromOrigin.bearingDeg, locale)}, à vol d’oiseau. ${fromTargetFr}`;
+    const caveatsFr: string[] = [];
+    if (outcome.terrain.checked) caveatsFr.push('Le modèle représente un terrain nu, sans arbres ni bâtiments. Vérifiez avec l’image de la caméra.');
+    if (outcome.terrain.checked && outcome.terrain.coverage < 1) caveatsFr.push(`Il manque des données de terrain sur ${Math.round((1 - outcome.terrain.coverage) * 100)} % du parcours.`);
+    if (outcome.centralDurationSec !== null) caveatsFr.push(outcome.centralDurationSec <= 0 ? 'Il n’y a pas de phase centrale à ce point : le Soleil est aligné, mais pas entièrement masqué.' : `Le point offre ${formatSeconds(outcome.centralDurationSec, locale)} de phase centrale.`);
+    if (outcome.edgeUncertain) caveatsFr.push('Vous êtes au bord de la bande, où la marge est inférieure à l’erreur des éphémérides : la phase centrale ne peut pas être garantie.');
+    for (const other of outcome.alternatives) caveatsFr.push(`L’alignement existe aussi sur la même ligne à ${formatKm(other.distanceKm, locale)} de ${outcome.targetName}${other.terrainClear ? '.' : ', mais le relief s’interpose.'}`);
+    return {
+      headline: `${whenFr}, le Soleil apparaît au-dessus de ${outcome.targetName} à ${formatDeg(outcome.sunAltitudeDeg, locale)} d’altitude, ${towards(outcome.sunAzimuthDeg, locale)}.`,
+      coordinates,
+      approach: approachFr,
+      tolerance: `Vous disposez de ${formatMeters(outcome.toleranceAlongM, locale)} de marge vers l’avant ou l’arrière et de ${formatMeters(outcome.toleranceLateralM, locale)} latéralement. Au-delà, le sommet sort du disque solaire.`,
+      terrain,
+      caveats: caveatsFr,
+    };
+  }
+
   const caveats: string[] = [];
 
   if (outcome.terrain.checked) {
@@ -1566,6 +1607,17 @@ function describeTerrain(outcome: AlignmentSolution, locale: AlignmentLocale): s
   const en = locale === 'en';
   const name = outcome.targetName;
   const target = of(name, locale);
+
+  if (locale === 'fr') {
+    if (t.skipped === 'too-close') return `Le point est à ${formatKm(outcome.point.distanceKm, locale)} de ${name} : aucune cellule du modèle ne tient entre les deux. Vérifiez avec la caméra.`;
+    if (!t.checked) return `Aucune donnée de terrain : impossible de vérifier que ${name} est visible depuis ce point.`;
+    if (!t.clear) {
+      const distance = t.foregroundDistanceKm === null ? '' : ` L’obstacle est à ${formatKm(t.foregroundDistanceKm, locale)} du point.`;
+      return `Le relief intermédiaire masque ${name} de ${formatDeg(-t.marginDeg, locale)}, ainsi que le Soleil. Ce point ne convient pas.${distance}`;
+    }
+    if (t.hiddenBaseM > 1) return `Le sommet est visible avec ${formatDeg(t.marginDeg, locale)} de marge, mais le relief masque les ${formatMeters(t.hiddenBaseM, locale)} inférieurs.`;
+    return `Le relief intermédiaire reste dégagé : ${name} est visible de haut en bas, avec ${formatDeg(t.marginDeg, locale)} de marge.`;
+  }
 
   if (t.skipped === 'too-close') {
     return en

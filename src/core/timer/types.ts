@@ -7,13 +7,14 @@
  */
 
 /** Els mateixos dos idiomes que `src/i18n`, sense dependre'n. */
-export type TimerLocale = 'ca' | 'es' | 'en';
+export type TimerLocale = 'ca' | 'es' | 'en' | 'fr';
 
 /** Text que s'ha de dir o ensenyar, en els dos idiomes. */
 export interface LocalisedText {
   ca: string;
   es: string;
   en: string;
+  fr: string;
 }
 
 /** Contacte de referència d'un avís. */

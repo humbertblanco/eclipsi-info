@@ -94,10 +94,20 @@ const INTL: Record<Locale, string> = {
   ca: 'ca-ES',
   es: 'es-ES',
   en: 'en-GB',
+  fr: 'fr-FR',
 };
 
 const percentFmt: Partial<Record<Locale, Intl.NumberFormat>> = {};
 const hourFmt: Partial<Record<Locale, Intl.DateTimeFormat>> = {};
+
+const CONFIDENCE_FR: Record<CloudOutlook['confidence'], string> = {
+  high: 'Élevée',
+  medium: 'Moyenne',
+  low: 'Faible',
+  'very-low': 'Très faible',
+};
+
+const OPEN_METEO_FR = 'Données météorologiques d’Open-Meteo.com (CC BY 4.0)';
 
 /** Es memoritzen: construir un `Intl` a cada pintada no és barat. */
 function percent(locale: Locale): Intl.NumberFormat {
@@ -428,7 +438,11 @@ export function CloudPanel({
         )}
         <MetaRow
           label={ws('meta.confidence', locale)}
-          value={CONFIDENCE_LABEL[outlook.confidence][locale]}
+          value={
+            locale === 'fr'
+              ? CONFIDENCE_FR[outlook.confidence]
+              : CONFIDENCE_LABEL[outlook.confidence][locale]
+          }
         />
         <MetaRow label={ws('meta.age', locale)} value={describeAge(ageMs, locale)} />
       </dl>
@@ -436,7 +450,9 @@ export function CloudPanel({
       <p className="cloudpanel__caveat">{outlook.caveat}</p>
 
       <footer className="cloudpanel__foot">
-        <span className="cloudpanel__source">{OPEN_METEO_ATTRIBUTION[locale]}</span>
+        <span className="cloudpanel__source">
+          {locale === 'fr' ? OPEN_METEO_FR : OPEN_METEO_ATTRIBUTION[locale]}
+        </span>
         <button
           type="button"
           className="cloudpanel__retry"

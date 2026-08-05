@@ -122,6 +122,16 @@ const IOS_HINT: Record<Locale, InstallHint> = {
       'Open the app from its new icon, then prepare your location there.',
     ],
   },
+  fr: {
+    reason:
+      'Sur iPhone, les téléchargements effectués dans le navigateur peuvent être supprimés automatiquement au bout de sept jours. Installer l’application évite cette suppression.',
+    steps: [
+      'Ouvrez cette page dans Safari.',
+      'Touchez le bouton Partager dans la barre inférieure.',
+      'Choisissez « Sur l’écran d’accueil ».',
+      'Ouvrez l’application depuis sa nouvelle icône, puis préparez-y votre point.',
+    ],
+  },
 };
 
 const GENERIC_HINT: Record<Locale, InstallHint> = {
@@ -144,6 +154,13 @@ const GENERIC_HINT: Record<Locale, InstallHint> = {
     steps: [
       'Open your browser menu.',
       'Choose “Install app” or “Add to Home Screen”.',
+    ],
+  },
+  fr: {
+    reason: 'Une fois installée, l’application s’ouvre directement en plein écran et conserve les données enregistrées plus longtemps.',
+    steps: [
+      'Ouvrez le menu de votre navigateur.',
+      'Choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil ».',
     ],
   },
 };

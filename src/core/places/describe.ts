@@ -16,7 +16,7 @@
 import type { PlaceName } from './types';
 
 /** Els idiomes que l'app té escrits. Català per defecte; el castellà és una tria. */
-export type PlaceLocale = 'ca' | 'es' | 'en';
+export type PlaceLocale = 'ca' | 'es' | 'en' | 'fr';
 
 /**
  * Frase feta, ja partida per pintar-la.
@@ -85,10 +85,15 @@ function englishOf(name: string): string {
   return `from ${name}`;
 }
 
+function frenchOf(name: string): string {
+  return `de ${name}`;
+}
+
 const OF: Record<PlaceLocale, (name: string) => string> = {
   ca: catalanOf,
   es: spanishOf,
   en: englishOf,
+  fr: frenchOf,
 };
 
 /**
@@ -130,7 +135,9 @@ export function describePlace(
     primary:
       locale === 'en'
         ? `${formatDistanceKm(km, locale)} ${OF[locale](settlement.name)}`
-        : `a ${formatDistanceKm(km, locale)} ${OF[locale](settlement.name)}`,
+        : locale === 'fr'
+          ? `à ${formatDistanceKm(km, locale)} ${OF[locale](settlement.name)}`
+          : `a ${formatDistanceKm(km, locale)} ${OF[locale](settlement.name)}`,
     secondary: region,
     precision: 'near',
   };

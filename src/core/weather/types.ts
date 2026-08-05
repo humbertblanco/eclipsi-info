@@ -21,13 +21,14 @@ import type { GeoLocation } from '../astro/types';
  * córrer dins d'un Worker i a Node. Si algun dia divergeixen, divergeix una
  * unió de dues cadenes i el compilador ho dirà a tots els llocs alhora.
  */
-export type WeatherLocale = 'ca' | 'es' | 'en';
+export type WeatherLocale = 'ca' | 'es' | 'en' | 'fr';
 
 /** Text que ha d'anar a la pantalla, en els dos idiomes. */
 export interface LocalisedText {
   ca: string;
   es: string;
   en: string;
+  fr: string;
 }
 
 /** Les tres capes de núvols que separa qualsevol model meteorològic. */
@@ -240,18 +241,22 @@ export const CLOUD_ERROR_TEXT: Record<CloudErrorCode, LocalisedText> = {
   'partial-points': {
     ca: 'La consulta del cel ha tornat incompleta. Torna-ho a provar.',
     es: 'La consulta del cielo ha vuelto incompleta. Vuelve a probarlo.', en: 'The cloud-data request returned an incomplete result. Try again.',
+    fr: 'La requête sur le ciel a renvoyé un résultat incomplet. Réessayez.',
   },
   'no-hour': {
     ca: 'La previsió no arriba a l’hora de l’eclipsi.',
     es: 'La previsión no llega a la hora del eclipse.', en: 'The forecast does not extend to the time of the eclipse.',
+    fr: 'La prévision ne couvre pas encore l’heure de l’éclipse.',
   },
   'not-enough-years': {
     ca: 'No hi ha prou anys d’arxiu en aquest punt per dir què hi sol fer.',
     es: 'No hay suficientes años de archivo en este punto para decir qué suele hacer.', en: 'There are not enough years of archive data at this location to establish the usual conditions.',
+    fr: 'Il n’y a pas assez d’années d’archives à cet endroit pour établir les conditions habituelles.',
   },
   unknown: {
     ca: 'No s’ha pogut obtenir la nuvolositat.',
     es: 'No se ha podido obtener la nubosidad.', en: 'Cloud cover could not be obtained.',
+    fr: 'La couverture nuageuse n’a pas pu être obtenue.',
   },
 };
 

@@ -21,27 +21,35 @@ import type { CloudOutlook, LocalisedText, SkyBand, WeatherLocale } from './type
 
 /** Titular de la puntuació. Tres estats i prou. */
 export const BAND_TITLE: Record<SkyBand, LocalisedText> = {
-  clear: { ca: 'Cel net', es: 'Cielo despejado', en: 'clear sky' },
-  partial: { ca: 'Cel a mitges', es: 'Cielo a medias', en: 'Partly cloudy' },
-  cloudy: { ca: 'Cel tapat', es: 'Cielo cubierto', en: 'overcast sky' },
+  clear: { ca: 'Cel net', es: 'Cielo despejado', en: 'clear sky', fr: 'Ciel dégagé' },
+  partial: { ca: 'Cel a mitges', es: 'Cielo a medias', en: 'Partly cloudy', fr: 'Ciel partiellement nuageux' },
+  cloudy: { ca: 'Cel tapat', es: 'Cielo cubierto', en: 'overcast sky', fr: 'Ciel couvert' },
 };
 
 /** Què vol dir cada estat per a l'eclipsi. */
 export const BAND_MEANING: Record<SkyBand, LocalisedText> = {
-  clear: { ca: 'Ho hauries de veure tot.', es: 'Deberías verlo todo.', en: 'You should see everything.' },
+  clear: { ca: 'Ho hauries de veure tot.', es: 'Deberías verlo todo.', en: 'You should see everything.', fr: 'Vous devriez tout voir.' },
   partial: {
     ca: 'El veuràs a estones, o a través d’un vel.',
-    es: 'Lo verás a ratos, o a través de un velo.', en: 'You will see it at times, or through a veil.',
+    es: 'Lo verás a ratos, o a través de un velo.', en: 'You will see it at times, or through a veil.', fr: 'Vous la verrez par moments ou à travers un voile.',
   },
   cloudy: {
     ca: 'Molt probablement no veuràs res. Mou-te.',
-    es: 'Muy probablemente no verás nada. Muévete.', en: 'Most likely you won\'t see anything. Move.',
+    es: 'Muy probablemente no verás nada. Muévete.', en: 'Most likely you won\'t see anything. Move.', fr: 'Vous ne verrez probablement rien. Déplacez-vous.',
   },
 };
 
 /** Edat d'una dada en text. Sempre s'ensenya: la incertesa es diu. */
 export function describeAge(ageMs: number, locale: WeatherLocale = 'ca'): string {
   const minutes = Math.round(ageMs / 60000);
+  if (locale === 'fr') {
+    if (minutes < 1) return 'à l’instant';
+    if (minutes < 60) return `il y a ${minutes} min`;
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return `il y a ${hours} h`;
+    const days = Math.round(hours / 24);
+    return days === 1 ? 'il y a 1 jour' : `il y a ${days} jours`;
+  }
   if (locale === 'en') {
     if (minutes < 1) return 'just now';
     if (minutes < 60) return `${minutes} min ago`;
@@ -77,12 +85,20 @@ export function describeAge(ageMs: number, locale: WeatherLocale = 'ca'): string
 export function describeAgeSince(ageMs: number, locale: WeatherLocale = 'ca'): string {
   const age = describeAge(ageMs, locale);
   if (locale === 'en') return `from ${age}`;
+  if (locale === 'fr') return `de ${age}`;
   if (locale === 'es') return `de ${age}`;
   return /^[aeiouàèéíòóúh]/i.test(age) ? `d’${age}` : `de ${age}`;
 }
 
 /** Antelació en text natural. */
 export function describeLead(days: number, locale: WeatherLocale = 'ca'): string {
+  if (locale === 'fr') {
+    if (days < 0) return 'déjà passée';
+    const hours = days * 24;
+    if (hours < 1) return 'dans moins d’une heure';
+    if (hours < 48) return `dans ${Math.round(hours)} h`;
+    return `dans ${Math.round(days)} jours`;
+  }
   if (locale === 'en') {
     if (days < 0) return 'already passed';
     const hours = days * 24;
@@ -117,9 +133,11 @@ export function describeLineOfSight(
   const dir = compassLabel(sampling.sunAzimuthDeg, locale);
   const alt = sampling.sunAltitudeDeg.toFixed(0);
   const en = locale === 'en';
+  const fr = locale === 'fr';
   const es = locale === 'es';
 
   if (!sampling.slanted) {
+    if (fr) return `Le Soleil sera à ${alt}°. Assez haut pour que les nuages pertinents soient directement au-dessus de vous.`;
     if (en) return `The Sun will be at ${alt}°. High enough that the relevant clouds are directly above you.`;
     return es
       ? `El Sol estará a ${alt}°. Bastante alto: las nubes que cuentan están encima de ti.`
@@ -127,6 +145,7 @@ export function describeLineOfSight(
   }
 
   if (!sampling.lineOfSightUsed) {
+    if (fr) return `Le Soleil sera à ${alt}° vers le ${dir}. La climatologie n’a été calculée qu’à votre position.`;
     if (en) return `The Sun will be at ${alt}° towards ${dir}. Climatology has only been calculated at your location.`;
     return es
       ? `El Sol estará a ${alt}° hacia el ${dir}. La climatología solo se ha calculado en tu punto.`
@@ -138,6 +157,7 @@ export function describeLineOfSight(
     sampling.points[0],
   );
   const km = Math.round(farthest.groundDistanceKm);
+  if (fr) return `Le Soleil sera à ${alt}° vers le ${dir}. Les nuages élevés susceptibles de le masquer se trouvent à ${km} km dans cette direction.`;
   if (en) return `The Sun will be at ${alt}° towards ${dir}. High clouds that could block it are ${km} km away in that direction.`;
   return es
     ? `El Sol estará a ${alt}° hacia el ${dir}. Las nubes altas que te taparían están a ${km} km de aquí, en esa dirección.`
@@ -158,6 +178,12 @@ export function describeDominantLayer(
   // baixa, dir "està tapat" seria fals, però dir que és el que més et pot
   // fastiguejar és exactament el que passa.
   const label = LAYER_LABEL[dominant][locale].toLowerCase();
+  if (locale === 'fr') {
+    const head = `Le principal risque vient des nuages ${label}.`;
+    if (dominant === 'high') return `${head} Ils sont fins : la couronne peut encore apparaître.`;
+    if (dominant === 'mid') return `${head} Le disque solaire paraîtra laiteux.`;
+    return `${head} Là où ils sont présents, ils masqueront entièrement la vue.`;
+  }
   if (locale === 'en') {
     const head = `The biggest risk is from ${label} clouds.`;
     if (dominant === 'high') return `${head} They are thin, so the corona can still show through.`;
@@ -195,6 +221,12 @@ export function describeHaze(
 
   const es = locale === 'es';
   const km = visibilityKm < 1 ? visibilityKm.toFixed(1) : String(Math.round(visibilityKm));
+  if (locale === 'fr') {
+    const head = `Avec ${km} km de visibilité et ${airmass.toFixed(0)} masses d’air`;
+    if (transmission < 0.1) return `${head}, presque aucune lumière n’atteindra le disque. La brume à l’ouest peut le faire disparaître avant l’horizon.`;
+    const pct = Math.round(transmission * 100);
+    return `${head}, ${pct} % de la lumière atteindra le disque. Il restera visible, mais rouge et faible.`;
+  }
   if (locale === 'en') {
     const head = `With ${km} km visibility and ${airmass.toFixed(0)} air masses`;
     if (transmission < 0.1) {

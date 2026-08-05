@@ -32,7 +32,7 @@ export const NBSP = '\u00a0';
  * igualment perquè el dia que entri una tercera llengua, la que sigui,
  * l'alternativa és descobrir-ho amb un «1,083 m» a la pantalla d'algú.
  */
-const INTL: Record<Locale, string> = { ca: 'ca-ES', es: 'es-ES', en: 'en-GB' };
+const INTL: Record<Locale, string> = { ca: 'ca-ES', es: 'es-ES', en: 'en-GB', fr: 'fr-FR' };
 
 const enterFmt: Partial<Record<Locale, Intl.NumberFormat>> = {};
 const decimalFmt: Partial<Record<Locale, Intl.NumberFormat>> = {};
@@ -103,6 +103,7 @@ export function bearingPhrase(degrees: number, locale: Locale = 'ca'): string {
   const name = compassName(degrees, locale);
   if (locale === 'en') return `towards the ${name}`;
   if (locale === 'es') return `hacia el ${name}`;
+  if (locale === 'fr') return `vers le ${name}`;
   return /^[aeiou]/.test(name) ? `cap a l’${name}` : `cap al ${name}`;
 }
 

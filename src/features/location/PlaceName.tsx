@@ -56,7 +56,21 @@ const SEARCHING: Record<Locale, string> = {
   ca: 'Buscant el nom del lloc',
   es: 'Buscando el nombre del lugar',
   en: 'Searching for the place name',
+  fr: 'Recherche du nom du lieu',
 };
+
+function placeDecimal(value: number, digits: number, locale: Locale): string {
+  if (locale !== 'fr') return formatDecimal(value, digits, locale);
+  return new Intl.NumberFormat('fr-FR', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value);
+}
+
+function placeCoords(location: GeoLocation, locale: Locale): string {
+  if (locale !== 'fr') return formatCoords(location.lat, location.lon, locale);
+  return `${placeDecimal(Math.abs(location.lat), 4, locale)}° ${location.lat >= 0 ? 'N' : 'S'}, ${placeDecimal(Math.abs(location.lon), 4, locale)}° ${location.lon >= 0 ? 'E' : 'O'}`;
+}
 
 export interface PlaceNameProps {
   /** `null` mentre no se sap on és l'usuari. Llavors no es pinta res. */
@@ -90,9 +104,9 @@ export function PlaceName({
   if (!location) return null;
 
   const root = className ? `pname ${className}` : 'pname';
-  const coords = formatCoords(location.lat, location.lon, locale);
+  const coords = placeCoords(location, locale);
   const elevation = showElevation
-    ? `${formatDecimal(Math.round(location.elevation), 0, locale)} m`
+    ? `${placeDecimal(Math.round(location.elevation), 0, locale)} m`
     : null;
 
   // Sense nom, les coordenades PUGEN a la línia principal. Així la línia de

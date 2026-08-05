@@ -107,6 +107,29 @@ function englishIndex(html: string): string {
     .replaceAll('Anular des de la península Ibèrica', 'Annular from the Iberian Peninsula')
 }
 
+function frenchIndex(html: string): string {
+  return html
+    .replace('<html lang="ca">', '<html lang="fr">')
+    .replace('<title>Eclipsi solar 2026: visibilitat i durada al teu punt | eclipsi.info</title>', '<title>Éclipse solaire 2026 : visibilité et durée à votre position | eclipsi.info</title>')
+    .replace(`rel="canonical" href="${SITE_URL}"`, `rel="canonical" href="${SITE_URL}fr/"`)
+    .replace(`<meta property="og:url" content="${SITE_URL}" />`, `<meta property="og:url" content="${SITE_URL}fr/" />`)
+    .replace(`"url": "${SITE_URL}"`, `"url": "${SITE_URL}fr/"`)
+    .replace('<meta property="og:locale" content="ca_ES" />', '<meta property="og:locale" content="fr_FR" />')
+    .replace('<meta property="og:locale:alternate" content="fr_FR" />', '<meta property="og:locale:alternate" content="ca_ES" />')
+    .replaceAll('Quants segons d’eclipsi veuràs des d’on seràs', 'Combien de secondes d’éclipse verrez-vous depuis votre position ?')
+    .replaceAll('Eclipsi solar 2026: quants segons veuràs al teu punt?', 'Éclipse solaire 2026 : combien de secondes verrez-vous ?')
+    .replaceAll('Càlcul topocèntric i horitzó real del teu punt: la durada que et deixa el relleu, no la del catàleg.', 'Calcul topocentrique et horizon réel : la durée permise par le relief, pas celle du catalogue.')
+    .replace('Calcula l’eclipsi solar del 12 d’agost de 2026 al teu punt: hora, segons de totalitat, núvols, relleu, mapa de visibilitat i llocs oficials.', 'Calculez l’éclipse solaire du 12 août 2026 à votre position : horaires, durée de totalité, nuages, relief, carte de visibilité et sites officiels.')
+    .replaceAll('eclipsi.info, durada i visibilitat de l’eclipsi solar al teu punt', 'eclipsi.info, durée et visibilité de l’éclipse solaire à votre position')
+    .replace('Simulador dels eclipsis solars del 2026, 2027 i 2028 amb càlcul topocèntric i perfil d’horitzó real del punt de l’observador.', 'Simulateur des éclipses solaires de 2026, 2027 et 2028 avec calcul topocentrique et profil réel de l’horizon de l’observateur.')
+    .replaceAll('Eclipsi solar total del 12 d’agost de 2026', 'Éclipse solaire totale du 12 août 2026')
+    .replaceAll('Eclipsi solar del 2 d’agost de 2027', 'Éclipse solaire du 2 août 2027')
+    .replaceAll('Eclipsi solar anular del 26 de gener de 2028', 'Éclipse solaire annulaire du 26 janvier 2028')
+    .replaceAll('Franja de totalitat: Islàndia i el nord d’Espanya', 'Bande de totalité : Islande et nord de l’Espagne')
+    .replaceAll('Nord d’Àfrica; parcial des d’Espanya', 'Afrique du Nord ; partielle depuis l’Espagne')
+    .replaceAll('Anular des de la península Ibèrica', 'Annulaire depuis la péninsule Ibérique')
+}
+
 /**
  * Noms de les memòries cau en temps d'execució.
  *
@@ -206,8 +229,10 @@ export default defineConfig(({ command }) => ({
         const html = await readFile(resolve(outDir, 'index.html'), 'utf8')
         await mkdir(resolve(outDir, 'es'), { recursive: true })
         await mkdir(resolve(outDir, 'en'), { recursive: true })
+        await mkdir(resolve(outDir, 'fr'), { recursive: true })
         await writeFile(resolve(outDir, 'es/index.html'), spanishIndex(html), 'utf8')
         await writeFile(resolve(outDir, 'en/index.html'), englishIndex(html), 'utf8')
+        await writeFile(resolve(outDir, 'fr/index.html'), frenchIndex(html), 'utf8')
       },
     },
     VitePWA({

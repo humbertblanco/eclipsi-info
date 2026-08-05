@@ -1819,6 +1819,43 @@
 }
 
 /*
+ * A MÒBIL LES ETIQUETES JA SÓN CODIS CURTS (`2026`, `CA`, `ES`, `EN`, `FR`).
+ * No té sentit conservar-hi el terra calculat per als noms llargs. Amb quatre
+ * idiomes, Safari feia respectar l'amplada intrínseca de «Français» al select
+ * tancat malgrat que React ja hi pintava «FR», i el control dret quedava
+ * retallat a 390 px. Fixar la base al contingut curt evita aquesta amplada
+ * fantasma i deixa marge per als safe areas i l'arrodoniment de píxels.
+ */
+@media (max-width: 480px) {
+  .shell__header .ui-topbar__actions {
+    gap: var(--sp-2);
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .shell__header .ui-selectwrap:has(.shell__eclipse) {
+    flex: 0 1 4.75rem;
+    min-width: 4.5rem;
+  }
+
+  .shell__header .ui-selectwrap:has(.shell__locale) {
+    flex: 0 1 4.25rem;
+    min-width: 4rem;
+  }
+
+  .shell__header .shell__eclipse,
+  .shell__header .shell__locale {
+    min-width: 0;
+    padding-inline-start: var(--sp-3);
+    padding-inline-end: var(--sp-8);
+  }
+
+  .shell__header .ui-selectwrap__caret {
+    right: var(--sp-3);
+  }
+}
+
+/*
  * A 360 px I PER SOTA, LA MARCA TAMBÉ CEDEIX UNA MICA.
  *
  * Mesurat al navegador: el logotip ocupa 127 px fixos, i amb els dos
@@ -1832,12 +1869,13 @@
  */
 @media (max-width: 360px) {
   .shell__header .ui-topbar {
-    padding-inline: var(--sp-4);
-    gap: var(--sp-3);
+    padding-left: max(var(--sp-3), env(safe-area-inset-left));
+    padding-right: max(var(--sp-3), env(safe-area-inset-right));
+    column-gap: var(--sp-2);
   }
 
   .shell__header .ui-topbar__logo {
-    max-width: 96px;
+    max-width: 88px;
   }
 }
 

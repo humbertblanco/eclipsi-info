@@ -58,7 +58,8 @@ const CONTACT_LABELS = {
   ca: { c1: 'C1', c2: 'C2 · totalitat', max: 'màxim', c3: 'C3', c4: 'C4' },
   es: { c1: 'C1', c2: 'C2 · totalidad', max: 'máximo', c3: 'C3', c4: 'C4' },
   en: { c1: 'C1', c2: 'C2 · totality', max: 'maximum', c3: 'C3', c4: 'C4' },
-} as const;
+  fr: { c1: 'C1', c2: 'C2 · totalité', max: 'maximum', c3: 'C3', c4: 'C4' },
+} as const satisfies Record<Locale, Record<'c1' | 'c2' | 'max' | 'c3' | 'c4', string>>;
 
 export function renderOverlay(
   ctx: CanvasRenderingContext2D,

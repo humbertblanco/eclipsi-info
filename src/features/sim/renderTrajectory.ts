@@ -80,6 +80,14 @@ const LABELS = {
     c4: 'C4 end',
     central: 'central phase',
   },
+  fr: {
+    c1: 'C1 début',
+    c2: 'C2 totalité',
+    max: 'maximum',
+    c3: 'C3 fin tot.',
+    c4: 'C4 fin',
+    central: 'phase centrale',
+  },
 } as const;
 
 export function renderTrajectory(

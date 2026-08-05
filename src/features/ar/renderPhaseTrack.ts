@@ -85,12 +85,24 @@ function isTotalPhase(sample: EclipseSample): boolean {
  * Fora de la fase central s'afegeixen decimals fins que la xifra deixa de
  * llegir-se com un 100.
  */
-function formatPhaseObscuration(sample: EclipseSample): string {
+const NUMBER_LOCALES = {
+  ca: 'ca-ES',
+  es: 'es-ES',
+  en: 'en-GB',
+  fr: 'fr-FR',
+} as const satisfies Record<Locale, string>;
+
+function formatPhaseObscuration(sample: EclipseSample, locale: Locale): string {
   const pct = Math.max(0, Math.min(1, sample.obscuration)) * 100;
   if (isTotalPhase(sample)) return '100%';
   for (const decimals of [0, 1, 2, 3]) {
     const text = pct.toFixed(decimals);
-    if (Number.parseFloat(text) < 100) return `${text.replace('.', ',')}%`;
+    if (Number.parseFloat(text) < 100) {
+      return `${new Intl.NumberFormat(NUMBER_LOCALES[locale], {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      }).format(Number.parseFloat(text))}%`;
+    }
   }
   return '<100%';
 }
@@ -182,7 +194,7 @@ export function renderPhaseTrack(
     drawPhase(ctx, p.x, p.y, r, sample, hidden, isCurrent, palette);
 
     if (isCurrent) {
-      const label = `${formatClockShort(sample.time, locale)} · ${formatPhaseObscuration(sample)}`;
+      const label = `${formatClockShort(sample.time, locale)} · ${formatPhaseObscuration(sample, locale)}`;
       ctx.lineWidth = 3;
       ctx.strokeStyle = withAlpha(palette.bgPage, 0.75);
       ctx.strokeText(label, p.x, p.y - r - 8);
