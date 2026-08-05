@@ -78,8 +78,8 @@ const TEXTURE_BY_MODE: Record<OutlookMode, CloudMapTexture> = {
 };
 
 const LABEL_BY_MODE: Record<OutlookMode, LocalisedText> = {
-  climatology: { ca: 'Climatologia', es: 'Climatología' },
-  forecast: { ca: 'Previsió', es: 'Previsión' },
+  climatology: { ca: 'Climatologia', es: 'Climatología', en: 'Climatology' },
+  forecast: { ca: 'Previsió', es: 'Previsión', en: 'Forecast' },
 };
 
 /**
@@ -118,6 +118,9 @@ function climatologyCaption(years: number): LocalisedText {
     es:
       `Lo que hizo el cielo estos mismos días los últimos ${years} años. ` +
       'NO es una previsión: sirve para elegir adónde vas.',
+    en:
+      `What the sky was like on these dates over the past ${years} years. ` +
+      'This is NOT a forecast: use it to choose where to go.',
   };
 }
 
@@ -127,6 +130,7 @@ function forecastCaption(lead: number): LocalisedText {
   return {
     ca: `Previsió del model per a l’hora de l’eclipsi. Falten ${days} dies.`,
     es: `Previsión del modelo para la hora del eclipse. Faltan ${days} días.`,
+    en: `Model forecast for the time of the eclipse. ${days} days remaining.`,
   };
 }
 

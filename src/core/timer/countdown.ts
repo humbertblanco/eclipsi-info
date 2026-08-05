@@ -13,17 +13,17 @@ import type { EclipseKind } from '../astro/types';
 import type { ContactTimesMs, CountdownTarget, LocalisedText } from './types';
 
 const LABELS = {
-  c1: { ca: 'Primer contacte', es: 'Primer contacto' },
-  totality: { ca: 'Totalitat', es: 'Totalidad' },
-  annularity: { ca: 'Anularitat', es: 'Anularidad' },
-  central: { ca: 'Fase central', es: 'Fase central' },
-  totalityEnd: { ca: 'Fi de la totalitat', es: 'Fin de la totalidad' },
-  annularityEnd: { ca: 'Fi de l’anularitat', es: 'Fin de la anularidad' },
-  centralEnd: { ca: 'Fi de la fase central', es: 'Fin de la fase central' },
-  max: { ca: 'Màxim', es: 'Máximo' },
-  end: { ca: 'Fi de l’eclipsi', es: 'Fin del eclipse' },
-  done: { ca: 'Eclipsi acabat', es: 'Eclipse acabado' },
-  none: { ca: 'Sense eclipsi', es: 'Sin eclipse' },
+  c1: { ca: 'Primer contacte', es: 'Primer contacto', en: 'First contact' },
+  totality: { ca: 'Totalitat', es: 'Totalidad', en: 'Totality' },
+  annularity: { ca: 'Anularitat', es: 'Anularidad', en: 'Annularity' },
+  central: { ca: 'Fase central', es: 'Fase central', en: 'Central phase' },
+  totalityEnd: { ca: 'Fi de la totalitat', es: 'Fin de la totalidad', en: 'End of totality' },
+  annularityEnd: { ca: 'Fi de l’anularitat', es: 'Fin de la anularidad', en: 'End of annularity' },
+  centralEnd: { ca: 'Fi de la fase central', es: 'Fin de la fase central', en: 'End of the central phase' },
+  max: { ca: 'Màxim', es: 'Máximo', en: 'Maximum' },
+  end: { ca: 'Fi de l’eclipsi', es: 'Fin del eclipse', en: 'End of the eclipse' },
+  done: { ca: 'Eclipsi acabat', es: 'Eclipse acabado', en: 'Eclipse finished' },
+  none: { ca: 'Sense eclipsi', es: 'Sin eclipse', en: 'No eclipse' },
 } satisfies Record<string, LocalisedText>;
 
 export interface CountdownInput {

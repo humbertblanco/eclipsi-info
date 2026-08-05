@@ -2,6 +2,110 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import { VitePWA } from 'vite-plugin-pwa'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
+
+/** HTML castellà real per a Google i les previsualitzacions de `/es`. */
+function spanishIndex(html: string): string {
+  return html
+    .replace('<html lang="ca">', '<html lang="es">')
+    .replace(
+      '<title>Eclipsi solar 2026: visibilitat i durada al teu punt | eclipsi.info</title>',
+      '<title>Eclipse solar 2026: visibilidad y duración en tu ubicación | eclipsi.info</title>',
+    )
+    .replace(
+      `rel="canonical" href="${SITE_URL}"`,
+      `rel="canonical" href="${SITE_URL}es/"`,
+    )
+    .replace(
+      `<meta property="og:url" content="${SITE_URL}" />`,
+      `<meta property="og:url" content="${SITE_URL}es/" />`,
+    )
+    .replace(`"url": "${SITE_URL}"`, `"url": "${SITE_URL}es/"`)
+    .replace('<meta property="og:locale" content="ca_ES" />', '<meta property="og:locale" content="es_ES" />')
+    .replace('<meta property="og:locale:alternate" content="es_ES" />', '<meta property="og:locale:alternate" content="ca_ES" />')
+    .replaceAll(
+      'Quants segons d’eclipsi veuràs des d’on seràs',
+      'Cuántos segundos de eclipse verás desde donde estarás',
+    )
+    .replaceAll(
+      'Eclipsi solar 2026: quants segons veuràs al teu punt?',
+      'Eclipse solar 2026: ¿cuántos segundos verás en tu ubicación?',
+    )
+    .replaceAll(
+      'Càlcul topocèntric i horitzó real del teu punt: la durada que et deixa el relleu, no la del catàleg.',
+      'Cálculo topocéntrico y horizonte real de tu punto: la duración que permite el relieve, no la del catálogo.',
+    )
+    .replace(
+      'Calcula l’eclipsi solar del 12 d’agost de 2026 al teu punt: hora, segons de totalitat, núvols, relleu, mapa de visibilitat i llocs oficials.',
+      'Calcula el eclipse solar del 12 de agosto de 2026 en tu ubicación: hora, segundos de totalidad, nubes, relieve, mapa de visibilidad y puntos oficiales.',
+    )
+    .replaceAll(
+      'eclipsi.info, durada i visibilitat de l’eclipsi solar al teu punt',
+      'eclipsi.info, duración y visibilidad del eclipse solar en tu ubicación',
+    )
+    .replace(
+      'Simulador dels eclipsis solars del 2026, 2027 i 2028 amb càlcul topocèntric i perfil d’horitzó real del punt de l’observador.',
+      'Simulador de los eclipses solares de 2026, 2027 y 2028 con cálculo topocéntrico y perfil del horizonte real del punto del observador.',
+    )
+    .replaceAll('Eclipsi solar total del 12 d’agost de 2026', 'Eclipse solar total del 12 de agosto de 2026')
+    .replaceAll('Eclipsi solar del 2 d’agost de 2027', 'Eclipse solar del 2 de agosto de 2027')
+    .replaceAll('Eclipsi solar anular del 26 de gener de 2028', 'Eclipse solar anular del 26 de enero de 2028')
+    .replaceAll('Franja de totalitat: Islàndia i el nord d’Espanya', 'Franja de totalidad: Islandia y el norte de España')
+    .replaceAll('Nord d’Àfrica; parcial des d’Espanya', 'Norte de África; parcial desde España')
+    .replaceAll('Anular des de la península Ibèrica', 'Anular desde la península ibérica')
+}
+
+/** HTML anglès real per a cercadors i previsualitzacions de `/en`. */
+function englishIndex(html: string): string {
+  return html
+    .replace('<html lang="ca">', '<html lang="en">')
+    .replace(
+      '<title>Eclipsi solar 2026: visibilitat i durada al teu punt | eclipsi.info</title>',
+      '<title>2026 solar eclipse: visibility and duration at your location | eclipsi.info</title>',
+    )
+    .replace(
+      `rel="canonical" href="${SITE_URL}"`,
+      `rel="canonical" href="${SITE_URL}en/"`,
+    )
+    .replace(
+      `<meta property="og:url" content="${SITE_URL}" />`,
+      `<meta property="og:url" content="${SITE_URL}en/" />`,
+    )
+    .replace(`"url": "${SITE_URL}"`, `"url": "${SITE_URL}en/"`)
+    .replace('<meta property="og:locale" content="ca_ES" />', '<meta property="og:locale" content="en_GB" />')
+    .replace('<meta property="og:locale:alternate" content="en_GB" />', '<meta property="og:locale:alternate" content="ca_ES" />')
+    .replaceAll(
+      'Quants segons d’eclipsi veuràs des d’on seràs',
+      'How many seconds of eclipse will you see from your location?',
+    )
+    .replaceAll(
+      'Eclipsi solar 2026: quants segons veuràs al teu punt?',
+      '2026 solar eclipse: how many seconds will you see?',
+    )
+    .replaceAll(
+      'Càlcul topocèntric i horitzó real del teu punt: la durada que et deixa el relleu, no la del catàleg.',
+      'Topocentric calculations and your real horizon: the duration the terrain allows, not the catalogue figure.',
+    )
+    .replace(
+      'Calcula l’eclipsi solar del 12 d’agost de 2026 al teu punt: hora, segons de totalitat, núvols, relleu, mapa de visibilitat i llocs oficials.',
+      'Calculate the 12 August 2026 solar eclipse at your location: times, seconds of totality, clouds, terrain, visibility map and official viewing sites.',
+    )
+    .replaceAll(
+      'eclipsi.info, durada i visibilitat de l’eclipsi solar al teu punt',
+      'eclipsi.info, solar eclipse duration and visibility at your location',
+    )
+    .replace(
+      'Simulador dels eclipsis solars del 2026, 2027 i 2028 amb càlcul topocèntric i perfil d’horitzó real del punt de l’observador.',
+      'Solar eclipse simulator for 2026, 2027 and 2028 with topocentric calculations and the observer’s real horizon profile.',
+    )
+    .replaceAll('Eclipsi solar total del 12 d’agost de 2026', 'Total solar eclipse of 12 August 2026')
+    .replaceAll('Eclipsi solar del 2 d’agost de 2027', 'Solar eclipse of 2 August 2027')
+    .replaceAll('Eclipsi solar anular del 26 de gener de 2028', 'Annular solar eclipse of 26 January 2028')
+    .replaceAll('Franja de totalitat: Islàndia i el nord d’Espanya', 'Path of totality: Iceland and northern Spain')
+    .replaceAll('Nord d’Àfrica; parcial des d’Espanya', 'North Africa; partial from Spain')
+    .replaceAll('Anular des de la península Ibèrica', 'Annular from the Iberian Peninsula')
+}
 
 /**
  * Noms de les memòries cau en temps d'execució.
@@ -94,6 +198,17 @@ export default defineConfig(({ command }) => ({
     {
       name: 'eclipsi-site-url',
       transformIndexHtml: (html: string) => html.replaceAll('%SITE_URL%', SITE_URL),
+    },
+    {
+      name: 'eclipsi-localised-indexes',
+      async writeBundle(options) {
+        const outDir = resolve(options.dir ?? 'dist')
+        const html = await readFile(resolve(outDir, 'index.html'), 'utf8')
+        await mkdir(resolve(outDir, 'es'), { recursive: true })
+        await mkdir(resolve(outDir, 'en'), { recursive: true })
+        await writeFile(resolve(outDir, 'es/index.html'), spanishIndex(html), 'utf8')
+        await writeFile(resolve(outDir, 'en/index.html'), englishIndex(html), 'utf8')
+      },
     },
     VitePWA({
       // 'prompt' i no 'autoUpdate' a propòsit. Una actualització automàtica

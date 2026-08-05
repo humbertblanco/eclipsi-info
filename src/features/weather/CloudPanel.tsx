@@ -90,7 +90,11 @@ export interface CloudPanelProps {
  * «ago») i, sobretot, el dia que entri una tercera llengua no s'ha de
  * descobrir amb una data catalana enmig d'una altra pantalla.
  */
-const INTL: Record<Locale, string> = { ca: 'ca-ES', es: 'es-ES' };
+const INTL: Record<Locale, string> = {
+  ca: 'ca-ES',
+  es: 'es-ES',
+  en: 'en-GB',
+};
 
 const percentFmt: Partial<Record<Locale, Intl.NumberFormat>> = {};
 const hourFmt: Partial<Record<Locale, Intl.DateTimeFormat>> = {};

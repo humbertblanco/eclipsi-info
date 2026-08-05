@@ -22,17 +22,42 @@ import {
 } from 'react';
 import ca from './ca.json';
 import es from './es.json';
+import en from './en.json';
 
-export type Locale = 'ca' | 'es';
+export type Locale = 'ca' | 'es' | 'en';
 
 /** Ordre d'aparició als selectors d'idioma. */
-export const LOCALES: readonly Locale[] = ['ca', 'es'];
+export const LOCALES: readonly Locale[] = ['ca', 'es', 'en'];
 
 /** Idioma per defecte quan el navegador no diu res útil. */
 export const FALLBACK_LOCALE: Locale = 'ca';
 
 /** Clau de localStorage. Prefixada per no xocar amb res més del domini. */
 export const LOCALE_STORAGE_KEY = 'eclipsi.locale';
+
+/** Idioma explícit de la URL. La ruta mana sobre qualsevol preferència desada. */
+export function localeFromPathname(
+  pathname: string,
+  base: string = import.meta.env.BASE_URL,
+): Locale | null {
+  const root = `/${base.split('/').filter(Boolean).join('/')}`.replace(/^\/$/, '');
+  if (root !== '' && pathname !== root && !pathname.startsWith(`${root}/`)) return null;
+  const relative = pathname.slice(root.length).replace(/^\/+|\/+$/g, '');
+  return relative === 'es' || relative === 'en'
+    ? relative
+    : relative === ''
+      ? 'ca'
+      : null;
+}
+
+/** Ruta compartible de cada idioma, compatible amb un BASE subdirectori. */
+export function pathnameForLocale(
+  locale: Locale,
+  base: string = import.meta.env.BASE_URL,
+): string {
+  const root = `/${base.split('/').filter(Boolean).join('/')}/`.replace(/^\/\/$/, '/');
+  return locale === 'ca' ? root : `${root}${locale}/`;
+}
 
 /**
  * Els diccionaris són arbres arbitràriament profunds de cadenes. No els tipem
@@ -41,7 +66,7 @@ export const LOCALE_STORAGE_KEY = 'eclipsi.locale';
  */
 type Dict = { [key: string]: string | Dict };
 
-const DICTS: Record<Locale, Dict> = { ca, es };
+const DICTS: Record<Locale, Dict> = { ca, es, en };
 
 export type TranslateVars = Record<string, string | number>;
 
@@ -57,7 +82,7 @@ export interface LocaleContextValue {
 
 /** Cert si el valor és un idioma que tenim traduït. */
 export function isLocale(value: unknown): value is Locale {
-  return value === 'ca' || value === 'es';
+  return value === 'ca' || value === 'es' || value === 'en';
 }
 
 /**
@@ -105,6 +130,9 @@ export function createTranslator(locale: Locale): TranslateFn {
  */
 export function detectLocale(): Locale {
   if (typeof window === 'undefined') return FALLBACK_LOCALE;
+
+  const routed = localeFromPathname(window.location.pathname);
+  if (routed !== null) return routed;
 
   try {
     const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
@@ -169,6 +197,13 @@ export function LocaleProvider({
     // Manté l'atribut `lang` del document sincronitzat: importa per als
     // lectors de pantalla i per a la partició de mots del navegador.
     if (typeof document !== 'undefined') document.documentElement.lang = next;
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(
+        window.history.state,
+        '',
+        `${pathnameForLocale(next)}${window.location.search}${window.location.hash}`,
+      );
+    }
   }, []);
 
   const value = useMemo<LocaleContextValue>(

@@ -650,6 +650,21 @@ describe('la tria del cos i la fusió d’àncores', () => {
     expect(expectedBrightBody(sample(skyPos(250, -5), skyPos(100, -10), 90))).toBeNull();
   });
 
+  it('de dia segueix el cos cap al qual apunta la càmera', () => {
+    const daylight = sample(skyPos(250, 30), skyPos(100, 35), 120);
+    const pointingMoon = { azimuth: 102, altitude: 35, roll: 0, screenAngle: 0 };
+    const pointingSun = { azimuth: 248, altitude: 30, roll: 0, screenAngle: 0 };
+
+    expect(expectedBrightBody(daylight, pointingMoon)!.kind).toBe('moon');
+    expect(expectedBrightBody(daylight, pointingSun)!.kind).toBe('sun');
+  });
+
+  it("durant l'eclipsi prioritza el Sol encara que els dos centres siguin al quadre", () => {
+    const eclipsed = sample(skyPos(250, 12), skyPos(250.4, 12.2), 0.4);
+    const camera = { azimuth: 250.4, altitude: 12.2, roll: 0, screenAngle: 0 };
+    expect(expectedBrightBody(eclipsed, camera)!.kind).toBe('sun');
+  });
+
   function fix(az: number, alt: number, confidence: number, altitudeOnly = false): SkylineFix {
     return {
       azimuthDeg: az,

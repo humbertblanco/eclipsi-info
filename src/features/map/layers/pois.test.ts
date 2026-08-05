@@ -110,7 +110,7 @@ const palette = readPalette();
 function point(over: Partial<ObservationPoint> = {}): ObservationPoint {
   return {
     id: 'x1',
-    name: { ca: 'Un lloc', es: 'Un sitio' },
+    name: { ca: 'Un lloc', es: 'Un sitio', en: 'A place' },
     lat: 41.5,
     lon: 1.5,
     precision: 'exact',

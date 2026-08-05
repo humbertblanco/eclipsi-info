@@ -488,6 +488,28 @@ describe('SpotList · el context va abans que les xifres', () => {
     llista({ results: [lloc(), lloc({ id: 'b' })] });
     expect(screen.getByText(sp('list.caveat', 'ca'))).toBeTruthy();
   });
+
+  it('prioritza tres opcions i deixa veure la resta sense perdre la numeració del mapa', () => {
+    llista({
+      results: [
+        lloc({ id: 'a' }),
+        lloc({ id: 'b' }),
+        lloc({ id: 'c' }),
+        lloc({ id: 'd' }),
+        lloc({ id: 'e' }),
+      ],
+    });
+
+    expect(screen.getByLabelText(sp('card.rank', 'ca', { n: 3 }))).toBeTruthy();
+    expect(screen.queryByLabelText(sp('card.rank', 'ca', { n: 4 }))).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: sp('list.more', 'ca', { n: 2 }) }));
+    expect(screen.getByLabelText(sp('card.rank', 'ca', { n: 4 }))).toBeTruthy();
+    expect(screen.getByLabelText(sp('card.rank', 'ca', { n: 5 }))).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: sp('list.less', 'ca') }));
+    expect(screen.queryByLabelText(sp('card.rank', 'ca', { n: 4 }))).toBeNull();
+  });
 });
 
 describe('SpotSearchPanel · la porta de privadesa, amb el component muntat', () => {

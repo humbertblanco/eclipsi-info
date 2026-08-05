@@ -45,6 +45,7 @@ import {
 } from './format';
 import { buildShareLink, isAbortError } from '../share';
 import { sp } from './strings';
+import { DEFAULT_SPOT_WEIGHTS } from '../../core/spots/score';
 import { useSpotPlaceName } from './useSpotPlaceName';
 import './spots.css';
 
@@ -68,6 +69,7 @@ export interface SpotCardProps {
    * d'horitzó de veritat, que és més fi que el del cercador.
    */
   onSelect?: (spot: SpotResult) => void;
+  baselineVisibleSec?: number | null;
   className?: string;
 }
 
@@ -194,7 +196,15 @@ function ShareSpot({
   );
 }
 
-export function SpotCard({ spot, rank, locale, eclipseId, onSelect, className }: SpotCardProps) {
+export function SpotCard({
+  spot,
+  rank,
+  locale,
+  eclipseId,
+  onSelect,
+  baselineVisibleSec,
+  className,
+}: SpotCardProps) {
   const visible = formatDuration(spot.centralVisibleSec);
   const total = formatDuration(spot.centralTotalSec);
   const perdut = spot.centralLostSec;
@@ -256,6 +266,16 @@ export function SpotCard({ spot, rank, locale, eclipseId, onSelect, className }:
 
       <p className="spotcard__blocking">{blockingText(spot, locale)}</p>
 
+      {baselineVisibleSec !== undefined &&
+        baselineVisibleSec !== null &&
+        spot.centralVisibleSec > baselineVisibleSec + 0.5 && (
+          <p className="spotcard__gain">
+            {sp('card.gain', locale, {
+              duration: durationText(spot.centralVisibleSec - baselineVisibleSec),
+            })}
+          </p>
+        )}
+
       {perdut > 0.5 && (
         <p className="spotcard__climb">
           {spot.climbToRecoverM === null
@@ -297,6 +317,36 @@ export function SpotCard({ spot, rank, locale, eclipseId, onSelect, className }:
           </Badge>
         )}
       </div>
+
+      <details className="spotcard__score">
+        <summary>
+          <span>{sp('card.score', locale)}</span>
+          <strong className="eclipsi-data">{Math.round(spot.score)}/100</strong>
+        </summary>
+        <p>{sp('card.scoreIntro', locale)}</p>
+        <div className="spotcard__scoreparts">
+          {(
+            [
+              ['centralSeconds', 'card.scoreSeconds', DEFAULT_SPOT_WEIGHTS.centralSeconds],
+              ['clearance', 'card.scoreClearance', DEFAULT_SPOT_WEIGHTS.clearance],
+              ['closeness', 'card.scoreDistance', DEFAULT_SPOT_WEIGHTS.closeness],
+              ['altitude', 'card.scoreAltitude', DEFAULT_SPOT_WEIGHTS.altitude],
+            ] as const
+          ).map(([part, label, weight]) => {
+            const points = spot.parts[part] * weight * 100;
+            return (
+              <div key={part}>
+                <span>{sp(label, locale)}</span>
+                <span className="spotcard__scorebar" aria-hidden="true">
+                  <i style={{ width: `${spot.parts[part] * 100}%` }} />
+                </span>
+                <strong className="eclipsi-data">+{Math.round(points)}</strong>
+              </div>
+            );
+          })}
+        </div>
+        <p>{sp('card.scoreWeather', locale)}</p>
+      </details>
 
       <div className="spotcard__actions">
         {onSelect && (

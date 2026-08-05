@@ -6,7 +6,7 @@
  * Una cel·la d'aquest mapa és una tessel·la de Web Mercator d'un zoom fix, o
  * sigui una subdivisió exacta de la tessel·la que el mapa ja ensenya: el zoom
  * de cel·la és el del mapa MÉS QUATRE, i per tant cada tessel·la visible queda
- * partida en 16 × 16 cel·les. D'aquí surten tres coses que una retícula pròpia
+ * partida en 32 × 32 cel·les. D'aquí surten tres coses que una retícula pròpia
  * (com la hexagonal de `spots/grid.ts`) no dona:
  *
  *  1. L'IDENTIFICADOR ÉS ESTABLE PER CONSTRUCCIÓ. `z/x/y` no depèn d'on tenies
@@ -29,29 +29,25 @@
  *
  * ── RESOLUCIÓ ADAPTATIVA, I EL SOSTRE ───────────────────────────────────────
  *
- * A zoom 9 la cel·la fa ~3,7 km, a 10 ~1,8 km i a 11 o més ~0,9 km (mesurat a
- * 41° de latitud). Per sota del zoom 9 la cel·la seria de desenes de km i la
+ * A zoom 9 la cel·la fa ~1,8 km, a 10 ~0,9 km, a 11 ~0,45 km i a 12 o més
+ * ~0,23 km (mesurat a 41° de latitud). Per sota del zoom 9 la cel·la seria de
  * pregunta «quants segons se'n menja el relleu» ja no té resposta a aquella
  * escala: el nivell 2 no s'ofereix (`terrainAvailable: false`) i el mapa només
  * pot pintar la durada teòrica. Dir-ho al tipus és el contracte: qui pinta no
  * ha d'endevinar quan una xifra és una mesura i quan és una estimació.
  *
- * I hi ha un SOSTRE DUR de 800 cel·les per passada. No és un número rodó
- * qualsevol: mesurat, 800 cel·les llegeixen 7,09 M mostres del terreny, que amb
- * tessel·les reals són ~3,3 s de garbell més ~1,9 s de xarxa (la taula sencera,
- * amb el que hi ha mesurat i el que hi ha extrapolat, és a la capçalera de
- * `compute.ts`). Passar-ne mou el mapa cap a la desena de segons, que és on la
- * gent deixa de mirar. Si en surten més, s'engruixeix la cel·la (un zoom menys,
- * quatre vegades menys cel·les) fins que hi càpiguen — i, si en sobren,
- * s'afina de tornada.
+ * I hi ha un SOSTRE DUR de 2.400 cel·les per passada. Amb 1.200, una vista
+ * local d'escriptori encara saltava un nivell sencer i deixava fronteres de
+ * gairebé un quilòmetre en forma d'esglaó. El sostre nou permet reduir-ne el
+ * costat a la meitat en aquesta escala, però continua tancant el cost. Si
+ * encara en surten més, s'engruixeix la cel·la fins que hi càpiguen.
  *
- * ON ES TOQUEN EL SOSTRE I LA RESOLUCIÓ, DIT CLAR. Una pantalla de mòbil fa
- * ~1,5 × 2,7 tessel·les, o sigui ~24 × 43 = 1.030 cel·les a la resolució
- * nominal: just per damunt del sostre. En un mòbil amb el retall a la franja
- * mossegant una mica, la passada hi cap; en un enquadrament ample (tauleta,
- * escriptori, o mirant la franja de lluny) baixa un nivell i les cel·les
- * dupliquen de costat. És el preu del sostre i és la tria correcta: val més un
- * mapa gruixut de seguida que un de fi que no arriba mai.
+ * ON ES TOQUEN EL SOSTRE I LA RESOLUCIÓ, DIT CLAR. Una pantalla sencera pot
+ * superar les 4.000 cel·les al nivell nominal; el retall a la franja fa que
+ * moltes vistes locals quedin per sota de 2.400. Quan no hi queden —una
+ * tauleta, un escriptori molt ample o la franja vista de lluny— baixa un nivell
+ * i les cel·les dupliquen de costat. És el preu del sostre: val més un mapa
+ * gruixut de seguida que un de fi que no arriba mai.
  *
  * ── EL RETALL A LA FRANJA ───────────────────────────────────────────────────
  *
@@ -85,19 +81,19 @@ const MERCATOR_LAT_LIMIT = 85.0511;
  * Cel·les que es calculen com a màxim en una passada. Vegeu la capçalera: surt
  * del cost mesurat del garbell, no d'una xifra rodona.
  */
-export const MAX_CELLS_PER_PASS = 800;
+export const MAX_CELLS_PER_PASS = 2_400;
 
 /** Marge de tolerància al voltant de la franja, en km. */
 export const BAND_MARGIN_KM = 10;
 
 /**
- * Diferència entre el zoom del mapa i el de la cel·la: 16 × 16 cel·les per
+ * Diferència entre el zoom del mapa i el de la cel·la: 32 × 32 cel·les per
  * tessel·la visible.
  */
-const CELL_ZOOM_OFFSET = 4;
+const CELL_ZOOM_OFFSET = 5;
 
-/** Zoom de cel·la més fi que s'ofereix (~0,9 km a 41°). Més enllà no aporta res. */
-const MAX_CELL_ZOOM = 15;
+/** Zoom més fi (~0,23 km a 41°): útil per separar valls i carenes properes. */
+const MAX_CELL_ZOOM = 17;
 /** Zoom de cel·la més gruixut que s'ofereix a un mapa allunyat (~7,4 km a 41°). */
 const MIN_OFFERED_CELL_ZOOM = 12;
 /**
@@ -159,7 +155,8 @@ export function cellSizeKm(cellZoom: number, latDeg: number): number {
 /**
  * Quina resolució toca a un zoom de mapa.
  *
- * z ≤ 8 → 7,4 km i sense relleu; z9 → 3,7 km; z10 → 1,8 km; z11+ → 0,9 km.
+ * z ≤ 8 → 3,7 km i sense relleu; z9 → 1,8 km; z10 → 0,9 km; z11 → 0,45 km;
+ * z12+ → 0,23 km.
  */
 export function resolutionForZoom(mapZoom: number): HeatResolution {
   const cellZoom = Math.min(

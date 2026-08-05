@@ -69,6 +69,7 @@ const TEXT = {
   free: {
     ca: 'Gratuït, per a tothom i sense ànim de lucre.',
     es: 'Gratuito, para todo el mundo y sin ánimo de lucro.',
+    en: 'Free, for everyone and not for profit.',
   },
   /*
    * NO NOMÉS «CODI OBERT»: UNA INVITACIÓ.
@@ -86,10 +87,11 @@ const TEXT = {
   code: {
     ca: 'Codi obert a GitHub: hi pots contribuir',
     es: 'Código abierto en GitHub: puedes contribuir',
+    en: 'Open source on GitHub: you can contribute',
   },
-  version: { ca: 'Versió', es: 'Versión' },
-  by: { ca: 'Fet per', es: 'Hecho por' },
-  and: { ca: 'i', es: 'y' },
+  version: { ca: 'Versió', es: 'Versión', en: 'Version' },
+  by: { ca: 'Fet per', es: 'Hecho por', en: 'Made by' },
+  and: { ca: 'i', es: 'y', en: 'and' },
   /*
    * L'ÚNICA PORTA CAP A LES FONTS — I CAP A «COM FUNCIONA» SENCERA.
    *
@@ -100,8 +102,9 @@ const TEXT = {
   sourcesLink: {
     ca: 'Fonts i atribucions, a «Com funciona»',
     es: 'Fuentes y atribuciones, en «Cómo funciona»',
+    en: 'Sources and attribution, under “How it works”',
   },
-  pressLink: { ca: 'Premsa', es: 'Prensa' },
+  pressLink: { ca: 'Premsa', es: 'Prensa', en: 'Press' },
 } as const;
 
 const REPO_URL = 'https://github.com/humbertblanco/eclipsi-info';
@@ -129,7 +132,10 @@ interface Author {
 
 const AUTHORS: Author[] = [
   { name: 'Humbert Blanco', url: 'https://x.com/humbertblanco' },
-  { name: 'Damos en el Blanco', url: 'https://damosenelblanco.com' },
+  {
+    name: 'Damos en el Blanco',
+    url: 'https://damosenelblanco.com/?utm_source=eclipsi.info&utm_medium=referral&utm_campaign=credits',
+  },
 ];
 
 export interface SiteFooterProps {

@@ -119,7 +119,7 @@ export interface Credit {
  */
 export const CREDITS: readonly Credit[] = [
   {
-    what: { ca: 'Efemèrides', es: 'Efemérides' },
+    what: { ca: 'Efemèrides', es: 'Efemérides', en: 'Ephemerides' },
     who: 'astronomy-engine',
     url: 'https://github.com/cosinekitty/astronomy',
     /*
@@ -131,7 +131,7 @@ export const CREDITS: readonly Credit[] = [
     hosts: ['github.com'],
   },
   {
-    what: { ca: 'Trajectòria de l’ombra', es: 'Trayectoria de la sombra' },
+    what: { ca: 'Trajectòria de l’ombra', es: 'Trayectoria de la sombra', en: 'Path of the shadow' },
     who: 'Fred Espenak, NASA/GSFC',
     url: 'https://eclipse.gsfc.nasa.gov/',
     /*
@@ -144,7 +144,7 @@ export const CREDITS: readonly Credit[] = [
     hosts: ['eclipse.gsfc.nasa.gov', 'umbra.nascom.nasa.gov'],
   },
   {
-    what: { ca: 'Contrast de les prediccions', es: 'Contraste de las predicciones' },
+    what: { ca: 'Contrast de les prediccions', es: 'Contraste de las predicciones', en: 'Prediction cross-checking' },
     who: 'IGN',
     url: 'https://eclipses.ign.es/',
     /*
@@ -158,7 +158,7 @@ export const CREDITS: readonly Credit[] = [
     hosts: ['eclipses.ign.es'],
   },
   {
-    what: { ca: 'Model del terreny', es: 'Modelo del terreno' },
+    what: { ca: 'Model del terreny', es: 'Modelo del terreno', en: 'Terrain model' },
     who: 'AWS Terrain Tiles',
     url: 'https://registry.opendata.aws/terrain-tiles/',
     /*
@@ -171,7 +171,7 @@ export const CREDITS: readonly Credit[] = [
     hosts: ['s3.amazonaws.com', 'registry.opendata.aws'],
   },
   {
-    what: { ca: 'Cartografia i topònims', es: 'Cartografía y topónimos' },
+    what: { ca: 'Cartografia i topònims', es: 'Cartografía y topónimos', en: 'Maps and place names' },
     who: 'OpenStreetMap · Photon · CARTO',
     url: OSM_COPYRIGHT_URL,
     /*
@@ -191,7 +191,7 @@ export const CREDITS: readonly Credit[] = [
      * dades, i tot i així era l'única de les dues que no sortia enlloc. La
      * dada la pintava el mapa des del primer dia.
      */
-    what: { ca: 'Miradors i cims', es: 'Miradores y cimas' },
+    what: { ca: 'Miradors i cims', es: 'Miradores y cimas', en: 'Viewpoints and peaks' },
     who: 'col·laboradors d’OpenStreetMap',
     url: OSM_COPYRIGHT_URL,
     licence: 'ODbL 1.0',
@@ -205,7 +205,7 @@ export const CREDITS: readonly Credit[] = [
     hosts: ['www.openstreetmap.org', 'overpass-api.de', 'overpass.openstreetmap.fr'],
   },
   {
-    what: { ca: 'Meteorologia', es: 'Meteorología' },
+    what: { ca: 'Meteorologia', es: 'Meteorología', en: 'Weather' },
     who: 'Open-Meteo',
     url: 'https://open-meteo.com/',
     /*
@@ -221,7 +221,7 @@ export const CREDITS: readonly Credit[] = [
     hosts: ['api.open-meteo.com', 'archive-api.open-meteo.com', 'open-meteo.com'],
   },
   {
-    what: { ca: 'Seguretat ocular', es: 'Seguridad ocular' },
+    what: { ca: 'Seguretat ocular', es: 'Seguridad ocular', en: 'Eye safety' },
     who: 'AAS · ISO 12312-2',
     url: 'https://eclipse.aas.org/eye-safety',
     /*
@@ -265,11 +265,13 @@ export const CREDITS: readonly Credit[] = [
 export const PRIVACY_NOTE: Record<Locale, string> = {
   ca: 'Els càlculs es fan al teu dispositiu: cap servidor no els fa per tu. Les coordenades només surten per posar nom al lloc i per la previsió, i no arriben mai a l’analítica.',
   es: 'Los cálculos se hacen en tu dispositivo: ningún servidor los hace por ti. Las coordenadas solo salen para poner nombre al lugar y para la previsión, y nunca llegan a la analítica.',
+  en: 'Calculations are performed on your device: no server does them for you. Your coordinates are only shared to identify the location and provide the forecast, and they never reach analytics.',
 };
 
 export const SOURCES_HEADING: Record<Locale, string> = {
   ca: 'D’on surten les dades',
   es: 'De dónde salen los datos',
+  en: 'Where the data comes from',
 };
 
 /**
@@ -282,9 +284,11 @@ export const SOURCES_HEADING: Record<Locale, string> = {
 export const OBSERVATION_SOURCES_HEADING: Record<Locale, string> = {
   ca: 'Qui publica els punts oficials',
   es: 'Quién publica los puntos oficiales',
+  en: 'Who publishes the official viewing sites',
 };
 
 export const OBSERVATION_SOURCES_NOTE: Record<Locale, string> = {
   ca: 'Els recintes habilitats no els posem nosaltres: cada punt és d’una administració, i aquí hi ha totes les que n’han publicat per a aquest eclipsi.',
   es: 'Los recintos habilitados no los ponemos nosotros: cada punto es de una administración, y aquí están todas las que han publicado alguno para este eclipse.',
+  en: 'We do not designate the official viewing areas: each site is provided by a public authority, and every authority that has published one for this eclipse is listed here.',
 };

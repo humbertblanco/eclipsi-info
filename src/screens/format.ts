@@ -16,7 +16,8 @@ import type { Locale } from '../i18n';
 /** Guió llarg. És el que es pinta quan una dada encara no existeix. */
 export const NO_DATA = '—';
 
-const tag = (locale: Locale): string => (locale === 'es' ? 'es-ES' : 'ca-ES');
+const tag = (locale: Locale): string =>
+  locale === 'en' ? 'en-GB' : locale === 'es' ? 'es-ES' : 'ca-ES';
 
 /**
  * Hora amb segons.
@@ -165,7 +166,7 @@ export function formatDegrees(deg: number, locale: Locale = 'ca'): string {
  */
 export function formatCoords(lat: number, lon: number, locale: Locale = 'ca'): string {
   const ns = lat >= 0 ? 'N' : 'S';
-  const ew = lon >= 0 ? 'E' : 'O';
+  const ew = lon >= 0 ? 'E' : locale === 'en' ? 'W' : 'O';
   const la = formatDecimal(Math.abs(lat), 4, locale);
   const lo = formatDecimal(Math.abs(lon), 4, locale);
   return `${la}° ${ns}, ${lo}° ${ew}`;

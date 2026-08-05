@@ -45,6 +45,7 @@ import {
 } from '../../core/horizon/raycast';
 import { MINI_TRAJECTORY_SAMPLES, trajectorySamples } from '../sim/samples';
 import { renderTrajectory } from '../sim/renderTrajectory';
+import type { Locale } from '../../i18n';
 
 /**
  * Mida de la miniatura de l'historial, en píxels de CSS.
@@ -197,7 +198,7 @@ export function drawThumbnail(
   model: ThumbnailModel,
   width: number,
   height: number,
-  locale: 'ca' | 'es' = 'ca',
+  locale: Locale = 'ca',
 ): void {
   renderTrajectory(ctx, model.circumstances, model.samples, width, height, {
     locale,

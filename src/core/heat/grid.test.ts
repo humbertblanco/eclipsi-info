@@ -75,14 +75,14 @@ describe('la cel·la és una tessel·la', () => {
 });
 
 describe('la resolució segueix el zoom', () => {
-  it('z9 ≈ 4 km, z10 ≈ 2 km, z11 i més ≈ 1 km', () => {
-    expect(resolutionForZoom(9).approxKm).toBeCloseTo(3.7, 1);
-    expect(resolutionForZoom(10).approxKm).toBeCloseTo(1.85, 1);
-    expect(resolutionForZoom(11).approxKm).toBeCloseTo(0.92, 1);
-    // Més enllà de z11 la cel·la ja no s'afina: el garbell del terreny té 57 m
-    // de mostra i partir la cel·la per sota del quilòmetre no aporta cap dada
-    // nova, només quatre vegades més feina.
-    expect(resolutionForZoom(14).cellZoom).toBe(resolutionForZoom(11).cellZoom);
+  it('z9 ≈ 2 km, z10 ≈ 1 km, z11 ≈ 0,5 km i z12+ ≈ 0,25 km', () => {
+    expect(resolutionForZoom(9).approxKm).toBeCloseTo(1.85, 1);
+    expect(resolutionForZoom(10).approxKm).toBeCloseTo(0.92, 1);
+    expect(resolutionForZoom(11).approxKm).toBeCloseTo(0.46, 1);
+    expect(resolutionForZoom(12).approxKm).toBeCloseTo(0.23, 1);
+    // Més enllà de z12 la cel·la ja no s'afina: 230 m separen millor valls i
+    // carenes sense deixar que el nombre de polígons creixi sense sostre.
+    expect(resolutionForZoom(14).cellZoom).toBe(resolutionForZoom(12).cellZoom);
   });
 
   it('per sota de z9 el nivell 2 no s’ofereix, i es diu al tipus', () => {
@@ -102,7 +102,7 @@ describe('la resolució segueix el zoom', () => {
 });
 
 describe('el sostre de cel·les', () => {
-  it('mai no se’n tornen més de 800, per ample que sigui l’enquadrament', () => {
+  it('mai no se supera el pressupost, per ample que sigui l’enquadrament', () => {
     const iberia: HeatBbox = { west: -9.5, south: 36, east: 4.5, north: 44 };
     for (const zoom of [8, 9, 10, 11, 12]) {
       const cells = cellsForViewport(iberia, zoom, ECLIPSE);

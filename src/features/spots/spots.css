@@ -59,6 +59,32 @@
   color: var(--status-danger);
 }
 
+.spotpanel__origin {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.spotpanel__originlabel,
+.spotpanel__originvalue {
+  margin: 0;
+}
+
+.spotpanel__originlabel,
+.spotlist__featured {
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.spotpanel__originvalue {
+  font: var(--text-label);
+  color: var(--text-primary);
+}
+
 /* ------------------------------------------------------------------ progrés */
 
 .spotpanel__progress {
@@ -146,6 +172,15 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.spotlist__featured {
+  margin: 0 0 calc(-1 * var(--sp-2));
+}
+
+.spotlist__reveal {
+  display: flex;
+  justify-content: center;
 }
 
 /* ----------------------------------------------------------------- targeta */
@@ -281,11 +316,17 @@
 .spotcard--cloudy .spotcard__headline .ui-stat__value { color: var(--status-cloudy); }
 
 .spotcard__blocking,
+.spotcard__gain,
 .spotcard__climb {
   margin: 0;
   max-width: var(--maxw-prose);
   font: var(--text-body-sm);
   color: var(--text-body);
+}
+
+.spotcard__gain {
+  color: var(--status-clear);
+  font-weight: var(--fw-semibold);
 }
 
 .spotcard__climb {
@@ -333,6 +374,46 @@
   gap: var(--sp-5);
   flex-wrap: wrap;
 }
+
+.spotcard__score {
+  border-top: var(--bw-hair) solid var(--border-hairline);
+  padding-top: var(--sp-3);
+}
+
+.spotcard__score summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--tap-min);
+  color: var(--text-secondary);
+  font: var(--text-label);
+  cursor: pointer;
+}
+
+.spotcard__score > p {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-muted);
+  font: var(--text-caption);
+}
+
+.spotcard__scoreparts {
+  display: grid;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.spotcard__scoreparts > div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) minmax(4rem, 1fr) 2.5rem;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-secondary);
+  font: var(--text-caption);
+}
+
+.spotcard__scoreparts strong { text-align: right; color: var(--text-primary); }
+.spotcard__scorebar { height: 4px; overflow: hidden; border-radius: 999px; background: var(--bg-inset); }
+.spotcard__scorebar i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
 
 .spotcard__map {
   font: var(--text-body-sm);

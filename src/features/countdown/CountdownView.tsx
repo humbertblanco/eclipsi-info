@@ -23,50 +23,66 @@ import { useEclipseTimer } from './useEclipseTimer';
 import './countdown.css';
 
 const UI = {
-  overline: { ca: 'Compte enrere', es: 'Cuenta atrás' },
-  at: { ca: 'a les', es: 'a las' },
-  during: { ca: 'Durant', es: 'Durante' },
-  now: { ca: 'Ara', es: 'Ahora' },
-  then: { ca: 'Després', es: 'Después' },
-  thenIn: { ca: 'd’aquí a', es: 'dentro de' },
-  filterOn: { ca: 'Filtre posat', es: 'Filtro puesto' },
-  filterOff: { ca: 'Filtre fora', es: 'Filtro fuera' },
-  filterBack: { ca: 'Posa’t el filtre', es: 'Ponte el filtro' },
-  enableVoice: { ca: 'Activa els avisos de veu', es: 'Activa los avisos de voz' },
-  disableVoice: { ca: 'Atura els avisos', es: 'Detén los avisos' },
-  testVoice: { ca: 'Prova la veu', es: 'Prueba la voz' },
-  rehearse: { ca: 'Assaig d’un minut', es: 'Ensayo de un minuto' },
-  stopRehearsal: { ca: 'Atura l’assaig', es: 'Detén el ensayo' },
-  rehearsing: { ca: 'Assaig en curs. Aquests avisos no són reals.', es: 'Ensayo en curso. Estos avisos no son reales.' },
-  upcoming: { ca: 'Properes fites', es: 'Próximos hitos' },
-  lastAlert: { ca: 'Últim avís:', es: 'Último aviso:' },
-  voiceReady: { ca: 'Veu activa.', es: 'Voz activa.' },
+  overline: { ca: 'Compte enrere', es: 'Cuenta atrás', en: 'Countdown' },
+  at: { ca: 'a les', es: 'a las', en: 'at' },
+  during: { ca: 'Durant', es: 'Durante', en: 'During' },
+  now: { ca: 'Ara', es: 'Ahora', en: 'Now' },
+  then: { ca: 'Després', es: 'Después', en: 'Next' },
+  thenIn: { ca: 'd’aquí a', es: 'dentro de', en: 'in' },
+  filterOn: { ca: 'Filtre posat', es: 'Filtro puesto', en: 'Filter on' },
+  filterOff: { ca: 'Filtre fora', es: 'Filtro fuera', en: 'Filter off' },
+  filterBack: { ca: 'Posa’t el filtre', es: 'Ponte el filtro', en: 'Put the filter back on' },
+  enableVoice: { ca: 'Activa els avisos de veu', es: 'Activa los avisos de voz', en: 'Enable voice alerts' },
+  disableVoice: { ca: 'Atura els avisos', es: 'Detén los avisos', en: 'Stop alerts' },
+  testVoice: { ca: 'Prova la veu', es: 'Prueba la voz', en: 'Test voice' },
+  rehearse: { ca: 'Assaig d’un minut', es: 'Ensayo de un minuto', en: 'One-minute rehearsal' },
+  stopRehearsal: { ca: 'Atura l’assaig', es: 'Detén el ensayo', en: 'Stop rehearsal' },
+  rehearsing: {
+    ca: 'Assaig en curs. Aquests avisos no són reals.',
+    es: 'Ensayo en curso. Estos avisos no son reales.',
+    en: 'Rehearsal in progress. These alerts are not real.',
+  },
+  upcoming: { ca: 'Properes fites', es: 'Próximos hitos', en: 'Upcoming milestones' },
+  lastAlert: { ca: 'Últim avís:', es: 'Último aviso:', en: 'Last alert:' },
+  voiceReady: { ca: 'Veu activa.', es: 'Voz activa.', en: 'Voice alerts active.' },
   voiceToneOnly: {
     ca: 'Aquest navegador no té cap veu instal·lada. Els avisos sonaran com a tons.',
     es: 'Este navegador no tiene ninguna voz instalada. Los avisos sonarán como tonos.',
+    en: 'This browser has no voice installed. Alerts will sound as tones.',
   },
   voiceUnsupported: {
     ca: 'Aquest navegador no pot reproduir avisos. Fes servir el compte enrere de la pantalla.',
     es: 'Este navegador no puede reproducir avisos. Usa la cuenta atrás de la pantalla.',
+    en: 'This browser cannot play alerts. Use the on-screen countdown.',
   },
   voiceLocked: {
     ca: 'Toca el botó per activar la veu. Els navegadors no deixen que soni sense un toc teu.',
     es: 'Toca el botón para activar la voz. Los navegadores no dejan que suene sin un toque tuyo.',
+    en: 'Tap the button to enable voice alerts. Browsers cannot play them until you interact with the page.',
   },
-  wakeOn: { ca: 'La pantalla es mantindrà encesa.', es: 'La pantalla se mantendrá encendida.' },
+  wakeOn: { ca: 'La pantalla es mantindrà encesa.', es: 'La pantalla se mantendrá encendida.', en: 'The screen will stay on.' },
   wakeUnsupported: {
     ca: 'Aquest dispositiu no deixa mantenir la pantalla encesa des del web. Desactiva el bloqueig automàtic a la configuració.',
     es: 'Este dispositivo no permite mantener la pantalla encendida desde la web. Desactiva el bloqueo automático en los ajustes.',
+    en: 'This device cannot keep the screen on from the web. Turn off auto-lock in your device settings.',
   },
   rehearsalLocked: {
     ca: 'L’assaig es desactiva a prop de l’eclipsi per no barrejar-lo amb els avisos de debò.',
     es: 'El ensayo se desactiva cerca del eclipse para no mezclarlo con los avisos de verdad.',
+    en: 'Rehearsal is disabled near the eclipse to keep it separate from real alerts.',
   },
   skipped: {
     ca: 'Un avís s’ha descartat perquè el telèfon estava aturat i ja no era cert.',
     es: 'Un aviso se ha descartado porque el teléfono estaba parado y ya no era cierto.',
+    en: 'An alert was skipped because the phone was inactive and the alert was no longer valid.',
   },
 } satisfies Record<string, LocalisedText>;
+
+const LOCALE_TAG = {
+  ca: 'ca-ES',
+  es: 'es-ES',
+  en: 'en-GB',
+} satisfies Record<TimerLocale, string>;
 
 /**
  * Per què NO sentiràs avisos de treure't el filtre. Es diu sempre, també quan
@@ -109,7 +125,7 @@ export function CountdownView({
 
   const clock = useMemo(
     () =>
-      new Intl.DateTimeFormat(locale === 'ca' ? 'ca-ES' : 'es-ES', {
+      new Intl.DateTimeFormat(LOCALE_TAG[locale], {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',

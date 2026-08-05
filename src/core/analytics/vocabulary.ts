@@ -133,7 +133,7 @@ export const VOCABULARY = {
    * així qui les acabi no ha de tocar aquest fitxer amb pressa.
    */
   map_layer_toggle: {
-    layer: ['hillshade', 'cone', 'heat', 'clouds', 'official', 'viewpoints'],
+    layer: ['path', 'hillshade', 'cone', 'heat', 'clouds', 'official', 'viewpoints'],
     state: ['on', 'off'],
   },
 

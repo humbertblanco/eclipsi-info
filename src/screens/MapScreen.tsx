@@ -38,6 +38,7 @@ import { loadCloudClimGrid } from '../features/map/layers/clouds';
 import { allClimCells, type CloudClimGrid } from '../core/weather/climGrid';
 import { planCloudMap } from '../core/weather/mapMode';
 import type { Viewpoint } from '../core/places/viewpoints';
+import { distanceKm } from '../core/places';
 import type { ObservationPoint } from '../data/observation-points/catalog';
 import { readPalette } from '../styles/palette';
 import { horizonDistanceAt } from '../core/horizon/profile';
@@ -243,6 +244,7 @@ export function MapScreen({
   const desktop = useMediaQuery('(min-width: 900px) and (min-height: 500px)');
   const [layers, setLayers] = useState<MapLayerState>(() =>
     readStoredLayers({
+      path: true,
       hillshade: desktop,
       cone: true,
       // Els punts oficials són contingut, són pocs i porten font: encesos.
@@ -253,6 +255,7 @@ export function MapScreen({
       // El mapa de calor baixa relleu i triga segons. Apagat SEMPRE per
       // defecte, també a l'escriptori: es paga en dades de l'usuari.
       heat: false,
+      clouds: true,
     }),
   );
 
@@ -270,9 +273,10 @@ export function MapScreen({
    * s'encén la capa (`loadViewpoints` ja té la seva memòria de mòdul i el seu
    * calaix al service worker).
    */
+  const officialPoints = useMemo(() => pointsForEclipse(eclipseId), [eclipseId]);
   const pois = useMemo(
-    () => (layers.official ? pointsForEclipse(eclipseId) : null),
-    [layers.official, eclipseId],
+    () => (layers.official ? officialPoints : null),
+    [layers.official, officialPoints],
   );
 
   /*
@@ -312,16 +316,21 @@ export function MapScreen({
     // `circumstances` i no `contacts`: aquell es declara més avall i aquí
     // només en cal l'instant del màxim, que és el que decideix si toca
     // climatologia o previsió.
-    return planCloudMap(
-      circumstances?.contacts.max.time.getTime() ?? Date.now(),
-      Date.now(),
-      { years: Number.isFinite(minYears) ? minYears : undefined },
-    );
+    const targetMs = circumstances?.contacts.max.time.getTime() ?? Date.now();
+    // La graella que tenim descarregada és climatologia precalculada. La
+    // previsió viva sí que existeix per al punt, però encara no com a camp
+    // espacial; etiquetar aquesta malla com a «Previsió» seria fals.
+    return planCloudMap(targetMs, targetMs - 90 * 86_400_000, {
+      years: Number.isFinite(minYears) ? minYears : undefined,
+    });
   }, [cloudGrid, circumstances]);
 
   const cloudCells = useMemo(
-    () => (view === 'clouds' && cloudGrid !== null ? allClimCells(cloudGrid) : null),
-    [view, cloudGrid],
+    () =>
+      view === 'clouds' && layers.clouds && cloudGrid !== null
+        ? allClimCells(cloudGrid)
+        : null,
+    [view, layers.clouds, cloudGrid],
   );
 
   /*
@@ -344,7 +353,7 @@ export function MapScreen({
 
   const [viewpoints, setViewpoints] = useState<readonly Viewpoint[] | null>(null);
   useEffect(() => {
-    if (!layers.viewpoints) {
+    if (!layers.viewpoints && view !== 'spots') {
       setViewpoints(null);
       return;
     }
@@ -360,7 +369,7 @@ export function MapScreen({
     return () => {
       alive = false;
     };
-  }, [layers.viewpoints, eclipseId]);
+  }, [layers.viewpoints, view, eclipseId]);
 
   /*
    * Si la navegació torna a demanar una vista amb el mapa ja obert —l'enrere
@@ -563,6 +572,7 @@ export function MapScreen({
             picked={location}
             focus={focus}
             spots={view === 'spots' ? spotPins : null}
+            pathVisible={layers.path}
             hillshade={layers.hillshade}
             /*
               LA LLUM DEL RELLEU VE D'ON SERÀ EL SOL. No és cosmètica: amb el
@@ -586,7 +596,7 @@ export function MapScreen({
               setPlace({ from: 'official', point: poi });
               onPickLocation(poi.lat, poi.lon);
             }}
-            viewpoints={viewpoints}
+            viewpoints={layers.viewpoints ? viewpoints : null}
             onPickViewpoint={(spot) => {
               setFocus(null);
               setPlace({ from: 'viewpoint', spot });
@@ -642,10 +652,22 @@ export function MapScreen({
                   state: next.hillshade ? 'on' : 'off',
                 });
               }
+              if (next.path !== layers.path) {
+                track('map_layer_toggle', {
+                  layer: 'path',
+                  state: next.path ? 'on' : 'off',
+                });
+              }
               if (next.cone !== layers.cone) {
                 track('map_layer_toggle', {
                   layer: 'cone',
                   state: next.cone ? 'on' : 'off',
+                });
+              }
+              if (next.clouds !== layers.clouds) {
+                track('map_layer_toggle', {
+                  layer: 'clouds',
+                  state: next.clouds ? 'on' : 'off',
                 });
               }
               setLayers(next);
@@ -661,17 +683,21 @@ export function MapScreen({
             hi són.
           */}
           <div className="mapscreen__legend">
-            <span className="mapscreen__legenditem">
-              <span className="mapscreen__swatch" aria-hidden="true" />
-              {s('map.legend.band', locale)}
-            </span>
-            <span className="mapscreen__legenditem">
-              <span
-                className="mapscreen__swatch mapscreen__swatch--line"
-                aria-hidden="true"
-              />
-              {s('map.legend.center', locale)}
-            </span>
+            {layers.path && (
+              <>
+                <span className="mapscreen__legenditem">
+                  <span className="mapscreen__swatch" aria-hidden="true" />
+                  {s('map.legend.band', locale)}
+                </span>
+                <span className="mapscreen__legenditem">
+                  <span
+                    className="mapscreen__swatch mapscreen__swatch--line"
+                    aria-hidden="true"
+                  />
+                  {s('map.legend.center', locale)}
+                </span>
+              </>
+            )}
             {cone !== null && (
               <span className="mapscreen__legenditem">
                 <span
@@ -1021,6 +1047,8 @@ export function MapScreen({
                 eclipseId={eclipseId}
                 locale={locale}
                 origin={location}
+                currentVisibleSec={central ? verdict?.centralVisibleSec ?? null : 0}
+                currentTotalSec={circumstances.centralDurationSec}
                 onSelect={(spot) => {
                   /*
                    * EL NÚMERO SURT DE LES XINXETES, no d'un índex nou: és
@@ -1041,6 +1069,20 @@ export function MapScreen({
                   onPickLocation(spot.lat, spot.lon);
                 }}
                 onResults={setSpotPins}
+              />
+              <MapRecommendedPlaces
+                locale={locale}
+                origin={location}
+                official={officialPoints}
+                viewpoints={viewpoints}
+                onPickOfficial={(point) => {
+                  setPlace({ from: 'official', point });
+                  onPickLocation(point.lat, point.lon);
+                }}
+                onPickViewpoint={(spot) => {
+                  setPlace({ from: 'viewpoint', spot });
+                  onPickLocation(spot.lat, spot.lon);
+                }}
               />
             </Suspense>
           ) : view === 'align' ? (
@@ -1215,6 +1257,97 @@ function searchNote(search: PlaceSearchApi, locale: Locale): string | null {
       // vol dir que n'hi ha una altra de camí.
       return null;
   }
+}
+
+function MapRecommendedPlaces({
+  locale,
+  origin,
+  official,
+  viewpoints,
+  onPickOfficial,
+  onPickViewpoint,
+}: {
+  locale: Locale;
+  origin: GeoLocation | null;
+  official: readonly ObservationPoint[];
+  viewpoints: readonly Viewpoint[] | null;
+  onPickOfficial: (point: ObservationPoint) => void;
+  onPickViewpoint: (spot: Viewpoint) => void;
+}) {
+  const near = <T extends { lat: number; lon: number }>(items: readonly T[]): T[] =>
+    [...items]
+      .sort((a, b) =>
+        origin === null
+          ? 0
+          : distanceKm(origin.lat, origin.lon, a.lat, a.lon) -
+            distanceKm(origin.lat, origin.lon, b.lat, b.lon),
+      )
+      .slice(0, 2);
+
+  const officialTop = [...official]
+    .sort((a, b) => {
+      if (origin !== null) {
+        const byDistance =
+          distanceKm(origin.lat, origin.lon, a.lat, a.lon) -
+          distanceKm(origin.lat, origin.lon, b.lat, b.lon);
+        if (byDistance !== 0) return byDistance;
+      }
+      if (a.phase !== b.phase) return a.phase === 'central' ? -1 : 1;
+      if (a.precision !== b.precision) return a.precision === 'exact' ? -1 : 1;
+      return 0;
+    })
+    .slice(0, 3);
+  const viewpointTop = near(viewpoints ?? []);
+  const distance = (point: { lat: number; lon: number }): string | null =>
+    origin === null
+      ? null
+      : `${Math.round(distanceKm(origin.lat, origin.lon, point.lat, point.lon))} km`;
+
+  return (
+    <div className="mapplaces">
+      <section className="mapplaces__group">
+        <h3 className="mapplaces__title">{s('map.spots.officialFirst', locale)}</h3>
+        {officialTop.length === 0 ? (
+          <p className="screen__note">{s('map.spots.noneOfficial', locale)}</p>
+        ) : (
+          <div className="mapplaces__list">
+            {officialTop.map((point) => (
+              <button key={point.id} className="mapplaces__item" onClick={() => onPickOfficial(point)}>
+                <span>
+                  <strong>{point.name[locale]}</strong>
+                  <small>
+                    {s(point.phase === 'central' ? 'map.spots.central' : 'map.spots.partial', locale)}
+                    {' · '}
+                    {s(point.precision === 'exact' ? 'map.spots.exact' : 'map.spots.estimated', locale)}
+                    {point.kind === 'event' ? ` · ${s('map.spots.booking', locale)}` : ''}
+                  </small>
+                </span>
+                <span className="eclipsi-data">{distance(point) ?? s('map.spots.pick', locale)}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {viewpointTop.length > 0 && (
+        <section className="mapplaces__group">
+          <h3 className="mapplaces__title">{s('map.spots.viewpointsNext', locale)}</h3>
+          <div className="mapplaces__list">
+            {viewpointTop.map((spot) => (
+              <button key={spot.id} className="mapplaces__item" onClick={() => onPickViewpoint(spot)}>
+                <span>
+                  <strong>{spot.name}</strong>
+                  <small>{s(`map.viewpoint.${spot.kind}`, locale)}</small>
+                </span>
+                <span className="eclipsi-data">{distance(spot) ?? s('map.spots.pick', locale)}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+      <p className="mapplaces__explain">{s('map.spots.orderExplain', locale)}</p>
+    </div>
+  );
 }
 
 /**

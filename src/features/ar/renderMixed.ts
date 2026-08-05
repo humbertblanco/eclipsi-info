@@ -20,6 +20,7 @@
  */
 
 import type { EclipseSample } from '../../core/astro/types';
+import type { Locale } from '../../i18n';
 import { colorfulness, skyStateFromSample } from '../../core/sky';
 import type { Viewport } from './cameraGeometry';
 import {
@@ -66,7 +67,7 @@ export interface MixedOptions {
    * mana sobre el cromatge —etiquetes, vores, marques—, no sobre la simulació.
    */
   palette: Palette;
-  locale?: 'ca' | 'es';
+  locale?: Locale;
   /**
    * La guia de cerca i la confirmació de fixació. `label` ve localitzat del
    * cridador; `sunLockedAtMs` és l'instant en què l'àncora de Sol va passar a

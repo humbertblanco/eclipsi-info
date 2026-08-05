@@ -16,12 +16,13 @@
  */
 
 import type { EclipseSample, LocalCircumstances } from '../../core/astro/types';
+import type { Locale } from '../../i18n';
 
 export interface TrajectoryOptions {
   horizonProfile?: (azimuthDeg: number) => number;
   /** Instant que s'està mostrant a la simulació, per marcar-lo. */
   currentTime?: Date;
-  locale: 'ca' | 'es';
+  locale: Locale;
   /**
    * Quanta cosa es dibuixa a part de la imatge.
    *
@@ -70,6 +71,14 @@ const LABELS = {
     c3: 'C3 fin tot.',
     c4: 'C4 final',
     central: 'fase central',
+  },
+  en: {
+    c1: 'C1 start',
+    c2: 'C2 totality',
+    max: 'maximum',
+    c3: 'C3 end tot.',
+    c4: 'C4 end',
+    central: 'central phase',
   },
 } as const;
 

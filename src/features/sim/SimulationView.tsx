@@ -189,7 +189,7 @@ export function SimulationView({ location, eclipseId, locale, horizon }: Props) 
         <p className="muted">
           {formatDecimal(location.lat, 4, locale)}°,{' '}
           {formatDecimal(location.lon, 4, locale)}° ·{' '}
-          {Math.round(location.elevation)} m
+          {formatDecimal(Math.round(location.elevation), 0, locale)} m
         </p>
       </header>
 

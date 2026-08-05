@@ -156,6 +156,7 @@ export type ObservationPhase = 'central' | 'partial';
 export interface LocalizedText {
   ca: string;
   es: string;
+  en: string;
 }
 
 export interface ObservationSource {

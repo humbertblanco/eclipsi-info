@@ -3,7 +3,8 @@
     "id": "ast-aller-alto-de-coto-bello",
     "name": {
       "ca": "Alto de Coto Bello",
-      "es": "Alto de Coto Bello"
+      "es": "Alto de Coto Bello",
+      "en": "Alto de Coto Bello"
     },
     "lat": 43.135,
     "lon": -5.63473,
@@ -15,7 +16,8 @@
     "kind": "official",
     "note": {
       "ca": "Aller, Astúries.",
-      "es": "Aller, Asturias."
+      "es": "Aller, Asturias.",
+      "en": "Aller, Asturias."
     },
     "phase": "central"
   },
@@ -23,7 +25,8 @@
     "id": "ast-san-martin-del-rey-aurelio-alto-de-la-camperona",
     "name": {
       "ca": "Alto de La Camperona",
-      "es": "Alto de La Camperona"
+      "es": "Alto de La Camperona",
+      "en": "Alto de La Camperona"
     },
     "lat": 43.32928,
     "lon": -5.6075,
@@ -35,7 +38,8 @@
     "kind": "official",
     "note": {
       "ca": "San Martín del Rey Aurelio, Astúries.",
-      "es": "San Martín del Rey Aurelio, Asturias."
+      "es": "San Martín del Rey Aurelio, Asturias.",
+      "en": "San Martín del Rey Aurelio, Asturias."
     },
     "phase": "central"
   },
@@ -43,7 +47,8 @@
     "id": "ast-tineo-alto-de-la-casa-el-puerto-sierra-de-tineo",
     "name": {
       "ca": "Alto de la Casa El Puerto (Sierra de Tineo)",
-      "es": "Alto de la Casa El Puerto (Sierra de Tineo)"
+      "es": "Alto de la Casa El Puerto (Sierra de Tineo)",
+      "en": "Alto de la Casa El Puerto (Sierra de Tineo)"
     },
     "lat": 43.36419,
     "lon": -6.39796,
@@ -55,7 +60,8 @@
     "kind": "official",
     "note": {
       "ca": "Tineo, Astúries.",
-      "es": "Tineo, Asturias."
+      "es": "Tineo, Asturias.",
+      "en": "Tineo, Asturias."
     },
     "phase": "central"
   },
@@ -63,7 +69,8 @@
     "id": "ast-quiros-alto-de-la-cobertoria",
     "name": {
       "ca": "Alto de La Cobertoria",
-      "es": "Alto de La Cobertoria"
+      "es": "Alto de La Cobertoria",
+      "en": "Alto de La Cobertoria"
     },
     "lat": 43.1435,
     "lon": -5.90565,
@@ -75,7 +82,8 @@
     "kind": "official",
     "note": {
       "ca": "Quirós, Astúries.",
-      "es": "Quirós, Asturias."
+      "es": "Quirós, Asturias.",
+      "en": "Quirós, Asturias."
     },
     "phase": "central"
   },
@@ -83,7 +91,8 @@
     "id": "ast-belmonte-de-miranda-alto-de-la-corredoria",
     "name": {
       "ca": "Alto de La Corredoria",
-      "es": "Alto de La Corredoria"
+      "es": "Alto de La Corredoria",
+      "en": "Alto de La Corredoria"
     },
     "lat": 43.24991,
     "lon": -6.20464,
@@ -95,7 +104,8 @@
     "kind": "official",
     "note": {
       "ca": "Belmonte de Miranda, Astúries.",
-      "es": "Belmonte de Miranda, Asturias."
+      "es": "Belmonte de Miranda, Asturias.",
+      "en": "Belmonte de Miranda, Asturias."
     },
     "phase": "central"
   },
@@ -103,7 +113,8 @@
     "id": "ast-somiedo-alto-de-la-farrapona",
     "name": {
       "ca": "Alto de la Farrapona",
-      "es": "Alto de la Farrapona"
+      "es": "Alto de la Farrapona",
+      "en": "Alto de la Farrapona"
     },
     "lat": 43.05701,
     "lon": -6.08996,
@@ -115,7 +126,8 @@
     "kind": "official",
     "note": {
       "ca": "Somiedo, Astúries.",
-      "es": "Somiedo, Asturias."
+      "es": "Somiedo, Asturias.",
+      "en": "Somiedo, Asturias."
     },
     "phase": "central"
   },
@@ -123,7 +135,8 @@
     "id": "ast-teverga-alto-de-san-lorenzo",
     "name": {
       "ca": "Alto de San Lorenzo",
-      "es": "Alto de San Lorenzo"
+      "es": "Alto de San Lorenzo",
+      "en": "Alto de San Lorenzo"
     },
     "lat": 43.14117,
     "lon": -6.19501,
@@ -135,7 +148,8 @@
     "kind": "official",
     "note": {
       "ca": "Teverga, Astúries.",
-      "es": "Teverga, Asturias."
+      "es": "Teverga, Asturias.",
+      "en": "Teverga, Asturias."
     },
     "phase": "central"
   },
@@ -143,7 +157,8 @@
     "id": "ast-ibias-alto-de-tormaleo-area-recreativa",
     "name": {
       "ca": "Alto de Tormaleo - Área recreativa",
-      "es": "Alto de Tormaleo - Área recreativa"
+      "es": "Alto de Tormaleo - Área recreativa",
+      "en": "Alto de Tormaleo - Área recreativa"
     },
     "lat": 42.9359,
     "lon": -6.73305,
@@ -155,7 +170,8 @@
     "kind": "official",
     "note": {
       "ca": "Ibias, Astúries.",
-      "es": "Ibias, Asturias."
+      "es": "Ibias, Asturias.",
+      "en": "Ibias, Asturias."
     },
     "phase": "central"
   },
@@ -163,7 +179,8 @@
     "id": "ast-sariego-alto-fario",
     "name": {
       "ca": "Alto Fario",
-      "es": "Alto Fario"
+      "es": "Alto Fario",
+      "en": "Alto Fario"
     },
     "lat": 43.43406,
     "lon": -5.5919,
@@ -175,7 +192,8 @@
     "kind": "official",
     "note": {
       "ca": "Sariego, Astúries.",
-      "es": "Sariego, Asturias."
+      "es": "Sariego, Asturias.",
+      "en": "Sariego, Asturias."
     },
     "phase": "central"
   },
@@ -183,7 +201,8 @@
     "id": "ast-candamo-aparcamiento-cueva-de-la-pena-san-roman-carreter",
     "name": {
       "ca": "Aparcamiento Cueva de La Peña (San Román). Carretera local CD-3, desde la AS-236",
-      "es": "Aparcamiento Cueva de La Peña (San Román). Carretera local CD-3, desde la AS-236"
+      "es": "Aparcamiento Cueva de La Peña (San Román). Carretera local CD-3, desde la AS-236",
+      "en": "Aparcamiento Cueva de La Peña (San Román). Carretera local CD-3, desde la AS-236"
     },
     "lat": 43.45623,
     "lon": -6.07261,
@@ -195,7 +214,8 @@
     "kind": "official",
     "note": {
       "ca": "Candamo, Astúries.",
-      "es": "Candamo, Asturias."
+      "es": "Candamo, Asturias.",
+      "en": "Candamo, Asturias."
     },
     "phase": "central"
   },
@@ -203,7 +223,8 @@
     "id": "ast-sobrescobio-aparcamiento-de-soto-de-agues",
     "name": {
       "ca": "Aparcamiento de Soto de Agues.",
-      "es": "Aparcamiento de Soto de Agues."
+      "es": "Aparcamiento de Soto de Agues.",
+      "en": "Aparcamiento de Soto de Agues."
     },
     "lat": 43.2022,
     "lon": -5.46767,
@@ -215,7 +236,8 @@
     "kind": "official",
     "note": {
       "ca": "Sobrescobio, Astúries.",
-      "es": "Sobrescobio, Asturias."
+      "es": "Sobrescobio, Asturias.",
+      "en": "Sobrescobio, Asturias."
     },
     "phase": "central"
   },
@@ -223,7 +245,8 @@
     "id": "ast-langreo-area-recreativa-brana-del-rio",
     "name": {
       "ca": "Área Recreativa Braña del Río",
-      "es": "Área Recreativa Braña del Río"
+      "es": "Área Recreativa Braña del Río",
+      "en": "Área Recreativa Braña del Río"
     },
     "lat": 43.31818,
     "lon": -5.62537,
@@ -235,7 +258,8 @@
     "kind": "official",
     "note": {
       "ca": "Langreo, Astúries.",
-      "es": "Langreo, Asturias."
+      "es": "Langreo, Asturias.",
+      "en": "Langreo, Asturias."
     },
     "phase": "central"
   },
@@ -243,7 +267,8 @@
     "id": "ast-boal-area-recreativa-de-llaviada-carretera-as12-boal-gra",
     "name": {
       "ca": "Área recreativa de Llaviada. Carretera  AS12 Boal-Grandas de Salime.",
-      "es": "Área recreativa de Llaviada. Carretera  AS12 Boal-Grandas de Salime."
+      "es": "Área recreativa de Llaviada. Carretera  AS12 Boal-Grandas de Salime.",
+      "en": "Área recreativa de Llaviada. Carretera  AS12 Boal-Grandas de Salime."
     },
     "lat": 43.42075,
     "lon": -6.81468,
@@ -255,7 +280,8 @@
     "kind": "official",
     "note": {
       "ca": "Boal, Astúries.",
-      "es": "Boal, Asturias."
+      "es": "Boal, Asturias.",
+      "en": "Boal, Asturias."
     },
     "phase": "central"
   },
@@ -263,7 +289,8 @@
     "id": "ast-pesoz-area-recreativa-de-pesoz",
     "name": {
       "ca": "Área recreativa de Pesoz",
-      "es": "Área recreativa de Pesoz"
+      "es": "Área recreativa de Pesoz",
+      "en": "Área recreativa de Pesoz"
     },
     "lat": 43.257,
     "lon": -6.8755,
@@ -275,7 +302,8 @@
     "kind": "official",
     "note": {
       "ca": "Pesoz, Astúries.",
-      "es": "Pesoz, Asturias."
+      "es": "Pesoz, Asturias.",
+      "en": "Pesoz, Asturias."
     },
     "phase": "central"
   },
@@ -283,7 +311,8 @@
     "id": "ast-coana-area-recreativa-de-salias",
     "name": {
       "ca": "Área Recreativa de Salías",
-      "es": "Área Recreativa de Salías"
+      "es": "Área Recreativa de Salías",
+      "en": "Área Recreativa de Salías"
     },
     "lat": 43.556,
     "lon": -6.79449,
@@ -295,7 +324,8 @@
     "kind": "official",
     "note": {
       "ca": "Coaña, Astúries.",
-      "es": "Coaña, Asturias."
+      "es": "Coaña, Asturias.",
+      "en": "Coaña, Asturias."
     },
     "phase": "central"
   },
@@ -303,7 +333,8 @@
     "id": "ast-grado-area-recreativa-de-sorribas",
     "name": {
       "ca": "Área Recreativa de Sorribas",
-      "es": "Área Recreativa de Sorribas"
+      "es": "Área Recreativa de Sorribas",
+      "en": "Área Recreativa de Sorribas"
     },
     "lat": 43.32882,
     "lon": -6.13601,
@@ -315,7 +346,8 @@
     "kind": "official",
     "note": {
       "ca": "Grado, Astúries.",
-      "es": "Grado, Asturias."
+      "es": "Grado, Asturias.",
+      "en": "Grado, Asturias."
     },
     "phase": "central"
   },
@@ -323,7 +355,8 @@
     "id": "ast-morcin-area-recreativa-de-viapara",
     "name": {
       "ca": "Área Recreativa de Viapará",
-      "es": "Área Recreativa de Viapará"
+      "es": "Área Recreativa de Viapará",
+      "en": "Área Recreativa de Viapará"
     },
     "lat": 43.24465,
     "lon": -5.91196,
@@ -335,7 +368,8 @@
     "kind": "official",
     "note": {
       "ca": "Morcín, Astúries.",
-      "es": "Morcín, Asturias."
+      "es": "Morcín, Asturias.",
+      "en": "Morcín, Asturias."
     },
     "phase": "central"
   },
@@ -343,7 +377,8 @@
     "id": "ast-riosa-area-recreativa-de-viapara-riosa",
     "name": {
       "ca": "Área Recreativa de Viapará - Riosa",
-      "es": "Área Recreativa de Viapará - Riosa"
+      "es": "Área Recreativa de Viapará - Riosa",
+      "en": "Área Recreativa de Viapará - Riosa"
     },
     "lat": 43.24465,
     "lon": -5.91196,
@@ -355,7 +390,8 @@
     "kind": "official",
     "note": {
       "ca": "Riosa, Astúries.",
-      "es": "Riosa, Asturias."
+      "es": "Riosa, Asturias.",
+      "en": "Riosa, Asturias."
     },
     "phase": "central"
   },
@@ -363,7 +399,8 @@
     "id": "ast-degana-area-recreativa-del-puerto-de-zarreu-puerto-cerre",
     "name": {
       "ca": "Area Recreativa del Puerto de Zarréu / Puerto Cerredo",
-      "es": "Area Recreativa del Puerto de Zarréu / Puerto Cerredo"
+      "es": "Area Recreativa del Puerto de Zarréu / Puerto Cerredo",
+      "en": "Area Recreativa del Puerto de Zarréu / Puerto Cerredo"
     },
     "lat": 42.95563,
     "lon": -6.43939,
@@ -375,7 +412,8 @@
     "kind": "official",
     "note": {
       "ca": "Degaña, Astúries.",
-      "es": "Degaña, Asturias."
+      "es": "Degaña, Asturias.",
+      "en": "Degaña, Asturias."
     },
     "phase": "central"
   },
@@ -383,7 +421,8 @@
     "id": "ast-ribera-de-arriba-area-recreativa-el-llosalin",
     "name": {
       "ca": "Área recreativa el Llosalín",
-      "es": "Área recreativa el Llosalín"
+      "es": "Área recreativa el Llosalín",
+      "en": "Área recreativa el Llosalín"
     },
     "lat": 43.31404,
     "lon": -5.8895,
@@ -395,7 +434,8 @@
     "kind": "official",
     "note": {
       "ca": "Ribera de Arriba, Astúries.",
-      "es": "Ribera de Arriba, Asturias."
+      "es": "Ribera de Arriba, Asturias.",
+      "en": "Ribera de Arriba, Asturias."
     },
     "phase": "central"
   },
@@ -403,7 +443,8 @@
     "id": "ast-pilona-area-recreativa-monte-cayon",
     "name": {
       "ca": "Área recreativa Monte Cayón",
-      "es": "Área recreativa Monte Cayón"
+      "es": "Área recreativa Monte Cayón",
+      "en": "Área recreativa Monte Cayón"
     },
     "lat": 43.36172,
     "lon": -5.35888,
@@ -415,7 +456,8 @@
     "kind": "official",
     "note": {
       "ca": "Piloña, Astúries.",
-      "es": "Piloña, Asturias."
+      "es": "Piloña, Asturias.",
+      "en": "Piloña, Asturias."
     },
     "phase": "central"
   },
@@ -423,7 +465,8 @@
     "id": "ast-cabranes-area-recreativa-pena-cabrera",
     "name": {
       "ca": "Área Recreativa Peña Cabrera",
-      "es": "Área Recreativa Peña Cabrera"
+      "es": "Área Recreativa Peña Cabrera",
+      "en": "Área Recreativa Peña Cabrera"
     },
     "lat": 43.43656,
     "lon": -5.4198,
@@ -435,7 +478,8 @@
     "kind": "official",
     "note": {
       "ca": "Cabranes, Astúries.",
-      "es": "Cabranes, Asturias."
+      "es": "Cabranes, Asturias.",
+      "en": "Cabranes, Asturias."
     },
     "phase": "central"
   },
@@ -443,7 +487,8 @@
     "id": "ast-cudillero-cabo-vidio-ovinana",
     "name": {
       "ca": "Cabo Vidio-Oviñana",
-      "es": "Cabo Vidio-Oviñana"
+      "es": "Cabo Vidio-Oviñana",
+      "en": "Cabo Vidio-Oviñana"
     },
     "lat": 43.59326,
     "lon": -6.24316,
@@ -455,7 +500,8 @@
     "kind": "official",
     "note": {
       "ca": "Cudillero, Astúries.",
-      "es": "Cudillero, Asturias."
+      "es": "Cudillero, Asturias.",
+      "en": "Cudillero, Asturias."
     },
     "phase": "central"
   },
@@ -463,7 +509,8 @@
     "id": "ast-san-tirso-de-abres-calle-la-tapia-san-tirso-de-abres",
     "name": {
       "ca": "Calle La Tapia (San Tirso de Abres)",
-      "es": "Calle La Tapia (San Tirso de Abres)"
+      "es": "Calle La Tapia (San Tirso de Abres)",
+      "en": "Calle La Tapia (San Tirso de Abres)"
     },
     "lat": 43.4077,
     "lon": -7.14405,
@@ -475,7 +522,8 @@
     "kind": "official",
     "note": {
       "ca": "San Tirso de Abres, Astúries.",
-      "es": "San Tirso de Abres, Asturias."
+      "es": "San Tirso de Abres, Asturias.",
+      "en": "San Tirso de Abres, Asturias."
     },
     "phase": "central"
   },
@@ -483,7 +531,8 @@
     "id": "ast-laviana-camin-del-horron-cruce-con-ramal-barrio-el-castr",
     "name": {
       "ca": "Camín del Horrón, Cruce con ramal \"Barrio El Castrillón\"",
-      "es": "Camín del Horrón, Cruce con ramal \"Barrio El Castrillón\""
+      "es": "Camín del Horrón, Cruce con ramal \"Barrio El Castrillón\"",
+      "en": "Camín del Horrón, Cruce con ramal \"Barrio El Castrillón\""
     },
     "lat": 43.25559,
     "lon": -5.5658,
@@ -495,7 +544,8 @@
     "kind": "official",
     "note": {
       "ca": "Laviana, Astúries.",
-      "es": "Laviana, Asturias."
+      "es": "Laviana, Asturias.",
+      "en": "Laviana, Asturias."
     },
     "phase": "central"
   },
@@ -503,7 +553,8 @@
     "id": "ast-villanueva-de-oscos-campo-de-la-feria-del-puerto-de-la-g",
     "name": {
       "ca": "Campo de la Feria del Puerto de La Garganta.",
-      "es": "Campo de la Feria del Puerto de La Garganta."
+      "es": "Campo de la Feria del Puerto de La Garganta.",
+      "en": "Campo de la Feria del Puerto de La Garganta."
     },
     "lat": 43.34554,
     "lon": -7.01046,
@@ -515,7 +566,8 @@
     "kind": "official",
     "note": {
       "ca": "Villanueva de Oscos, Astúries.",
-      "es": "Villanueva de Oscos, Asturias."
+      "es": "Villanueva de Oscos, Asturias.",
+      "en": "Villanueva de Oscos, Asturias."
     },
     "phase": "central"
   },
@@ -523,7 +575,8 @@
     "id": "ast-siero-campo-municipal-de-futbol-sergio-sanchez-lopez-pep",
     "name": {
       "ca": "Campo Municipal de Fútbol “Sergio Sánchez López Pepio” – El Berrón.",
-      "es": "Campo Municipal de Fútbol “Sergio Sánchez López Pepio” – El Berrón."
+      "es": "Campo Municipal de Fútbol “Sergio Sánchez López Pepio” – El Berrón.",
+      "en": "Campo Municipal de Fútbol “Sergio Sánchez López Pepio” – El Berrón."
     },
     "lat": 43.38171,
     "lon": -5.69635,
@@ -535,7 +588,8 @@
     "kind": "official",
     "note": {
       "ca": "Siero, Astúries.",
-      "es": "Siero, Asturias."
+      "es": "Siero, Asturias.",
+      "en": "Siero, Asturias."
     },
     "phase": "central"
   },
@@ -543,7 +597,8 @@
     "id": "ast-grandas-de-salime-capilla-nuestra-senora-de-los-remedios",
     "name": {
       "ca": "Capilla Nuestra señora de los Remedios, Santa Maria",
-      "es": "Capilla Nuestra señora de los Remedios, Santa Maria"
+      "es": "Capilla Nuestra señora de los Remedios, Santa Maria",
+      "en": "Capilla Nuestra señora de los Remedios, Santa Maria"
     },
     "lat": 43.23287,
     "lon": -6.87405,
@@ -555,7 +610,8 @@
     "kind": "official",
     "note": {
       "ca": "Grandas de Salime, Astúries.",
-      "es": "Grandas de Salime, Asturias."
+      "es": "Grandas de Salime, Asturias.",
+      "en": "Grandas de Salime, Asturias."
     },
     "phase": "central"
   },
@@ -563,7 +619,8 @@
     "id": "ast-valdes-caroyas",
     "name": {
       "ca": "Caroyas",
-      "es": "Caroyas"
+      "es": "Caroyas",
+      "en": "Caroyas"
     },
     "lat": 43.54563,
     "lon": -6.47799,
@@ -575,7 +632,8 @@
     "kind": "official",
     "note": {
       "ca": "Valdés, Astúries.",
-      "es": "Valdés, Asturias."
+      "es": "Valdés, Asturias.",
+      "en": "Valdés, Asturias."
     },
     "phase": "central"
   },
@@ -583,7 +641,8 @@
     "id": "ast-aviles-centro-niemeyer",
     "name": {
       "ca": "Centro Niemeyer",
-      "es": "Centro Niemeyer"
+      "es": "Centro Niemeyer",
+      "en": "Centro Niemeyer"
     },
     "lat": 43.55768,
     "lon": -5.91707,
@@ -595,7 +654,8 @@
     "kind": "official",
     "note": {
       "ca": "Avilés, Astúries.",
-      "es": "Avilés, Asturias."
+      "es": "Avilés, Asturias.",
+      "en": "Avilés, Asturias."
     },
     "phase": "central"
   },
@@ -603,7 +663,8 @@
     "id": "ast-caso-collada-del-pandu",
     "name": {
       "ca": "Collada del Pandu",
-      "es": "Collada del Pandu"
+      "es": "Collada del Pandu",
+      "en": "Collada del Pandu"
     },
     "lat": 43.18996,
     "lon": -5.33624,
@@ -615,7 +676,8 @@
     "kind": "official",
     "note": {
       "ca": "Caso, Astúries.",
-      "es": "Caso, Asturias."
+      "es": "Caso, Asturias.",
+      "en": "Caso, Asturias."
     },
     "phase": "central"
   },
@@ -623,7 +685,8 @@
     "id": "ast-mieres-collau-de-les-muries-polio",
     "name": {
       "ca": "Collau de Les Muries -Polio",
-      "es": "Collau de Les Muries -Polio"
+      "es": "Collau de Les Muries -Polio",
+      "en": "Collau de Les Muries -Polio"
     },
     "lat": 43.23042,
     "lon": -5.7257,
@@ -635,7 +698,8 @@
     "kind": "official",
     "note": {
       "ca": "Mieres, Astúries.",
-      "es": "Mieres, Asturias."
+      "es": "Mieres, Asturias.",
+      "en": "Mieres, Asturias."
     },
     "phase": "central"
   },
@@ -643,7 +707,8 @@
     "id": "ast-santo-adriano-dosango",
     "name": {
       "ca": "Dosango",
-      "es": "Dosango"
+      "es": "Dosango",
+      "en": "Dosango"
     },
     "lat": 43.2726,
     "lon": -5.9712,
@@ -655,7 +720,8 @@
     "kind": "official",
     "note": {
       "ca": "Santo Adriano, Astúries.",
-      "es": "Santo Adriano, Asturias."
+      "es": "Santo Adriano, Asturias.",
+      "en": "Santo Adriano, Asturias."
     },
     "phase": "central"
   },
@@ -663,7 +729,8 @@
     "id": "ast-corvera-de-asturias-entrada-al-pueblo-de-gavitos",
     "name": {
       "ca": "Entrada al pueblo de Gavitos",
-      "es": "Entrada al pueblo de Gavitos"
+      "es": "Entrada al pueblo de Gavitos",
+      "en": "Entrada al pueblo de Gavitos"
     },
     "lat": 43.53694,
     "lon": -5.8744,
@@ -675,7 +742,8 @@
     "kind": "official",
     "note": {
       "ca": "Corvera de Asturias, Astúries.",
-      "es": "Corvera de Asturias, Asturias."
+      "es": "Corvera de Asturias, Asturias.",
+      "en": "Corvera de Asturias, Asturias."
     },
     "phase": "central"
   },
@@ -683,7 +751,8 @@
     "id": "ast-vegadeo-explanada-del-recinto-ferial-de-vegadeo",
     "name": {
       "ca": "Explanada del Recinto Ferial de Vegadeo.",
-      "es": "Explanada del Recinto Ferial de Vegadeo."
+      "es": "Explanada del Recinto Ferial de Vegadeo.",
+      "en": "Explanada del Recinto Ferial de Vegadeo."
     },
     "lat": 43.46535,
     "lon": -7.05168,
@@ -695,7 +764,8 @@
     "kind": "official",
     "note": {
       "ca": "Vegadeo, Astúries.",
-      "es": "Vegadeo, Asturias."
+      "es": "Vegadeo, Asturias.",
+      "en": "Vegadeo, Asturias."
     },
     "phase": "central"
   },
@@ -703,7 +773,8 @@
     "id": "ast-taramundi-explanada-granja-de-los-huevos-camperos-y-area",
     "name": {
       "ca": "Explanada Granja de los huevos camperos y Área AC",
-      "es": "Explanada Granja de los huevos camperos y Área AC"
+      "es": "Explanada Granja de los huevos camperos y Área AC",
+      "en": "Explanada Granja de los huevos camperos y Área AC"
     },
     "lat": 43.36054,
     "lon": -7.11565,
@@ -715,7 +786,8 @@
     "kind": "official",
     "note": {
       "ca": "Taramundi, Astúries.",
-      "es": "Taramundi, Asturias."
+      "es": "Taramundi, Asturias.",
+      "en": "Taramundi, Asturias."
     },
     "phase": "central"
   },
@@ -723,7 +795,8 @@
     "id": "ast-colunga-faro-de-luces",
     "name": {
       "ca": "Faro de Luces",
-      "es": "Faro de Luces"
+      "es": "Faro de Luces",
+      "en": "Faro de Luces"
     },
     "lat": 43.53401,
     "lon": -5.30034,
@@ -735,7 +808,8 @@
     "kind": "official",
     "note": {
       "ca": "Colunga, Astúries.",
-      "es": "Colunga, Asturias."
+      "es": "Colunga, Asturias.",
+      "en": "Colunga, Asturias."
     },
     "phase": "central"
   },
@@ -743,7 +817,8 @@
     "id": "ast-gozon-faro-del-cabo-penas",
     "name": {
       "ca": "Faro del Cabo Peñas",
-      "es": "Faro del Cabo Peñas"
+      "es": "Faro del Cabo Peñas",
+      "en": "Faro del Cabo Peñas"
     },
     "lat": 43.65565,
     "lon": -5.84853,
@@ -755,7 +830,8 @@
     "kind": "official",
     "note": {
       "ca": "Gozón, Astúries.",
-      "es": "Gozón, Asturias."
+      "es": "Gozón, Asturias.",
+      "en": "Gozón, Asturias."
     },
     "phase": "central"
   },
@@ -763,7 +839,8 @@
     "id": "ast-bimenes-fayacaba",
     "name": {
       "ca": "Fayacaba",
-      "es": "Fayacaba"
+      "es": "Fayacaba",
+      "en": "Fayacaba"
     },
     "lat": 43.3114,
     "lon": -5.52345,
@@ -775,7 +852,8 @@
     "kind": "official",
     "note": {
       "ca": "Bimenes, Astúries.",
-      "es": "Bimenes, Asturias."
+      "es": "Bimenes, Asturias.",
+      "en": "Bimenes, Asturias."
     },
     "phase": "central"
   },
@@ -783,7 +861,8 @@
     "id": "ast-amieva-iglesia-de-san-juan",
     "name": {
       "ca": "Iglesia de San Juan",
-      "es": "Iglesia de San Juan"
+      "es": "Iglesia de San Juan",
+      "en": "Iglesia de San Juan"
     },
     "lat": 43.24361,
     "lon": -5.07379,
@@ -795,7 +874,8 @@
     "kind": "official",
     "note": {
       "ca": "Amieva, Astúries.",
-      "es": "Amieva, Asturias."
+      "es": "Amieva, Asturias.",
+      "en": "Amieva, Asturias."
     },
     "phase": "central"
   },
@@ -803,7 +883,8 @@
     "id": "ast-ribadesella-la-rasa-de-berbes-campo-de-golf-ribadesella",
     "name": {
       "ca": "La Rasa de Berbes (Campo de Golf - Ribadesella)",
-      "es": "La Rasa de Berbes (Campo de Golf - Ribadesella)"
+      "es": "La Rasa de Berbes (Campo de Golf - Ribadesella)",
+      "en": "La Rasa de Berbes (Campo de Golf - Ribadesella)"
     },
     "lat": 43.46549,
     "lon": -5.14833,
@@ -815,7 +896,8 @@
     "kind": "official",
     "note": {
       "ca": "Ribadesella, Astúries.",
-      "es": "Ribadesella, Asturias."
+      "es": "Ribadesella, Asturias.",
+      "en": "Ribadesella, Asturias."
     },
     "phase": "central"
   },
@@ -823,7 +905,8 @@
     "id": "ast-nava-les-praeres-de-nava",
     "name": {
       "ca": "Les Praeres de Nava",
-      "es": "Les Praeres de Nava"
+      "es": "Les Praeres de Nava",
+      "en": "Les Praeres de Nava"
     },
     "lat": 43.3214,
     "lon": -5.49967,
@@ -835,7 +918,8 @@
     "kind": "official",
     "note": {
       "ca": "Nava, Astúries.",
-      "es": "Nava, Asturias."
+      "es": "Nava, Asturias.",
+      "en": "Nava, Asturias."
     },
     "phase": "central"
   },
@@ -843,7 +927,8 @@
     "id": "ast-cangas-de-onis-llano-del-cura",
     "name": {
       "ca": "Llano del cura",
-      "es": "Llano del cura"
+      "es": "Llano del cura",
+      "en": "Llano del cura"
     },
     "lat": 43.34279,
     "lon": -5.12378,
@@ -855,7 +940,8 @@
     "kind": "official",
     "note": {
       "ca": "Cangas de Onís, Astúries.",
-      "es": "Cangas de Onís, Asturias."
+      "es": "Cangas de Onís, Asturias.",
+      "en": "Cangas de Onís, Asturias."
     },
     "phase": "central"
   },
@@ -863,7 +949,8 @@
     "id": "ast-onis-llano-miyar",
     "name": {
       "ca": "Llano Miyar",
-      "es": "Llano Miyar"
+      "es": "Llano Miyar",
+      "en": "Llano Miyar"
     },
     "lat": 43.32692,
     "lon": -4.99737,
@@ -875,7 +962,8 @@
     "kind": "official",
     "note": {
       "ca": "Onís, Astúries.",
-      "es": "Onís, Asturias."
+      "es": "Onís, Asturias.",
+      "en": "Onís, Asturias."
     },
     "phase": "central"
   },
@@ -883,7 +971,8 @@
     "id": "ast-villayon-mirador-de-busmente",
     "name": {
       "ca": "Mirador de Busmente",
-      "es": "Mirador de Busmente"
+      "es": "Mirador de Busmente",
+      "en": "Mirador de Busmente"
     },
     "lat": 43.42832,
     "lon": -6.68405,
@@ -895,7 +984,8 @@
     "kind": "official",
     "note": {
       "ca": "Villayón, Astúries.",
-      "es": "Villayón, Asturias."
+      "es": "Villayón, Asturias.",
+      "en": "Villayón, Asturias."
     },
     "phase": "central"
   },
@@ -903,7 +993,8 @@
     "id": "ast-proaza-mirador-de-la-cruz-de-linares",
     "name": {
       "ca": "Mirador de la Cruz de Linares",
-      "es": "Mirador de la Cruz de Linares"
+      "es": "Mirador de la Cruz de Linares",
+      "en": "Mirador de la Cruz de Linares"
     },
     "lat": 43.2723,
     "lon": -6.02857,
@@ -915,7 +1006,8 @@
     "kind": "official",
     "note": {
       "ca": "Proaza, Astúries.",
-      "es": "Proaza, Asturias."
+      "es": "Proaza, Asturias.",
+      "en": "Proaza, Asturias."
     },
     "phase": "central"
   },
@@ -923,7 +1015,8 @@
     "id": "ast-pravia-mirador-de-la-penona",
     "name": {
       "ca": "Mirador de la Peñona",
-      "es": "Mirador de la Peñona"
+      "es": "Mirador de la Peñona",
+      "en": "Mirador de la Peñona"
     },
     "lat": 43.52512,
     "lon": -6.13894,
@@ -935,7 +1028,8 @@
     "kind": "official",
     "note": {
       "ca": "Pravia, Astúries.",
-      "es": "Pravia, Asturias."
+      "es": "Pravia, Asturias.",
+      "en": "Pravia, Asturias."
     },
     "phase": "central"
   },
@@ -943,7 +1037,8 @@
     "id": "ast-gijon-mirador-de-la-providencia",
     "name": {
       "ca": "Mirador de la Providencia",
-      "es": "Mirador de la Providencia"
+      "es": "Mirador de la Providencia",
+      "en": "Mirador de la Providencia"
     },
     "lat": 43.55393,
     "lon": -5.61899,
@@ -955,7 +1050,8 @@
     "kind": "official",
     "note": {
       "ca": "Gijón, Astúries.",
-      "es": "Gijón, Asturias."
+      "es": "Gijón, Asturias.",
+      "en": "Gijón, Asturias."
     },
     "phase": "central"
   },
@@ -963,7 +1059,8 @@
     "id": "ast-allande-mirador-de-montefurado-carretera-as-14",
     "name": {
       "ca": "Mirador de Montefurado – Carretera AS-14.",
-      "es": "Mirador de Montefurado – Carretera AS-14."
+      "es": "Mirador de Montefurado – Carretera AS-14.",
+      "en": "Mirador de Montefurado – Carretera AS-14."
     },
     "lat": 43.26891,
     "lon": -6.68511,
@@ -975,7 +1072,8 @@
     "kind": "official",
     "note": {
       "ca": "Allande, Astúries.",
-      "es": "Allande, Asturias."
+      "es": "Allande, Asturias.",
+      "en": "Allande, Asturias."
     },
     "phase": "central"
   },
@@ -983,7 +1081,8 @@
     "id": "ast-penamellera-alta-mirador-de-oceno",
     "name": {
       "ca": "Mirador de Oceño",
-      "es": "Mirador de Oceño"
+      "es": "Mirador de Oceño",
+      "en": "Mirador de Oceño"
     },
     "lat": 43.29636,
     "lon": -4.74395,
@@ -995,7 +1094,8 @@
     "kind": "official",
     "note": {
       "ca": "Peñamellera Alta, Astúries.",
-      "es": "Peñamellera Alta, Asturias."
+      "es": "Peñamellera Alta, Asturias.",
+      "en": "Peñamellera Alta, Asturias."
     },
     "phase": "central"
   },
@@ -1003,7 +1103,8 @@
     "id": "ast-penamellera-baja-mirador-de-san-antonio-alevia",
     "name": {
       "ca": "Mirador de San Antonio, Alevia",
-      "es": "Mirador de San Antonio, Alevia"
+      "es": "Mirador de San Antonio, Alevia",
+      "en": "Mirador de San Antonio, Alevia"
     },
     "lat": 43.33309,
     "lon": -4.59561,
@@ -1015,7 +1116,8 @@
     "kind": "official",
     "note": {
       "ca": "Peñamellera Baja, Astúries.",
-      "es": "Peñamellera Baja, Asturias."
+      "es": "Peñamellera Baja, Asturias.",
+      "en": "Peñamellera Baja, Asturias."
     },
     "phase": "central"
   },
@@ -1023,7 +1125,8 @@
     "id": "ast-illano-mirador-de-tiracais",
     "name": {
       "ca": "Mirador de Tiracais",
-      "es": "Mirador de Tiracais"
+      "es": "Mirador de Tiracais",
+      "en": "Mirador de Tiracais"
     },
     "lat": 43.361,
     "lon": -6.82929,
@@ -1035,7 +1138,8 @@
     "kind": "official",
     "note": {
       "ca": "Illano, Astúries.",
-      "es": "Illano, Asturias."
+      "es": "Illano, Asturias.",
+      "en": "Illano, Asturias."
     },
     "phase": "central"
   },
@@ -1043,7 +1147,8 @@
     "id": "ast-ponga-mirador-les-bedules",
     "name": {
       "ca": "Mirador les Bedules",
-      "es": "Mirador les Bedules"
+      "es": "Mirador les Bedules",
+      "en": "Mirador les Bedules"
     },
     "lat": 43.18953,
     "lon": -5.14124,
@@ -1055,7 +1160,8 @@
     "kind": "official",
     "note": {
       "ca": "Ponga, Astúries.",
-      "es": "Ponga, Asturias."
+      "es": "Ponga, Asturias.",
+      "en": "Ponga, Asturias."
     },
     "phase": "central"
   },
@@ -1063,7 +1169,8 @@
     "id": "ast-salas-mirador-pico-el-viso",
     "name": {
       "ca": "Mirador Pico el Viso",
-      "es": "Mirador Pico el Viso"
+      "es": "Mirador Pico el Viso",
+      "en": "Mirador Pico el Viso"
     },
     "lat": 43.42208,
     "lon": -6.25232,
@@ -1075,7 +1182,8 @@
     "kind": "official",
     "note": {
       "ca": "Salas, Astúries.",
-      "es": "Salas, Asturias."
+      "es": "Salas, Asturias.",
+      "en": "Salas, Asturias."
     },
     "phase": "central"
   },
@@ -1083,7 +1191,8 @@
     "id": "ast-las-regueras-monte-la-berruga",
     "name": {
       "ca": "Monte la Berruga",
-      "es": "Monte la Berruga"
+      "es": "Monte la Berruga",
+      "en": "Monte la Berruga"
     },
     "lat": 43.38326,
     "lon": -5.94501,
@@ -1095,7 +1204,8 @@
     "kind": "official",
     "note": {
       "ca": "Las Regueras, Astúries.",
-      "es": "Las Regueras, Asturias."
+      "es": "Las Regueras, Asturias.",
+      "en": "Las Regueras, Asturias."
     },
     "phase": "central"
   },
@@ -1103,7 +1213,8 @@
     "id": "ast-parres-parque-de-la-concordia",
     "name": {
       "ca": "Parque de La Concordia",
-      "es": "Parque de La Concordia"
+      "es": "Parque de La Concordia",
+      "en": "Parque de La Concordia"
     },
     "lat": 43.38578,
     "lon": -5.18539,
@@ -1115,7 +1226,8 @@
     "kind": "official",
     "note": {
       "ca": "Parres, Astúries.",
-      "es": "Parres, Asturias."
+      "es": "Parres, Asturias.",
+      "en": "Parres, Asturias."
     },
     "phase": "central"
   },
@@ -1123,7 +1235,8 @@
     "id": "ast-norena-parque-de-los-riegos",
     "name": {
       "ca": "Parque de los Riegos",
-      "es": "Parque de los Riegos"
+      "es": "Parque de los Riegos",
+      "en": "Parque de los Riegos"
     },
     "lat": 43.39004,
     "lon": -5.70539,
@@ -1135,7 +1248,8 @@
     "kind": "official",
     "note": {
       "ca": "Noreña, Astúries.",
-      "es": "Noreña, Asturias."
+      "es": "Noreña, Asturias.",
+      "en": "Noreña, Asturias."
     },
     "phase": "central"
   },
@@ -1143,7 +1257,8 @@
     "id": "ast-oviedo-parque-del-oeste",
     "name": {
       "ca": "Parque del Oeste",
-      "es": "Parque del Oeste"
+      "es": "Parque del Oeste",
+      "en": "Parque del Oeste"
     },
     "lat": 43.3629,
     "lon": -5.87311,
@@ -1155,7 +1270,8 @@
     "kind": "official",
     "note": {
       "ca": "Oviedo, Astúries.",
-      "es": "Oviedo, Asturias."
+      "es": "Oviedo, Asturias.",
+      "en": "Oviedo, Asturias."
     },
     "phase": "central"
   },
@@ -1163,7 +1279,8 @@
     "id": "ast-carreno-parque-ingles",
     "name": {
       "ca": "Parque Inglés",
-      "es": "Parque Inglés"
+      "es": "Parque Inglés",
+      "en": "Parque Inglés"
     },
     "lat": 43.59357,
     "lon": -5.76263,
@@ -1175,7 +1292,8 @@
     "kind": "official",
     "note": {
       "ca": "Carreño, Astúries.",
-      "es": "Carreño, Asturias."
+      "es": "Carreño, Asturias.",
+      "en": "Carreño, Asturias."
     },
     "phase": "central"
   },
@@ -1183,7 +1301,8 @@
     "id": "ast-llanes-paseo-de-san-pedro-llanes",
     "name": {
       "ca": "Paseo de San Pedro, Llanes",
-      "es": "Paseo de San Pedro, Llanes"
+      "es": "Paseo de San Pedro, Llanes",
+      "en": "Paseo de San Pedro, Llanes"
     },
     "lat": 43.42523,
     "lon": -4.75986,
@@ -1195,7 +1314,8 @@
     "kind": "official",
     "note": {
       "ca": "Llanes, Astúries.",
-      "es": "Llanes, Asturias."
+      "es": "Llanes, Asturias.",
+      "en": "Llanes, Asturias."
     },
     "phase": "central"
   },
@@ -1203,7 +1323,8 @@
     "id": "ast-navia-playa-de-frexulfe",
     "name": {
       "ca": "Playa de Frexulfe",
-      "es": "Playa de Frexulfe"
+      "es": "Playa de Frexulfe",
+      "en": "Playa de Frexulfe"
     },
     "lat": 43.55923,
     "lon": -6.67818,
@@ -1215,7 +1336,8 @@
     "kind": "official",
     "note": {
       "ca": "Navia, Astúries.",
-      "es": "Navia, Asturias."
+      "es": "Navia, Asturias.",
+      "en": "Navia, Asturias."
     },
     "phase": "central"
   },
@@ -1223,7 +1345,8 @@
     "id": "ast-caravia-playa-de-la-espasa-moracey-y-arenal-de-moris-zon",
     "name": {
       "ca": "Playa de La Espasa, Moracey, y Arenal de Morís (zona)",
-      "es": "Playa de La Espasa, Moracey, y Arenal de Morís (zona)"
+      "es": "Playa de La Espasa, Moracey, y Arenal de Morís (zona)",
+      "en": "Playa de La Espasa, Moracey, y Arenal de Morís (zona)"
     },
     "lat": 43.47433,
     "lon": -5.21457,
@@ -1235,7 +1358,8 @@
     "kind": "official",
     "note": {
       "ca": "Caravia, Astúries.",
-      "es": "Caravia, Asturias."
+      "es": "Caravia, Asturias.",
+      "en": "Caravia, Asturias."
     },
     "phase": "central"
   },
@@ -1243,7 +1367,8 @@
     "id": "ast-ribadedeva-playa-de-la-franca",
     "name": {
       "ca": "Playa de la Franca",
-      "es": "Playa de la Franca"
+      "es": "Playa de la Franca",
+      "en": "Playa de la Franca"
     },
     "lat": 43.39395,
     "lon": -4.57502,
@@ -1255,7 +1380,8 @@
     "kind": "official",
     "note": {
       "ca": "Ribadedeva, Astúries.",
-      "es": "Ribadedeva, Asturias."
+      "es": "Ribadedeva, Asturias.",
+      "en": "Ribadedeva, Asturias."
     },
     "phase": "central"
   },
@@ -1263,7 +1389,8 @@
     "id": "ast-soto-del-barco-playa-de-los-quebrantos",
     "name": {
       "ca": "Playa de Los Quebrantos",
-      "es": "Playa de Los Quebrantos"
+      "es": "Playa de Los Quebrantos",
+      "en": "Playa de Los Quebrantos"
     },
     "lat": 43.56566,
     "lon": -6.06957,
@@ -1275,7 +1402,8 @@
     "kind": "official",
     "note": {
       "ca": "Soto del Barco, Astúries.",
-      "es": "Soto del Barco, Asturias."
+      "es": "Soto del Barco, Asturias.",
+      "en": "Soto del Barco, Asturias."
     },
     "phase": "central"
   },
@@ -1283,7 +1411,8 @@
     "id": "ast-castropol-playa-de-penarronda",
     "name": {
       "ca": "Playa de Peñarronda",
-      "es": "Playa de Peñarronda"
+      "es": "Playa de Peñarronda",
+      "en": "Playa de Peñarronda"
     },
     "lat": 43.55362,
     "lon": -6.99676,
@@ -1295,7 +1424,8 @@
     "kind": "official",
     "note": {
       "ca": "Castropol, Astúries.",
-      "es": "Castropol, Asturias."
+      "es": "Castropol, Asturias.",
+      "en": "Castropol, Asturias."
     },
     "phase": "central"
   },
@@ -1303,7 +1433,8 @@
     "id": "ast-el-franco-playa-de-porcia",
     "name": {
       "ca": "Playa de Porcía",
-      "es": "Playa de Porcía"
+      "es": "Playa de Porcía",
+      "en": "Playa de Porcía"
     },
     "lat": 43.56365,
     "lon": -6.87347,
@@ -1315,7 +1446,8 @@
     "kind": "official",
     "note": {
       "ca": "El Franco, Astúries.",
-      "es": "El Franco, Asturias."
+      "es": "El Franco, Asturias.",
+      "en": "El Franco, Asturias."
     },
     "phase": "central"
   },
@@ -1323,7 +1455,8 @@
     "id": "ast-villaviciosa-playa-de-rodiles-accesos-carretera-vv-6",
     "name": {
       "ca": "Playa de Rodiles. Accesos: Carretera VV-6",
-      "es": "Playa de Rodiles. Accesos: Carretera VV-6"
+      "es": "Playa de Rodiles. Accesos: Carretera VV-6",
+      "en": "Playa de Rodiles. Accesos: Carretera VV-6"
     },
     "lat": 43.53296,
     "lon": -5.37798,
@@ -1335,7 +1468,8 @@
     "kind": "official",
     "note": {
       "ca": "Villaviciosa, Astúries.",
-      "es": "Villaviciosa, Asturias."
+      "es": "Villaviciosa, Asturias.",
+      "en": "Villaviciosa, Asturias."
     },
     "phase": "central"
   },
@@ -1343,7 +1477,8 @@
     "id": "ast-castrillon-playa-de-san-juan-de-nieva-el-espartal",
     "name": {
       "ca": "Playa de San Juan de Nieva / El Espartal",
-      "es": "Playa de San Juan de Nieva / El Espartal"
+      "es": "Playa de San Juan de Nieva / El Espartal",
+      "en": "Playa de San Juan de Nieva / El Espartal"
     },
     "lat": 43.58697,
     "lon": -5.94295,
@@ -1355,7 +1490,8 @@
     "kind": "official",
     "note": {
       "ca": "Castrillón, Astúries.",
-      "es": "Castrillón, Asturias."
+      "es": "Castrillón, Asturias.",
+      "en": "Castrillón, Asturias."
     },
     "phase": "central"
   },
@@ -1363,7 +1499,8 @@
     "id": "ast-tapia-de-casariego-playa-de-serantes",
     "name": {
       "ca": "Playa de Serantes",
-      "es": "Playa de Serantes"
+      "es": "Playa de Serantes",
+      "en": "Playa de Serantes"
     },
     "lat": 43.55585,
     "lon": -6.97494,
@@ -1375,7 +1512,8 @@
     "kind": "official",
     "note": {
       "ca": "Tapia de Casariego, Astúries.",
-      "es": "Tapia de Casariego, Asturias."
+      "es": "Tapia de Casariego, Asturias.",
+      "en": "Tapia de Casariego, Asturias."
     },
     "phase": "central"
   },
@@ -1383,7 +1521,8 @@
     "id": "ast-muros-de-nalon-playa-del-aguilar",
     "name": {
       "ca": "Playa del Aguilar",
-      "es": "Playa del Aguilar"
+      "es": "Playa del Aguilar",
+      "en": "Playa del Aguilar"
     },
     "lat": 43.55509,
     "lon": -6.11626,
@@ -1395,7 +1534,8 @@
     "kind": "official",
     "note": {
       "ca": "Muros de Nalón, Astúries.",
-      "es": "Muros de Nalón, Asturias."
+      "es": "Muros de Nalón, Asturias.",
+      "en": "Muros de Nalón, Asturias."
     },
     "phase": "central"
   },
@@ -1403,7 +1543,8 @@
     "id": "ast-santa-eulalia-de-oscos-plaza-detras-de-la-iglesia-santal",
     "name": {
       "ca": "Plaza detrás de la Iglesia.  Santalla",
-      "es": "Plaza detrás de la Iglesia.  Santalla"
+      "es": "Plaza detrás de la Iglesia.  Santalla",
+      "en": "Plaza detrás de la Iglesia.  Santalla"
     },
     "lat": 43.25891,
     "lon": -7.02555,
@@ -1415,7 +1556,8 @@
     "kind": "official",
     "note": {
       "ca": "Santa Eulalia de Oscos, Astúries.",
-      "es": "Santa Eulalia de Oscos, Asturias."
+      "es": "Santa Eulalia de Oscos, Asturias.",
+      "en": "Santa Eulalia de Oscos, Asturias."
     },
     "phase": "central"
   },
@@ -1423,7 +1565,8 @@
     "id": "ast-yernes-y-tameza-prado-al-lado-de-la-fundacion-vital",
     "name": {
       "ca": "Prado al lado de la Fundación Vital",
-      "es": "Prado al lado de la Fundación Vital"
+      "es": "Prado al lado de la Fundación Vital",
+      "en": "Prado al lado de la Fundación Vital"
     },
     "lat": 43.28126,
     "lon": -6.08638,
@@ -1435,7 +1578,8 @@
     "kind": "official",
     "note": {
       "ca": "Yernes y Tameza, Astúries.",
-      "es": "Yernes y Tameza, Asturias."
+      "es": "Yernes y Tameza, Asturias.",
+      "en": "Yernes y Tameza, Asturias."
     },
     "phase": "central"
   },
@@ -1443,7 +1587,8 @@
     "id": "ast-lena-prau-llaguezos-la-cobertoria",
     "name": {
       "ca": "Prau LLagüezos – La Cobertoria",
-      "es": "Prau LLagüezos – La Cobertoria"
+      "es": "Prau LLagüezos – La Cobertoria",
+      "en": "Prau LLagüezos – La Cobertoria"
     },
     "lat": 43.14662,
     "lon": -5.90683,
@@ -1455,7 +1600,8 @@
     "kind": "official",
     "note": {
       "ca": "Lena, Astúries.",
-      "es": "Lena, Asturias."
+      "es": "Lena, Asturias.",
+      "en": "Lena, Asturias."
     },
     "phase": "central"
   },
@@ -1463,7 +1609,8 @@
     "id": "ast-llanera-recinto-ferial-de-llanera",
     "name": {
       "ca": "Recinto Ferial de Llanera",
-      "es": "Recinto Ferial de Llanera"
+      "es": "Recinto Ferial de Llanera",
+      "en": "Recinto Ferial de Llanera"
     },
     "lat": 43.43082,
     "lon": -5.8649,
@@ -1475,7 +1622,8 @@
     "kind": "official",
     "note": {
       "ca": "Llanera, Astúries.",
-      "es": "Llanera, Asturias."
+      "es": "Llanera, Asturias.",
+      "en": "Llanera, Asturias."
     },
     "phase": "central"
   },
@@ -1483,7 +1631,8 @@
     "id": "ast-cangas-del-narcea-santuario-del-acebo",
     "name": {
       "ca": "Santuario del Acebo",
-      "es": "Santuario del Acebo"
+      "es": "Santuario del Acebo",
+      "en": "Santuario del Acebo"
     },
     "lat": 43.15881,
     "lon": -6.49889,
@@ -1495,7 +1644,8 @@
     "kind": "official",
     "note": {
       "ca": "Cangas del Narcea, Astúries.",
-      "es": "Cangas del Narcea, Asturias."
+      "es": "Cangas del Narcea, Asturias.",
+      "en": "Cangas del Narcea, Asturias."
     },
     "phase": "central"
   },
@@ -1503,7 +1653,8 @@
     "id": "ast-cabrales-sotres-la-caballar",
     "name": {
       "ca": "Sotres- La Caballar",
-      "es": "Sotres- La Caballar"
+      "es": "Sotres- La Caballar",
+      "en": "Sotres- La Caballar"
     },
     "lat": 43.23781,
     "lon": -4.73792,
@@ -1515,7 +1666,8 @@
     "kind": "official",
     "note": {
       "ca": "Cabrales, Astúries.",
-      "es": "Cabrales, Asturias."
+      "es": "Cabrales, Asturias.",
+      "en": "Cabrales, Asturias."
     },
     "phase": "central"
   },
@@ -1523,7 +1675,8 @@
     "id": "ast-illas-taborneda",
     "name": {
       "ca": "Taborneda",
-      "es": "Taborneda"
+      "es": "Taborneda",
+      "en": "Taborneda"
     },
     "lat": 43.5024,
     "lon": -5.94687,
@@ -1535,7 +1688,8 @@
     "kind": "official",
     "note": {
       "ca": "Illas, Astúries.",
-      "es": "Illas, Asturias."
+      "es": "Illas, Asturias.",
+      "en": "Illas, Asturias."
     },
     "phase": "central"
   },
@@ -1543,7 +1697,8 @@
     "id": "ast-san-martin-de-oscos-villarin-de-trasmonte",
     "name": {
       "ca": "Villarín de Trasmonte",
-      "es": "Villarín de Trasmonte"
+      "es": "Villarín de Trasmonte",
+      "en": "Villarín de Trasmonte"
     },
     "lat": 43.24785,
     "lon": -6.97601,
@@ -1555,7 +1710,8 @@
     "kind": "official",
     "note": {
       "ca": "San Martín de Oscos, Astúries.",
-      "es": "San Martín de Oscos, Asturias."
+      "es": "San Martín de Oscos, Asturias.",
+      "en": "San Martín de Oscos, Asturias."
     },
     "phase": "central"
   },
@@ -1563,7 +1719,8 @@
     "id": "cyl-avila-adanero",
     "name": {
       "ca": "Adanero",
-      "es": "Adanero"
+      "es": "Adanero",
+      "en": "Adanero"
     },
     "lat": 40.93549,
     "lon": -4.61025,
@@ -1575,7 +1732,8 @@
     "kind": "official",
     "note": {
       "ca": "Adanero, Àvila.",
-      "es": "Adanero, Ávila."
+      "es": "Adanero, Ávila.",
+      "en": "Adanero, Ávila."
     },
     "phase": "central"
   },
@@ -1583,7 +1741,8 @@
     "id": "cyl-avila-arevalo",
     "name": {
       "ca": "Arévalo",
-      "es": "Arévalo"
+      "es": "Arévalo",
+      "en": "Arévalo"
     },
     "lat": 41.0718,
     "lon": -4.73655,
@@ -1595,7 +1754,8 @@
     "kind": "official",
     "note": {
       "ca": "Arévalo, Àvila.",
-      "es": "Arévalo, Ávila."
+      "es": "Arévalo, Ávila.",
+      "en": "Arévalo, Ávila."
     },
     "phase": "central"
   },
@@ -1603,7 +1763,8 @@
     "id": "cyl-avila-moraleja-de-matacabras",
     "name": {
       "ca": "Moraleja de Matacabras",
-      "es": "Moraleja de Matacabras"
+      "es": "Moraleja de Matacabras",
+      "en": "Moraleja de Matacabras"
     },
     "lat": 41.10906,
     "lon": -4.96283,
@@ -1615,7 +1776,8 @@
     "kind": "official",
     "note": {
       "ca": "Moraleja de Matacabras, Àvila.",
-      "es": "Moraleja de Matacabras, Ávila."
+      "es": "Moraleja de Matacabras, Ávila.",
+      "en": "Moraleja de Matacabras, Ávila."
     },
     "phase": "central"
   },
@@ -1623,7 +1785,8 @@
     "id": "cyl-avila-palacios-rubios",
     "name": {
       "ca": "Palacios Rubios (Nava de Arévalo)",
-      "es": "Palacios Rubios (Nava de Arévalo)"
+      "es": "Palacios Rubios (Nava de Arévalo)",
+      "en": "Palacios Rubios (Nava de Arévalo)"
     },
     "lat": 41.02729,
     "lon": -4.77303,
@@ -1635,7 +1798,8 @@
     "kind": "official",
     "note": {
       "ca": "Nava de Arévalo, Àvila.",
-      "es": "Nava de Arévalo, Ávila."
+      "es": "Nava de Arévalo, Ávila.",
+      "en": "Nava de Arévalo, Ávila."
     },
     "phase": "central"
   },
@@ -1643,7 +1807,8 @@
     "id": "cyl-avila-vinaderos",
     "name": {
       "ca": "Vinaderos (Nava de Arévalo)",
-      "es": "Vinaderos (Nava de Arévalo)"
+      "es": "Vinaderos (Nava de Arévalo)",
+      "en": "Vinaderos (Nava de Arévalo)"
     },
     "lat": 41.01323,
     "lon": -4.74254,
@@ -1655,7 +1820,8 @@
     "kind": "official",
     "note": {
       "ca": "Nava de Arévalo, Àvila.",
-      "es": "Nava de Arévalo, Ávila."
+      "es": "Nava de Arévalo, Ávila.",
+      "en": "Nava de Arévalo, Ávila."
     },
     "phase": "central"
   },
@@ -1663,7 +1829,8 @@
     "id": "cyl-avila-palacios-de-goda",
     "name": {
       "ca": "Palacios de Goda",
-      "es": "Palacios de Goda"
+      "es": "Palacios de Goda",
+      "en": "Palacios de Goda"
     },
     "lat": 41.12922,
     "lon": -4.78756,
@@ -1675,7 +1842,8 @@
     "kind": "official",
     "note": {
       "ca": "Palacios de Goda, Àvila.",
-      "es": "Palacios de Goda, Ávila."
+      "es": "Palacios de Goda, Ávila.",
+      "en": "Palacios de Goda, Ávila."
     },
     "phase": "central"
   },
@@ -1683,7 +1851,8 @@
     "id": "cyl-burgos-arija",
     "name": {
       "ca": "Arija",
-      "es": "Arija"
+      "es": "Arija",
+      "en": "Arija"
     },
     "lat": 42.9947,
     "lon": -3.94697,
@@ -1695,7 +1864,8 @@
     "kind": "official",
     "note": {
       "ca": "Arija, Burgos.",
-      "es": "Arija, Burgos."
+      "es": "Arija, Burgos.",
+      "en": "Arija, Burgos."
     },
     "phase": "central"
   },
@@ -1703,7 +1873,8 @@
     "id": "cyl-burgos-burgos",
     "name": {
       "ca": "Burgos",
-      "es": "Burgos"
+      "es": "Burgos",
+      "en": "Burgos"
     },
     "lat": 42.3295,
     "lon": -3.70347,
@@ -1715,7 +1886,8 @@
     "kind": "official",
     "note": {
       "ca": "Burgos, Burgos.",
-      "es": "Burgos, Burgos."
+      "es": "Burgos, Burgos.",
+      "en": "Burgos, Burgos."
     },
     "phase": "central"
   },
@@ -1723,7 +1895,8 @@
     "id": "cyl-burgos-hacinas",
     "name": {
       "ca": "Hacinas",
-      "es": "Hacinas"
+      "es": "Hacinas",
+      "en": "Hacinas"
     },
     "lat": 41.98377,
     "lon": -3.2878,
@@ -1735,7 +1908,8 @@
     "kind": "official",
     "note": {
       "ca": "Hacinas, Burgos.",
-      "es": "Hacinas, Burgos."
+      "es": "Hacinas, Burgos.",
+      "en": "Hacinas, Burgos."
     },
     "phase": "central"
   },
@@ -1743,7 +1917,8 @@
     "id": "cyl-burgos-quintanarraya",
     "name": {
       "ca": "Quintanarraya (Huerta de Rey)",
-      "es": "Quintanarraya (Huerta de Rey)"
+      "es": "Quintanarraya (Huerta de Rey)",
+      "en": "Quintanarraya (Huerta de Rey)"
     },
     "lat": 41.78149,
     "lon": -3.33717,
@@ -1755,7 +1930,8 @@
     "kind": "official",
     "note": {
       "ca": "Huerta de Rey, Burgos.",
-      "es": "Huerta de Rey, Burgos."
+      "es": "Huerta de Rey, Burgos.",
+      "en": "Huerta de Rey, Burgos."
     },
     "phase": "central"
   },
@@ -1763,7 +1939,8 @@
     "id": "cyl-burgos-lodoso",
     "name": {
       "ca": "Lodoso (Pedrosa de Río Úrbel)",
-      "es": "Lodoso (Pedrosa de Río Úrbel)"
+      "es": "Lodoso (Pedrosa de Río Úrbel)",
+      "en": "Lodoso (Pedrosa de Río Úrbel)"
     },
     "lat": 42.44022,
     "lon": -3.84007,
@@ -1775,7 +1952,8 @@
     "kind": "official",
     "note": {
       "ca": "Pedrosa de Río Úrbel, Burgos.",
-      "es": "Pedrosa de Río Úrbel, Burgos."
+      "es": "Pedrosa de Río Úrbel, Burgos.",
+      "en": "Pedrosa de Río Úrbel, Burgos."
     },
     "phase": "central"
   },
@@ -1783,7 +1961,8 @@
     "id": "cyl-burgos-poza-de-la-sal",
     "name": {
       "ca": "Poza de la Sal",
-      "es": "Poza de la Sal"
+      "es": "Poza de la Sal",
+      "en": "Poza de la Sal"
     },
     "lat": 42.67997,
     "lon": -3.58,
@@ -1795,7 +1974,8 @@
     "kind": "official",
     "note": {
       "ca": "Poza de la Sal, Burgos.",
-      "es": "Poza de la Sal, Burgos."
+      "es": "Poza de la Sal, Burgos.",
+      "en": "Poza de la Sal, Burgos."
     },
     "phase": "central"
   },
@@ -1803,7 +1983,8 @@
     "id": "cyl-burgos-tejada",
     "name": {
       "ca": "Tejada",
-      "es": "Tejada"
+      "es": "Tejada",
+      "en": "Tejada"
     },
     "lat": 41.94434,
     "lon": -3.55231,
@@ -1815,7 +1996,8 @@
     "kind": "official",
     "note": {
       "ca": "Tejada, Burgos.",
-      "es": "Tejada, Burgos."
+      "es": "Tejada, Burgos.",
+      "en": "Tejada, Burgos."
     },
     "phase": "central"
   },
@@ -1823,7 +2005,8 @@
     "id": "cyl-burgos-burgos-2",
     "name": {
       "ca": "Burgos",
-      "es": "Burgos"
+      "es": "Burgos",
+      "en": "Burgos"
     },
     "lat": 42.34387,
     "lon": -3.71091,
@@ -1835,7 +2018,8 @@
     "kind": "official",
     "note": {
       "ca": "Burgos, Burgos.",
-      "es": "Burgos, Burgos."
+      "es": "Burgos, Burgos.",
+      "en": "Burgos, Burgos."
     },
     "phase": "central"
   },
@@ -1843,7 +2027,8 @@
     "id": "cyl-burgos-tejada-2",
     "name": {
       "ca": "Tejada",
-      "es": "Tejada"
+      "es": "Tejada",
+      "en": "Tejada"
     },
     "lat": 41.94993,
     "lon": -3.53388,
@@ -1855,7 +2040,8 @@
     "kind": "official",
     "note": {
       "ca": "Tejada, Burgos.",
-      "es": "Tejada, Burgos."
+      "es": "Tejada, Burgos.",
+      "en": "Tejada, Burgos."
     },
     "phase": "central"
   },
@@ -1863,7 +2049,8 @@
     "id": "cyl-leon-santa-catalina-de-somoza",
     "name": {
       "ca": "Santa Catalina de Somoza (Astorga)",
-      "es": "Santa Catalina de Somoza (Astorga)"
+      "es": "Santa Catalina de Somoza (Astorga)",
+      "en": "Santa Catalina de Somoza (Astorga)"
     },
     "lat": 42.45433,
     "lon": -6.15359,
@@ -1875,7 +2062,8 @@
     "kind": "official",
     "note": {
       "ca": "Astorga, Lleó.",
-      "es": "Astorga, León."
+      "es": "Astorga, León.",
+      "en": "Astorga, León."
     },
     "phase": "central"
   },
@@ -1883,7 +2071,8 @@
     "id": "cyl-leon-destriana",
     "name": {
       "ca": "Destriana",
-      "es": "Destriana"
+      "es": "Destriana",
+      "en": "Destriana"
     },
     "lat": 42.31861,
     "lon": -6.09441,
@@ -1895,7 +2084,8 @@
     "kind": "official",
     "note": {
       "ca": "Destriana, Lleó.",
-      "es": "Destriana, León."
+      "es": "Destriana, León.",
+      "en": "Destriana, León."
     },
     "phase": "central"
   },
@@ -1903,7 +2093,8 @@
     "id": "cyl-leon-valderilla-de-torio",
     "name": {
       "ca": "Valderilla de Torío (Garrafe de Torío)",
-      "es": "Valderilla de Torío (Garrafe de Torío)"
+      "es": "Valderilla de Torío (Garrafe de Torío)",
+      "en": "Valderilla de Torío (Garrafe de Torío)"
     },
     "lat": 42.72436,
     "lon": -5.53634,
@@ -1915,7 +2106,8 @@
     "kind": "official",
     "note": {
       "ca": "Garrafe de Torío, Lleó.",
-      "es": "Garrafe de Torío, León."
+      "es": "Garrafe de Torío, León.",
+      "en": "Garrafe de Torío, León."
     },
     "phase": "central"
   },
@@ -1923,7 +2115,8 @@
     "id": "cyl-leon-san-feliz-de-torio",
     "name": {
       "ca": "San Feliz de Torío (Garrafe de Torío)",
-      "es": "San Feliz de Torío (Garrafe de Torío)"
+      "es": "San Feliz de Torío (Garrafe de Torío)",
+      "en": "San Feliz de Torío (Garrafe de Torío)"
     },
     "lat": 42.6833,
     "lon": -5.5333,
@@ -1935,7 +2128,8 @@
     "kind": "official",
     "note": {
       "ca": "Garrafe de Torío, Lleó.",
-      "es": "Garrafe de Torío, León."
+      "es": "Garrafe de Torío, León.",
+      "en": "Garrafe de Torío, León."
     },
     "phase": "central"
   },
@@ -1943,7 +2137,8 @@
     "id": "cyl-leon-leon",
     "name": {
       "ca": "León",
-      "es": "León"
+      "es": "León",
+      "en": "León"
     },
     "lat": 42.59257,
     "lon": -5.58378,
@@ -1955,7 +2150,8 @@
     "kind": "official",
     "note": {
       "ca": "León, Lleó.",
-      "es": "León, León."
+      "es": "León, León.",
+      "en": "León, León."
     },
     "phase": "central"
   },
@@ -1963,7 +2159,8 @@
     "id": "cyl-leon-noceda-del-bierzo",
     "name": {
       "ca": "Noceda del Bierzo",
-      "es": "Noceda del Bierzo"
+      "es": "Noceda del Bierzo",
+      "en": "Noceda del Bierzo"
     },
     "lat": 42.71718,
     "lon": -6.39888,
@@ -1975,7 +2172,8 @@
     "kind": "official",
     "note": {
       "ca": "Noceda del Bierzo, Lleó.",
-      "es": "Noceda del Bierzo, León."
+      "es": "Noceda del Bierzo, León.",
+      "en": "Noceda del Bierzo, León."
     },
     "phase": "central"
   },
@@ -1983,7 +2181,8 @@
     "id": "cyl-leon-ponferrada",
     "name": {
       "ca": "Ponferrada",
-      "es": "Ponferrada"
+      "es": "Ponferrada",
+      "en": "Ponferrada"
     },
     "lat": 42.54407,
     "lon": -6.5936,
@@ -1995,7 +2194,8 @@
     "kind": "official",
     "note": {
       "ca": "Ponferrada, Lleó.",
-      "es": "Ponferrada, León."
+      "es": "Ponferrada, León.",
+      "en": "Ponferrada, León."
     },
     "phase": "central"
   },
@@ -2003,7 +2203,8 @@
     "id": "cyl-leon-sabero",
     "name": {
       "ca": "Sabero",
-      "es": "Sabero"
+      "es": "Sabero",
+      "en": "Sabero"
     },
     "lat": 42.85325,
     "lon": -5.19606,
@@ -2015,7 +2216,8 @@
     "kind": "official",
     "note": {
       "ca": "Sabero, Lleó.",
-      "es": "Sabero, León."
+      "es": "Sabero, León.",
+      "en": "Sabero, León."
     },
     "phase": "central"
   },
@@ -2023,7 +2225,8 @@
     "id": "cyl-leon-san-andres-del-rabanedo",
     "name": {
       "ca": "San Andrés del Rabanedo",
-      "es": "San Andrés del Rabanedo"
+      "es": "San Andrés del Rabanedo",
+      "en": "San Andrés del Rabanedo"
     },
     "lat": 42.61575,
     "lon": -5.61906,
@@ -2035,7 +2238,8 @@
     "kind": "official",
     "note": {
       "ca": "San Andrés del Rabanedo, Lleó.",
-      "es": "San Andrés del Rabanedo, León."
+      "es": "San Andrés del Rabanedo, León.",
+      "en": "San Andrés del Rabanedo, León."
     },
     "phase": "central"
   },
@@ -2043,7 +2247,8 @@
     "id": "cyl-palencia-herrera-de-pisuerga",
     "name": {
       "ca": "Herrera de Pisuerga",
-      "es": "Herrera de Pisuerga"
+      "es": "Herrera de Pisuerga",
+      "en": "Herrera de Pisuerga"
     },
     "lat": 42.5935,
     "lon": -4.28855,
@@ -2055,7 +2260,8 @@
     "kind": "official",
     "note": {
       "ca": "Herrera de Pisuerga, Palència.",
-      "es": "Herrera de Pisuerga, Palencia."
+      "es": "Herrera de Pisuerga, Palencia.",
+      "en": "Herrera de Pisuerga, Palencia."
     },
     "phase": "central"
   },
@@ -2063,7 +2269,8 @@
     "id": "cyl-palencia-ledigos",
     "name": {
       "ca": "Ledigos",
-      "es": "Ledigos"
+      "es": "Ledigos",
+      "en": "Ledigos"
     },
     "lat": 42.35458,
     "lon": -4.86137,
@@ -2075,7 +2282,8 @@
     "kind": "official",
     "note": {
       "ca": "Ledigos, Palència.",
-      "es": "Ledigos, Palencia."
+      "es": "Ledigos, Palencia.",
+      "en": "Ledigos, Palencia."
     },
     "phase": "central"
   },
@@ -2083,7 +2291,8 @@
     "id": "cyl-palencia-palencia",
     "name": {
       "ca": "Palencia",
-      "es": "Palencia"
+      "es": "Palencia",
+      "en": "Palencia"
     },
     "lat": 42.02828,
     "lon": -4.52853,
@@ -2095,7 +2304,8 @@
     "kind": "official",
     "note": {
       "ca": "Palencia, Palència.",
-      "es": "Palencia, Palencia."
+      "es": "Palencia, Palencia.",
+      "en": "Palencia, Palencia."
     },
     "phase": "central"
   },
@@ -2103,7 +2313,8 @@
     "id": "cyl-palencia-paredes-de-nava",
     "name": {
       "ca": "Paredes de Nava",
-      "es": "Paredes de Nava"
+      "es": "Paredes de Nava",
+      "en": "Paredes de Nava"
     },
     "lat": 42.17184,
     "lon": -4.67637,
@@ -2115,7 +2326,8 @@
     "kind": "official",
     "note": {
       "ca": "Paredes de Nava, Palència.",
-      "es": "Paredes de Nava, Palencia."
+      "es": "Paredes de Nava, Palencia.",
+      "en": "Paredes de Nava, Palencia."
     },
     "phase": "central"
   },
@@ -2123,7 +2335,8 @@
     "id": "cyl-palencia-saldana",
     "name": {
       "ca": "Saldaña",
-      "es": "Saldaña"
+      "es": "Saldaña",
+      "en": "Saldaña"
     },
     "lat": 42.53003,
     "lon": -4.73638,
@@ -2135,7 +2348,8 @@
     "kind": "official",
     "note": {
       "ca": "Saldaña, Palència.",
-      "es": "Saldaña, Palencia."
+      "es": "Saldaña, Palencia.",
+      "en": "Saldaña, Palencia."
     },
     "phase": "central"
   },
@@ -2143,7 +2357,8 @@
     "id": "cyl-palencia-osorno-la-mayor",
     "name": {
       "ca": "Osorno La Mayor (Osorno la Mayor)",
-      "es": "Osorno La Mayor (Osorno la Mayor)"
+      "es": "Osorno La Mayor (Osorno la Mayor)",
+      "en": "Osorno La Mayor (Osorno la Mayor)"
     },
     "lat": 42.4292,
     "lon": -4.36242,
@@ -2155,7 +2370,8 @@
     "kind": "official",
     "note": {
       "ca": "Osorno la Mayor, Palència.",
-      "es": "Osorno la Mayor, Palencia."
+      "es": "Osorno la Mayor, Palencia.",
+      "en": "Osorno la Mayor, Palencia."
     },
     "phase": "central"
   },
@@ -2163,7 +2379,8 @@
     "id": "cyl-segovia-arcones",
     "name": {
       "ca": "Arcones",
-      "es": "Arcones"
+      "es": "Arcones",
+      "en": "Arcones"
     },
     "lat": 41.10888,
     "lon": -3.71696,
@@ -2175,7 +2392,8 @@
     "kind": "official",
     "note": {
       "ca": "Arcones, Segòvia.",
-      "es": "Arcones, Segovia."
+      "es": "Arcones, Segovia.",
+      "en": "Arcones, Segovia."
     },
     "phase": "central"
   },
@@ -2183,7 +2401,8 @@
     "id": "cyl-segovia-ayllon",
     "name": {
       "ca": "Ayllón",
-      "es": "Ayllón"
+      "es": "Ayllón",
+      "en": "Ayllón"
     },
     "lat": 41.41991,
     "lon": -3.3733,
@@ -2195,7 +2414,8 @@
     "kind": "official",
     "note": {
       "ca": "Ayllón, Segòvia.",
-      "es": "Ayllón, Segovia."
+      "es": "Ayllón, Segovia.",
+      "en": "Ayllón, Segovia."
     },
     "phase": "central"
   },
@@ -2203,7 +2423,8 @@
     "id": "cyl-segovia-boceguillas",
     "name": {
       "ca": "Boceguillas",
-      "es": "Boceguillas"
+      "es": "Boceguillas",
+      "en": "Boceguillas"
     },
     "lat": 41.34031,
     "lon": -3.63981,
@@ -2215,7 +2436,8 @@
     "kind": "official",
     "note": {
       "ca": "Boceguillas, Segòvia.",
-      "es": "Boceguillas, Segovia."
+      "es": "Boceguillas, Segovia.",
+      "en": "Boceguillas, Segovia."
     },
     "phase": "central"
   },
@@ -2223,7 +2445,8 @@
     "id": "cyl-segovia-collado-hermoso",
     "name": {
       "ca": "Collado Hermoso",
-      "es": "Collado Hermoso"
+      "es": "Collado Hermoso",
+      "en": "Collado Hermoso"
     },
     "lat": 41.03222,
     "lon": -3.91564,
@@ -2235,7 +2458,8 @@
     "kind": "official",
     "note": {
       "ca": "Collado Hermoso, Segòvia.",
-      "es": "Collado Hermoso, Segovia."
+      "es": "Collado Hermoso, Segovia.",
+      "en": "Collado Hermoso, Segovia."
     },
     "phase": "central"
   },
@@ -2243,7 +2467,8 @@
     "id": "cyl-segovia-otero-de-los-herreros",
     "name": {
       "ca": "Otero de los Herreros (Otero de Herreros)",
-      "es": "Otero de los Herreros (Otero de Herreros)"
+      "es": "Otero de los Herreros (Otero de Herreros)",
+      "en": "Otero de los Herreros (Otero de Herreros)"
     },
     "lat": 40.81765,
     "lon": -4.21481,
@@ -2255,7 +2480,8 @@
     "kind": "official",
     "note": {
       "ca": "Otero de Herreros, Segòvia.",
-      "es": "Otero de Herreros, Segovia."
+      "es": "Otero de Herreros, Segovia.",
+      "en": "Otero de Herreros, Segovia."
     },
     "phase": "central"
   },
@@ -2263,7 +2489,8 @@
     "id": "cyl-segovia-segovia",
     "name": {
       "ca": "Segovia",
-      "es": "Segovia"
+      "es": "Segovia",
+      "en": "Segovia"
     },
     "lat": 40.92547,
     "lon": -4.10708,
@@ -2275,7 +2502,8 @@
     "kind": "official",
     "note": {
       "ca": "Segovia, Segòvia.",
-      "es": "Segovia, Segovia."
+      "es": "Segovia, Segovia.",
+      "en": "Segovia, Segovia."
     },
     "phase": "central"
   },
@@ -2283,7 +2511,8 @@
     "id": "cyl-segovia-turegano",
     "name": {
       "ca": "Turégano",
-      "es": "Turégano"
+      "es": "Turégano",
+      "en": "Turégano"
     },
     "lat": 41.15858,
     "lon": -4.00539,
@@ -2295,7 +2524,8 @@
     "kind": "official",
     "note": {
       "ca": "Turégano, Segòvia.",
-      "es": "Turégano, Segovia."
+      "es": "Turégano, Segovia.",
+      "en": "Turégano, Segovia."
     },
     "phase": "central"
   },
@@ -2303,7 +2533,8 @@
     "id": "cyl-segovia-riaza",
     "name": {
       "ca": "Riaza",
-      "es": "Riaza"
+      "es": "Riaza",
+      "en": "Riaza"
     },
     "lat": 41.27067,
     "lon": -3.49747,
@@ -2315,7 +2546,8 @@
     "kind": "official",
     "note": {
       "ca": "Riaza, Segòvia.",
-      "es": "Riaza, Segovia."
+      "es": "Riaza, Segovia.",
+      "en": "Riaza, Segovia."
     },
     "phase": "central"
   },
@@ -2323,7 +2555,8 @@
     "id": "cyl-soria-agreda",
     "name": {
       "ca": "Ágreda",
-      "es": "Ágreda"
+      "es": "Ágreda",
+      "en": "Ágreda"
     },
     "lat": 41.85097,
     "lon": -1.92139,
@@ -2335,7 +2568,8 @@
     "kind": "official",
     "note": {
       "ca": "Ágreda, Sòria.",
-      "es": "Ágreda, Soria."
+      "es": "Ágreda, Soria.",
+      "en": "Ágreda, Soria."
     },
     "phase": "central"
   },
@@ -2343,7 +2577,8 @@
     "id": "cyl-soria-borobia",
     "name": {
       "ca": "Borobia",
-      "es": "Borobia"
+      "es": "Borobia",
+      "en": "Borobia"
     },
     "lat": 41.66028,
     "lon": -1.89906,
@@ -2355,7 +2590,8 @@
     "kind": "official",
     "note": {
       "ca": "Borobia, Sòria.",
-      "es": "Borobia, Soria."
+      "es": "Borobia, Soria.",
+      "en": "Borobia, Soria."
     },
     "phase": "central"
   },
@@ -2363,7 +2599,8 @@
     "id": "cyl-soria-castillejo-de-robledo",
     "name": {
       "ca": "Castillejo de Robledo",
-      "es": "Castillejo de Robledo"
+      "es": "Castillejo de Robledo",
+      "en": "Castillejo de Robledo"
     },
     "lat": 41.57167,
     "lon": -3.52944,
@@ -2375,7 +2612,8 @@
     "kind": "official",
     "note": {
       "ca": "Castillejo de Robledo, Sòria.",
-      "es": "Castillejo de Robledo, Soria."
+      "es": "Castillejo de Robledo, Soria.",
+      "en": "Castillejo de Robledo, Soria."
     },
     "phase": "central"
   },
@@ -2383,7 +2621,8 @@
     "id": "cyl-soria-garray",
     "name": {
       "ca": "Garray",
-      "es": "Garray"
+      "es": "Garray",
+      "en": "Garray"
     },
     "lat": 41.81342,
     "lon": -2.44094,
@@ -2395,7 +2634,8 @@
     "kind": "official",
     "note": {
       "ca": "Garray, Sòria.",
-      "es": "Garray, Soria."
+      "es": "Garray, Soria.",
+      "en": "Garray, Soria."
     },
     "phase": "central"
   },
@@ -2403,7 +2643,8 @@
     "id": "cyl-soria-san-leonardo-de-yague",
     "name": {
       "ca": "San Leonardo de Yagüe",
-      "es": "San Leonardo de Yagüe"
+      "es": "San Leonardo de Yagüe",
+      "en": "San Leonardo de Yagüe"
     },
     "lat": 41.83104,
     "lon": -3.07751,
@@ -2415,7 +2656,8 @@
     "kind": "official",
     "note": {
       "ca": "San Leonardo de Yagüe, Sòria.",
-      "es": "San Leonardo de Yagüe, Soria."
+      "es": "San Leonardo de Yagüe, Soria.",
+      "en": "San Leonardo de Yagüe, Soria."
     },
     "phase": "central"
   },
@@ -2423,7 +2665,8 @@
     "id": "cyl-soria-soria",
     "name": {
       "ca": "Soria",
-      "es": "Soria"
+      "es": "Soria",
+      "en": "Soria"
     },
     "lat": 41.81111,
     "lon": -2.54994,
@@ -2435,7 +2678,8 @@
     "kind": "official",
     "note": {
       "ca": "Soria, Sòria.",
-      "es": "Soria, Soria."
+      "es": "Soria, Soria.",
+      "en": "Soria, Soria."
     },
     "phase": "central"
   },
@@ -2443,7 +2687,8 @@
     "id": "cyl-valladolid-alcazaren",
     "name": {
       "ca": "Alcazarén",
-      "es": "Alcazarén"
+      "es": "Alcazarén",
+      "en": "Alcazarén"
     },
     "lat": 41.375,
     "lon": -4.67222,
@@ -2455,7 +2700,8 @@
     "kind": "official",
     "note": {
       "ca": "Alcazarén, Valladolid.",
-      "es": "Alcazarén, Valladolid."
+      "es": "Alcazarén, Valladolid.",
+      "en": "Alcazarén, Valladolid."
     },
     "phase": "central"
   },
@@ -2463,7 +2709,8 @@
     "id": "cyl-valladolid-arroyo-de-la-encomienda",
     "name": {
       "ca": "Arroyo de la Encomienda",
-      "es": "Arroyo de la Encomienda"
+      "es": "Arroyo de la Encomienda",
+      "en": "Arroyo de la Encomienda"
     },
     "lat": 41.61611,
     "lon": -4.80406,
@@ -2475,7 +2722,8 @@
     "kind": "official",
     "note": {
       "ca": "Arroyo de la Encomienda, Valladolid.",
-      "es": "Arroyo de la Encomienda, Valladolid."
+      "es": "Arroyo de la Encomienda, Valladolid.",
+      "en": "Arroyo de la Encomienda, Valladolid."
     },
     "phase": "central"
   },
@@ -2483,7 +2731,8 @@
     "id": "cyl-valladolid-cabezon-de-pisuerga",
     "name": {
       "ca": "Cabezón de Pisuerga",
-      "es": "Cabezón de Pisuerga"
+      "es": "Cabezón de Pisuerga",
+      "en": "Cabezón de Pisuerga"
     },
     "lat": 41.73232,
     "lon": -4.64222,
@@ -2495,7 +2744,8 @@
     "kind": "official",
     "note": {
       "ca": "Cabezón de Pisuerga, Valladolid.",
-      "es": "Cabezón de Pisuerga, Valladolid."
+      "es": "Cabezón de Pisuerga, Valladolid.",
+      "en": "Cabezón de Pisuerga, Valladolid."
     },
     "phase": "central"
   },
@@ -2503,7 +2753,8 @@
     "id": "cyl-valladolid-cigales",
     "name": {
       "ca": "Cigales",
-      "es": "Cigales"
+      "es": "Cigales",
+      "en": "Cigales"
     },
     "lat": 41.75717,
     "lon": -4.713,
@@ -2515,7 +2766,8 @@
     "kind": "official",
     "note": {
       "ca": "Cigales, Valladolid.",
-      "es": "Cigales, Valladolid."
+      "es": "Cigales, Valladolid.",
+      "en": "Cigales, Valladolid."
     },
     "phase": "central"
   },
@@ -2523,7 +2775,8 @@
     "id": "cyl-valladolid-cisterniga",
     "name": {
       "ca": "Cistérniga",
-      "es": "Cistérniga"
+      "es": "Cistérniga",
+      "en": "Cistérniga"
     },
     "lat": 41.61745,
     "lon": -4.68177,
@@ -2535,7 +2788,8 @@
     "kind": "official",
     "note": {
       "ca": "Cistérniga, Valladolid.",
-      "es": "Cistérniga, Valladolid."
+      "es": "Cistérniga, Valladolid.",
+      "en": "Cistérniga, Valladolid."
     },
     "phase": "central"
   },
@@ -2543,7 +2797,8 @@
     "id": "cyl-valladolid-iscar",
     "name": {
       "ca": "Íscar",
-      "es": "Íscar"
+      "es": "Íscar",
+      "en": "Íscar"
     },
     "lat": 41.37133,
     "lon": -4.54589,
@@ -2555,7 +2810,8 @@
     "kind": "official",
     "note": {
       "ca": "Íscar, Valladolid.",
-      "es": "Íscar, Valladolid."
+      "es": "Íscar, Valladolid.",
+      "en": "Íscar, Valladolid."
     },
     "phase": "central"
   },
@@ -2563,7 +2819,8 @@
     "id": "cyl-valladolid-laguna-de-duero",
     "name": {
       "ca": "Laguna de Duero",
-      "es": "Laguna de Duero"
+      "es": "Laguna de Duero",
+      "en": "Laguna de Duero"
     },
     "lat": 41.5825,
     "lon": -4.73082,
@@ -2575,7 +2832,8 @@
     "kind": "official",
     "note": {
       "ca": "Laguna de Duero, Valladolid.",
-      "es": "Laguna de Duero, Valladolid."
+      "es": "Laguna de Duero, Valladolid.",
+      "en": "Laguna de Duero, Valladolid."
     },
     "phase": "central"
   },
@@ -2583,7 +2841,8 @@
     "id": "cyl-valladolid-medina-del-campo",
     "name": {
       "ca": "Medina del Campo",
-      "es": "Medina del Campo"
+      "es": "Medina del Campo",
+      "en": "Medina del Campo"
     },
     "lat": 41.29389,
     "lon": -4.91703,
@@ -2595,7 +2854,8 @@
     "kind": "official",
     "note": {
       "ca": "Medina del Campo, Valladolid.",
-      "es": "Medina del Campo, Valladolid."
+      "es": "Medina del Campo, Valladolid.",
+      "en": "Medina del Campo, Valladolid."
     },
     "phase": "central"
   },
@@ -2603,7 +2863,8 @@
     "id": "cyl-valladolid-medina-de-rioseco",
     "name": {
       "ca": "Medina de Rioseco",
-      "es": "Medina de Rioseco"
+      "es": "Medina de Rioseco",
+      "en": "Medina de Rioseco"
     },
     "lat": 41.86353,
     "lon": -5.08242,
@@ -2615,7 +2876,8 @@
     "kind": "official",
     "note": {
       "ca": "Medina de Rioseco, Valladolid.",
-      "es": "Medina de Rioseco, Valladolid."
+      "es": "Medina de Rioseco, Valladolid.",
+      "en": "Medina de Rioseco, Valladolid."
     },
     "phase": "central"
   },
@@ -2623,7 +2885,8 @@
     "id": "cyl-valladolid-montealegre-de-campos",
     "name": {
       "ca": "Montealegre de Campos",
-      "es": "Montealegre de Campos"
+      "es": "Montealegre de Campos",
+      "en": "Montealegre de Campos"
     },
     "lat": 41.90069,
     "lon": -4.8985,
@@ -2635,7 +2898,8 @@
     "kind": "official",
     "note": {
       "ca": "Montealegre de Campos, Valladolid.",
-      "es": "Montealegre de Campos, Valladolid."
+      "es": "Montealegre de Campos, Valladolid.",
+      "en": "Montealegre de Campos, Valladolid."
     },
     "phase": "central"
   },
@@ -2643,7 +2907,8 @@
     "id": "cyl-valladolid-rueda",
     "name": {
       "ca": "Rueda",
-      "es": "Rueda"
+      "es": "Rueda",
+      "en": "Rueda"
     },
     "lat": 41.41639,
     "lon": -4.95639,
@@ -2655,7 +2920,8 @@
     "kind": "official",
     "note": {
       "ca": "Rueda, Valladolid.",
-      "es": "Rueda, Valladolid."
+      "es": "Rueda, Valladolid.",
+      "en": "Rueda, Valladolid."
     },
     "phase": "central"
   },
@@ -2663,7 +2929,8 @@
     "id": "cyl-valladolid-tiedra",
     "name": {
       "ca": "Tiedra",
-      "es": "Tiedra"
+      "es": "Tiedra",
+      "en": "Tiedra"
     },
     "lat": 41.65778,
     "lon": -5.26306,
@@ -2675,7 +2942,8 @@
     "kind": "official",
     "note": {
       "ca": "Tiedra, Valladolid.",
-      "es": "Tiedra, Valladolid."
+      "es": "Tiedra, Valladolid.",
+      "en": "Tiedra, Valladolid."
     },
     "phase": "central"
   },
@@ -2683,7 +2951,8 @@
     "id": "cyl-valladolid-tiedra-2",
     "name": {
       "ca": "Tiedra",
-      "es": "Tiedra"
+      "es": "Tiedra",
+      "en": "Tiedra"
     },
     "lat": 41.65185,
     "lon": -5.27471,
@@ -2695,7 +2964,8 @@
     "kind": "official",
     "note": {
       "ca": "Tiedra, Valladolid.",
-      "es": "Tiedra, Valladolid."
+      "es": "Tiedra, Valladolid.",
+      "en": "Tiedra, Valladolid."
     },
     "phase": "central"
   },
@@ -2703,7 +2973,8 @@
     "id": "cyl-valladolid-trigueros-del-valle",
     "name": {
       "ca": "Trigueros del Valle",
-      "es": "Trigueros del Valle"
+      "es": "Trigueros del Valle",
+      "en": "Trigueros del Valle"
     },
     "lat": 41.83122,
     "lon": -4.65131,
@@ -2715,7 +2986,8 @@
     "kind": "official",
     "note": {
       "ca": "Trigueros del Valle, Valladolid.",
-      "es": "Trigueros del Valle, Valladolid."
+      "es": "Trigueros del Valle, Valladolid.",
+      "en": "Trigueros del Valle, Valladolid."
     },
     "phase": "central"
   },
@@ -2723,7 +2995,8 @@
     "id": "cyl-valladolid-tudela-de-duero",
     "name": {
       "ca": "Tudela de Duero",
-      "es": "Tudela de Duero"
+      "es": "Tudela de Duero",
+      "en": "Tudela de Duero"
     },
     "lat": 41.56667,
     "lon": -4.55,
@@ -2735,7 +3008,8 @@
     "kind": "official",
     "note": {
       "ca": "Tudela de Duero, Valladolid.",
-      "es": "Tudela de Duero, Valladolid."
+      "es": "Tudela de Duero, Valladolid.",
+      "en": "Tudela de Duero, Valladolid."
     },
     "phase": "central"
   },
@@ -2743,7 +3017,8 @@
     "id": "cyl-valladolid-urones-de-castroponce",
     "name": {
       "ca": "Urones de Castroponce",
-      "es": "Urones de Castroponce"
+      "es": "Urones de Castroponce",
+      "en": "Urones de Castroponce"
     },
     "lat": 42.0995,
     "lon": -5.28462,
@@ -2755,7 +3030,8 @@
     "kind": "official",
     "note": {
       "ca": "Urones de Castroponce, Valladolid.",
-      "es": "Urones de Castroponce, Valladolid."
+      "es": "Urones de Castroponce, Valladolid.",
+      "en": "Urones de Castroponce, Valladolid."
     },
     "phase": "central"
   },
@@ -2763,7 +3039,8 @@
     "id": "cyl-valladolid-uruena",
     "name": {
       "ca": "Urueña",
-      "es": "Urueña"
+      "es": "Urueña",
+      "en": "Urueña"
     },
     "lat": 41.73083,
     "lon": -5.20283,
@@ -2775,7 +3052,8 @@
     "kind": "official",
     "note": {
       "ca": "Urueña, Valladolid.",
-      "es": "Urueña, Valladolid."
+      "es": "Urueña, Valladolid.",
+      "en": "Urueña, Valladolid."
     },
     "phase": "central"
   },
@@ -2783,7 +3061,8 @@
     "id": "cyl-valladolid-valladolid",
     "name": {
       "ca": "Valladolid",
-      "es": "Valladolid"
+      "es": "Valladolid",
+      "en": "Valladolid"
     },
     "lat": 41.64915,
     "lon": -4.7578,
@@ -2795,7 +3074,8 @@
     "kind": "official",
     "note": {
       "ca": "Valladolid, Valladolid.",
-      "es": "Valladolid, Valladolid."
+      "es": "Valladolid, Valladolid.",
+      "en": "Valladolid, Valladolid."
     },
     "phase": "central"
   },
@@ -2803,7 +3083,8 @@
     "id": "cyl-valladolid-villalar-de-los-comuneros",
     "name": {
       "ca": "Villalar de los Comuneros",
-      "es": "Villalar de los Comuneros"
+      "es": "Villalar de los Comuneros",
+      "en": "Villalar de los Comuneros"
     },
     "lat": 41.54491,
     "lon": -5.13931,
@@ -2815,7 +3096,8 @@
     "kind": "official",
     "note": {
       "ca": "Villalar de los Comuneros, Valladolid.",
-      "es": "Villalar de los Comuneros, Valladolid."
+      "es": "Villalar de los Comuneros, Valladolid.",
+      "en": "Villalar de los Comuneros, Valladolid."
     },
     "phase": "central"
   },
@@ -2823,7 +3105,8 @@
     "id": "cyl-valladolid-villalon-de-campos",
     "name": {
       "ca": "Villalón de Campos",
-      "es": "Villalón de Campos"
+      "es": "Villalón de Campos",
+      "en": "Villalón de Campos"
     },
     "lat": 42.12308,
     "lon": -5.05361,
@@ -2835,7 +3118,8 @@
     "kind": "official",
     "note": {
       "ca": "Villalón de Campos, Valladolid.",
-      "es": "Villalón de Campos, Valladolid."
+      "es": "Villalón de Campos, Valladolid.",
+      "en": "Villalón de Campos, Valladolid."
     },
     "phase": "central"
   },
@@ -2843,7 +3127,8 @@
     "id": "cyl-valladolid-villanubla",
     "name": {
       "ca": "Villanubla",
-      "es": "Villanubla"
+      "es": "Villanubla",
+      "en": "Villanubla"
     },
     "lat": 41.692,
     "lon": -4.842,
@@ -2855,7 +3140,8 @@
     "kind": "official",
     "note": {
       "ca": "Villanubla, Valladolid.",
-      "es": "Villanubla, Valladolid."
+      "es": "Villanubla, Valladolid.",
+      "en": "Villanubla, Valladolid."
     },
     "phase": "central"
   },
@@ -2863,7 +3149,8 @@
     "id": "cyl-zamora-benavente",
     "name": {
       "ca": "Benavente",
-      "es": "Benavente"
+      "es": "Benavente",
+      "en": "Benavente"
     },
     "lat": 41.9992,
     "lon": -5.68095,
@@ -2875,7 +3162,8 @@
     "kind": "official",
     "note": {
       "ca": "Benavente, Zamora.",
-      "es": "Benavente, Zamora."
+      "es": "Benavente, Zamora.",
+      "en": "Benavente, Zamora."
     },
     "phase": "central"
   },
@@ -2883,7 +3171,8 @@
     "id": "cyl-zamora-toro",
     "name": {
       "ca": "Toro",
-      "es": "Toro"
+      "es": "Toro",
+      "en": "Toro"
     },
     "lat": 41.52036,
     "lon": -5.40628,
@@ -2895,7 +3184,8 @@
     "kind": "official",
     "note": {
       "ca": "Toro, Zamora.",
-      "es": "Toro, Zamora."
+      "es": "Toro, Zamora.",
+      "en": "Toro, Zamora."
     },
     "phase": "central"
   },
@@ -2903,7 +3193,8 @@
     "id": "cat-alcanar-placa-de-bous",
     "name": {
       "ca": "Alcanar — Plaça de bous",
-      "es": "Alcanar — Plaza de toros"
+      "es": "Alcanar — Plaza de toros",
+      "en": "Alcanar — Plaza de toros"
     },
     "lat": 40.53945,
     "lon": 0.48063,
@@ -2919,7 +3210,8 @@
     "id": "cat-altafulla-font-del-mirador",
     "name": {
       "ca": "Altafulla — Font del Mirador",
-      "es": "Altafulla — Font del Mirador"
+      "es": "Altafulla — Font del Mirador",
+      "en": "Altafulla — Font del Mirador"
     },
     "lat": 41.13752,
     "lon": 1.38811,
@@ -2935,7 +3227,8 @@
     "id": "cat-amposta-poligon-industrial-l-oriola",
     "name": {
       "ca": "Amposta — Polígon industrial l’Oriola",
-      "es": "Amposta — Polígono industrial l’Oriola"
+      "es": "Amposta — Polígono industrial l’Oriola",
+      "en": "Amposta — Polígono industrial l’Oriola"
     },
     "lat": 40.69412,
     "lon": 0.5765,
@@ -2951,7 +3244,8 @@
     "id": "cat-camarles-pla-de-camarles",
     "name": {
       "ca": "Camarles — Pla de Camarles",
-      "es": "Camarles — Pla de Camarles"
+      "es": "Camarles — Pla de Camarles",
+      "en": "Camarles — Pla de Camarles"
     },
     "lat": 40.77031,
     "lon": 0.66504,
@@ -2967,7 +3261,8 @@
     "id": "cat-cambrils-cooperativa-agricola-de-cambrils",
     "name": {
       "ca": "Cambrils — Cooperativa Agrícola de Cambrils",
-      "es": "Cambrils — Cooperativa Agrícola de Cambrils"
+      "es": "Cambrils — Cooperativa Agrícola de Cambrils",
+      "en": "Cambrils — Cooperativa Agrícola de Cambrils"
     },
     "lat": 41.08541,
     "lon": 1.03353,
@@ -2983,7 +3278,8 @@
     "id": "cat-constanti-carrer-joan-miro",
     "name": {
       "ca": "Constantí — Carrer Joan Miró",
-      "es": "Constantí — Calle Joan Miró"
+      "es": "Constantí — Calle Joan Miró",
+      "en": "Constantí — Calle Joan Miró"
     },
     "lat": 41.15199,
     "lon": 1.21332,
@@ -2999,7 +3295,8 @@
     "id": "cat-gandesa-poligon-industrial-la-plana",
     "name": {
       "ca": "Gandesa — Polígon industrial la Plana",
-      "es": "Gandesa — Polígono industrial la Plana"
+      "es": "Gandesa — Polígono industrial la Plana",
+      "en": "Gandesa — Polígono industrial la Plana"
     },
     "lat": 41.05569,
     "lon": 0.45317,
@@ -3015,7 +3312,8 @@
     "id": "cat-l-aldea-can-girones",
     "name": {
       "ca": "l’Aldea — Can Gironès",
-      "es": "l’Aldea — Can Gironès"
+      "es": "l’Aldea — Can Gironès",
+      "en": "l’Aldea — Can Gironès"
     },
     "lat": 40.74564,
     "lon": 0.62749,
@@ -3031,7 +3329,8 @@
     "id": "cat-l-ametlla-de-mar-camp-de-futbol-municipal",
     "name": {
       "ca": "l’Ametlla de Mar — Camp de futbol municipal",
-      "es": "l’Ametlla de Mar — Campo de fútbol municipal"
+      "es": "l’Ametlla de Mar — Campo de fútbol municipal",
+      "en": "l’Ametlla de Mar — Campo de fútbol municipal"
     },
     "lat": 40.88684,
     "lon": 0.79305,
@@ -3047,7 +3346,8 @@
     "id": "cat-les-borges-blanques-zona-esportiva",
     "name": {
       "ca": "les Borges Blanques — Zona esportiva",
-      "es": "les Borges Blanques — Zona deportiva"
+      "es": "les Borges Blanques — Zona deportiva",
+      "en": "les Borges Blanques — Zona deportiva"
     },
     "lat": 41.51302,
     "lon": 0.87379,
@@ -3063,7 +3363,8 @@
     "id": "cat-lleida-magraners",
     "name": {
       "ca": "Lleida — Magraners",
-      "es": "Lleida — Magraners"
+      "es": "Lleida — Magraners",
+      "en": "Lleida — Magraners"
     },
     "lat": 41.60521,
     "lon": 0.66007,
@@ -3079,7 +3380,8 @@
     "id": "cat-montbrio-del-camp-les-palomeres-granja-gira-sol",
     "name": {
       "ca": "Montbrió del Camp — les Palomeres / Granja Gira-sol",
-      "es": "Montbrió del Camp — les Palomeres / Granja Gira-sol"
+      "es": "Montbrió del Camp — les Palomeres / Granja Gira-sol",
+      "en": "Montbrió del Camp — les Palomeres / Granja Gira-sol"
     },
     "lat": 41.12607,
     "lon": 1.00597,
@@ -3095,7 +3397,8 @@
     "id": "cat-mora-la-nova-carrer-tortosa",
     "name": {
       "ca": "Móra la Nova — Carrer Tortosa",
-      "es": "Móra la Nova — Calle Tortosa"
+      "es": "Móra la Nova — Calle Tortosa",
+      "en": "Móra la Nova — Calle Tortosa"
     },
     "lat": 41.09764,
     "lon": 0.65294,
@@ -3111,7 +3414,8 @@
     "id": "cat-reus-barri-de-la-immaculada",
     "name": {
       "ca": "Reus — Barri de la Immaculada",
-      "es": "Reus — Barrio de la Inmaculada"
+      "es": "Reus — Barrio de la Inmaculada",
+      "en": "Reus — Barrio de la Inmaculada"
     },
     "lat": 41.15082,
     "lon": 1.09162,
@@ -3127,7 +3431,8 @@
     "id": "cat-santa-barbara-zona-esportiva-de-la-carretera-de-la-galer",
     "name": {
       "ca": "Santa Bàrbara — Zona esportiva de la carretera de la Galera",
-      "es": "Santa Bàrbara — Zona deportiva de la carretera de la Galera"
+      "es": "Santa Bàrbara — Zona deportiva de la carretera de la Galera",
+      "en": "Santa Bàrbara — Zona deportiva de la carretera de la Galera"
     },
     "lat": 40.71373,
     "lon": 0.48709,
@@ -3143,7 +3448,8 @@
     "id": "cat-torredembarra-poligon-industrial-de-roques-planes",
     "name": {
       "ca": "Torredembarra — Polígon industrial de Roques Planes",
-      "es": "Torredembarra — Polígono industrial de Roques Planes"
+      "es": "Torredembarra — Polígono industrial de Roques Planes",
+      "en": "Torredembarra — Polígono industrial de Roques Planes"
     },
     "lat": 41.15287,
     "lon": 1.39092,
@@ -3159,7 +3465,8 @@
     "id": "cat-valls-poligon-industrial-de-valls-carrer-fuster",
     "name": {
       "ca": "Valls — Polígon industrial de Valls, carrer Fuster",
-      "es": "Valls — Polígono industrial de Valls, calle Fuster"
+      "es": "Valls — Polígono industrial de Valls, calle Fuster",
+      "en": "Valls — Polígono industrial de Valls, calle Fuster"
     },
     "lat": 41.30733,
     "lon": 1.25735,
@@ -3175,7 +3482,8 @@
     "id": "cat-tarragona-anella-mediterrania",
     "name": {
       "ca": "Tarragona — l’Anella Mediterrània",
-      "es": "Tarragona — l’Anella Mediterrània"
+      "es": "Tarragona — l’Anella Mediterrània",
+      "en": "Tarragona — l’Anella Mediterrània"
     },
     "lat": 41.12209,
     "lon": 1.20393,
@@ -3187,7 +3495,8 @@
     "kind": "official",
     "note": {
       "ca": "La Generalitat publica aquest punt sense coordenada: aquesta és la de l’Anella Mediterrània a OpenStreetMap.",
-      "es": "La Generalitat publica este punto sin coordenada: esta es la de l’Anella Mediterrània en OpenStreetMap."
+      "es": "La Generalitat publica este punto sin coordenada: esta es la de l’Anella Mediterrània en OpenStreetMap.",
+      "en": "The Generalitat publishes this point without a coordinate: this is that of the Anella Mediterrània in OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3195,7 +3504,8 @@
     "id": "nav-arguedas",
     "name": {
       "ca": "Arguedas",
-      "es": "Arguedas"
+      "es": "Arguedas",
+      "en": "Arguedas"
     },
     "lat": 42.17582,
     "lon": -1.59701,
@@ -3207,7 +3517,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3215,7 +3526,8 @@
     "id": "nav-bardenas-reales-aguilares",
     "name": {
       "ca": "Bardenas Reales — Aguilares",
-      "es": "Bardenas Reales — Aguilares"
+      "es": "Bardenas Reales — Aguilares",
+      "en": "Bardenas Reales — Aguilares"
     },
     "lat": 42.18091,
     "lon": -1.53423,
@@ -3227,7 +3539,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3235,7 +3548,8 @@
     "id": "nav-bardenas-reales-el-ferial",
     "name": {
       "ca": "Bardenas Reales — El Ferial",
-      "es": "Bardenas Reales — El Ferial"
+      "es": "Bardenas Reales — El Ferial",
+      "en": "Bardenas Reales — El Ferial"
     },
     "lat": 42.28857,
     "lon": -1.58813,
@@ -3247,7 +3561,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3255,7 +3570,8 @@
     "id": "nav-bunuel",
     "name": {
       "ca": "Buñuel",
-      "es": "Buñuel"
+      "es": "Buñuel",
+      "en": "Buñuel"
     },
     "lat": 41.97975,
     "lon": -1.44488,
@@ -3267,7 +3583,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3275,7 +3592,8 @@
     "id": "nav-carcar",
     "name": {
       "ca": "Cárcar",
-      "es": "Cárcar"
+      "es": "Cárcar",
+      "en": "Cárcar"
     },
     "lat": 42.39133,
     "lon": -1.97474,
@@ -3287,7 +3605,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3295,7 +3614,8 @@
     "id": "nav-cascante",
     "name": {
       "ca": "Cascante",
-      "es": "Cascante"
+      "es": "Cascante",
+      "en": "Cascante"
     },
     "lat": 42.01176,
     "lon": -1.70676,
@@ -3307,7 +3627,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3315,7 +3636,8 @@
     "id": "nav-castejon",
     "name": {
       "ca": "Castejón",
-      "es": "Castejón"
+      "es": "Castejón",
+      "en": "Castejón"
     },
     "lat": 42.16843,
     "lon": -1.69078,
@@ -3327,7 +3649,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3335,7 +3658,8 @@
     "id": "nav-corella",
     "name": {
       "ca": "Corella",
-      "es": "Corella"
+      "es": "Corella",
+      "en": "Corella"
     },
     "lat": 42.11521,
     "lon": -1.78937,
@@ -3347,7 +3671,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3355,7 +3680,8 @@
     "id": "nav-fitero",
     "name": {
       "ca": "Fitero",
-      "es": "Fitero"
+      "es": "Fitero",
+      "en": "Fitero"
     },
     "lat": 42.05572,
     "lon": -1.85657,
@@ -3367,7 +3693,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3375,7 +3702,8 @@
     "id": "nav-larraga",
     "name": {
       "ca": "Larraga",
-      "es": "Larraga"
+      "es": "Larraga",
+      "en": "Larraga"
     },
     "lat": 42.55805,
     "lon": -1.85007,
@@ -3387,7 +3715,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3395,7 +3724,8 @@
     "id": "nav-lerin",
     "name": {
       "ca": "Lerín",
-      "es": "Lerín"
+      "es": "Lerín",
+      "en": "Lerín"
     },
     "lat": 42.48271,
     "lon": -1.97272,
@@ -3407,7 +3737,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3415,7 +3746,8 @@
     "id": "nav-lodosa",
     "name": {
       "ca": "Lodosa",
-      "es": "Lodosa"
+      "es": "Lodosa",
+      "en": "Lodosa"
     },
     "lat": 42.42419,
     "lon": -2.07856,
@@ -3427,7 +3759,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3435,7 +3768,8 @@
     "id": "nav-marcilla",
     "name": {
       "ca": "Marcilla",
-      "es": "Marcilla"
+      "es": "Marcilla",
+      "en": "Marcilla"
     },
     "lat": 42.32588,
     "lon": -1.7381,
@@ -3447,7 +3781,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3455,7 +3790,8 @@
     "id": "nav-mendavia",
     "name": {
       "ca": "Mendavia",
-      "es": "Mendavia"
+      "es": "Mendavia",
+      "en": "Mendavia"
     },
     "lat": 42.44439,
     "lon": -2.20029,
@@ -3467,7 +3803,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3475,7 +3812,8 @@
     "id": "nav-peralta",
     "name": {
       "ca": "Peralta",
-      "es": "Peralta"
+      "es": "Peralta",
+      "en": "Peralta"
     },
     "lat": 42.35686,
     "lon": -1.7995,
@@ -3487,7 +3825,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3495,7 +3834,8 @@
     "id": "nav-ribaforada",
     "name": {
       "ca": "Ribaforada",
-      "es": "Ribaforada"
+      "es": "Ribaforada",
+      "en": "Ribaforada"
     },
     "lat": 41.99814,
     "lon": -1.51266,
@@ -3507,7 +3847,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3515,7 +3856,8 @@
     "id": "nav-sendaviva-arguedas",
     "name": {
       "ca": "Sendaviva (Arguedas)",
-      "es": "Sendaviva (Arguedas)"
+      "es": "Sendaviva (Arguedas)",
+      "en": "Sendaviva (Arguedas)"
     },
     "lat": 42.19266,
     "lon": -1.57326,
@@ -3527,7 +3869,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3535,7 +3878,8 @@
     "id": "nav-tafalla",
     "name": {
       "ca": "Tafalla",
-      "es": "Tafalla"
+      "es": "Tafalla",
+      "en": "Tafalla"
     },
     "lat": 42.51297,
     "lon": -1.70683,
@@ -3547,7 +3891,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3555,7 +3900,8 @@
     "id": "nav-tudela",
     "name": {
       "ca": "Tudela",
-      "es": "Tudela"
+      "es": "Tudela",
+      "en": "Tudela"
     },
     "lat": 42.07831,
     "lon": -1.63866,
@@ -3567,7 +3913,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3575,7 +3922,8 @@
     "id": "nav-viana",
     "name": {
       "ca": "Viana",
-      "es": "Viana"
+      "es": "Viana",
+      "en": "Viana"
     },
     "lat": 42.51547,
     "lon": -2.37134,
@@ -3587,7 +3935,8 @@
     "kind": "event",
     "note": {
       "ca": "Punt oficial del Govern de Navarra; cal entrada. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Navarra; requiere entrada. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Navarra; booking required. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3595,7 +3944,8 @@
     "id": "ara-alcaniz-motorland-aragon",
     "name": {
       "ca": "Alcañiz — MotorLand Aragón",
-      "es": "Alcañiz — MotorLand Aragón"
+      "es": "Alcañiz — MotorLand Aragón",
+      "en": "Alcañiz — MotorLand Aragón"
     },
     "lat": 41.07782,
     "lon": -0.19497,
@@ -3607,7 +3957,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial del Govern d’Aragó (POGA); cal reserva de vehicle. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Aragon (POGA); requires vehicle reservation. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3615,7 +3966,8 @@
     "id": "ara-calamocha-antic-aerodrom",
     "name": {
       "ca": "Calamocha — antic aeròdrom",
-      "es": "Calamocha — antiguo aeródromo"
+      "es": "Calamocha — antiguo aeródromo",
+      "en": "Calamocha — antiguo aeródromo"
     },
     "lat": 40.90186,
     "lon": -1.2974,
@@ -3627,7 +3979,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial del Govern d’Aragó (POGA); cal reserva de vehicle. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Aragon (POGA); requires vehicle reservation. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3635,7 +3988,8 @@
     "id": "ara-camarena-de-la-sierra-estacio-d-esqui-de-javalambre",
     "name": {
       "ca": "Camarena de la Sierra — estació d’esquí de Javalambre",
-      "es": "Camarena de la Sierra — estación de esquí de Javalambre"
+      "es": "Camarena de la Sierra — estación de esquí de Javalambre",
+      "en": "Camarena de la Sierra — estación de esquí de Javalambre"
     },
     "lat": 40.11516,
     "lon": -1.01785,
@@ -3647,7 +4001,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial del Govern d’Aragó (POGA); cal reserva de vehicle. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Aragon (POGA); requires vehicle reservation. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3655,7 +4010,8 @@
     "id": "ara-epila-poligon-industrial",
     "name": {
       "ca": "Épila — polígon industrial",
-      "es": "Épila — polígono industrial"
+      "es": "Épila — polígono industrial",
+      "en": "Épila — polígono industrial"
     },
     "lat": 41.5985,
     "lon": -1.27962,
@@ -3667,7 +4023,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial del Govern d’Aragó (POGA); cal reserva de vehicle. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Aragon (POGA); requires vehicle reservation. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3675,7 +4032,8 @@
     "id": "ara-carinena-poligon-industrial",
     "name": {
       "ca": "Cariñena — polígon industrial",
-      "es": "Cariñena — polígono industrial"
+      "es": "Cariñena — polígono industrial",
+      "en": "Cariñena — polígono industrial"
     },
     "lat": 41.33821,
     "lon": -1.22631,
@@ -3687,7 +4045,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial del Govern d’Aragó (POGA); cal reserva de vehicle. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Aragon (POGA); requires vehicle reservation. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3695,7 +4054,8 @@
     "id": "ara-ariza",
     "name": {
       "ca": "Ariza",
-      "es": "Ariza"
+      "es": "Ariza",
+      "en": "Ariza"
     },
     "lat": 41.31036,
     "lon": -2.05556,
@@ -3707,7 +4067,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial del Govern d’Aragó (POGA); cal reserva de vehicle. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Aragon (POGA); requires vehicle reservation. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3715,7 +4076,8 @@
     "id": "ara-monreal-del-campo",
     "name": {
       "ca": "Monreal del Campo",
-      "es": "Monreal del Campo"
+      "es": "Monreal del Campo",
+      "en": "Monreal del Campo"
     },
     "lat": 40.77495,
     "lon": -1.34937,
@@ -3727,7 +4089,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial del Govern d’Aragó (POGA); cal reserva de vehicle. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial del Gobierno de Aragón (POGA); requiere reserva de vehículo. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Government of Aragon (POGA); requires vehicle reservation. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3735,7 +4098,8 @@
     "id": "val-benassal-ermita-de-sant-cristofol",
     "name": {
       "ca": "Benassal — ermita de Sant Cristòfol",
-      "es": "Benassal — ermita de Sant Cristòfol"
+      "es": "Benassal — ermita de Sant Cristòfol",
+      "en": "Benassal — ermita de Sant Cristòfol"
     },
     "lat": 40.35977,
     "lon": -0.13938,
@@ -3747,7 +4111,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Generalitat Valenciana. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3755,7 +4120,8 @@
     "id": "val-peniscola",
     "name": {
       "ca": "Peníscola",
-      "es": "Peñíscola"
+      "es": "Peñíscola",
+      "en": "Peñíscola"
     },
     "lat": 40.35778,
     "lon": 0.40738,
@@ -3767,7 +4133,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Generalitat Valenciana. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3775,7 +4142,8 @@
     "id": "val-castello-de-la-plana-entorn-del-planetari",
     "name": {
       "ca": "Castelló de la Plana — entorn del Planetari",
-      "es": "Castellón de la Plana — entorno del Planetario"
+      "es": "Castellón de la Plana — entorno del Planetario",
+      "en": "Castellón de la Plana — entorno del Planetario"
     },
     "lat": 39.97931,
     "lon": 0.02206,
@@ -3787,7 +4155,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Generalitat Valenciana. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3795,7 +4164,8 @@
     "id": "val-pucol",
     "name": {
       "ca": "Puçol",
-      "es": "Puçol"
+      "es": "Puçol",
+      "en": "Puçol"
     },
     "lat": 39.61722,
     "lon": -0.30283,
@@ -3807,7 +4177,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Generalitat Valenciana. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3815,7 +4186,8 @@
     "id": "val-aras-de-los-olmos",
     "name": {
       "ca": "Aras de los Olmos",
-      "es": "Aras de los Olmos"
+      "es": "Aras de los Olmos",
+      "en": "Aras de los Olmos"
     },
     "lat": 39.92423,
     "lon": -1.13323,
@@ -3827,7 +4199,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Generalitat Valenciana. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3835,7 +4208,8 @@
     "id": "val-macastre",
     "name": {
       "ca": "Macastre",
-      "es": "Macastre"
+      "es": "Macastre",
+      "en": "Macastre"
     },
     "lat": 39.38204,
     "lon": -0.78549,
@@ -3847,7 +4221,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Generalitat Valenciana. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3855,7 +4230,8 @@
     "id": "val-utiel",
     "name": {
       "ca": "Utiel",
-      "es": "Utiel"
+      "es": "Utiel",
+      "en": "Utiel"
     },
     "lat": 39.56808,
     "lon": -1.20516,
@@ -3867,7 +4243,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Generalitat Valenciana. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3875,7 +4252,8 @@
     "id": "val-valencia",
     "name": {
       "ca": "València",
-      "es": "Valencia"
+      "es": "Valencia",
+      "en": "Valencia"
     },
     "lat": 39.46971,
     "lon": -0.37634,
@@ -3887,7 +4265,8 @@
     "kind": "official",
     "note": {
       "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing site of the Generalitat Valenciana. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3895,7 +4274,8 @@
     "id": "bal-felanitx-circuit-de-son-matamoros",
     "name": {
       "ca": "Felanitx — circuit de Son Matamoros",
-      "es": "Felanitx — circuito de Son Matamoros"
+      "es": "Felanitx — circuito de Son Matamoros",
+      "en": "Felanitx — circuito de Son Matamoros"
     },
     "lat": 39.48497,
     "lon": 3.13497,
@@ -3907,7 +4287,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3915,7 +4296,8 @@
     "id": "bal-platja-de-palma",
     "name": {
       "ca": "Platja de Palma",
-      "es": "Playa de Palma"
+      "es": "Playa de Palma",
+      "en": "Playa de Palma"
     },
     "lat": 39.51777,
     "lon": 2.7426,
@@ -3927,7 +4309,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3935,7 +4318,8 @@
     "id": "bal-porreres-ronda-de-porreres",
     "name": {
       "ca": "Porreres — ronda de Porreres",
-      "es": "Porreres — ronda de Porreres"
+      "es": "Porreres — ronda de Porreres",
+      "en": "Porreres — ronda de Porreres"
     },
     "lat": 39.51689,
     "lon": 3.02275,
@@ -3947,7 +4331,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3955,7 +4340,8 @@
     "id": "bal-platja-de-santa-ponca",
     "name": {
       "ca": "Platja de Santa Ponça",
-      "es": "Playa de Santa Ponça"
+      "es": "Playa de Santa Ponça",
+      "en": "Playa de Santa Ponça"
     },
     "lat": 39.51621,
     "lon": 2.48009,
@@ -3967,7 +4353,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3975,7 +4362,8 @@
     "id": "bal-algaida-camp-de-futbol",
     "name": {
       "ca": "Algaida — camp de futbol",
-      "es": "Algaida — campo de fútbol"
+      "es": "Algaida — campo de fútbol",
+      "en": "Algaida — campo de fútbol"
     },
     "lat": 39.55711,
     "lon": 2.89729,
@@ -3987,7 +4375,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -3995,7 +4384,8 @@
     "id": "bal-pina-camp-de-futbol",
     "name": {
       "ca": "Pina — camp de futbol",
-      "es": "Pina — campo de fútbol"
+      "es": "Pina — campo de fútbol",
+      "en": "Pina — campo de fútbol"
     },
     "lat": 39.59919,
     "lon": 2.92458,
@@ -4007,7 +4397,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4015,7 +4406,8 @@
     "id": "bal-llucmajor-de-maioris-a-tolleric",
     "name": {
       "ca": "Llucmajor — de Maioris a Tolleric",
-      "es": "Llucmajor — de Maioris a Tolleric"
+      "es": "Llucmajor — de Maioris a Tolleric",
+      "en": "Llucmajor — de Maioris a Tolleric"
     },
     "lat": 39.4493,
     "lon": 2.76255,
@@ -4027,7 +4419,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4035,7 +4428,8 @@
     "id": "bal-llucmajor-aparcament-de-la-ma-3220",
     "name": {
       "ca": "Llucmajor — aparcament de la MA-3220",
-      "es": "Llucmajor — aparcamiento de la MA-3220"
+      "es": "Llucmajor — aparcamiento de la MA-3220",
+      "en": "Llucmajor — aparcamiento de la MA-3220"
     },
     "lat": 39.45443,
     "lon": 2.7514,
@@ -4047,7 +4441,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4055,7 +4450,8 @@
     "id": "bal-llucmajor-maioris",
     "name": {
       "ca": "Llucmajor — Maioris",
-      "es": "Llucmajor — Maioris"
+      "es": "Llucmajor — Maioris",
+      "en": "Llucmajor — Maioris"
     },
     "lat": 39.45478,
     "lon": 2.74933,
@@ -4067,7 +4463,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4075,7 +4472,8 @@
     "id": "bal-cala-en-bosc",
     "name": {
       "ca": "Cala en Bosc",
-      "es": "Cala en Bosc"
+      "es": "Cala en Bosc",
+      "en": "Cala en Bosc"
     },
     "lat": 39.92733,
     "lon": 3.83086,
@@ -4087,7 +4485,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4095,7 +4494,8 @@
     "id": "bal-cala-blanca",
     "name": {
       "ca": "Cala Blanca",
-      "es": "Cala Blanca"
+      "es": "Cala Blanca",
+      "en": "Cala Blanca"
     },
     "lat": 39.96766,
     "lon": 3.83592,
@@ -4107,7 +4507,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4115,7 +4516,8 @@
     "id": "bal-ciutadella-son-blanc",
     "name": {
       "ca": "Ciutadella — Son Blanc",
-      "es": "Ciutadella — Son Blanc"
+      "es": "Ciutadella — Son Blanc",
+      "en": "Ciutadella — Son Blanc"
     },
     "lat": 39.98546,
     "lon": 3.83366,
@@ -4127,7 +4529,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4135,7 +4538,8 @@
     "id": "bal-platja-de-son-bou",
     "name": {
       "ca": "Platja de Son Bou",
-      "es": "Playa de Son Bou"
+      "es": "Playa de Son Bou",
+      "en": "Playa de Son Bou"
     },
     "lat": 39.90177,
     "lon": 4.06725,
@@ -4147,7 +4551,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4155,7 +4560,8 @@
     "id": "bal-cala-en-blanes-avinguda-los-delfines",
     "name": {
       "ca": "Cala en Blanes — avinguda Los Delfines",
-      "es": "Cala en Blanes — avenida Los Delfines"
+      "es": "Cala en Blanes — avenida Los Delfines",
+      "en": "Cala en Blanes — avenida Los Delfines"
     },
     "lat": 40.00203,
     "lon": 3.81372,
@@ -4167,7 +4573,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4175,7 +4582,8 @@
     "id": "bal-passeig-maritim-de-mao",
     "name": {
       "ca": "Passeig Marítim de Maó",
-      "es": "Paseo Marítimo de Mahón"
+      "es": "Paseo Marítimo de Mahón",
+      "en": "Paseo Marítimo de Mahón"
     },
     "lat": 39.89019,
     "lon": 4.27267,
@@ -4187,7 +4595,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4195,7 +4604,8 @@
     "id": "bal-platja-de-sant-tomas",
     "name": {
       "ca": "Platja de Sant Tomàs",
-      "es": "Playa de Sant Tomàs"
+      "es": "Playa de Sant Tomàs",
+      "en": "Playa de Sant Tomàs"
     },
     "lat": 39.91349,
     "lon": 4.04189,
@@ -4207,7 +4617,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4215,7 +4626,8 @@
     "id": "bal-costa-de-sant-antoni-de-portmany",
     "name": {
       "ca": "Costa de Sant Antoni de Portmany",
-      "es": "Costa de Sant Antoni de Portmany"
+      "es": "Costa de Sant Antoni de Portmany",
+      "en": "Costa de Sant Antoni de Portmany"
     },
     "lat": 38.98306,
     "lon": 1.30095,
@@ -4227,7 +4639,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4235,7 +4648,8 @@
     "id": "bal-cala-tarida",
     "name": {
       "ca": "Cala Tarida",
-      "es": "Cala Tarida"
+      "es": "Cala Tarida",
+      "en": "Cala Tarida"
     },
     "lat": 38.94008,
     "lon": 1.23576,
@@ -4247,7 +4661,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4255,7 +4670,8 @@
     "id": "bal-sa-pedrera-de-port-des-torrent",
     "name": {
       "ca": "Sa Pedrera de Port des Torrent",
-      "es": "Sa Pedrera de Port des Torrent"
+      "es": "Sa Pedrera de Port des Torrent",
+      "en": "Sa Pedrera de Port des Torrent"
     },
     "lat": 38.96423,
     "lon": 1.26007,
@@ -4267,7 +4683,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4275,7 +4692,8 @@
     "id": "bal-cala-comte",
     "name": {
       "ca": "Cala Comte",
-      "es": "Cala Comte"
+      "es": "Cala Comte",
+      "en": "Cala Comte"
     },
     "lat": 38.96288,
     "lon": 1.22127,
@@ -4287,7 +4705,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4295,7 +4714,8 @@
     "id": "bal-cala-vedella",
     "name": {
       "ca": "Cala Vedella",
-      "es": "Cala Vedella"
+      "es": "Cala Vedella",
+      "en": "Cala Vedella"
     },
     "lat": 38.91004,
     "lon": 1.22411,
@@ -4307,7 +4727,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4315,7 +4736,8 @@
     "id": "bal-cala-gracio",
     "name": {
       "ca": "Cala Gració",
-      "es": "Cala Gració"
+      "es": "Cala Gració",
+      "en": "Cala Gració"
     },
     "lat": 38.99196,
     "lon": 1.29043,
@@ -4327,7 +4749,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4335,7 +4758,8 @@
     "id": "bal-estany-des-peix",
     "name": {
       "ca": "Estany des Peix",
-      "es": "Estany des Peix"
+      "es": "Estany des Peix",
+      "en": "Estany des Peix"
     },
     "lat": 38.7289,
     "lon": 1.41758,
@@ -4347,7 +4771,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4355,7 +4780,8 @@
     "id": "bal-es-arenals",
     "name": {
       "ca": "Es Arenals",
-      "es": "Es Arenals"
+      "es": "Es Arenals",
+      "en": "Es Arenals"
     },
     "lat": 38.67557,
     "lon": 1.49313,
@@ -4367,7 +4793,8 @@
     "kind": "official",
     "note": {
       "ca": "Zona d’observació oficial (ZOO) del Govern de les Illes Balears. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap."
+      "es": "Zona de observación oficial (ZOO) del Govern de les Illes Balears. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
+      "en": "Official observing area (ZOO) of the Government of the Balearic Islands. The source does not publish its coordinate; this one comes from OpenStreetMap."
     },
     "phase": "central"
   },
@@ -4375,7 +4802,8 @@
     "id": "mad-ambite",
     "name": {
       "ca": "Ambite",
-      "es": "Ambite"
+      "es": "Ambite",
+      "en": "Ambite"
     },
     "lat": 40.32897,
     "lon": -3.18121,
@@ -4387,7 +4815,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (27 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (27 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (27 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (27 seconds of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4395,7 +4824,8 @@
     "id": "mad-becerril-de-la-sierra",
     "name": {
       "ca": "Becerril de la Sierra",
-      "es": "Becerril de la Sierra"
+      "es": "Becerril de la Sierra",
+      "en": "Becerril de la Sierra"
     },
     "lat": 40.71635,
     "lon": -3.98907,
@@ -4407,7 +4837,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (35 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (35 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (35 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (35 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4415,7 +4846,8 @@
     "id": "mad-berzosa-del-lozoya",
     "name": {
       "ca": "Berzosa del Lozoya",
-      "es": "Berzosa del Lozoya"
+      "es": "Berzosa del Lozoya",
+      "en": "Berzosa del Lozoya"
     },
     "lat": 40.97578,
     "lon": -3.52367,
@@ -4427,7 +4859,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (81 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (81 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (81 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (81 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4435,7 +4868,8 @@
     "id": "mad-braojos",
     "name": {
       "ca": "Braojos",
-      "es": "Braojos"
+      "es": "Braojos",
+      "en": "Braojos"
     },
     "lat": 41.04001,
     "lon": -3.64259,
@@ -4447,7 +4881,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (82 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (82 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (82 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (82 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4455,7 +4890,8 @@
     "id": "mad-brunete",
     "name": {
       "ca": "Brunete",
-      "es": "Brunete"
+      "es": "Brunete",
+      "en": "Brunete"
     },
     "lat": 40.40505,
     "lon": -3.99799,
@@ -4467,7 +4903,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, FORA de la franja: eclipsi parcial, 99,88 % del Sol tapat i cap segon de totalitat. El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,88 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,88 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, OUTSIDE the path of totality: partial eclipse, 99.88% of the Sun covered and no totality. The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "partial"
   },
@@ -4475,7 +4912,8 @@
     "id": "mad-buitrago-del-lozoya",
     "name": {
       "ca": "Buitrago del Lozoya",
-      "es": "Buitrago del Lozoya"
+      "es": "Buitrago del Lozoya",
+      "en": "Buitrago del Lozoya"
     },
     "lat": 40.99535,
     "lon": -3.63505,
@@ -4487,7 +4925,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (80 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (80 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (80 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (80 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4495,7 +4934,8 @@
     "id": "mad-cabanillas-de-la-sierra",
     "name": {
       "ca": "Cabanillas de la Sierra",
-      "es": "Cabanillas de la Sierra"
+      "es": "Cabanillas de la Sierra",
+      "en": "Cabanillas de la Sierra"
     },
     "lat": 40.82161,
     "lon": -3.62597,
@@ -4507,7 +4947,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (68 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (68 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (68 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (68 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4515,7 +4956,8 @@
     "id": "mad-canencia",
     "name": {
       "ca": "Canencia",
-      "es": "Canencia"
+      "es": "Canencia",
+      "en": "Canencia"
     },
     "lat": 40.90959,
     "lon": -3.73756,
@@ -4527,7 +4969,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (71 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (71 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (71 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (71 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4535,7 +4978,8 @@
     "id": "mad-chapineria",
     "name": {
       "ca": "Chapinería",
-      "es": "Chapinería"
+      "es": "Chapinería",
+      "en": "Chapinería"
     },
     "lat": 40.37916,
     "lon": -4.20973,
@@ -4547,7 +4991,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, FORA de la franja: eclipsi parcial, 99,79 % del Sol tapat i cap segon de totalitat. El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,79 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,79 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, OUTSIDE the path of totality: partial eclipse, 99.79% of the Sun covered and no totality. The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "partial"
   },
@@ -4555,7 +5000,8 @@
     "id": "mad-chinchon",
     "name": {
       "ca": "Chinchón",
-      "es": "Chinchón"
+      "es": "Chinchón",
+      "en": "Chinchón"
     },
     "lat": 40.14083,
     "lon": -3.42315,
@@ -4567,7 +5013,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, FORA de la franja: eclipsi parcial, 99,87 % del Sol tapat i cap segon de totalitat. El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,87 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,87 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, OUTSIDE the path of totality: partial eclipse, 99.87% of the Sun covered and no totality. The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "partial"
   },
@@ -4575,7 +5022,8 @@
     "id": "mad-collado-mediano",
     "name": {
       "ca": "Collado Mediano",
-      "es": "Collado Mediano"
+      "es": "Collado Mediano",
+      "en": "Collado Mediano"
     },
     "lat": 40.69437,
     "lon": -4.02472,
@@ -4587,7 +5035,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (26 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (26 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (26 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (26 seconds of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4595,7 +5044,8 @@
     "id": "mad-colmenar-viejo",
     "name": {
       "ca": "Colmenar Viejo",
-      "es": "Colmenar Viejo"
+      "es": "Colmenar Viejo",
+      "en": "Colmenar Viejo"
     },
     "lat": 40.65881,
     "lon": -3.76591,
@@ -4607,7 +5057,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (42 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (42 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (42 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (42 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4615,7 +5066,8 @@
     "id": "mad-daganzo-de-arriba",
     "name": {
       "ca": "Daganzo de Arriba",
-      "es": "Daganzo de Arriba"
+      "es": "Daganzo de Arriba",
+      "en": "Daganzo de Arriba"
     },
     "lat": 40.5452,
     "lon": -3.45785,
@@ -4627,7 +5079,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (46 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (46 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (46 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (46 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4635,7 +5088,8 @@
     "id": "mad-el-molar",
     "name": {
       "ca": "El Molar",
-      "es": "El Molar"
+      "es": "El Molar",
+      "en": "El Molar"
     },
     "lat": 40.73452,
     "lon": -3.58324,
@@ -4647,7 +5101,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (61 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (61 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (61 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (61 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4655,7 +5110,8 @@
     "id": "mad-fresno-de-torote",
     "name": {
       "ca": "Fresno de Torote",
-      "es": "Fresno de Torote"
+      "es": "Fresno de Torote",
+      "en": "Fresno de Torote"
     },
     "lat": 40.59227,
     "lon": -3.41197,
@@ -4667,7 +5123,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (54 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (54 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (54 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (54 seconds of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4675,7 +5132,8 @@
     "id": "mad-garganta-de-los-montes",
     "name": {
       "ca": "Garganta de los Montes",
-      "es": "Garganta de los Montes"
+      "es": "Garganta de los Montes",
+      "en": "Garganta de los Montes"
     },
     "lat": 40.92161,
     "lon": -3.68665,
@@ -4687,7 +5145,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (73 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (73 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (73 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (73 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4695,7 +5154,8 @@
     "id": "mad-gascones",
     "name": {
       "ca": "Gascones",
-      "es": "Gascones"
+      "es": "Gascones",
+      "en": "Gascones"
     },
     "lat": 41.01857,
     "lon": -3.6415,
@@ -4707,7 +5167,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (81 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (81 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (81 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (81 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4715,7 +5176,8 @@
     "id": "mad-hoyo-de-manzanares",
     "name": {
       "ca": "Hoyo de Manzanares",
-      "es": "Hoyo de Manzanares"
+      "es": "Hoyo de Manzanares",
+      "en": "Hoyo de Manzanares"
     },
     "lat": 40.62273,
     "lon": -3.90721,
@@ -4727,7 +5189,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (20 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (20 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (20 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (20 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4735,7 +5198,8 @@
     "id": "mad-la-cabrera",
     "name": {
       "ca": "La Cabrera",
-      "es": "La Cabrera"
+      "es": "La Cabrera",
+      "en": "La Cabrera"
     },
     "lat": 40.86517,
     "lon": -3.61255,
@@ -4747,7 +5211,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (71 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (71 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (71 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (71 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4755,7 +5220,8 @@
     "id": "mad-la-serna-del-monte",
     "name": {
       "ca": "La Serna del Monte",
-      "es": "La Serna del Monte"
+      "es": "La Serna del Monte",
+      "en": "La Serna del Monte"
     },
     "lat": 41.03058,
     "lon": -3.62526,
@@ -4767,7 +5233,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (82 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (82 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (82 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (82 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4775,7 +5242,8 @@
     "id": "mad-los-molinos",
     "name": {
       "ca": "Los Molinos",
-      "es": "Los Molinos"
+      "es": "Los Molinos",
+      "en": "Los Molinos"
     },
     "lat": 40.7147,
     "lon": -4.07339,
@@ -4787,7 +5255,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (26 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (26 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (26 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (26 seconds of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4795,7 +5264,8 @@
     "id": "mad-los-santos-de-la-humosa",
     "name": {
       "ca": "Los Santos de la Humosa",
-      "es": "Los Santos de la Humosa"
+      "es": "Los Santos de la Humosa",
+      "en": "Los Santos de la Humosa"
     },
     "lat": 40.5013,
     "lon": -3.25668,
@@ -4807,7 +5277,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (51 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (51 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (51 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (51 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4815,7 +5286,8 @@
     "id": "mad-lozoya",
     "name": {
       "ca": "Lozoya",
-      "es": "Lozoya"
+      "es": "Lozoya",
+      "en": "Lozoya"
     },
     "lat": 40.95133,
     "lon": -3.79171,
@@ -4827,7 +5299,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (72 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (72 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (72 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (72 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4835,7 +5308,8 @@
     "id": "mad-meco",
     "name": {
       "ca": "Meco",
-      "es": "Meco"
+      "es": "Meco",
+      "en": "Meco"
     },
     "lat": 40.55375,
     "lon": -3.32816,
@@ -4847,7 +5321,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (54 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (54 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (54 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (54 seconds of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4855,7 +5330,8 @@
     "id": "mad-moralzarzal",
     "name": {
       "ca": "Moralzarzal",
-      "es": "Moralzarzal"
+      "es": "Moralzarzal",
+      "en": "Moralzarzal"
     },
     "lat": 40.67915,
     "lon": -3.97218,
@@ -4867,7 +5343,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (29 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (29 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (29 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (29 seconds of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4875,7 +5352,8 @@
     "id": "mad-navacerrada",
     "name": {
       "ca": "Navacerrada",
-      "es": "Navacerrada"
+      "es": "Navacerrada",
+      "en": "Navacerrada"
     },
     "lat": 40.72879,
     "lon": -4.01517,
@@ -4887,7 +5365,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (35 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (35 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (35 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (35 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4895,7 +5374,8 @@
     "id": "mad-navalafuente",
     "name": {
       "ca": "Navalafuente",
-      "es": "Navalafuente"
+      "es": "Navalafuente",
+      "en": "Navalafuente"
     },
     "lat": 40.82328,
     "lon": -3.67474,
@@ -4907,7 +5387,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (66 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (66 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (66 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (66 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4915,7 +5396,8 @@
     "id": "mad-navas-del-rey",
     "name": {
       "ca": "Navas del Rey",
-      "es": "Navas del Rey"
+      "es": "Navas del Rey",
+      "en": "Navas del Rey"
     },
     "lat": 40.38637,
     "lon": -4.25084,
@@ -4927,7 +5409,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, FORA de la franja: eclipsi parcial, 99,78 % del Sol tapat i cap segon de totalitat. El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,78 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,78 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, OUTSIDE the path of totality: partial eclipse, 99.78% of the Sun covered and no totality. The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "partial"
   },
@@ -4935,7 +5418,8 @@
     "id": "mad-nuevo-baztan",
     "name": {
       "ca": "Nuevo Baztán",
-      "es": "Nuevo Baztán"
+      "es": "Nuevo Baztán",
+      "en": "Nuevo Baztán"
     },
     "lat": 40.36571,
     "lon": -3.24276,
@@ -4947,7 +5431,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (30 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (30 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (30 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (30 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4955,7 +5440,8 @@
     "id": "mad-olmeda-de-las-fuentes",
     "name": {
       "ca": "Olmeda de las Fuentes",
-      "es": "Olmeda de las Fuentes"
+      "es": "Olmeda de las Fuentes",
+      "en": "Olmeda de las Fuentes"
     },
     "lat": 40.36952,
     "lon": -3.22132,
@@ -4967,7 +5453,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (33 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (33 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (33 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (33 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -4975,7 +5462,8 @@
     "id": "mad-perales-de-tajuna",
     "name": {
       "ca": "Perales de Tajuña",
-      "es": "Perales de Tajuña"
+      "es": "Perales de Tajuña",
+      "en": "Perales de Tajuña"
     },
     "lat": 40.23259,
     "lon": -3.35067,
@@ -4987,7 +5475,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, FORA de la franja: eclipsi parcial, 99,95 % del Sol tapat i cap segon de totalitat. El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,95 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,95 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, OUTSIDE the path of totality: partial eclipse, 99.95% of the Sun covered and no totality. The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "partial"
   },
@@ -4995,7 +5484,8 @@
     "id": "mad-pezuela-de-las-torres",
     "name": {
       "ca": "Pezuela de las Torres",
-      "es": "Pezuela de las Torres"
+      "es": "Pezuela de las Torres",
+      "en": "Pezuela de las Torres"
     },
     "lat": 40.41867,
     "lon": -3.17711,
@@ -5007,7 +5497,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (45 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (45 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (45 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (45 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -5015,7 +5506,8 @@
     "id": "mad-pinuecar-gandullas",
     "name": {
       "ca": "Piñuécar-Gandullas",
-      "es": "Piñuécar-Gandullas"
+      "es": "Piñuécar-Gandullas",
+      "en": "Piñuécar-Gandullas"
     },
     "lat": 41.03306,
     "lon": -3.59937,
@@ -5027,7 +5519,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (83 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli de Piñuécar.",
-      "es": "Comunidad de Madrid, dentro de la franja (83 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo de Piñuécar."
+      "es": "Comunidad de Madrid, dentro de la franja (83 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo de Piñuécar.",
+      "en": "Community of Madrid, inside the path of totality (83 s of totality). The municipality, not the precinct: the source does not publish any. The coordinate is the core of Piñuécar."
     },
     "phase": "central"
   },
@@ -5035,7 +5528,8 @@
     "id": "mad-pradena-del-rincon",
     "name": {
       "ca": "Prádena del Rincón",
-      "es": "Prádena del Rincón"
+      "es": "Prádena del Rincón",
+      "en": "Prádena del Rincón"
     },
     "lat": 41.04434,
     "lon": -3.54023,
@@ -5047,7 +5541,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (84 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (84 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (84 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (84 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -5055,7 +5550,8 @@
     "id": "mad-puentes-viejas",
     "name": {
       "ca": "Puentes Viejas",
-      "es": "Puentes Viejas"
+      "es": "Puentes Viejas",
+      "en": "Puentes Viejas"
     },
     "lat": 40.96522,
     "lon": -3.58427,
@@ -5067,7 +5563,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (79 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli de Manjirón.",
-      "es": "Comunidad de Madrid, dentro de la franja (79 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo de Manjirón."
+      "es": "Comunidad de Madrid, dentro de la franja (79 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo de Manjirón.",
+      "en": "Community of Madrid, inside the path of totality (79 s of totality). The municipality, not the precinct: the source does not publish any. The coordinate is the core of Manjirón."
     },
     "phase": "central"
   },
@@ -5075,7 +5572,8 @@
     "id": "mad-rascafria",
     "name": {
       "ca": "Rascafría",
-      "es": "Rascafría"
+      "es": "Rascafría",
+      "en": "Rascafría"
     },
     "lat": 40.90389,
     "lon": -3.88029,
@@ -5087,7 +5585,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (65 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (65 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (65 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (65 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -5095,7 +5594,8 @@
     "id": "mad-robledo-de-chavela",
     "name": {
       "ca": "Robledo de Chavela",
-      "es": "Robledo de Chavela"
+      "es": "Robledo de Chavela",
+      "en": "Robledo de Chavela"
     },
     "lat": 40.50092,
     "lon": -4.2381,
@@ -5107,7 +5607,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, FORA de la franja: eclipsi parcial, 99,88 % del Sol tapat i cap segon de totalitat. El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,88 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,88 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, OUTSIDE the path of totality: partial eclipse, 99.88% of the Sun covered and no totality. The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "partial"
   },
@@ -5115,7 +5616,8 @@
     "id": "mad-san-agustin-del-guadalix",
     "name": {
       "ca": "San Agustín del Guadalix",
-      "es": "San Agustín del Guadalix"
+      "es": "San Agustín del Guadalix",
+      "en": "San Agustín del Guadalix"
     },
     "lat": 40.6794,
     "lon": -3.616,
@@ -5127,7 +5629,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (54 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (54 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (54 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (54 seconds of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -5135,7 +5638,8 @@
     "id": "mad-san-lorenzo-de-el-escorial",
     "name": {
       "ca": "San Lorenzo de El Escorial",
-      "es": "San Lorenzo de El Escorial"
+      "es": "San Lorenzo de El Escorial",
+      "en": "San Lorenzo de El Escorial"
     },
     "lat": 40.59267,
     "lon": -4.14716,
@@ -5147,7 +5651,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, FORA de la franja: eclipsi parcial, 99,96 % del Sol tapat i cap segon de totalitat. El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,96 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,96 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, OUTSIDE the path of totality: partial eclipse, 99.96% of the Sun covered and no totality. The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "partial"
   },
@@ -5155,7 +5660,8 @@
     "id": "mad-san-martin-de-valdeiglesias",
     "name": {
       "ca": "San Martín de Valdeiglesias",
-      "es": "San Martín de Valdeiglesias"
+      "es": "San Martín de Valdeiglesias",
+      "en": "San Martín de Valdeiglesias"
     },
     "lat": 40.3625,
     "lon": -4.39865,
@@ -5167,7 +5673,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, FORA de la franja: eclipsi parcial, 99,70 % del Sol tapat i cap segon de totalitat. El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,70 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,70 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, OUTSIDE the path of totality: partial eclipse, 99.70% of the Sun covered and no totality. The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "partial"
   },
@@ -5175,7 +5682,8 @@
     "id": "mad-san-sebastian-de-los-reyes",
     "name": {
       "ca": "San Sebastián de los Reyes",
-      "es": "San Sebastián de los Reyes"
+      "es": "San Sebastián de los Reyes",
+      "en": "San Sebastián de los Reyes"
     },
     "lat": 40.54737,
     "lon": -3.62606,
@@ -5187,7 +5695,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (33 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (33 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (33 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (33 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -5195,7 +5704,8 @@
     "id": "mad-santa-maria-de-la-alameda",
     "name": {
       "ca": "Santa María de la Alameda",
-      "es": "Santa María de la Alameda"
+      "es": "Santa María de la Alameda",
+      "en": "Santa María de la Alameda"
     },
     "lat": 40.59582,
     "lon": -4.25792,
@@ -5207,7 +5717,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, FORA de la franja: eclipsi parcial, 99,94 % del Sol tapat i cap segon de totalitat. El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,94 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,94 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, OUTSIDE the path of totality: partial eclipse, 99.94% of the Sun covered and no totality. The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "partial"
   },
@@ -5215,7 +5726,8 @@
     "id": "mad-somosierra",
     "name": {
       "ca": "Somosierra",
-      "es": "Somosierra"
+      "es": "Somosierra",
+      "en": "Somosierra"
     },
     "lat": 41.13321,
     "lon": -3.58148,
@@ -5227,7 +5739,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (88 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (88 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (88 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (88 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -5235,7 +5748,8 @@
     "id": "mad-soto-del-real",
     "name": {
       "ca": "Soto del Real",
-      "es": "Soto del Real"
+      "es": "Soto del Real",
+      "en": "Soto del Real"
     },
     "lat": 40.75336,
     "lon": -3.78685,
@@ -5247,7 +5761,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (54 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (54 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (54 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (54 seconds of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -5255,7 +5770,8 @@
     "id": "mad-talamanca-de-jarama",
     "name": {
       "ca": "Talamanca de Jarama",
-      "es": "Talamanca de Jarama"
+      "es": "Talamanca de Jarama",
+      "en": "Talamanca de Jarama"
     },
     "lat": 40.74547,
     "lon": -3.51276,
@@ -5267,7 +5783,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (65 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (65 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (65 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (65 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -5275,7 +5792,8 @@
     "id": "mad-torrejon-de-la-calzada",
     "name": {
       "ca": "Torrejón de la Calzada",
-      "es": "Torrejón de la Calzada"
+      "es": "Torrejón de la Calzada",
+      "en": "Torrejón de la Calzada"
     },
     "lat": 40.20068,
     "lon": -3.79933,
@@ -5287,7 +5805,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, FORA de la franja: eclipsi parcial, 99,79 % del Sol tapat i cap segon de totalitat. El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,79 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,79 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, OUTSIDE the path of totality: partial eclipse, 99.79% of the Sun covered and no totality. The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "partial"
   },
@@ -5295,7 +5814,8 @@
     "id": "mad-tres-cantos",
     "name": {
       "ca": "Tres Cantos",
-      "es": "Tres Cantos"
+      "es": "Tres Cantos",
+      "en": "Tres Cantos"
     },
     "lat": 40.60124,
     "lon": -3.70385,
@@ -5307,7 +5827,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (37 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (37 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (37 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (37 seconds of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -5315,7 +5836,8 @@
     "id": "mad-valdeolmos-alalpardo",
     "name": {
       "ca": "Valdeolmos-Alalpardo",
-      "es": "Valdeolmos-Alalpardo"
+      "es": "Valdeolmos-Alalpardo",
+      "en": "Valdeolmos-Alalpardo"
     },
     "lat": 40.62967,
     "lon": -3.47406,
@@ -5327,7 +5849,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (55 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli d’Alalpardo.",
-      "es": "Comunidad de Madrid, dentro de la franja (55 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo de Alalpardo."
+      "es": "Comunidad de Madrid, dentro de la franja (55 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo de Alalpardo.",
+      "en": "Community of Madrid, inside the path of totality (55 s of totality). The municipality, not the precinct: the source does not publish any. The coordinate is the nucleus of Alalpardo."
     },
     "phase": "central"
   },
@@ -5335,7 +5858,8 @@
     "id": "mad-valdepielagos",
     "name": {
       "ca": "Valdepiélagos",
-      "es": "Valdepiélagos"
+      "es": "Valdepiélagos",
+      "en": "Valdepiélagos"
     },
     "lat": 40.76033,
     "lon": -3.46586,
@@ -5347,7 +5871,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (68 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (68 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (68 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (68 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   },
@@ -5355,7 +5880,8 @@
     "id": "mad-villamantilla",
     "name": {
       "ca": "Villamantilla",
-      "es": "Villamantilla"
+      "es": "Villamantilla",
+      "en": "Villamantilla"
     },
     "lat": 40.34304,
     "lon": -4.13022,
@@ -5367,7 +5893,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, FORA de la franja: eclipsi parcial, 99,79 % del Sol tapat i cap segon de totalitat. El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,79 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,79 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, OUTSIDE the path of totality: partial eclipse, 99.79% of the Sun covered and no totality. The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "partial"
   },
@@ -5375,7 +5902,8 @@
     "id": "mad-villarejo-de-salvanes",
     "name": {
       "ca": "Villarejo de Salvanés",
-      "es": "Villarejo de Salvanés"
+      "es": "Villarejo de Salvanés",
+      "en": "Villarejo de Salvanés"
     },
     "lat": 40.16836,
     "lon": -3.27388,
@@ -5387,7 +5915,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, FORA de la franja: eclipsi parcial, 99,94 % del Sol tapat i cap segon de totalitat. El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,94 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, FUERA de la franja: eclipse parcial, 99,94 % del Sol tapado y ningún segundo de totalidad. El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, OUTSIDE the path of totality: partial eclipse, 99.94% of the Sun covered and no totality. The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "partial"
   },
@@ -5395,7 +5924,8 @@
     "id": "mad-villavieja-del-lozoya",
     "name": {
       "ca": "Villavieja del Lozoya",
-      "es": "Villavieja del Lozoya"
+      "es": "Villavieja del Lozoya",
+      "en": "Villavieja del Lozoya"
     },
     "lat": 41.00636,
     "lon": -3.67163,
@@ -5407,7 +5937,8 @@
     "kind": "official",
     "note": {
       "ca": "Comunitat de Madrid, dins de la franja (79 s de totalitat). El municipi, no el recinte: la font no en publica cap. La coordenada és el nucli del poble.",
-      "es": "Comunidad de Madrid, dentro de la franja (79 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo."
+      "es": "Comunidad de Madrid, dentro de la franja (79 s de totalidad). El municipio, no el recinto: la fuente no publica ninguno. La coordenada es el núcleo del pueblo.",
+      "en": "Community of Madrid, inside the path of totality (79 s of totality). The source names only the municipality, not a venue. The coordinates mark the town center."
     },
     "phase": "central"
   }

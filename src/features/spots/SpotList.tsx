@@ -24,10 +24,12 @@
  * quin lloc era, i un lloc és una ubicació (vegeu `core/analytics/buckets.ts`).
  */
 
+import { useEffect, useState } from 'react';
 import { rankBucket, track } from '../../core/analytics';
 import { PLACES_ATTRIBUTION } from '../../core/places';
 import type { SpotResult, SpotSearchOutcome } from '../../core/spots/types';
 import type { Locale } from '../../i18n';
+import { Button } from '../../ui';
 import { SpotCard } from './SpotCard';
 import { durationText, formatDistance } from './format';
 import { sp } from './strings';
@@ -40,11 +42,25 @@ export interface SpotListProps {
   eclipseId: string;
   /** Es passa avall a cada targeta: fer d'un resultat el punt de l'app. */
   onSelect?: (spot: SpotResult) => void;
+  baselineVisibleSec?: number | null;
   className?: string;
 }
 
-export function SpotList({ outcome, locale, eclipseId, onSelect, className }: SpotListProps) {
+export function SpotList({
+  outcome,
+  locale,
+  eclipseId,
+  onSelect,
+  baselineVisibleSec,
+  className,
+}: SpotListProps) {
   const { results, radiusKm, candidates, bestCentralSec, centralReachable } = outcome;
+  const [showAll, setShowAll] = useState(false);
+  const visibleResults = showAll ? results : results.slice(0, 3);
+
+  // Una cerca nova torna a començar pels tres finalistes; no hereta el
+  // desplegament d'una llista anterior que ja no representa els mateixos llocs.
+  useEffect(() => setShowAll(false), [outcome]);
 
   if (results.length === 0) {
     return (
@@ -71,14 +87,17 @@ export function SpotList({ outcome, locale, eclipseId, onSelect, className }: Sp
         <p className="spotlist__estimate">{sp('list.estimate', locale)}</p>
       )}
 
+      {results.length > 3 && <p className="spotlist__featured">{sp('list.featured', locale)}</p>}
+
       <ol className="spotlist__items">
-        {results.map((spot, index) => (
+        {visibleResults.map((spot, index) => (
           <li key={spot.id}>
             <SpotCard
               spot={spot}
               rank={index + 1}
               locale={locale}
               eclipseId={eclipseId}
+              baselineVisibleSec={baselineVisibleSec}
               onSelect={
                 onSelect &&
                 ((picked) => {
@@ -93,6 +112,16 @@ export function SpotList({ outcome, locale, eclipseId, onSelect, className }: Sp
           </li>
         ))}
       </ol>
+
+      {results.length > 3 && (
+        <div className="spotlist__reveal">
+          <Button variant="secondary" onClick={() => setShowAll((shown) => !shown)}>
+            {showAll
+              ? sp('list.less', locale)
+              : sp('list.more', locale, { n: results.length - 3 })}
+          </Button>
+        </div>
+      )}
 
       <p className="spotlist__caveat">{sp('list.caveat', locale)}</p>
 

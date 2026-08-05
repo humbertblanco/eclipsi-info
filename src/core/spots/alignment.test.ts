@@ -529,6 +529,24 @@ describe('describeAlignment', () => {
       }
     });
 
+    it('la versió anglesa tradueix totes les peces i usa decimals anglesos', () => {
+      const text = describeAlignment(outcome, 'en');
+      expect(text.headline).toContain('the Sun appears above');
+      expect(text.approach).toContain('from where you are');
+      expect(text.tolerance).toContain('margin');
+      expect(text.caveats.some((c) => c.includes('bare ground'))).toBe(true);
+
+      const all = [
+        text.headline,
+        text.approach ?? '',
+        text.tolerance ?? '',
+        text.terrain ?? '',
+        ...text.caveats,
+      ].join(' ');
+      expect(all).not.toMatch(/\bdamunt\b|d’on ets|\bterreny\b|\bencima\b|donde estás/);
+      expect(all).toMatch(/\d\.\d/);
+    });
+
       /*
      * LA COMA DECIMAL, QUE AQUEST MÒDUL ESCRIVIA AMB PUNT.
      *
@@ -581,7 +599,7 @@ describe('describeAlignment', () => {
 
       for (const c of cases) {
         expect(c.ok).toBe(false);
-        for (const locale of ['ca', 'es'] as const) {
+        for (const locale of ['ca', 'es', 'en'] as const) {
           const text = describeAlignment(c, locale);
           expect(text.headline.length).toBeGreaterThan(20);
           expect(text.headline).not.toContain('undefined');

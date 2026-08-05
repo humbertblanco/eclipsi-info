@@ -109,7 +109,7 @@ export function usePlaceName(
   // El mòdul de topònims declara els seus idiomes a part per no dependre de
   // React; quan l'app n'afegeixi (anglès, francès), aquesta línia és on es
   // decidirà a quina de les redaccions que hi ha escrites cauen.
-  const label = describePlace(place, locale === 'es' ? 'es' : 'ca');
+  const label = describePlace(place, locale);
 
   // Avisa qui vulgui desar el nom a l'estat de la ubicació. Va dins d'un
   // efecte i no al cos del render perquè escriure a un estat de fora mentre es

@@ -138,10 +138,10 @@ export function confidenceForYears(years: number): Confidence {
 }
 
 export const CONFIDENCE_LABEL: Record<Confidence, LocalisedText> = {
-  high: { ca: 'Alta', es: 'Alta' },
-  medium: { ca: 'Mitjana', es: 'Media' },
-  low: { ca: 'Baixa', es: 'Baja' },
-  'very-low': { ca: 'Molt baixa', es: 'Muy baja' },
+  high: { ca: 'Alta', es: 'Alta', en: 'High' },
+  medium: { ca: 'Mitjana', es: 'Media', en: 'Medium' },
+  low: { ca: 'Baixa', es: 'Baja', en: 'Low' },
+  'very-low': { ca: 'Molt baixa', es: 'Muy baja', en: 'Very low' },
 };
 
 /* ------------------------------------------------------- lectura de dades */
@@ -290,26 +290,26 @@ async function buildForecast(
 const FORECAST_CAVEAT_BASE: Record<Confidence, LocalisedText> = {
   high: {
     ca: 'Previsió a poques hores vista. És el millor que es pot saber.',
-    es: 'Previsión a pocas horas vista. Es lo mejor que se puede saber.',
+    es: 'Previsión a pocas horas vista. Es lo mejor que se puede saber.', en: 'Short-range forecast. This is the most reliable information currently available.',
   },
   medium: {
     ca: 'Previsió a mig termini. La posició exacta dels núvols encara ballarà.',
-    es: 'Previsión a medio plazo. La posición exacta de las nubes todavía bailará.',
+    es: 'Previsión a medio plazo. La posición exacta de las nubes todavía bailará.', en: 'Medium-range forecast. The exact position of the clouds may still change.',
   },
   low: {
     ca: 'Previsió llunyana. Serveix per a la tendència, no per decidir.',
-    es: 'Previsión lejana. Sirve para la tendencia, no para decidir.',
+    es: 'Previsión lejana. Sirve para la tendencia, no para decidir.', en: 'Long-range forecast. Use it for the overall trend, not for final decisions.',
   },
   'very-low': {
     ca: 'Previsió al límit del model. Torna-hi quan falti menys d’una setmana.',
-    es: 'Previsión al límite del modelo. Vuelve cuando falte menos de una semana.',
+    es: 'Previsión al límite del modelo. Vuelve cuando falte menos de una semana.', en: 'Forecast at the limit of the model. Come back when it\'s less than a week away.',
   },
 };
 
 /** L'avís de quan el model no ha donat les tres capes. */
 const FROM_TOTAL_ONLY_NOTE: LocalisedText = {
   ca: ' El model no ha donat el desglossament per capes: la xifra és grollera.',
-  es: ' El modelo no ha dado el desglose por capas: la cifra es tosca.',
+  es: ' El modelo no ha dado el desglose por capas: la cifra es tosca.', en: ' The model did not provide a layer breakdown, so this figure is approximate.',
 };
 
 /**
@@ -326,7 +326,11 @@ export function forecastCaveat(
 ): string {
   const base = FORECAST_CAVEAT_BASE[confidence][locale];
   const days =
-    locale === 'es' ? `Faltan ${lead.toFixed(1)} días.` : `Falten ${lead.toFixed(1)} dies.`;
+    locale === 'en'
+      ? `${lead.toFixed(1)} days remaining.`
+      : locale === 'es'
+        ? `Faltan ${lead.toFixed(1)} días.`
+        : `Falten ${lead.toFixed(1)} dies.`;
   const extra = fromTotalOnly ? FROM_TOTAL_ONLY_NOTE[locale] : '';
   return `${days} ${base}${extra}`;
 }
@@ -340,6 +344,12 @@ export function forecastCaveat(
  * cel el dia 12.
  */
 export function climatologyCaveat(years: number, locale: WeatherLocale = 'ca'): string {
+  if (locale === 'en') {
+    return (
+      'This is NOT a forecast. It shows what the sky was like on these dates over ' +
+      `the past ${years} years. Use it to choose where to go, not to know whether you will see the eclipse.`
+    );
+  }
   if (locale === 'es') {
     return (
       'Esto NO es una previsión. Es lo que hizo el cielo estos mismos días ' +

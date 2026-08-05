@@ -33,7 +33,7 @@
 import type { GeoLocation } from '../../core/astro/types';
 import { PLACES_ATTRIBUTION } from '../../core/places';
 import type { Locale } from '../../i18n';
-import { formatCoords } from '../../screens/format';
+import { formatCoords, formatDecimal } from '../../screens/format';
 import { usePlaceName } from './usePlaceName';
 import './PlaceName.css';
 
@@ -55,6 +55,7 @@ export type { PlaceNameState, UsePlaceNameOptions } from './usePlaceName';
 const SEARCHING: Record<Locale, string> = {
   ca: 'Buscant el nom del lloc',
   es: 'Buscando el nombre del lugar',
+  en: 'Searching for the place name',
 };
 
 export interface PlaceNameProps {
@@ -89,8 +90,10 @@ export function PlaceName({
   if (!location) return null;
 
   const root = className ? `pname ${className}` : 'pname';
-  const coords = formatCoords(location.lat, location.lon);
-  const elevation = showElevation ? `${Math.round(location.elevation)} m` : null;
+  const coords = formatCoords(location.lat, location.lon, locale);
+  const elevation = showElevation
+    ? `${formatDecimal(Math.round(location.elevation), 0, locale)} m`
+    : null;
 
   // Sense nom, les coordenades PUGEN a la línia principal. Així la línia de
   // dalt sempre diu on ets, amb les paraules que hi hagi en aquell moment.

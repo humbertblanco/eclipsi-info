@@ -22,6 +22,7 @@
  */
 
 import type { EclipseSample } from '../../core/astro/types';
+import type { Locale } from '../../i18n';
 import type { Viewport } from './cameraGeometry';
 import { projectToScreen, type CameraPointing, type Calibration } from './orientation';
 import { canvasFont, withAlpha, type Palette } from '../../styles/palette';
@@ -44,7 +45,7 @@ export interface PhaseTrackOptions {
   horizonProfile?: (azimuthDeg: number) => number;
   /** Radi del disc solar als indicadors, en píxels. */
   markerRadiusPx?: number;
-  locale: 'ca' | 'es';
+  locale: Locale;
   /**
    * Colors i tipografies del sistema de disseny, com a dada.
    *

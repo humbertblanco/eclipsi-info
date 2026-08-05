@@ -72,7 +72,7 @@ export function OfflinePanel({
 
   const dateFormat = useMemo(
     () =>
-      new Intl.DateTimeFormat(locale === 'es' ? 'es-ES' : 'ca-ES', {
+      new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : locale === 'es' ? 'es-ES' : 'ca-ES', {
         day: 'numeric',
         month: 'short',
         hour: '2-digit',

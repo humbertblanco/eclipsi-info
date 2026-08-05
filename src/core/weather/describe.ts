@@ -21,27 +21,35 @@ import type { CloudOutlook, LocalisedText, SkyBand, WeatherLocale } from './type
 
 /** Titular de la puntuació. Tres estats i prou. */
 export const BAND_TITLE: Record<SkyBand, LocalisedText> = {
-  clear: { ca: 'Cel net', es: 'Cielo despejado' },
-  partial: { ca: 'Cel a mitges', es: 'Cielo a medias' },
-  cloudy: { ca: 'Cel tapat', es: 'Cielo cubierto' },
+  clear: { ca: 'Cel net', es: 'Cielo despejado', en: 'clear sky' },
+  partial: { ca: 'Cel a mitges', es: 'Cielo a medias', en: 'Partly cloudy' },
+  cloudy: { ca: 'Cel tapat', es: 'Cielo cubierto', en: 'overcast sky' },
 };
 
 /** Què vol dir cada estat per a l'eclipsi. */
 export const BAND_MEANING: Record<SkyBand, LocalisedText> = {
-  clear: { ca: 'Ho hauries de veure tot.', es: 'Deberías verlo todo.' },
+  clear: { ca: 'Ho hauries de veure tot.', es: 'Deberías verlo todo.', en: 'You should see everything.' },
   partial: {
     ca: 'El veuràs a estones, o a través d’un vel.',
-    es: 'Lo verás a ratos, o a través de un velo.',
+    es: 'Lo verás a ratos, o a través de un velo.', en: 'You will see it at times, or through a veil.',
   },
   cloudy: {
     ca: 'Molt probablement no veuràs res. Mou-te.',
-    es: 'Muy probablemente no verás nada. Muévete.',
+    es: 'Muy probablemente no verás nada. Muévete.', en: 'Most likely you won\'t see anything. Move.',
   },
 };
 
 /** Edat d'una dada en text. Sempre s'ensenya: la incertesa es diu. */
 export function describeAge(ageMs: number, locale: WeatherLocale = 'ca'): string {
   const minutes = Math.round(ageMs / 60000);
+  if (locale === 'en') {
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return `${hours} h ago`;
+    const days = Math.round(hours / 24);
+    return days === 1 ? '1 day ago' : `${days} days ago`;
+  }
   const es = locale === 'es';
   if (minutes < 1) return es ? 'ahora mismo' : 'ara mateix';
   if (minutes < 60) return es ? `hace ${minutes} min` : `fa ${minutes} min`;
@@ -68,12 +76,20 @@ export function describeAge(ageMs: number, locale: WeatherLocale = 'ca'): string
  */
 export function describeAgeSince(ageMs: number, locale: WeatherLocale = 'ca'): string {
   const age = describeAge(ageMs, locale);
+  if (locale === 'en') return `from ${age}`;
   if (locale === 'es') return `de ${age}`;
   return /^[aeiouàèéíòóúh]/i.test(age) ? `d’${age}` : `de ${age}`;
 }
 
 /** Antelació en text natural. */
 export function describeLead(days: number, locale: WeatherLocale = 'ca'): string {
+  if (locale === 'en') {
+    if (days < 0) return 'already passed';
+    const hours = days * 24;
+    if (hours < 1) return 'in less than an hour';
+    if (hours < 48) return `in ${Math.round(hours)} h`;
+    return `in ${Math.round(days)} days`;
+  }
   const es = locale === 'es';
   if (days < 0) return es ? 'ya ha pasado' : 'ja ha passat';
   const hours = days * 24;
@@ -100,15 +116,18 @@ export function describeLineOfSight(
   const { sampling } = outlook;
   const dir = compassLabel(sampling.sunAzimuthDeg, locale);
   const alt = sampling.sunAltitudeDeg.toFixed(0);
+  const en = locale === 'en';
   const es = locale === 'es';
 
   if (!sampling.slanted) {
+    if (en) return `The Sun will be at ${alt}°. High enough that the relevant clouds are directly above you.`;
     return es
       ? `El Sol estará a ${alt}°. Bastante alto: las nubes que cuentan están encima de ti.`
       : `El Sol estarà a ${alt}°. Prou alt: els núvols que compten són damunt teu.`;
   }
 
   if (!sampling.lineOfSightUsed) {
+    if (en) return `The Sun will be at ${alt}° towards ${dir}. Climatology has only been calculated at your location.`;
     return es
       ? `El Sol estará a ${alt}° hacia el ${dir}. La climatología solo se ha calculado en tu punto.`
       : `El Sol estarà a ${alt}° cap al ${dir}. La climatologia només s’ha calculat al teu punt.`;
@@ -119,6 +138,7 @@ export function describeLineOfSight(
     sampling.points[0],
   );
   const km = Math.round(farthest.groundDistanceKm);
+  if (en) return `The Sun will be at ${alt}° towards ${dir}. High clouds that could block it are ${km} km away in that direction.`;
   return es
     ? `El Sol estará a ${alt}° hacia el ${dir}. Las nubes altas que te taparían están a ${km} km de aquí, en esa dirección.`
     : `El Sol estarà a ${alt}° cap al ${dir}. Els núvols alts que et taparien són a ${km} km d’aquí, en aquella direcció.`;
@@ -138,6 +158,12 @@ export function describeDominantLayer(
   // baixa, dir "està tapat" seria fals, però dir que és el que més et pot
   // fastiguejar és exactament el que passa.
   const label = LAYER_LABEL[dominant][locale].toLowerCase();
+  if (locale === 'en') {
+    const head = `The biggest risk is from ${label} clouds.`;
+    if (dominant === 'high') return `${head} They are thin, so the corona can still show through.`;
+    if (dominant === 'mid') return `${head} The solar disk will look milky.`;
+    return `${head} Where present, they will block the view completely.`;
+  }
   const es = locale === 'es';
   // El subjecte concorda amb el nom del núvol de cada idioma: «els núvols
   // baixos» contra «las nubes bajas». Per això `LAYER_LABEL` no és la mateixa
@@ -169,6 +195,14 @@ export function describeHaze(
 
   const es = locale === 'es';
   const km = visibilityKm < 1 ? visibilityKm.toFixed(1) : String(Math.round(visibilityKm));
+  if (locale === 'en') {
+    const head = `With ${km} km visibility and ${airmass.toFixed(0)} air masses`;
+    if (transmission < 0.1) {
+      return `${head}, almost no light will reach the disk. Haze to the west may make it disappear before it reaches the horizon.`;
+    }
+    const pct = Math.round(transmission * 100);
+    return `${head}, ${pct}% of the light will reach the disk. It will remain visible, but red and dim.`;
+  }
   const head = es
     ? `Con ${km} km de visibilidad y ${airmass.toFixed(0)} masas de aire`
     : `Amb ${km} km de visibilitat i ${airmass.toFixed(0)} masses d’aire`;

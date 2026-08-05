@@ -1,5 +1,5 @@
 /**
- * Ancorar la superposició al SOL DE DEBÒ (o a la Lluna, de nit).
+ * Ancorar la superposició al SOL DE DEBÒ (o a la Lluna, també de dia).
  *
  * ── PER QUÈ ─────────────────────────────────────────────────────────────────
  *
@@ -595,21 +595,55 @@ export function sunFixFrom(
 }
 
 /**
- * Quin cos s'espera veure ara: el Sol si és amunt; si no, la Lluna (assajos
- * nocturns abans de l'eclipsi — la fase lunar no es modela: mig radi lunar
- * d'error de centroide en quarts, acceptable per assajar). Null si cap dels
- * dos és sobre l'horitzó.
+ * Quin cos brillant s'espera veure ara.
+ *
+ * Si tots dos són sobre l'horitzó no es pot prioritzar sempre el Sol: la
+ * Lluna és visible moltes hores de dia i, si l'usuari l'enquadra amb el Sol
+ * fora de camp, ajustar aquella taca contra les efemèrides solars rebutja un
+ * fix lunar perfectament bo. Mana el cos més proper a l'eix de la càmera.
+ * Quan són gairebé coincidents —durant l'eclipsi— mana el Sol, perquè el
+ * detector està modelant el seu creixent i el seu flux.
+ *
+ * Sense `camera` es conserva el comportament determinista antic, útil per a
+ * consumidors que només volen saber quin far hi ha disponible. La fase lunar
+ * encara no es modela: en quarts, el centroide pot errar fins a mig radi.
  */
 export function expectedBrightBody(
   sample: EclipseSample,
+  camera?: CameraPointing,
 ): { body: SkyPosition; kind: 'sun' | 'moon' } | null {
-  if (sample.sun.altitudeApparent > MIN_BODY_ALTITUDE_DEG) {
+  const sunUp = sample.sun.altitudeApparent > MIN_BODY_ALTITUDE_DEG;
+  const moonUp = sample.moon.altitudeApparent > MIN_BODY_ALTITUDE_DEG;
+  if (!sunUp && !moonUp) return null;
+  if (sunUp && (!moonUp || camera === undefined)) {
     return { body: sample.sun, kind: 'sun' };
   }
-  if (sample.moon.altitudeApparent > MIN_BODY_ALTITUDE_DEG) {
+  if (!sunUp) {
     return { body: sample.moon, kind: 'moon' };
   }
-  return null;
+
+  // Les sortides anteriors garanteixen això; la guarda explícita manté el
+  // contracte evident també per al compilador si les condicions canvien.
+  if (camera === undefined) return { body: sample.sun, kind: 'sun' };
+  const pointing = camera;
+  const distanceFromAxis = (body: SkyPosition): number => {
+    const cosAlt = Math.max(0.2, Math.cos(body.altitudeApparent * DEG));
+    return Math.hypot(
+      normalizeDelta(body.azimuth - pointing.azimuth) * cosAlt,
+      body.altitudeApparent - pointing.altitude,
+    );
+  };
+  const sunDistance = distanceFromAxis(sample.sun);
+  const moonDistance = distanceFromAxis(sample.moon);
+
+  // Una diferència tan petita és soroll de brúixola, no intenció de l'usuari.
+  // A l'eclipsi els centres són a menys d'un grau i sempre cau aquí.
+  if (Math.abs(sunDistance - moonDistance) < 2) {
+    return { body: sample.sun, kind: 'sun' };
+  }
+  return moonDistance < sunDistance
+    ? { body: sample.moon, kind: 'moon' }
+    : { body: sample.sun, kind: 'sun' };
 }
 
 /**

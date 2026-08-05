@@ -24,10 +24,12 @@ export const HISTORICAL_ECLIPSES: EclipseEntry[] = [
     label: {
       ca: 'Eclipsi total del 21 d’agost de 2017 (EUA)',
       es: 'Eclipse total del 21 de agosto de 2017 (EE. UU.)',
+      en: 'Total solar eclipse of 21 August 2017 (USA)',
     },
     spain: {
       ca: 'No visible des d’Espanya. Només per a validació del motor.',
       es: 'No visible desde España. Solo para validación del motor.',
+      en: 'Not visible from Spain. Used only for engine validation.',
     },
     saros: 145,
     lowSunOverSpain: false,
@@ -39,10 +41,12 @@ export const HISTORICAL_ECLIPSES: EclipseEntry[] = [
     label: {
       ca: 'Eclipsi total del 8 d’abril de 2024 (Mèxic, EUA, Canadà)',
       es: 'Eclipse total del 8 de abril de 2024 (México, EE. UU., Canadá)',
+      en: 'Total solar eclipse of 8 April 2024 (Mexico, USA, Canada)',
     },
     spain: {
       ca: 'No visible des d’Espanya. Només per a validació del motor.',
       es: 'No visible desde España. Solo para validación del motor.',
+      en: 'Not visible from Spain. Used only for engine validation.',
     },
     saros: 139,
     lowSunOverSpain: false,

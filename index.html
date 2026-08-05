@@ -2,6 +2,8 @@
 <html lang="ca">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" sizes="48x48" href="%BASE_URL%favicon-48.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="%BASE_URL%icons/icon-192.png" />
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
 
     <!-- viewport-fit=cover: sense això, l'app instal·lada a un iPhone amb
@@ -46,7 +48,7 @@
          els converteixen en enllaços blaus. L'app és tota xifres. -->
     <meta name="format-detection" content="telephone=no" />
 
-    <title>eclipsi.info · Quants segons d’eclipsi veuràs des d’on seràs</title>
+    <title>Eclipsi solar 2026: visibilitat i durada al teu punt | eclipsi.info</title>
 
     <!-- ================================================================
          METADADES SOCIALS I DE CERCA
@@ -66,18 +68,24 @@
          ================================================================= -->
     <meta
       name="description"
-      content="Des del punt exacte on seràs: quants segons de totalitat veuràs de debò, a quina hora, cap a on mirar i si el relleu te la tapa. Eclipsis del 12 d’agost de 2026, 2 d’agost de 2027 i 26 de gener de 2028. El càlcul es fa al teu dispositiu."
+      content="Calcula l’eclipsi solar del 12 d’agost de 2026 al teu punt: hora, segons de totalitat, núvols, relleu, mapa de visibilitat i llocs oficials."
     />
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
     <link rel="canonical" href="%SITE_URL%" />
+    <link rel="alternate" hreflang="ca" href="%SITE_URL%" />
+    <link rel="alternate" hreflang="es" href="%SITE_URL%es/" />
+    <link rel="alternate" hreflang="en" href="%SITE_URL%en/" />
+    <link rel="alternate" hreflang="x-default" href="%SITE_URL%" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="eclipsi.info" />
     <meta property="og:locale" content="ca_ES" />
     <meta property="og:locale:alternate" content="es_ES" />
+    <meta property="og:locale:alternate" content="en_GB" />
     <meta property="og:url" content="%SITE_URL%" />
     <meta
       property="og:title"
-      content="Quants segons d’eclipsi veuràs des d’on seràs"
+      content="Eclipsi solar 2026: quants segons veuràs al teu punt?"
     />
     <meta
       property="og:description"
@@ -88,6 +96,7 @@
          targeta PER PUNT amb el veredicte continua demanant pre-renderitzat
          en compilació i queda per a més endavant. -->
     <meta property="og:image" content="%SITE_URL%brand/og.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
@@ -98,13 +107,14 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="twitter:title"
-      content="Quants segons d’eclipsi veuràs des d’on seràs"
+      content="Eclipsi solar 2026: quants segons veuràs al teu punt?"
     />
     <meta
       name="twitter:description"
       content="Càlcul topocèntric i horitzó real del teu punt: la durada que et deixa el relleu, no la del catàleg."
     />
     <meta name="twitter:image" content="%SITE_URL%brand/og.png" />
+    <meta name="twitter:image:alt" content="eclipsi.info, durada i visibilitat de l’eclipsi solar al teu punt" />
 
     <!-- Dades estructurades: un eclipsi ÉS un esdeveniment, i és el vocabulari
          que Google entén. Les hores són les del màxim de l'eclipsi a la
@@ -118,7 +128,7 @@
         "url": "%SITE_URL%",
         "applicationCategory": "https://schema.org/EducationalApplication",
         "operatingSystem": "Web",
-        "inLanguage": ["ca", "es"],
+        "inLanguage": ["ca", "es", "en"],
         "isAccessibleForFree": true,
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
         "description": "Simulador dels eclipsis solars del 2026, 2027 i 2028 amb càlcul topocèntric i perfil d’horitzó real del punt de l’observador.",

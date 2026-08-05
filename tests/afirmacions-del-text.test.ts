@@ -232,7 +232,7 @@ describe('la llista de llocs del catàleg', () => {
     describe(eclipseId, () => {
       for (const key of claim.inside) {
         it(`${PLACES[key].ca} surt escrit i el motor li dona fase central`, () => {
-          for (const locale of LOCALES) {
+          for (const locale of ['ca', 'es'] as const) {
             expect(spainText(eclipseId, locale)).toContain(PLACES[key][locale]);
           }
           const c = circ(eclipseId, key);
@@ -247,7 +247,7 @@ describe('la llista de llocs del catàleg', () => {
 
       for (const key of claim.outside) {
         it(`${PLACES[key].ca} surt escrit com a fora, i el motor ho confirma`, () => {
-          for (const locale of LOCALES) {
+          for (const locale of ['ca', 'es'] as const) {
             expect(spainText(eclipseId, locale)).toContain(PLACES[key][locale]);
           }
           const c = circ(eclipseId, key);

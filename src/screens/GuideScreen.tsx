@@ -8,6 +8,8 @@ import { getGuide, type GuideSection, type GuideSectionId } from '../content/gui
 import type { EclipseContext } from './context';
 import { s } from './strings';
 import { formatClockShort } from './format';
+import { pointsForEclipse } from '../data/observation-points/catalog';
+import { distanceKm } from '../core/places';
 import './screens.css';
 import '../features/guide/guide.css';
 
@@ -159,7 +161,24 @@ export function GuideScreen({
    * eclipsi (`onlyFor`), o sigui que l'índex no pot apuntar mai a una secció
    * que no existeixi a sota, ni ensenyar-ne una que el contingut hagi amagat.
    */
-  const tocSections = useMemo(() => getGuide(locale, eclipseId), [locale, eclipseId]);
+  const sunAltitudeDeg = circumstances?.contacts.max.sun.altitudeApparent ?? null;
+  const tocSections = useMemo(
+    () => getGuide(locale, eclipseId, { sunAltitudeDeg }),
+    [locale, eclipseId, sunAltitudeDeg],
+  );
+  const officialPoints = useMemo(
+    () =>
+      [...pointsForEclipse(eclipseId)]
+        .map((point) => ({
+          point,
+          distanceKm:
+            location === null
+              ? null
+              : distanceKm(location.lat, location.lon, point.lat, point.lon),
+        }))
+        .sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity)),
+    [eclipseId, location],
+  );
 
   /*
    * Obrir la secció tocant el DOM i no amb estat de React, a posta: els
@@ -173,11 +192,18 @@ export function GuideScreen({
   // Accepta `string` i no només `GuideSectionId` perquè també la crida
   // l'aterratge per fragment (vegeu `initialSection`); per a l'índex no canvia
   // res, i la guarda de sota ja fa d'una clau inexistent un no-fer-res.
-  const openSection = useCallback((id: string) => {
+  const openSection = useCallback((id: string, updateAddress = true) => {
     const el = document.getElementById(`guia-${id}`);
     if (!(el instanceof HTMLDetailsElement)) return;
     el.open = true;
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (updateAddress) {
+      window.history.replaceState(
+        window.history.state,
+        '',
+        `${window.location.pathname}${window.location.search}#/guia/${encodeURIComponent(id)}`,
+      );
+    }
   }, []);
 
   /*
@@ -188,7 +214,7 @@ export function GuideScreen({
    * en el mateix commit i els efectes corren just després.
    */
   useEffect(() => {
-    if (initialSection != null) openSection(initialSection);
+    if (initialSection != null) openSection(initialSection, false);
   }, [initialSection, openSection]);
 
   const tocLabel = s('guide.toc', locale);
@@ -238,6 +264,37 @@ export function GuideScreen({
             {s('nav.countdown', locale)}
           </Button>
         </Card>
+
+        {officialPoints.length > 0 && (
+          <Card>
+            <span className="screen__overline">{s('map.spots.officialFirst', locale)}</span>
+            <p className="screen__note guideofficial__lead">
+              {s('guide.officialNearby', locale)}
+            </p>
+            <ul className="guideofficial__list">
+              {officialPoints.slice(0, 5).map(({ point, distanceKm: km }) => (
+                <li key={point.id}>
+                  <span className="guideofficial__row">
+                    <strong>{point.name[locale]}</strong>
+                    {km !== null && <span className="eclipsi-data">{Math.round(km)} km</span>}
+                  </span>
+                  <span className="guideofficial__meta">
+                    {s(
+                      point.phase === 'partial'
+                        ? 'guide.officialPartial'
+                        : 'guide.officialCentral',
+                      locale,
+                    )}
+                    {' · '}
+                    <a href={point.source.url} target="_blank" rel="noreferrer noopener">
+                      {point.source.who}
+                    </a>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
 
         {/*
           ELS TRES ECLIPSIS, CALCULATS PER AL PUNT DE L'USUARI.
@@ -308,7 +365,7 @@ export function GuideScreen({
             saltar-se'ls amb una drecera. */}
         <GuideToc variant="chips" label={tocLabel} sections={tocSections} onOpen={openSection} />
 
-        <GuideView eclipseId={eclipseId} />
+        <GuideView eclipseId={eclipseId} sunAltitudeDeg={sunAltitudeDeg} />
       </div>
     </div>
   );

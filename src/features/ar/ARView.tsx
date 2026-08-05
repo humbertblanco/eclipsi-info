@@ -126,11 +126,12 @@ import { readPalette } from '../../styles/palette';
  */
 import { s, type StringKey } from '../../screens/strings';
 import { formatClock, formatDecimal, formatDuration, NO_DATA } from '../../screens/format';
+import type { Locale } from '../../i18n';
 
 interface Props {
   location: GeoLocation;
   eclipseId: string;
-  locale: 'ca' | 'es';
+  locale: Locale;
   /** Perfil d'horitzó del terreny, quan ja s'ha calculat. */
   horizon: HorizonProfile | null;
   /**
@@ -369,7 +370,7 @@ interface RenderState {
   samples: EclipseSample[];
   bodies: SkyBody[];
   horizonProfile: ((azimuthDeg: number) => number) | undefined;
-  locale: 'ca' | 'es';
+  locale: Locale;
   mode: Mode;
 }
 
@@ -648,6 +649,8 @@ export function ARView({
   const sunRefinerRef = useRef<SunRefiner | null>(null);
   /** Memòria angular curta per discriminar reflexos sense tancar la cerca. */
   const sunTemporalGuideRef = useRef(new SunTemporalGuide());
+  /** Cos a què pertany el residual temporal: mai es reutilitza entre astres. */
+  const guidedBodyRef = useRef<'sun' | 'moon' | null>(null);
   /** Quan l'àncora de Sol va passar a manar, per al pols de confirmació. */
   const sunLockRef = useRef<number | null>(null);
   /** Misses seguits del lock, per no fer caure el pols per un badall. */
@@ -1308,9 +1311,13 @@ export function ARView({
           const trackSpeed = smoothingRef.current.angularSpeedDegPerSec;
           const body =
             trackSpeed <= SUN_TRACK_MAX_SPEED_DPS
-              ? expectedBrightBody(state.liveSample)
+              ? expectedBrightBody(state.liveSample, sensorAtCapture)
               : null;
           if (body !== null) {
+            if (guidedBodyRef.current !== body.kind) {
+              sunTemporalGuideRef.current.reset();
+              guidedBodyRef.current = body.kind;
+            }
             // Després de tres fixes concordants projectem amb el biaix angular
             // après. La detecció continua recorrent TOTA la graella: això
             // només desempata candidats i no pot empresonar-se en un ROI.

@@ -128,6 +128,8 @@ interface Props {
    * seu «Calcula-ho des d'aquí».
    */
   spots?: { lat: number; lon: number; index: number }[] | null;
+  /** Si es pinta la franja, les vores i la línia central de l'eclipsi. */
+  pathVisible?: boolean;
   /**
    * Relleu ombrejat amb el model d'elevació de l'horitzó. El commuta el
    * control de capes de `MapScreen`; aquí només s'obeeix.
@@ -356,6 +358,14 @@ function applyPath(map: MapLibreMap, geojson: EclipsePathGeoJson): void {
   (map.getSource(CENTER_SOURCE) as GeoJSONSource).setData(geojson.centerLine);
 }
 
+/** Commuta tota la geometria del recorregut com una sola capa conceptual. */
+function setPathVisibility(map: MapLibreMap, visible: boolean): void {
+  const visibility = visible ? 'visible' : 'none';
+  for (const id of ['band-fill', 'band-edge', 'center-line']) {
+    if (map.getLayer(id) !== undefined) map.setLayoutProperty(id, 'visibility', visibility);
+  }
+}
+
 /**
  * Què ha fallat del mapa.
  *
@@ -374,6 +384,7 @@ export function EclipseMap({
   picked = null,
   focus = null,
   spots = null,
+  pathVisible = true,
   hillshade = false,
   sunAzimuthDeg = null,
   cone = null,
@@ -425,6 +436,7 @@ export function EclipseMap({
    * des del `style.load` com des dels efectes de canvi.
    */
   const wantedLayers = {
+    pathVisible,
     hillshade,
     sunAzimuthDeg,
     cone,
@@ -449,6 +461,7 @@ export function EclipseMap({
 
   const syncLayers = useCallback((map: MapLibreMap): void => {
     const wanted = layersRef.current;
+    setPathVisibility(map, wanted.pathVisible);
     if (wanted.hillshade) {
       // Sota la franja: el relleu és context i la resposta va a sobre.
       ensureHillshade(
@@ -503,7 +516,7 @@ export function EclipseMap({
     applyEdgeUncertainty(
       map,
       PALETTE,
-      wanted.edgeUncertaintyKm === null
+      !wanted.pathVisible || wanted.edgeUncertaintyKm === null
         ? null
         : {
             limitRuns: geojsonRef.current.limits.geometry.coordinates,
@@ -764,6 +777,7 @@ export function EclipseMap({
     syncLayers(map);
   }, [
     hillshade,
+    pathVisible,
     sunAzimuthDeg,
     cone,
     heatCells,

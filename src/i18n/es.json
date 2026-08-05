@@ -3,7 +3,8 @@
     "name": "Castellano",
     "switch": "Idioma",
     "ca": "Catalán",
-    "es": "Castellano"
+    "es": "Castellano",
+    "en": "Inglés"
   },
   "guide": {
     "title": "Guía del eclipse",

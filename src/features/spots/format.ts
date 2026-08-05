@@ -32,7 +32,7 @@ export const NBSP = '\u00a0';
  * igualment perquè el dia que entri una tercera llengua, la que sigui,
  * l'alternativa és descobrir-ho amb un «1,083 m» a la pantalla d'algú.
  */
-const INTL: Record<Locale, string> = { ca: 'ca-ES', es: 'es-ES' };
+const INTL: Record<Locale, string> = { ca: 'ca-ES', es: 'es-ES', en: 'en-GB' };
 
 const enterFmt: Partial<Record<Locale, Intl.NumberFormat>> = {};
 const decimalFmt: Partial<Record<Locale, Intl.NumberFormat>> = {};
@@ -69,7 +69,10 @@ function coordsDecimal(locale: Locale): Intl.NumberFormat {
  * parla: «un minut i quaranta-un». Per sota d'un minut es diu la xifra sola,
  * que és més curta de llegir i no menteix.
  */
-export function formatDuration(seconds: number): { value: string; unit: string } {
+export function formatDuration(
+  seconds: number,
+  _locale: Locale = 'ca',
+): { value: string; unit: string } {
   if (!Number.isFinite(seconds) || seconds <= 0) return { value: '0', unit: 's' };
   const total = Math.round(seconds);
   if (total < 60) return { value: String(total), unit: 's' };
@@ -79,8 +82,8 @@ export function formatDuration(seconds: number): { value: string; unit: string }
 }
 
 /** Durada en una sola cadena, per posar dins d'una frase. */
-export function durationText(seconds: number): string {
-  const { value, unit } = formatDuration(seconds);
+export function durationText(seconds: number, locale: Locale = 'ca'): string {
+  const { value, unit } = formatDuration(seconds, locale);
   return `${value}${NBSP}${unit}`;
 }
 
@@ -98,6 +101,7 @@ export function durationText(seconds: number): string {
  */
 export function bearingPhrase(degrees: number, locale: Locale = 'ca'): string {
   const name = compassName(degrees, locale);
+  if (locale === 'en') return `towards the ${name}`;
   if (locale === 'es') return `hacia el ${name}`;
   return /^[aeiou]/.test(name) ? `cap a l’${name}` : `cap al ${name}`;
 }

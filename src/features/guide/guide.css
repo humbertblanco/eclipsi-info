@@ -400,6 +400,43 @@
   color: var(--text-muted);
 }
 
+.guideofficial__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guideofficial__lead {
+  margin-top: var(--sp-3);
+}
+
+.guideofficial__list li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.guideofficial__list strong {
+  font: var(--text-label);
+}
+
+.guideofficial__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.guideofficial__meta {
+  font: var(--text-caption);
+  color: var(--text-muted);
+}
+
+.guideofficial__list a { font: inherit; }
+
 /* ------------------------------------------------- escriptori: 900-1179 */
 
 @media (min-width: 900px) and (min-height: 500px) {
@@ -469,16 +506,11 @@
    */
   .guidescreen__toc--list {
     display: block;
-    position: sticky;
+    position: static;
     /* L'offset compta TAMBÉ la barra de lloc compacta (--tap-min de botó més
        --sp-3 de coixins), que a escriptori sempre és allà, enganxada sota el
        Dateline: sense aquest terme, l'índex s'aturava 36 px per sota d'on
        comença la barra i les dues capes es llegien barrejades. */
-    top: calc(
-      var(--bar-top) + var(--bar-dateline) + var(--tap-min) + var(--sp-3) +
-        var(--sp-5)
-    );
-    z-index: 1;
     background: var(--bg-page);
     padding-bottom: var(--sp-3);
     border-bottom: var(--bw-hair) solid var(--border-hairline);

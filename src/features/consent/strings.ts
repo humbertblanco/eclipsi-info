@@ -46,7 +46,7 @@
 
 import type { Locale } from '../../i18n';
 
-type Entry = { ca: string; es: string };
+type Entry = { ca: string; es: string; en: string };
 
 const STRINGS = {
   /*
@@ -56,7 +56,7 @@ const STRINGS = {
    * reconeix sense llegir-lo, que és precisament el que es vol: qui no hi vol
    * dedicar temps ha de poder resoldre-ho d'un cop d'ull.
    */
-  'banner.title': { ca: 'Cookies', es: 'Cookies' },
+  'banner.title': { ca: 'Cookies', es: 'Cookies', en: 'Cookies' },
 
   /*
    * EL COS, UNA FRASE.
@@ -67,6 +67,7 @@ const STRINGS = {
   'banner.body': {
     ca: 'Fem servir una galeta per comptar quanta gent fa servir l’app.',
     es: 'Usamos una cookie para contar cuánta gente usa la app.',
+    en: 'We use one cookie to count how many people use the app.',
   },
 
   /*
@@ -88,12 +89,13 @@ const STRINGS = {
   'banner.promise': {
     ca: 'No guardem la teva ubicació ni cap dada personal: només un número a l’atzar per no comptar-te dues vegades.',
     es: 'No guardamos tu ubicación ni ningún dato personal: solo un número al azar para no contarte dos veces.',
+    en: 'We do not store your location or any personal data: only a random number so we do not count you twice.',
   },
 
   /* Les dues respostes. Verb en imperatiu la primera, fórmula educada la
      segona; cap de les dues amaga res ni fa sentir malament qui la tria. */
-  'banner.accept': { ca: 'Accepta', es: 'Acepta' },
-  'banner.reject': { ca: 'No, gràcies', es: 'No, gracias' },
+  'banner.accept': { ca: 'Accepta', es: 'Acepta', en: 'Accept' },
+  'banner.reject': { ca: 'No, gràcies', es: 'No, gracias', en: 'No, thanks' },
 
   /*
    * L'ETIQUETA DEL PEU PER CANVIAR D'OPINIÓ.
@@ -101,7 +103,7 @@ const STRINGS = {
    * Ha d'existir: retirar el consentiment ha de ser tan fàcil com donar-lo, i
    * un sí que no es pot desfer no és vàlid. Va al peu i no a un menú amagat.
    */
-  'footer.change': { ca: 'Cookies', es: 'Cookies' },
+  'footer.change': { ca: 'Cookies', es: 'Cookies', en: 'Cookies' },
 
   /*
    * L'ESTAT ACTUAL, per al lector de pantalla del botó del peu: qui no veu el
@@ -110,10 +112,12 @@ const STRINGS = {
   'footer.granted': {
     ca: 'Cookies de mesura: acceptades. Toca per canviar-ho.',
     es: 'Cookies de medición: aceptadas. Toca para cambiarlo.',
+    en: 'Analytics cookies: accepted. Tap to change this.',
   },
   'footer.denied': {
     ca: 'Cookies de mesura: rebutjades. Toca per canviar-ho.',
     es: 'Cookies de medición: rechazadas. Toca para cambiarlo.',
+    en: 'Analytics cookies: rejected. Tap to change this.',
   },
 } as const satisfies Record<string, Entry>;
 

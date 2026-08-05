@@ -112,6 +112,16 @@ const IOS_HINT: Record<Locale, InstallHint> = {
       'Abre la app desde el icono nuevo y prepara el punto desde allí.',
     ],
   },
+  en: {
+    reason:
+      'On iPhone, downloads made in the browser may be deleted automatically after seven days. Installing the app prevents this.',
+    steps: [
+      'Open this page in Safari.',
+      'Tap the Share button in the bottom toolbar.',
+      'Choose “Add to Home Screen”.',
+      'Open the app from its new icon, then prepare your location there.',
+    ],
+  },
 };
 
 const GENERIC_HINT: Record<Locale, InstallHint> = {
@@ -127,6 +137,13 @@ const GENERIC_HINT: Record<Locale, InstallHint> = {
     steps: [
       'Abre el menú del navegador.',
       'Elige «Instalar la aplicación» o «Añadir a pantalla de inicio».',
+    ],
+  },
+  en: {
+    reason: 'Once installed, the app opens directly in full screen and keeps saved data for longer.',
+    steps: [
+      'Open your browser menu.',
+      'Choose “Install app” or “Add to Home Screen”.',
     ],
   },
 };

@@ -276,23 +276,23 @@ export function averageLayers(samples: readonly CloudLayers[]): CloudLayers {
  * sortiria mal concordada.
  */
 export const LAYER_LABEL: Record<CloudLayerId, LocalisedText> = {
-  low: { ca: 'Baixos', es: 'Bajas' },
-  mid: { ca: 'Mitjans', es: 'Medias' },
-  high: { ca: 'Alts', es: 'Altas' },
+  low: { ca: 'Baixos', es: 'Bajas', en: 'Low' },
+  mid: { ca: 'Mitjans', es: 'Medias', en: 'Mid-level' },
+  high: { ca: 'Alts', es: 'Altas', en: 'High' },
 };
 
 /** Què és cada capa i què et fa. Frases curtes, per a la interfície. */
 export const LAYER_NOTE: Record<CloudLayerId, LocalisedText> = {
   low: {
     ca: 'Estrats i cúmuls, fins a 2 km. Tapen del tot.',
-    es: 'Estratos y cúmulos, hasta 2 km. Tapan del todo.',
+    es: 'Estratos y cúmulos, hasta 2 km. Tapan del todo.', en: 'Stratus and cumulus, up to 2 km. They can block the view completely.',
   },
   mid: {
     ca: 'Altostrats, de 2 a 6 km. El Sol es veu lletós, la corona no.',
-    es: 'Altoestratos, de 2 a 6 km. El Sol se ve lechoso, la corona no.',
+    es: 'Altoestratos, de 2 a 6 km. El Sol se ve lechoso, la corona no.', en: 'Altostratus, from 2 to 6 km. The Sun looks milky and the corona is obscured.',
   },
   high: {
     ca: 'Cirrus, per damunt de 6 km. La corona encara passa.',
-    es: 'Cirros, por encima de 6 km. La corona todavía pasa.',
+    es: 'Cirros, por encima de 6 km. La corona todavía pasa.', en: 'Cirrus above 6 km. The corona can still show through.',
   },
 };

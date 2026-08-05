@@ -153,11 +153,12 @@ export function computeDurationGradient(
 }
 
 /** Rumb a text, per a la interfície. */
-export function bearingToCardinal(bearing: number, locale: 'ca' | 'es' = 'ca'): string {
-  const names =
-    locale === 'ca'
-      ? ['nord', 'nord-est', 'est', 'sud-est', 'sud', 'sud-oest', 'oest', 'nord-oest']
-      : ['norte', 'noreste', 'este', 'sureste', 'sur', 'suroeste', 'oeste', 'noroeste'];
+export function bearingToCardinal(bearing: number, locale: 'ca' | 'es' | 'en' = 'ca'): string {
+  const names = locale === 'ca'
+    ? ['nord', 'nord-est', 'est', 'sud-est', 'sud', 'sud-oest', 'oest', 'nord-oest']
+    : locale === 'es'
+      ? ['norte', 'noreste', 'este', 'sureste', 'sur', 'suroeste', 'oeste', 'noroeste']
+      : ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'];
   const index = Math.round(((bearing % 360) + 360) % 360 / 45) % 8;
   return names[index];
 }

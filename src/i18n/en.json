@@ -1,0 +1,48 @@
+{
+  "locale": {
+    "name": "English",
+    "switch": "Language",
+    "ca": "Catalan",
+    "es": "Spanish",
+    "en": "English"
+  },
+  "guide": {
+    "title": "Eclipse guide",
+    "subtitle": "Everything you need to know before {{eclipse}}.",
+    "expandAll": "Open all",
+    "collapseAll": "Close all",
+    "criticalBadge": "Key for this eclipse",
+    "openHint": "Tap to open",
+    "sourcesTitle": "Sources",
+    "sourcesNote": "Safety and exposure data verified against IGN, NASA/GSFC and the American Astronomical Society.",
+    "readingTime": "Read it before leaving home: mobile networks will be congested on eclipse day."
+  },
+  "safety": {
+    "badge": "Eye safety",
+    "filterRequired": {
+      "title": "Certified solar filter required",
+      "text": "Never remove your ISO 12312-2 filter to look at the Sun. The retina burns without pain and the damage is permanent."
+    },
+    "totalityNow": {
+      "title": "Now you can look without a filter",
+      "text": "You are within totality. Remove the filter and view the corona with the naked eye. Put it back on as soon as the first point of light appears."
+    },
+    "totalitySoon": {
+      "title": "Keep the filter on until second contact",
+      "text": "You are still in the partial phase. Do not touch the filter until the Sun is completely covered and darkness falls suddenly."
+    },
+    "annular": {
+      "title": "Annular eclipse: never remove the filter",
+      "text": "There is no safe moment during an annular eclipse. The ring of sunlight that remains visible can burn just like the full Sun. Keep the filter on at all times."
+    },
+    "partial": {
+      "title": "Only a partial phase here",
+      "text": "The Sun is never fully covered at this location. A certified filter is required from beginning to end."
+    },
+    "none": {
+      "title": "No visible eclipse",
+      "text": "Even without an eclipse, looking directly at the Sun or through an unfiltered lens can damage your eyesight."
+    },
+    "cameraNote": "Use your phone screen, not your eyes."
+  }
+}

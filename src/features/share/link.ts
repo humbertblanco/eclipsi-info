@@ -260,3 +260,15 @@ export function buildShareLink(params: ShareLinkParams): string {
 
   return `?${parts.join('&')}`;
 }
+
+/** Munta l'URL completa sense perdre ni l'idioma del pathname ni la vista hash. */
+export function buildShareUrl(
+  params: ShareLinkParams,
+  currentUrl: string,
+  destinationHash?: string,
+): string {
+  const url = new URL(currentUrl);
+  url.search = buildShareLink(params);
+  url.hash = destinationHash ?? url.hash;
+  return url.toString();
+}

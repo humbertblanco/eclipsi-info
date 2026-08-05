@@ -383,17 +383,18 @@ function formatFactor(factor: number): string {
  */
 function twilightComparison(lux: number, atmosphere: Atmosphere): LocalisedText {
   const alt = equivalentSunAltitudeDeg(lux, atmosphere);
-  if (alt >= 10) return { ca: 'un dia ennuvolat', es: 'un día nublado' };
-  if (alt >= 0) return { ca: 'els minuts abans de la posta de sol', es: 'los minutos antes de la puesta de sol' };
-  if (alt >= -6) return { ca: 'el crepuscle just després de la posta', es: 'el crepúsculo justo después de la puesta' };
+  if (alt >= 10) return { ca: 'un dia ennuvolat', es: 'un día nublado', en: 'an overcast day' };
+  if (alt >= 0) return { ca: 'els minuts abans de la posta de sol', es: 'los minutos antes de la puesta de sol', en: 'the minutes before sunset' };
+  if (alt >= -6) return { ca: 'el crepuscle just després de la posta', es: 'el crepúsculo justo después de la puesta', en: 'twilight just after sunset' };
   if (alt >= -12) {
     return {
       ca: 'el final del crepuscle civil, quan s’encenen els fanals',
       es: 'el final del crepúsculo civil, cuando se encienden las farolas',
+      en: 'the end of civil twilight, when the street lights come on',
     };
   }
-  if (alt >= -18) return { ca: 'el crepuscle nàutic', es: 'el crepúsculo náutico' };
-  return { ca: 'la nit tancada', es: 'la noche cerrada' };
+  if (alt >= -18) return { ca: 'el crepuscle nàutic', es: 'el crepúsculo náutico', en: 'nautical twilight' };
+  return { ca: 'la nit tancada', es: 'la noche cerrada', en: 'full darkness' };
 }
 
 /**
@@ -416,8 +417,18 @@ const BODY_ES: Record<string, string> = {
   Saturn: 'Saturno',
 };
 
+const BODY_EN: Record<string, string> = {
+  Venus: 'Venus',
+  Júpiter: 'Jupiter',
+  Mercuri: 'Mercury',
+  Mart: 'Mars',
+  Saturn: 'Saturn',
+};
+
 function bodyName(name: string, locale: TimerLocale): string {
-  return locale === 'es' ? (BODY_ES[name] ?? name) : name;
+  if (locale === 'es') return BODY_ES[name] ?? name;
+  if (locale === 'en') return BODY_EN[name] ?? name;
+  return name;
 }
 
 /** Diferència d'azimut portada a l'interval −180…180. */
@@ -434,21 +445,23 @@ function azimuthDelta(bodyAz: number, sunAz: number): number {
 function bodyPlacement(body: VisibleBody, sunAz: number, sunAlt: number, locale: TimerLocale): string {
   const dAz = azimuthDelta(body.azimuth, sunAz);
   const dAlt = body.altitude - sunAlt;
-  const side =
-    dAz >= 0 ? (locale === 'es' ? 'a la derecha' : 'a la dreta') : locale === 'es' ? 'a la izquierda' : 'a l’esquerra';
+  const side = dAz >= 0
+    ? locale === 'es' ? 'a la derecha' : locale === 'en' ? 'to the right' : 'a la dreta'
+    : locale === 'es' ? 'a la izquierda' : locale === 'en' ? 'to the left' : 'a l’esquerra';
   const horizontal = `${Math.round(Math.abs(dAz))}° ${side}`;
 
   let vertical: string;
   if (Math.abs(dAlt) < 3) {
-    vertical = locale === 'es' ? 'a la misma altura' : 'a la mateixa altura';
+    vertical = locale === 'es' ? 'a la misma altura' : locale === 'en' ? 'at the same height' : 'a la mateixa altura';
   } else if (dAlt > 0) {
-    vertical = locale === 'es' ? `${Math.round(dAlt)}° más arriba` : `${Math.round(dAlt)}° més amunt`;
+    vertical = locale === 'es' ? `${Math.round(dAlt)}° más arriba` : locale === 'en' ? `${Math.round(dAlt)}° higher` : `${Math.round(dAlt)}° més amunt`;
   } else {
-    vertical = locale === 'es' ? `${Math.round(-dAlt)}° más abajo` : `${Math.round(-dAlt)}° més avall`;
+    vertical = locale === 'es' ? `${Math.round(-dAlt)}° más abajo` : locale === 'en' ? `${Math.round(-dAlt)}° lower` : `${Math.round(-dAlt)}° més avall`;
   }
 
-  const conjunction = locale === 'es' ? 'y' : 'i';
-  return `${bodyName(body.name, locale)}, ${horizontal} del Sol ${conjunction} ${vertical}`;
+  const conjunction = locale === 'es' ? 'y' : locale === 'en' ? 'and' : 'i';
+  const sunReference = locale === 'en' ? 'of the Sun' : 'del Sol';
+  return `${bodyName(body.name, locale)}, ${horizontal} ${sunReference} ${conjunction} ${vertical}`;
 }
 
 /* ------------------------------------------------------- esborrany de fita */
@@ -528,14 +541,16 @@ function totalityBeats(
     windowSec: 200,
     filterState: 'away-from-sun',
     look: 'ground',
-    title: { ca: 'La llum es torna metàl·lica', es: 'La luz se vuelve metálica' },
+    title: { ca: 'La llum es torna metàl·lica', es: 'La luz se vuelve metálica', en: 'The light turns metallic' },
     text: {
       ca: 'Els últims minuts el Sol ja no és un disc sinó una línia de llum, i les ombres es tornen extraordinàriament nítides. Mira a terra sota un arbre: cada espai entre fulles fa de forat estenopeic i el terra s’omple de mitges llunes.',
       es: 'En los últimos minutos el Sol ya no es un disco sino una línea de luz, y las sombras se vuelven extraordinariamente nítidas. Mira al suelo bajo un árbol: cada hueco entre hojas hace de agujero estenopeico y el suelo se llena de medias lunas.',
+      en: 'In the final minutes the Sun is no longer a disc but a line of light, and shadows become extraordinarily sharp. Look at the ground beneath a tree: every gap between the leaves acts as a pinhole and fills the ground with crescents.',
     },
     speech: {
       ca: 'Mira les ombres a terra. Es tornen molt nítides.',
       es: 'Mira las sombras en el suelo. Se vuelven muy nítidas.',
+      en: 'Look at the shadows on the ground. They are becoming very sharp.',
     },
   });
 
@@ -546,12 +561,13 @@ function totalityBeats(
     windowSec: 70,
     filterState: 'away-from-sun',
     look: 'ground',
-    title: { ca: 'Bandes d’ombra', es: 'Bandas de sombra' },
+    title: { ca: 'Bandes d’ombra', es: 'Bandas de sombra', en: 'Shadow bands' },
     text: {
       ca: 'Ratlles fosques ondulants que corren per terra, com el fons d’una piscina. Són turbulència atmosfèrica i no surten sempre. Per veure-les cal una superfície clara i llisa: aquí és on serveix el llençol blanc estès a terra.',
       es: 'Rayas oscuras ondulantes que corren por el suelo, como el fondo de una piscina. Son turbulencia atmosférica y no salen siempre. Para verlas hace falta una superficie clara y lisa: aquí es donde sirve la sábana blanca extendida en el suelo.',
+      en: 'Rippling dark lines race across the ground like patterns on the bottom of a swimming pool. They are caused by atmospheric turbulence and do not always appear. A pale, smooth surface helps reveal them: this is what the white sheet spread on the ground is for.',
     },
-    speech: { ca: 'Mira el llençol blanc. Bandes d’ombra.', es: 'Mira la sábana blanca. Bandas de sombra.' },
+    speech: { ca: 'Mira el llençol blanc. Bandes d’ombra.', es: 'Mira la sábana blanca. Bandas de sombra.', en: 'Look at the white sheet. Shadow bands.' },
   });
 
   drafts.push(shadowWallBeat(shadow));
@@ -566,12 +582,13 @@ function totalityBeats(
     windowSec: 5,
     filterState: 'filtered',
     look: 'sun',
-    title: { ca: 'Grans de Baily', es: 'Granos de Baily' },
+    title: { ca: 'Grans de Baily', es: 'Granos de Baily', en: 'Baily’s beads' },
     text: {
       ca: 'L’últim fil de Sol es trenca en punts brillants separats: és la llum que passa entre les muntanyes de la vora de la Lluna. Encara és fotosfera, i el filtre encara no es toca.',
       es: 'El último hilo de Sol se rompe en puntos brillantes separados: es la luz que pasa entre las montañas del borde de la Luna. Todavía es fotosfera, y el filtro todavía no se toca.',
+      en: 'The last thread of sunlight breaks into separate bright points: sunlight is passing between mountains along the Moon’s edge. This is still the photosphere, so keep the filter on.',
     },
-    speech: { ca: 'Grans de Baily. Amb el filtre posat.', es: 'Granos de Baily. Con el filtro puesto.' },
+    speech: { ca: 'Grans de Baily. Amb el filtre posat.', es: 'Granos de Baily. Con el filtro puesto.', en: 'Baily’s beads. Keep the filter on.' },
   });
 
   drafts.push({
@@ -582,12 +599,13 @@ function totalityBeats(
     filterState: 'filtered',
     look: 'sun',
     essential: true,
-    title: { ca: 'Anell de diamant', es: 'Anillo de diamante' },
+    title: { ca: 'Anell de diamant', es: 'Anillo de diamante', en: 'Diamond ring' },
     text: {
       ca: 'Queda un sol punt de llum amb la corona insinuant-se al voltant. És la imatge que tothom té al cap. Segueix sent fotosfera: el filtre es treu quan la veu ho digui, no quan et sembli que ja no enlluerna.',
       es: 'Queda un solo punto de luz con la corona insinuándose alrededor. Es la imagen que todo el mundo tiene en la cabeza. Sigue siendo fotosfera: el filtro se quita cuando la voz lo diga, no cuando te parezca que ya no deslumbra.',
+      en: 'One point of light remains, with the corona beginning to show around it. This is the image everyone knows. It is still the photosphere: remove the filter when the voice tells you, not when it merely seems less dazzling.',
     },
-    speech: { ca: 'Anell de diamant. Filtre posat.', es: 'Anillo de diamante. Filtro puesto.' },
+    speech: { ca: 'Anell de diamant. Filtre posat.', es: 'Anillo de diamante. Filtro puesto.', en: 'Diamond ring. Keep the filter on.' },
   });
 
   // ————— L'ÚNICA fita que autoritza a treure's el filtre —————
@@ -617,6 +635,7 @@ function totalityBeats(
     text: {
       ca: 'El disc solar ha quedat tapat del tot. Ara, i només fins al tercer contacte, es mira sense filtre: és l’única manera de veure la corona, perquè a través d’un filtre solar no se’n veu absolutament res. Comprova-ho abans de fer res: si encara queda un punt de llum, el filtre no es toca. Pot ser que a la vora per on ha desaparegut el Sol hi quedi un arc rosa —la cromosfera—, però dura uns cinc segons i el retard de seguretat se’l sol menjar.',
       es: 'El disco solar ha quedado tapado del todo. Ahora, y solo hasta el tercer contacto, se mira sin filtro: es la única manera de ver la corona, porque a través de un filtro solar no se ve absolutamente nada. Compruébalo antes de hacer nada: si todavía queda un punto de luz, el filtro no se toca. Puede que en el borde por donde ha desaparecido el Sol quede un arco rosa —la cromosfera—, pero dura unos cinco segundos y el retardo de seguridad suele comérselo.',
+      en: 'The solar disc is now completely covered. From now, and only until third contact, you may look without a filter: that is the only way to see the corona, which is completely invisible through a solar filter. Check before doing anything: if any point of light remains, keep the filter on. A pink arc —the chromosphere— may linger where the Sun disappeared, but it lasts about five seconds and the safety delay usually misses it.',
     },
     speech: filterOffText.speech,
   });
@@ -629,12 +648,13 @@ function totalityBeats(
     filterState: 'naked-eye',
     look: 'sun',
     essential: true,
-    title: { ca: 'Corona', es: 'Corona' },
+    title: { ca: 'Corona', es: 'Corona', en: 'Corona' },
     text: {
       ca: 'El motiu del viatge. Un halo nacrat i estructurat, amb serpentines que arriben a diversos radis solars. Cap fotografia s’hi assembla: el rang dinàmic que veu l’ull no cap en cap sensor. Mira-la a ull nu primer i amb prismàtics després.',
       es: 'El motivo del viaje. Un halo nacarado y estructurado, con serpentinas que llegan a varios radios solares. Ninguna fotografía se le parece: el rango dinámico que ve el ojo no cabe en ningún sensor. Mírala a simple vista primero y con prismáticos después.',
+      en: 'The reason for the journey. A pearly, structured halo with streamers extending several solar radii. No photograph looks like it: no sensor can capture the dynamic range your eye sees. Look with the naked eye first, then with binoculars.',
     },
-    speech: { ca: 'Corona. Mira-la a ull nu.', es: 'Corona. Mírala a simple vista.' },
+    speech: { ca: 'Corona. Mira-la a ull nu.', es: 'Corona. Mírala a simple vista.', en: 'Corona. Look with the naked eye.' },
   });
 
   drafts.push({
@@ -644,12 +664,13 @@ function totalityBeats(
     windowSec: 15,
     filterState: 'naked-eye',
     look: 'sun',
-    title: { ca: 'Protuberàncies', es: 'Protuberancias' },
+    title: { ca: 'Protuberàncies', es: 'Protuberancias', en: 'Prominences' },
     text: {
       ca: 'Llengües vermelloses de plasma que sobresurten de la vora de la Lluna. Amb prismàtics —ara sí, sense filtre, i només mentre duri la totalitat— es veuen molt bé.',
       es: 'Lenguas rojizas de plasma que sobresalen del borde de la Luna. Con prismáticos —ahora sí, sin filtro, y solo mientras dure la totalidad— se ven muy bien.',
+      en: 'Reddish tongues of plasma protruding from the Moon’s edge. They show clearly through binoculars —now without a filter, but only while totality lasts.',
     },
-    speech: { ca: 'Protuberàncies a la vora. Prismàtics, si en tens.', es: 'Protuberancias en el borde. Prismáticos, si tienes.' },
+    speech: { ca: 'Protuberàncies a la vora. Prismàtics, si en tens.', es: 'Protuberancias en el borde. Prismáticos, si tienes.', en: 'Prominences at the edge. Use binoculars if you have them.' },
   });
 
   // ————— El que NOMÉS hi cap si la totalitat arriba al minut —————
@@ -673,7 +694,7 @@ function totalityBeats(
       windowSec: 15,
       filterState: 'away-from-sun',
       look: 'around',
-      title: { ca: 'Crepuscle de 360°', es: 'Crepúsculo de 360°' },
+      title: { ca: 'Crepuscle de 360°', es: 'Crepúsculo de 360°', en: '360° twilight' },
       // «UN CENTENAR DE QUILÒMETRES» ERA TRES VEGADES MASSA POC (corregit a
       // l'auditoria de text del 3-8-2026). Mesurat caminant perpendicularment
       // a la franja des de la línia central amb `computeLocalCircumstances`
@@ -684,8 +705,9 @@ function totalityBeats(
       text: {
         ca: 'Aparta la vista del Sol un moment i gira sobre tu mateix. Tot l’horitzó té color de posta de sol, en totes direccions alhora, perquè ets sota una ombra de pocs centenars de quilòmetres i fora d’ella encara és de dia.',
         es: 'Aparta la vista del Sol un momento y gira sobre ti mismo. Todo el horizonte tiene color de puesta de sol, en todas direcciones a la vez, porque estás bajo una sombra de pocos centenares de kilómetros y fuera de ella todavía es de día.',
+        en: 'Look away from the Sun for a moment and turn around. The entire horizon has the colours of sunset in every direction at once: you are beneath a shadow only a few hundred kilometres wide, and beyond it daylight continues.',
       },
-      speech: { ca: 'Gira’t. Tot l’horitzó és color de posta.', es: 'Date la vuelta. Todo el horizonte es color de puesta.' },
+      speech: { ca: 'Gira’t. Tot l’horitzó és color de posta.', es: 'Date la vuelta. Todo el horizonte es color de puesta.', en: 'Turn around. The whole horizon has the colours of sunset.' },
     });
   }
 
@@ -704,12 +726,13 @@ function totalityBeats(
     windowSec: 15,
     filterState: 'away-from-sun',
     look: 'around',
-    title: { ca: 'Fred, vent i silenci', es: 'Frío, viento y silencio' },
+    title: { ca: 'Fred, vent i silenci', es: 'Frío, viento y silencio', en: 'Cold, wind and silence' },
     text: {
       ca: `La temperatura fa un descens molt brusc en qüestió de segons i sovint s’aixeca un cop de vent. Els ocells callen de cop o tornen a dormir, els grills es posen a cantar. La llum haurà caigut fins a uns ${formatLux(totalityLux)} lux, com ${totalityLight.ca}: és el que dona el nostre model amb el Sol a ${Math.round(sunAlt)}°, i com més baix és el Sol menys llum entra dins de l’ombra. Escolta tant com mires.`,
       es: `La temperatura sufre un descenso muy brusco en cuestión de segundos y a menudo se levanta un golpe de viento. Los pájaros callan de golpe o vuelven a dormir, los grillos se ponen a cantar. La luz habrá caído hasta unos ${formatLux(totalityLux)} lux, como ${totalityLight.es}: es lo que da nuestro modelo con el Sol a ${Math.round(sunAlt)}°, y cuanto más bajo está el Sol menos luz entra dentro de la sombra. Escucha tanto como miras.`,
+      en: `The temperature drops sharply within seconds and a gust of wind often rises. Birds suddenly fall silent or settle down to sleep, while crickets start singing. The light will have fallen to about ${formatLux(totalityLux)} lux, like ${totalityLight.en}: that is what our model gives with the Sun at ${Math.round(sunAlt)}°, and the lower the Sun, the less light enters the shadow. Listen as much as you look.`,
     },
-    speech: { ca: 'Escolta. Els ocells callen i baixa la temperatura.', es: 'Escucha. Los pájaros callan y baja la temperatura.' },
+    speech: { ca: 'Escolta. Els ocells callen i baixa la temperatura.', es: 'Escucha. Los pájaros callan y baja la temperatura.', en: 'Listen. The birds fall silent and the temperature drops.' },
   });
 
   // «Deixa la càmera», NOMÉS SI LA TOTALITAT DURA UN MINUT O MÉS.
@@ -732,12 +755,13 @@ function totalityBeats(
       windowSec: 10,
       filterState: 'naked-eye',
       look: 'sun',
-      title: { ca: 'Deixa la càmera', es: 'Deja la cámara' },
+      title: { ca: 'Deixa la càmera', es: 'Deja la cámara', en: 'Put the camera down' },
       text: {
         ca: 'Si has estat a la càmera, para ara. Els últims segons són per mirar. Fotografies de la corona n’hi ha milions de millors que la teva; aquesta corona, amb aquesta gent i aquest horitzó, no la tornaràs a veure.',
         es: 'Si has estado con la cámara, para ahora. Los últimos segundos son para mirar. Fotografías de la corona hay millones mejores que la tuya; esta corona, con esta gente y este horizonte, no la volverás a ver.',
+        en: 'If you have been using the camera, stop now. These final seconds are for looking. Millions of better photographs of the corona already exist; you will never see this corona, with these people and this horizon, again.',
       },
-      speech: { ca: 'Deixa la càmera. Mira la corona.', es: 'Deja la cámara. Mira la corona.' },
+      speech: { ca: 'Deixa la càmera. Mira la corona.', es: 'Deja la cámara. Mira la corona.', en: 'Put the camera down. Look at the corona.' },
     });
   }
 
@@ -748,7 +772,7 @@ function totalityBeats(
     windowSec: 5,
     filterState: 'naked-eye',
     look: 'sun',
-    title: { ca: 'L’arc rosa de sortida', es: 'El arco rosa de salida' },
+    title: { ca: 'L’arc rosa de sortida', es: 'El arco rosa de salida', en: 'The returning pink arc' },
     // Dita com una cosa que has de VIGILAR i no com una cosa que ja passa: la
     // cromosfera de sortida apareix als últims segons abans de C3, i aquesta
     // fita arriba vint segons abans. I amb l'asimetria explícita, que és la
@@ -758,8 +782,9 @@ function totalityBeats(
     text: {
       ca: 'Vigila la vora contrària, per on tornarà el Sol: quan hi vegis un arc rosa, la totalitat ja s’està acabant i el següent que sortirà per allà és fotosfera. No esperis a veure’l per posar-te el filtre. Per treure-te’l manava el que veies; per tornar-te’l a posar mana el rellotge, i el rellotge va abans.',
       es: 'Vigila el borde contrario, por donde volverá el Sol: cuando veas ahí un arco rosa, la totalidad ya se está acabando y lo siguiente que saldrá por ahí es fotosfera. No esperes a verlo para ponerte el filtro. Para quitártelo mandaba lo que veías; para volver a ponértelo manda el reloj, y el reloj va antes.',
+      en: 'Watch the opposite edge, where the Sun will return: when a pink arc appears there, totality is ending and the photosphere will emerge next. Do not wait to see it before replacing the filter. What you saw governed removing the filter; the clock governs putting it back on, and the clock acts early.',
     },
-    speech: { ca: 'Vigila la vora. Quan torni l’arc rosa, s’acaba.', es: 'Vigila el borde. Cuando vuelva el arco rosa, se acaba.' },
+    speech: { ca: 'Vigila la vora. Quan torni l’arc rosa, s’acaba.', es: 'Vigila el borde. Cuando vuelva el arco rosa, se acaba.', en: 'Watch the edge. When the pink arc returns, totality is ending.' },
   });
 
   // ————— Els dos avisos de SEGURETAT abans de C3 —————
@@ -785,10 +810,12 @@ function totalityBeats(
           ? {
               ca: 'El Sol no torna gradualment: reapareix de cop, i el primer punt de fotosfera ja és massa brillant per a un ull adaptat a la foscor. El filtre s’ha de tenir posat ABANS, no en veure’l.',
               es: 'El Sol no vuelve gradualmente: reaparece de golpe, y el primer punto de fotosfera ya es demasiado brillante para un ojo adaptado a la oscuridad. El filtro debe estar puesto ANTES, no al verlo.',
+              en: 'The Sun does not return gradually: it reappears suddenly, and the first point of photosphere is already too bright for a dark-adapted eye. The filter must be on BEFORE it appears, not when you see it.',
             }
           : {
               ca: 'Ulls tapats ara. El tercer contacte arriba d’aquí a cinc segons i els instants de contacte tenen un parell de segons d’incertesa.',
               es: 'Ojos tapados ya. El tercer contacto llega dentro de cinco segundos y los instantes de contacto tienen un par de segundos de incertidumbre.',
+              en: 'Cover your eyes now. Third contact is five seconds away, and contact times carry a couple of seconds of uncertainty.',
             },
       speech: phrase.speech,
     });
@@ -802,12 +829,13 @@ function totalityBeats(
     filterState: 'filtered',
     look: 'sun',
     essential: true,
-    title: { ca: 'Anell de diamant de sortida', es: 'Anillo de diamante de salida' },
+    title: { ca: 'Anell de diamant de sortida', es: 'Anillo de diamante de salida', en: 'Outgoing diamond ring' },
     text: {
       ca: 'El primer punt de Sol torna per la vora oposada, amb la corona encara insinuada al voltant. Es mira amb filtre: això ja és fotosfera.',
       es: 'El primer punto de Sol vuelve por el borde opuesto, con la corona todavía insinuada alrededor. Se mira con filtro: eso ya es fotosfera.',
+      en: 'The first point of sunlight returns at the opposite edge, with the corona still faintly visible around it. View it through the filter: this is the photosphere again.',
     },
-    speech: { ca: 'Anell de diamant. Només amb filtre.', es: 'Anillo de diamante. Solo con filtro.' },
+    speech: { ca: 'Anell de diamant. Només amb filtre.', es: 'Anillo de diamante. Solo con filtro.', en: 'Diamond ring. Through the filter only.' },
   });
 
   drafts.push({
@@ -817,17 +845,19 @@ function totalityBeats(
     windowSec: 5,
     filterState: 'filtered',
     look: 'sun',
-    title: { ca: 'Grans de Baily de sortida', es: 'Granos de Baily de salida' },
+    title: { ca: 'Grans de Baily de sortida', es: 'Granos de Baily de salida', en: 'Outgoing Baily’s beads' },
     text: {
       ca: 'Els punts es multipliquen per la vora fins a tornar-se un fil continu. A partir d’aquí el filtre es queda posat fins al quart contacte.',
       es: 'Los puntos se multiplican por el borde hasta volverse un hilo continuo. A partir de aquí el filtro se queda puesto hasta el cuarto contacto.',
+      en: 'The points multiply along the edge until they become a continuous thread. Keep the filter on from now until fourth contact.',
     },
-    speech: { ca: 'Grans de Baily. El filtre es queda posat.', es: 'Granos de Baily. El filtro se queda puesto.' },
+    speech: { ca: 'Grans de Baily. El filtre es queda posat.', es: 'Granos de Baily. El filtro se queda puesto.', en: 'Baily’s beads. Keep the filter on.' },
   });
 
   if (shadow) {
     const cardinalCa = bearingToCardinal(shadow.departureBearing, 'ca');
     const cardinalEs = bearingToCardinal(shadow.departureBearing, 'es');
+    const cardinalEn = bearingToCardinal(shadow.departureBearing, 'en');
     drafts.push({
       id: 'shadow-departs',
       anchor: 'c3',
@@ -835,14 +865,16 @@ function totalityBeats(
       windowSec: 20,
       filterState: 'away-from-sun',
       look: 'horizon',
-      title: { ca: 'L’ombra marxa', es: 'La sombra se va' },
+      title: { ca: 'L’ombra marxa', es: 'La sombra se va', en: 'The shadow departs' },
       text: {
         ca: `Gira’t cap ${towardsCa(cardinalCa)}. L’ombra s’allunya per allà a la mateixa velocitat amb què ha arribat, i la paret de foscor es veu marxar contra un cel que ja torna a ser clar.`,
         es: `Vuélvete hacia el ${cardinalEs}. La sombra se aleja por ahí a la misma velocidad con la que ha llegado, y la pared de oscuridad se ve marchar contra un cielo que ya vuelve a ser claro.`,
+        en: `Turn towards the ${cardinalEn}. The shadow recedes that way as fast as it arrived, and you can watch the wall of darkness depart against a brightening sky.`,
       },
       speech: {
         ca: `Mira cap ${towardsCa(cardinalCa)}. L’ombra marxa.`,
         es: `Mira hacia el ${cardinalEs}. La sombra se va.`,
+        en: `Look towards the ${cardinalEn}. The shadow is departing.`,
       },
     });
   }
@@ -854,12 +886,13 @@ function totalityBeats(
     windowSec: 60,
     filterState: 'away-from-sun',
     look: 'ground',
-    title: { ca: 'Bandes d’ombra, segona passada', es: 'Bandas de sombra, segunda pasada' },
+    title: { ca: 'Bandes d’ombra, segona passada', es: 'Bandas de sombra, segunda pasada', en: 'Shadow bands, second pass' },
     text: {
       ca: 'Les bandes d’ombra tornen a passar per terra un minut després de la totalitat. És la segona i última oportunitat de veure-les.',
       es: 'Las bandas de sombra vuelven a pasar por el suelo un minuto después de la totalidad. Es la segunda y última oportunidad de verlas.',
+      en: 'Shadow bands cross the ground again one minute after totality. This is your second and final chance to see them.',
     },
-    speech: { ca: 'Torna a mirar el llençol. Bandes d’ombra.', es: 'Vuelve a mirar la sábana. Bandas de sombra.' },
+    speech: { ca: 'Torna a mirar el llençol. Bandes d’ombra.', es: 'Vuelve a mirar la sábana. Bandas de sombra.', en: 'Look at the sheet again. Shadow bands.' },
   });
 
   return drafts;
@@ -875,7 +908,7 @@ function shadowWallBeat(shadow: ShadowMotion | null): BeatDraft {
     filterState: 'away-from-sun' as const,
     look: 'horizon' as const,
     essential: true,
-    title: { ca: 'L’ombra que arriba', es: 'La sombra que llega' },
+    title: { ca: 'L’ombra que arriba', es: 'La sombra que llega', en: 'The approaching shadow' },
   };
 
   if (!shadow) {
@@ -884,22 +917,28 @@ function shadowWallBeat(shadow: ShadowMotion | null): BeatDraft {
       text: {
         ca: 'Aparta la vista del Sol i mira l’horitzó per on ve l’ombra. És una paret de foscor que s’acosta a velocitat supersònica. Des d’aquest punt no en podem calcular el rumb.',
         es: 'Aparta la vista del Sol y mira el horizonte por donde viene la sombra. Es una pared de oscuridad que se acerca a velocidad supersónica. Desde este punto no podemos calcular su rumbo.',
+        en: 'Look away from the Sun and towards the horizon where the shadow is coming from. It is a wall of darkness approaching at supersonic speed. We cannot calculate its bearing from this location.',
       },
-      speech: { ca: 'Mira l’horitzó. L’ombra arriba.', es: 'Mira el horizonte. La sombra llega.' },
+      speech: { ca: 'Mira l’horitzó. L’ombra arriba.', es: 'Mira el horizonte. La sombra llega.', en: 'Look at the horizon. The shadow is coming.' },
     };
   }
 
   const cardinalCa = bearingToCardinal(shadow.arrivalBearing, 'ca');
   const cardinalEs = bearingToCardinal(shadow.arrivalBearing, 'es');
+  const cardinalEn = bearingToCardinal(shadow.arrivalBearing, 'en');
   // Al final del recorregut, amb el Sol rasant, la velocitat sobre el terra
   // tendeix a infinit. Quan passa, la xifra no informa de res i no es diu.
   const speedCa = shadow.speedDiverging ? 'molt de pressa' : `a uns ${formatSpeed(shadow.speedKmh)} km/h`;
   const speedEs = shadow.speedDiverging ? 'muy deprisa' : `a unos ${formatSpeed(shadow.speedKmh)} km/h`;
+  const speedEn = shadow.speedDiverging ? 'very quickly' : `at about ${formatSpeed(shadow.speedKmh)} km/h`;
   const caveatCa = shadow.lowSunCaveat
     ? ` Amb el Sol a ${Math.round(shadow.sunAltitudeDeg)}° la paret arriba molt rasant: es veu més difusa i costa de destriar del capvespre.`
     : '';
   const caveatEs = shadow.lowSunCaveat
     ? ` Con el Sol a ${Math.round(shadow.sunAltitudeDeg)}° la pared llega muy rasante: se ve más difusa y cuesta distinguirla del atardecer.`
+    : '';
+  const caveatEn = shadow.lowSunCaveat
+    ? ` With the Sun at ${Math.round(shadow.sunAltitudeDeg)}°, the wall arrives at a very shallow angle: it looks more diffuse and is harder to distinguish from dusk.`
     : '';
 
   return {
@@ -907,10 +946,12 @@ function shadowWallBeat(shadow: ShadowMotion | null): BeatDraft {
     text: {
       ca: `Aparta la vista del Sol i mira cap ${towardsCa(cardinalCa)}. L’ombra de la Lluna arriba per allà ${speedCa}: una paret de foscor que s’acosta i t’engoleix.${caveatCa}`,
       es: `Aparta la vista del Sol y mira hacia el ${cardinalEs}. La sombra de la Luna llega por ahí ${speedEs}: una pared de oscuridad que se acerca y te engulle.${caveatEs}`,
+      en: `Look away from the Sun and towards the ${cardinalEn}. The Moon’s shadow is arriving from there ${speedEn}: a wall of darkness approaches and engulfs you.${caveatEn}`,
     },
     speech: {
       ca: `Mira cap ${towardsCa(cardinalCa)}. L’ombra arriba.`,
       es: `Mira hacia el ${cardinalEs}. La sombra llega.`,
+      en: `Look towards the ${cardinalEn}. The shadow is coming.`,
     },
   };
 }
@@ -924,7 +965,7 @@ function planetsBeat(offsetSec: number, bodies: VisibleBody[], sunAz: number, su
     windowSec: 15,
     filterState: 'away-from-sun' as const,
     look: 'sky' as const,
-    title: { ca: 'Planetes', es: 'Planetas' },
+    title: { ca: 'Planetes', es: 'Planetas', en: 'Planets' },
   };
 
   if (bodies.length === 0) {
@@ -933,8 +974,9 @@ function planetsBeat(offsetSec: number, bodies: VisibleBody[], sunAz: number, su
       text: {
         ca: 'Des d’aquest punt no hem calculat cap planeta prou brillant per damunt de l’horitzó durant la totalitat. El cel quedarà com un crepuscle civil: hi pot haver alguna estrella brillant, però no val la pena gastar-hi segons.',
         es: 'Desde este punto no hemos calculado ningún planeta lo bastante brillante por encima del horizonte durante la totalidad. El cielo quedará como un crepúsculo civil: puede haber alguna estrella brillante, pero no vale la pena gastar segundos en ella.',
+        en: 'From this location, no planet is calculated to be bright enough and above the horizon during totality. The sky will resemble civil twilight: a bright star may appear, but it is not worth spending precious seconds looking for one.',
       },
-      speech: { ca: 'Des d’aquí no surt cap planeta brillant.', es: 'Desde aquí no sale ningún planeta brillante.' },
+      speech: { ca: 'Des d’aquí no surt cap planeta brillant.', es: 'Desde aquí no sale ningún planeta brillante.', en: 'No bright planet appears from here.' },
     };
   }
 
@@ -943,20 +985,25 @@ function planetsBeat(offsetSec: number, bodies: VisibleBody[], sunAz: number, su
   const shown = bodies.slice(0, 3);
   const listCa = shown.map((b) => bodyPlacement(b, sunAz, sunAlt, 'ca')).join('. ');
   const listEs = shown.map((b) => bodyPlacement(b, sunAz, sunAlt, 'es')).join('. ');
+  const listEn = shown.map((b) => bodyPlacement(b, sunAz, sunAlt, 'en')).join('. ');
   const firstCa = bodyName(shown[0].name, 'ca');
   const firstEs = bodyName(shown[0].name, 'es');
+  const firstEn = bodyName(shown[0].name, 'en');
   const sideCa = azimuthDelta(shown[0].azimuth, sunAz) >= 0 ? 'a la dreta' : 'a l’esquerra';
   const sideEs = azimuthDelta(shown[0].azimuth, sunAz) >= 0 ? 'a la derecha' : 'a la izquierda';
+  const sideEn = azimuthDelta(shown[0].azimuth, sunAz) >= 0 ? 'to the right' : 'to the left';
 
   return {
     ...base,
     text: {
       ca: `Amb el cel a nivell de crepuscle civil surten els planetes brillants. Calculats per a aquest punt i aquesta hora: ${listCa}.`,
       es: `Con el cielo a nivel de crepúsculo civil salen los planetas brillantes. Calculados para este punto y esta hora: ${listEs}.`,
+      en: `Bright planets appear in a sky as dark as civil twilight. Calculated for this location and time: ${listEn}.`,
     },
     speech: {
       ca: `${firstCa}, ${sideCa} del Sol.`,
       es: `${firstEs}, ${sideEs} del Sol.`,
+      en: `${firstEn}, ${sideEn} of the Sun.`,
     },
   };
 }
@@ -982,12 +1029,13 @@ function annularBeats(durationSec: number): BeatDraft[] {
       windowSec: 200,
       filterState: 'away-from-sun',
       look: 'ground',
-      title: { ca: 'La llum es torna metàl·lica', es: 'La luz se vuelve metálica' },
+      title: { ca: 'La llum es torna metàl·lica', es: 'La luz se vuelve metálica', en: 'The light turns metallic' },
       text: {
         ca: 'Els últims minuts la llum es torna metàl·lica i les ombres, molt nítides. Segueix sent de dia i ho serà tota l’estona: aquesta és la diferència amb un eclipsi total.',
         es: 'En los últimos minutos la luz se vuelve metálica y las sombras, muy nítidas. Sigue siendo de día y lo será todo el rato: esta es la diferencia con un eclipse total.',
+        en: 'In the final minutes the light turns metallic and shadows become very sharp. It is still daylight and will remain so throughout: that is the difference from a total eclipse.',
       },
-      speech: { ca: 'Mira les ombres a terra. Es tornen molt nítides.', es: 'Mira las sombras en el suelo. Se vuelven muy nítidas.' },
+      speech: { ca: 'Mira les ombres a terra. Es tornen molt nítides.', es: 'Mira las sombras en el suelo. Se vuelven muy nítidas.', en: 'Look at the shadows on the ground. They are becoming very sharp.' },
     },
     {
       id: 'ring-closes',
@@ -997,12 +1045,13 @@ function annularBeats(durationSec: number): BeatDraft[] {
       filterState: 'filtered',
       look: 'sun',
       essential: true,
-      title: { ca: 'Es tanca l’anell', es: 'Se cierra el anillo' },
+      title: { ca: 'Es tanca l’anell', es: 'Se cierra el anillo', en: 'The ring closes' },
       text: {
         ca: 'La Lluna acaba d’entrar dins del disc solar i el fil de llum es tanca en un anell complet. Amb el filtre posat: el que estàs mirant és el Sol sencer vist per la vora.',
         es: 'La Luna acaba de entrar dentro del disco solar y el hilo de luz se cierra en un anillo completo. Con el filtro puesto: lo que estás mirando es el Sol entero visto por el borde.',
+        en: 'The Moon has just moved fully inside the solar disc and the thread of light closes into a complete ring. Keep the filter on: you are seeing the entire Sun around the edge.',
       },
-      speech: { ca: 'Es tanca l’anell. Amb el filtre posat.', es: 'Se cierra el anillo. Con el filtro puesto.' },
+      speech: { ca: 'Es tanca l’anell. Amb el filtre posat.', es: 'Se cierra el anillo. Con el filtro puesto.', en: 'The ring closes. Keep the filter on.' },
     },
     {
       id: 'never-safe',
@@ -1014,14 +1063,16 @@ function annularBeats(durationSec: number): BeatDraft[] {
       severity: 'safety',
       essential: true,
       validForMs: 10 * SEC,
-      title: { ca: 'El filtre no es toca', es: 'El filtro no se toca' },
+      title: { ca: 'El filtre no es toca', es: 'El filtro no se toca', en: 'Keep the filter on' },
       text: {
         ca: 'En un eclipsi anular no hi ha cap instant segur sense filtre. L’anell és fotosfera i crema igual que el Sol sencer, encara que el cel s’hagi enfosquit i sembli que ja no enlluerna. Si vas viure la totalitat del 2026 o del 2027, aquest és el dia de no repetir el gest.',
         es: 'En un eclipse anular no hay ningún instante seguro sin filtro. El anillo es fotosfera y quema igual que el Sol entero, aunque el cielo se haya oscurecido y parezca que ya no deslumbra. Si viviste la totalidad de 2026 o 2027, este es el día de no repetir el gesto.',
+        en: 'There is no safe moment without a filter during an annular eclipse. The ring is photosphere and burns just like the full Sun, even if the sky has darkened and it no longer seems dazzling. If you saw totality in 2026 or 2027, this is the day not to repeat that gesture.',
       },
       speech: {
         ca: 'Anularitat. El filtre no es treu en cap moment.',
         es: 'Anularidad. El filtro no se quita en ningún momento.',
+        en: 'Annularity. Keep the filter on at all times.',
       },
     },
     {
@@ -1031,12 +1082,13 @@ function annularBeats(durationSec: number): BeatDraft[] {
       windowSec: 20,
       filterState: 'filtered',
       look: 'sun',
-      title: { ca: 'L’anell, al màxim', es: 'El anillo, en el máximo' },
+      title: { ca: 'L’anell, al màxim', es: 'El anillo, en el máximo', en: 'The ring at maximum' },
       text: {
         ca: 'Al màxim l’anell és el més prim i el més simètric de tota la fase central. Amb el filtre, i amb prismàtics filtrats si en tens, s’hi veu el gruix desigual: la vora de la Lluna no és una circumferència llisa.',
         es: 'En el máximo el anillo es el más fino y el más simétrico de toda la fase central. Con el filtro, y con prismáticos filtrados si tienes, se ve el grosor desigual: el borde de la Luna no es una circunferencia lisa.',
+        en: 'At maximum, the ring is at its thinnest and most symmetrical. Through the filter —and filtered binoculars if you have them— its uneven thickness is visible: the Moon’s edge is not a smooth circle.',
       },
-      speech: { ca: 'L’anell és al més prim. Amb filtre.', es: 'El anillo está en su punto más fino. Con filtro.' },
+      speech: { ca: 'L’anell és al més prim. Amb filtre.', es: 'El anillo está en su punto más fino. Con filtro.', en: 'The ring is at its thinnest. Keep the filter on.' },
     },
     {
       id: 'crescents',
@@ -1045,12 +1097,13 @@ function annularBeats(durationSec: number): BeatDraft[] {
       windowSec: 30,
       filterState: 'away-from-sun',
       look: 'ground',
-      title: { ca: 'Anells a terra', es: 'Anillos en el suelo' },
+      title: { ca: 'Anells a terra', es: 'Anillos en el suelo', en: 'Rings on the ground' },
       text: {
         ca: 'Sota un arbre, o a través d’un escumador de cuina, cada foradet projecta la forma del Sol: ara mateix, anells complets. És l’única manera de veure la forma de l’anell sense mirar-lo.',
         es: 'Bajo un árbol, o a través de un escurridor de cocina, cada agujerito proyecta la forma del Sol: ahora mismo, anillos completos. Es la única manera de ver la forma del anillo sin mirarlo.',
+        en: 'Beneath a tree, or through a kitchen colander, every small hole projects the Sun’s shape: complete rings right now. This is the only way to see the ring’s shape without looking at it.',
       },
-      speech: { ca: 'Mira a terra. Cada foradet projecta un anell.', es: 'Mira al suelo. Cada agujerito proyecta un anillo.' },
+      speech: { ca: 'Mira a terra. Cada foradet projecta un anell.', es: 'Mira al suelo. Cada agujerito proyecta un anillo.', en: 'Look at the ground. Every small hole projects a ring.' },
     },
     {
       id: 'temperature',
@@ -1059,12 +1112,13 @@ function annularBeats(durationSec: number): BeatDraft[] {
       windowSec: 20,
       filterState: 'away-from-sun',
       look: 'around',
-      title: { ca: 'Fred i silenci', es: 'Frío y silencio' },
+      title: { ca: 'Fred i silenci', es: 'Frío y silencio', en: 'Cold and silence' },
       text: {
         ca: 'La temperatura baixa i sovint s’aixeca vent. Els ocells s’aquieten. És més suau que en una totalitat, però amb el Sol al capvespre del gener es nota.',
         es: 'La temperatura baja y a menudo se levanta viento. Los pájaros se aquietan. Es más suave que en una totalidad, pero con el Sol en el atardecer de enero se nota.',
+        en: 'The temperature falls and a wind often rises. Birds grow quiet. The effect is gentler than at totality, but it is noticeable with the Sun low on a January afternoon.',
       },
-      speech: { ca: 'Escolta. Baixa la temperatura.', es: 'Escucha. Baja la temperatura.' },
+      speech: { ca: 'Escolta. Baixa la temperatura.', es: 'Escucha. Baja la temperatura.', en: 'Listen. The temperature is falling.' },
     },
     {
       id: 'ring-opens',
@@ -1074,12 +1128,13 @@ function annularBeats(durationSec: number): BeatDraft[] {
       filterState: 'filtered',
       look: 'sun',
       essential: true,
-      title: { ca: 'S’obre l’anell', es: 'Se abre el anillo' },
+      title: { ca: 'S’obre l’anell', es: 'Se abre el anillo', en: 'The ring opens' },
       text: {
         ca: 'La Lluna toca la vora per l’altra banda i l’anell es trenca. S’acaba l’anularitat. El filtre segueix posat fins al quart contacte.',
         es: 'La Luna toca el borde por el otro lado y el anillo se rompe. Se acaba la anularidad. El filtro sigue puesto hasta el cuarto contacto.',
+        en: 'The Moon touches the opposite edge and breaks the ring. Annularity is over. Keep the filter on until fourth contact.',
       },
-      speech: { ca: 'S’obre l’anell. El filtre segueix posat.', es: 'Se abre el anillo. El filtro sigue puesto.' },
+      speech: { ca: 'S’obre l’anell. El filtre segueix posat.', es: 'Se abre el anillo. El filtro sigue puesto.', en: 'The ring opens. Keep the filter on.' },
     },
   ];
 }
@@ -1093,31 +1148,37 @@ function gateReasonText(gate: FilterGate): LocalisedText {
       return {
         ca: 'Des d’aquest punt l’eclipsi és només parcial: la Lluna no arriba a tapar el Sol del tot i sempre en queda fotosfera a la vista. No hi ha cap moment segur sense filtre, per alta que sigui l’obscuració.',
         es: 'Desde este punto el eclipse es solo parcial: la Luna no llega a tapar el Sol del todo y siempre queda fotosfera a la vista. No hay ningún momento seguro sin filtro, por alta que sea la oscuración.',
+        en: 'The eclipse is only partial from this location: the Moon never fully covers the Sun and some photosphere remains visible throughout. There is no safe moment without a filter, however high the obscuration.',
       };
     case 'central-blocked-by-terrain':
       return {
         ca: 'Hi ha fase central, però des d’aquest punt el terreny tapa el Sol mentre dura. El que et pot reaparèixer per damunt de la carena és fotosfera: el filtre no es treu. Val la pena mirar si movent-te uns quilòmetres el veuries.',
         es: 'Hay fase central, pero desde este punto el terreno tapa el Sol mientras dura. Lo que te puede reaparecer por encima de la loma es fotosfera: el filtro no se quita. Vale la pena mirar si moviéndote unos kilómetros lo verías.',
+        en: 'There is a central phase, but terrain blocks the Sun from this location while it lasts. Anything that reappears above the ridge may be photosphere: keep the filter on. Check whether moving a few kilometres would give you a view.',
       };
     case 'totality-too-short':
       return {
         ca: 'Ets pràcticament damunt del límit de la franja. La totalitat calculada és tan curta que la incertesa del perfil de muntanyes de la Lluna la supera: hi hauria fotosfera visible bona part del temps. Aquí no autoritzem treure’s res. Mou-te cap al centre de la franja.',
         es: 'Estás prácticamente sobre el límite de la franja. La totalidad calculada es tan corta que la incertidumbre del perfil de montañas de la Luna la supera: habría fotosfera visible buena parte del tiempo. Aquí no autorizamos quitarse nada. Muévete hacia el centro de la franja.',
+        en: 'You are almost exactly on the edge of the path. The calculated totality is shorter than the uncertainty in the Moon’s mountain profile, so photosphere may remain visible for much of it. Removing the filter is not authorised here. Move towards the centre of the path.',
       };
     case 'edge-uncertain':
       return {
         ca: 'Ets a la franja de dos o tres quilòmetres on el nostre error de posició relativa entre el Sol i la Lluna és més gran que el marge que et separa del límit. Dit clar: no sabem si des d’aquí hi haurà totalitat o no, i una resposta a cara o creu no autoritza ningú a treure’s res. Mou-te cap al centre de la franja i el guió canviarà tot sol.',
         es: 'Estás en la franja de dos o tres kilómetros donde nuestro error de posición relativa entre el Sol y la Luna es mayor que el margen que te separa del límite. Dicho claro: no sabemos si desde aquí habrá totalidad o no, y una respuesta a cara o cruz no autoriza a nadie a quitarse nada. Muévete hacia el centro de la franja y el guion cambiará solo.',
+        en: 'You are within the two- or three-kilometre strip where our error in the Sun–Moon relative position exceeds your margin from the edge. Put plainly: we do not know whether totality will occur here, and a fifty-fifty answer cannot authorise anyone to remove a filter. Move towards the centre of the path and the script will update automatically.',
       };
     case 'missing-central-contacts':
       return {
         ca: 'No hem pogut resoldre el segon i el tercer contacte des d’aquest punt. Sense saber exactament quan comença i quan s’acaba la totalitat, no es pot autoritzar treure cap filtre.',
         es: 'No hemos podido resolver el segundo y el tercer contacto desde este punto. Sin saber exactamente cuándo empieza y cuándo acaba la totalidad, no se puede autorizar quitar ningún filtro.',
+        en: 'We could not resolve second and third contact from this location. Without knowing exactly when totality begins and ends, removing the filter cannot be authorised.',
       };
     default:
       return {
         ca: 'Des d’aquest punt el filtre no es treu en cap moment.',
         es: 'Desde este punto el filtro no se quita en ningún momento.',
+        en: 'Keep the filter on at all times from this location.',
       };
   }
 }
@@ -1165,11 +1226,12 @@ function filteredBeats(
       severity: 'safety',
       essential: true,
       validForMs: 30 * SEC,
-      title: { ca: 'Aquí el filtre no es treu', es: 'Aquí el filtro no se quita' },
+      title: { ca: 'Aquí el filtre no es treu', es: 'Aquí el filtro no se quita', en: 'Keep the filter on here' },
       text: gateReasonText(gate),
       speech: {
         ca: 'Des d’aquest punt el filtre no es treu en cap moment.',
         es: 'Desde este punto el filtro no se quita en ningún momento.',
+        en: 'Keep the filter on at all times from this location.',
       },
     },
     {
@@ -1179,12 +1241,13 @@ function filteredBeats(
       windowSec: 240,
       filterState: 'away-from-sun',
       look: 'ground',
-      title: { ca: 'Mitges llunes a terra', es: 'Medias lunas en el suelo' },
+      title: { ca: 'Mitges llunes a terra', es: 'Medias lunas en el suelo', en: 'Crescents on the ground' },
       text: {
         ca: 'Sota un arbre, cada espai entre fulles fa de forat estenopeic i el terra s’omple de solets mossegats. Un escumador de cuina en fa desenes alhora. És segur i és la millor manera d’ensenyar-ho a qui no tingui ulleres.',
         es: 'Bajo un árbol, cada hueco entre hojas hace de agujero estenopeico y el suelo se llena de solecitos mordidos. Un escurridor de cocina hace decenas a la vez. Es seguro y es la mejor manera de enseñárselo a quien no tenga gafas.',
+        en: 'Beneath a tree, every gap between the leaves acts as a pinhole and fills the ground with tiny bitten Suns. A kitchen colander makes dozens at once. It is safe and the best way to show the eclipse to anyone without glasses.',
       },
-      speech: { ca: 'Mira a terra sota un arbre. Solets mossegats.', es: 'Mira al suelo bajo un árbol. Solecitos mordidos.' },
+      speech: { ca: 'Mira a terra sota un arbre. Solets mossegats.', es: 'Mira al suelo bajo un árbol. Solecitos mordidos.', en: 'Look at the ground beneath a tree. Tiny crescent Suns.' },
     },
     {
       id: 'deep-partial-light',
@@ -1193,7 +1256,7 @@ function filteredBeats(
       windowSec: 60,
       filterState: 'away-from-sun',
       look: 'around',
-      title: { ca: 'La llum, al minut previ', es: 'La luz, en el minuto previo' },
+      title: { ca: 'La llum, al minut previ', es: 'La luz, en el minuto previo', en: 'The light, one minute before maximum' },
       // XIFRES DEL MODEL, NO ESCRITES A MÀ. Aquí hi deia «la il·luminació ronda
       // els mil lux: encara inequívocament de dia, amb ombres i llum per
       // llegir». Amb el 99,84 % de Barcelona i el Sol a 4°, el model del
@@ -1211,6 +1274,7 @@ function filteredBeats(
         ? {
             ca: `Amb el ${pct} % del Sol tapat i el Sol a ${Math.round(sunAlt)}°, el model de llum d’aquesta app dona uns ${lux} lux: com ${comparison.ca}, unes ${factor} vegades menys llum que sense eclipsi. Es farà fosc de debò, i aquí hi ha el parany: s’assemblarà prou a una totalitat perquè algú es tregui el filtre. No ho és. Queda una escletxa de fotosfera encesa fins a l’últim segon, i n’hi ha prou per cremar la retina i per esborrar la corona, que és el que de veritat et perds.`,
             es: `Con el ${pct} % del Sol tapado y el Sol a ${Math.round(sunAlt)}°, el modelo de luz de esta app da unos ${lux} lux: como ${comparison.es}, unas ${factor} veces menos luz que sin eclipse. Va a oscurecer de verdad, y ahí está la trampa: se parecerá lo bastante a una totalidad como para que alguien se quite el filtro. No lo es. Queda una rendija de fotosfera encendida hasta el último segundo, y basta para quemar la retina y para borrar la corona, que es lo que de verdad te pierdes.`,
+            en: `With ${pct}% of the Sun covered and the Sun at ${Math.round(sunAlt)}°, this app’s light model gives about ${lux} lux: like ${comparison.en}, around ${factor} times less light than without an eclipse. It really will become dark, and that is the trap: it will resemble totality enough to tempt someone to remove the filter. It is not totality. A sliver of photosphere remains lit until the final second, enough to burn the retina and wash out the corona —the sight you are truly missing.`,
           }
         : {
             // El «la majoria de gent no nota res» d'abans era una afirmació
@@ -1220,10 +1284,12 @@ function filteredBeats(
             // cert a tot el rang, i el número el posa el model.
             ca: `Amb el ${pct} % del Sol tapat el model dona uns ${lux} lux, unes ${factor} vegades menys llum que sense eclipsi. En notaràs molt menys del que fa pensar la xifra: l’ull respon de manera logarítmica i les pupil·les s’han anat dilatant durant l’hora de fase parcial. El que sí que es nota és la qualitat de la llum i la nitidesa de les ombres.`,
             es: `Con el ${pct} % del Sol tapado el modelo da unos ${lux} lux, unas ${factor} veces menos luz que sin eclipse. Notarás mucho menos de lo que hace pensar la cifra: el ojo responde de forma logarítmica y las pupilas se han ido dilatando durante la hora de fase parcial. Lo que sí se nota es la calidad de la luz y la nitidez de las sombras.`,
+            en: `With ${pct}% of the Sun covered, the model gives about ${lux} lux, around ${factor} times less light than without an eclipse. You will notice much less change than the figure suggests: the eye responds logarithmically and your pupils have been dilating throughout the partial phase. What does stand out is the quality of the light and the sharpness of the shadows.`,
           },
       speech: {
         ca: 'Mira la qualitat de la llum i les ombres, no el Sol.',
         es: 'Mira la calidad de la luz y las sombras, no el Sol.',
+        en: 'Look at the quality of the light and the shadows, not the Sun.',
       },
     },
     {
@@ -1234,12 +1300,13 @@ function filteredBeats(
       filterState: 'filtered',
       look: 'sun',
       essential: true,
-      title: { ca: `Màxim · ${pct} %`, es: `Máximo · ${pct} %` },
+      title: { ca: `Màxim · ${pct} %`, es: `Máximo · ${pct} %`, en: `Maximum · ${pct}%` },
       text: {
         ca: `Màxim de l’eclipsi des d’aquest punt: ${pct} % del disc solar tapat. Amb el filtre posat, la forma del Sol és la més estreta de tot l’esdeveniment.`,
         es: `Máximo del eclipse desde este punto: ${pct} % del disco solar tapado. Con el filtro puesto, la forma del Sol es la más estrecha de todo el evento.`,
+        en: `Eclipse maximum from this location: ${pct}% of the solar disc covered. Through the filter, the Sun is at its narrowest of the entire event.`,
       },
-      speech: { ca: 'Màxim de l’eclipsi. No et treguis el filtre.', es: 'Máximo del eclipse. No te quites el filtro.' },
+      speech: { ca: 'Màxim de l’eclipsi. No et treguis el filtre.', es: 'Máximo del eclipse. No te quites el filtro.', en: 'Eclipse maximum. Keep the filter on.' },
     },
     {
       id: 'temperature',
@@ -1248,18 +1315,20 @@ function filteredBeats(
       windowSec: 60,
       filterState: 'away-from-sun',
       look: 'around',
-      title: { ca: 'Fred i silenci', es: 'Frío y silencio' },
+      title: { ca: 'Fred i silenci', es: 'Frío y silencio', en: 'Cold and silence' },
       text: {
         ca: 'La temperatura baixa i els ocells s’aquieten. Amb obscuracions altes es nota clarament, encara que la llum sembli normal. Escolta tant com mires.',
         es: 'La temperatura baja y los pájaros se aquietan. Con oscuraciones altas se nota claramente, aunque la luz parezca normal. Escucha tanto como miras.',
+        en: 'The temperature falls and birds grow quiet. With high obscuration the effect is clear even if the light seems normal. Listen as much as you look.',
       },
-      speech: { ca: 'Escolta. Baixa la temperatura.', es: 'Escucha. Baja la temperatura.' },
+      speech: { ca: 'Escolta. Baixa la temperatura.', es: 'Escucha. Baja la temperatura.', en: 'Listen. The temperature is falling.' },
     },
   ];
 
   if (deep && shadow) {
     const cardinalCa = bearingToCardinal(shadow.arrivalBearing, 'ca');
     const cardinalEs = bearingToCardinal(shadow.arrivalBearing, 'es');
+    const cardinalEn = bearingToCardinal(shadow.arrivalBearing, 'en');
     drafts.push({
       id: 'shadow-wall',
       anchor: 'max',
@@ -1267,12 +1336,13 @@ function filteredBeats(
       windowSec: 40,
       filterState: 'away-from-sun',
       look: 'horizon',
-      title: { ca: 'L’ombra, de lluny', es: 'La sombra, de lejos' },
+      title: { ca: 'L’ombra, de lluny', es: 'La sombra, de lejos', en: 'The shadow in the distance' },
       text: {
         ca: `L’ombra de la Lluna passa a prop però no per aquí. Mira cap ${towardsCa(cardinalCa)}: l’horitzó s’enfosqueix com una tempesta que no arriba. És el més a prop que estaràs de la totalitat des d’aquest punt.`,
         es: `La sombra de la Luna pasa cerca pero no por aquí. Mira hacia el ${cardinalEs}: el horizonte se oscurece como una tormenta que no llega. Es lo más cerca que estarás de la totalidad desde este punto.`,
+        en: `The Moon’s shadow passes nearby, but not here. Look towards the ${cardinalEn}: the horizon darkens like a storm that never arrives. This is the closest you will come to totality from this location.`,
       },
-      speech: { ca: `Mira cap ${towardsCa(cardinalCa)}. L’ombra passa de llarg.`, es: `Mira hacia el ${cardinalEs}. La sombra pasa de largo.` },
+      speech: { ca: `Mira cap ${towardsCa(cardinalCa)}. L’ombra passa de llarg.`, es: `Mira hacia el ${cardinalEs}. La sombra pasa de largo.`, en: `Look towards the ${cardinalEn}. The shadow passes by.` },
     });
   }
 
@@ -1295,6 +1365,7 @@ function buildCaveats(
       text: {
         ca: `Ets a la vora de la franja: el marge que et separa del límit és de ${arcsec}″ i l’error de posició relativa Sol-Lluna de les efemèrides és d’uns 1,5″. No podem dir honestament si hi haurà fase central des d’aquí. Mou-te cap endins.`,
         es: `Estás en el borde de la franja: el margen que te separa del límite es de ${arcsec}″ y el error de posición relativa Sol-Luna de las efemérides es de unos 1,5″. No podemos decir honestamente si habrá fase central desde aquí. Muévete hacia dentro.`,
+        en: `You are at the edge of the path: your margin from the limit is ${arcsec}″, while the ephemeris error in the Sun–Moon relative position is about 1.5″. We cannot honestly say whether a central phase will occur here. Move further into the path.`,
       },
     });
   }
@@ -1313,6 +1384,7 @@ function buildCaveats(
       text: {
         ca: `Els instants de contacte es calculen amb radis mitjans del Sol i de la Lluna: el relleu real del limbe lunar arriba a uns ±2 km i els mou un parell de segons. A més, comparat amb les taules de l’IGN el nostre segon contacte s’avança uns quants segons, fins a nou en el pitjor cas mesurat, i s’avança sempre cap al mateix costat. Per això l’avís de treure’s el filtre no arriba fins a ${FILTER_OFF_DELAY_SEC} segons després del C2 calculat, i encara així es dona condicionat a haver-se fet fosc i veure la corona: si queda un punt de llum, s’espera. El filtre torna a lloc quinze segons abans del C3.`,
         es: `Los instantes de contacto se calculan con radios medios del Sol y de la Luna: el relieve real del limbo lunar llega a unos ±2 km y los mueve un par de segundos. Además, comparado con las tablas del IGN nuestro segundo contacto se adelanta unos segundos, hasta nueve en el peor caso medido, y se adelanta siempre hacia el mismo lado. Por eso el aviso de quitarse el filtro no llega hasta ${FILTER_OFF_DELAY_SEC} segundos después del C2 calculado, y aun así se da condicionado a que haya oscurecido y se vea la corona: si queda un punto de luz, se espera. El filtro vuelve a su sitio quince segundos antes del C3.`,
+        en: `Contact times are calculated using the mean radii of the Sun and Moon: the Moon’s real limb relief reaches about ±2 km and shifts them by a couple of seconds. Compared with IGN tables, our second contact is also several seconds early —up to nine in the worst measured case— and the error consistently points the same way. That is why the instruction to remove the filter does not arrive until ${FILTER_OFF_DELAY_SEC} seconds after calculated C2, and is still conditional on darkness having fallen and the corona being visible: if any point of light remains, wait. Replace the filter fifteen seconds before C3.`,
       },
     });
   }
@@ -1323,6 +1395,7 @@ function buildCaveats(
       text: {
         ca: 'Les bandes d’ombra són turbulència atmosfèrica, no geometria: no es poden predir i hi ha eclipsis en què no surten.',
         es: 'Las bandas de sombra son turbulencia atmosférica, no geometría: no se pueden predecir y hay eclipses en los que no salen.',
+        en: 'Shadow bands are caused by atmospheric turbulence, not geometry: they cannot be predicted and do not appear at every eclipse.',
       },
     });
   }
@@ -1333,6 +1406,7 @@ function buildCaveats(
       text: {
         ca: `El Sol és a ${Math.round(shadow.sunAltitudeDeg)}° sobre l’horitzó. L’ombra arriba tan rasant que la paret de foscor és difusa i es confon amb el capvespre. Es veurà, però no com a les fotografies dels eclipsis amb el Sol alt.`,
         es: `El Sol está a ${Math.round(shadow.sunAltitudeDeg)}° sobre el horizonte. La sombra llega tan rasante que la pared de oscuridad es difusa y se confunde con el atardecer. Se verá, pero no como en las fotografías de los eclipses con el Sol alto.`,
+        en: `The Sun is ${Math.round(shadow.sunAltitudeDeg)}° above the horizon. The shadow arrives at such a shallow angle that the wall of darkness is diffuse and blends into dusk. It will be visible, but not like photographs of eclipses with the Sun high in the sky.`,
       },
     });
   }
@@ -1343,6 +1417,7 @@ function buildCaveats(
       text: {
         ca: 'Amb el Sol tan baix, la velocitat de l’ombra sobre el terra es dispara i deixa de ser una xifra útil. Per això aquí no en donem cap número.',
         es: 'Con el Sol tan bajo, la velocidad de la sombra sobre el terreno se dispara y deja de ser una cifra útil. Por eso aquí no damos ningún número.',
+        en: 'With the Sun this low, the shadow’s ground speed soars and ceases to be a useful figure. That is why no number is shown here.',
       },
     });
   }

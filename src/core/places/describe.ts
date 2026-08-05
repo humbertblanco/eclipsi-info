@@ -16,7 +16,7 @@
 import type { PlaceName } from './types';
 
 /** Els idiomes que l'app té escrits. Català per defecte; el castellà és una tria. */
-export type PlaceLocale = 'ca' | 'es';
+export type PlaceLocale = 'ca' | 'es' | 'en';
 
 /**
  * Frase feta, ja partida per pintar-la.
@@ -45,8 +45,8 @@ export interface PlaceLabel {
  * `Intl` a posta: `src/core/**` no ha de dependre de la configuració regional
  * de l'aparell, i totes dues llengües fan servir la mateixa coma.
  */
-export function formatDistanceKm(km: number): string {
-  if (km < 10) return `${km.toFixed(1).replace('.', ',')} km`;
+export function formatDistanceKm(km: number, locale: PlaceLocale = 'ca'): string {
+  if (km < 10) return `${locale === 'en' ? km.toFixed(1) : km.toFixed(1).replace('.', ',')} km`;
   return `${Math.round(km)} km`;
 }
 
@@ -81,9 +81,14 @@ function spanishOf(name: string): string {
   return `de ${name}`;
 }
 
+function englishOf(name: string): string {
+  return `from ${name}`;
+}
+
 const OF: Record<PlaceLocale, (name: string) => string> = {
   ca: catalanOf,
   es: spanishOf,
+  en: englishOf,
 };
 
 /**
@@ -122,7 +127,10 @@ export function describePlace(
   // afalagar l'usuari amb un número que no és.
   const km = place.distanceKm ?? 0;
   return {
-    primary: `a ${formatDistanceKm(km)} ${OF[locale](settlement.name)}`,
+    primary:
+      locale === 'en'
+        ? `${formatDistanceKm(km, locale)} ${OF[locale](settlement.name)}`
+        : `a ${formatDistanceKm(km, locale)} ${OF[locale](settlement.name)}`,
     secondary: region,
     precision: 'near',
   };

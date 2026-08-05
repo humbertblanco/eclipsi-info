@@ -36,7 +36,7 @@ export const ARCHIVE_ENDPOINT = 'https://archive-api.open-meteo.com/v1/archive';
  */
 export const OPEN_METEO_ATTRIBUTION: LocalisedText = {
   ca: 'Dades meteorològiques d’Open-Meteo.com (CC BY 4.0)',
-  es: 'Datos meteorológicos de Open-Meteo.com (CC BY 4.0)',
+  es: 'Datos meteorológicos de Open-Meteo.com (CC BY 4.0)', en: 'Weather data from Open-Meteo.com (CC BY 4.0)',
 };
 
 /** Horitzó màxim del model numèric, en dies. Passat això no hi ha previsió. */

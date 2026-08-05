@@ -18,6 +18,11 @@ import { ClockDriftNotice } from '../features/clock';
 import { ShareButton } from '../features/share';
 import { CountdownView } from '../features/countdown';
 import { useCloudOutlook } from '../features/weather';
+import {
+  describeDominantLayer,
+  describeHaze,
+  describeLineOfSight,
+} from '../core/weather/describe';
 import { EclipseFingerprint } from '../features/eclipse-visuals/EclipseFingerprint';
 import { ShadowApproach } from '../features/eclipse-visuals/ShadowApproach';
 import { computeShadowMotion } from '../core/astro/shadow';
@@ -132,6 +137,7 @@ export function CountdownScreen({
     targetTimeMs: contacts?.max.time.getTime() ?? null,
     sunAzimuthDeg: contacts?.max.sun.azimuth ?? null,
     sunAltitudeDeg: contacts?.max.sun.altitudeApparent ?? null,
+    locale,
   });
 
   const timeline = useMemo<TimelineContact[]>(() => {
@@ -261,6 +267,72 @@ export function CountdownScreen({
     verdict.centralVisibleSec < verdict.centralTotalSec - 1;
 
   const outlook = clouds.outlook;
+  const dominantWeather = outlook ? describeDominantLayer(outlook, locale) : null;
+  const hazeWeather = outlook ? describeHaze(outlook, locale) : null;
+
+  const weatherCard = (
+    <Card className="home__weathercard">
+      <span className="screen__overline home__weathertitle">
+        {s('home.weatherAtPoint', locale)}
+      </span>
+      <VisibilityMeter
+        place={placeLabel ?? s('common.here', locale)}
+        value={outlook ? outlook.score.score : null}
+        state={outlook ? outlook.score.band : 'unknown'}
+        caption={
+          outlook
+            ? outlook.caveat
+            : clouds.loading
+              ? s('sky.cloudsLoading', locale)
+              : (clouds.error ?? s('sky.cloudsOffline', locale))
+        }
+        age={outlook ? formatAge(clouds.nowMs - outlook.fetchedAtMs) : undefined}
+      />
+      {outlook && (
+        <div className="home__weatherdetails">
+          <div className="home__weathermeta">
+            <span>
+              {s(outlook.mode === 'forecast' ? 'sky.forecast' : 'sky.climatology', locale)}
+            </span>
+            <span>
+              {s('sky.confidence', locale)}:{' '}
+              {s(`sky.confidence.${outlook.confidence}`, locale)}
+            </span>
+          </div>
+          {dominantWeather && <p className="home__weatherlead">{dominantWeather}</p>}
+          <details className="home__weathermore">
+            <summary>{s('home.weatherWhy', locale)}</summary>
+            <dl className="home__cloudlayers">
+              {(['low', 'mid', 'high'] as const).map((layer) => (
+                <div key={layer} className="home__cloudlayer">
+                  <dt>{s(`sky.clouds.${layer}`, locale)}</dt>
+                  <dd>{Math.round(outlook.layers[layer])} %</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="home__weatheranalysis">
+              <p>{describeLineOfSight(outlook, locale)}</p>
+              {hazeWeather && <p>{hazeWeather}</p>}
+            </div>
+          </details>
+        </div>
+      )}
+    </Card>
+  );
+
+  const sharePoint = (
+    <ShareButton
+      eclipseId={eclipseId}
+      locale={locale}
+      location={location}
+      label={placeLabel}
+      circumstances={circumstances}
+      profile={horizon}
+      verdict={verdict}
+      surface="home"
+      className="home__share"
+    />
+  );
 
   return (
     <div className="screen screen--split">
@@ -290,12 +362,11 @@ export function CountdownScreen({
           />
         </section>
 
-        {/* A MÒBIL, JUST SOTA DEL COMPTE ENRERE. Vegeu `cameraCta`. */}
-        {!desktop && cameraCta}
-
-        <Card className="home__phase">
-          <PhaseDial obscuration={obscuration} totality={showsCorona} size={96} />
-          <div className="home__stats">
+        <section className="home__point">
+          <span className="screen__overline">{s('home.fromThisPoint', locale)}</span>
+          <Card className="home__phase">
+            <PhaseDial obscuration={obscuration} totality={showsCorona} size={96} />
+            <div className="home__stats">
             <Stat
               label={
                 verdict
@@ -311,22 +382,31 @@ export function CountdownScreen({
               label={s('home.sunAltitude', locale)}
               value={formatDegrees(contacts.max.sun.altitudeApparent)}
             />
-          </div>
-        </Card>
+            </div>
+          </Card>
 
-        {!horizon && <p className="screen__note">{s('home.terrainPending', locale)}</p>}
-        {verdict && <p className="screen__note">{verdictSummary(verdict, locale)}</p>}
+          {!horizon && <p className="screen__note">{s('home.terrainPending', locale)}</p>}
+          {verdict && <p className="screen__note">{verdictSummary(verdict, locale)}</p>}
         {/*
           Just sota la frase que diu què roba el terreny, la sortida: el
           cercador de llocs del mapa, que és l'única part de l'app que respon
           «i doncs, què faig?» amb llocs concrets. En fantasma i mai en ambre:
           l'accent d'aquesta pantalla ja el té la durada visible, aquí dalt.
         */}
-        {onOpenSpots !== undefined && terrainRobsCentral && (
-          <Button variant="ghost" size="sm" icon="search" onClick={onOpenSpots}>
-            {s('home.findSpot', locale)}
-          </Button>
-        )}
+          {onOpenSpots !== undefined && terrainRobsCentral && (
+            <Button variant="ghost" size="sm" icon="search" onClick={onOpenSpots}>
+              {s('home.findSpot', locale)}
+            </Button>
+          )}
+        </section>
+
+        {/* A mòbil, la càmera és l'acció diferencial i segueix immediatament
+            el resultat que ha de comprovar. */}
+        {!desktop && cameraCta}
+
+        {!desktop && weatherCard}
+
+        {!desktop && sharePoint}
 
         {/*
           Els cinc contactes, al mòbil: la línia horitzontal que diu «per on
@@ -352,15 +432,6 @@ export function CountdownScreen({
           que travessa. Separats en columnes semblaven dues dades independents;
           junts es llegeixen en l'ordre causal correcte.
         */}
-        {shadowMotion && (
-          <ShadowApproach
-            motion={shadowMotion}
-            circumstances={circumstances}
-            locale={locale}
-          />
-        )}
-        <p className="screen__note">{eclipse.spain[locale]}</p>
-
         {/* La simulació converteix l'explicació anterior en una imatge. */}
         <SimulationView
           location={location}
@@ -368,6 +439,13 @@ export function CountdownScreen({
           locale={locale}
           horizon={horizon}
         />
+        {shadowMotion && (
+          <ShadowApproach
+            motion={shadowMotion}
+            circumstances={circumstances}
+            locale={locale}
+          />
+        )}
 
         {/* L'empremta TANCA la columna. És el resum personal que queda després
             d'haver entès les dades, l'arribada de l'ombra i la simulació. */}
@@ -380,21 +458,11 @@ export function CountdownScreen({
       </div>
 
       <div className="screen__col screen__col--side">
-        <Card>
-          <VisibilityMeter
-            place={placeLabel ?? s('common.here', locale)}
-            value={outlook ? outlook.score.score : null}
-            state={outlook ? outlook.score.band : 'unknown'}
-            caption={
-              outlook
-                ? outlook.caveat
-                : clouds.loading
-                  ? s('sky.cloudsLoading', locale)
-                  : (clouds.error ?? s('sky.cloudsOffline', locale))
-            }
-            age={outlook ? formatAge(clouds.nowMs - outlook.fetchedAtMs) : undefined}
-          />
-        </Card>
+        {desktop && cameraCta}
+
+        {desktop && weatherCard}
+
+        {desktop && sharePoint}
 
         {/* El compte enrere amb veu, assaig i pantalla desperta. */}
         <CountdownView
@@ -413,39 +481,6 @@ export function CountdownScreen({
           no pinta res.
         */}
         <ClockDriftNotice locale={locale} />
-
-        {/*
-          A MÒBIL L'APARADOR JA ÉS A DALT (vegeu la columna principal): aquí
-          només hi queda quan la pantalla és ampla i les dues columnes es
-          llegeixen alhora.
-        */}
-        {desktop && cameraCta}
-
-        {/*
-          COMPARTIR EL PUNT, SOTA L'ACCIÓ PRINCIPAL I EN `ghost`.
-
-          Va aquí perquè és la pantalla que respon «quants segons veuràs des
-          d'aquí», que és exactament el que s'envia. I va en fantasma perquè no
-          compet amb el botó gran: qui obre l'app ve a mirar la seva xifra, no a
-          enviar-la; compartir-la ve després.
-
-          Envia l'enllaç amb el punt i, si el sistema ho permet, la targeta amb
-          la silueta del teu horitzó com a fitxer — que és l'única manera que
-          una previsualització de veritat arribi a una conversa, perquè un lloc
-          estàtic no pot tenir una `og:image` diferent per punt.
-        */}
-        <ShareButton
-          eclipseId={eclipseId}
-          locale={locale}
-          location={location}
-          label={placeLabel}
-          circumstances={circumstances}
-          profile={horizon}
-          verdict={verdict}
-          /* Des d'on es comparteix, per saber quin esglaó de l'escala guanya a
-             cada pantalla. Sense aquesta prop el gest no s'apunta enlloc. */
-          surface="home"
-        />
 
         {/*
           EL MINI-MAPA: on és la franja i on ets tu, d'un cop d'ull i sense
@@ -499,6 +534,7 @@ export function CountdownScreen({
           )}
         </p>
         <p className="screen__note">{s('home.sources', locale)}</p>
+        <p className="screen__note">{eclipse.spain[locale]}</p>
       </div>
     </div>
   );

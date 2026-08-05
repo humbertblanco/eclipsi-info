@@ -70,7 +70,8 @@ import type { GeoLocation, LocalCircumstances } from '../../core/astro/types';
 import type { HorizonProfile } from '../../core/horizon/profile';
 import type { VisibilityVerdict } from '../../core/visibility/verdict';
 import type { Locale } from '../../i18n';
-import { buildShareLink } from './link';
+import { formatClock, formatDuration } from '../../screens/format';
+import { buildShareUrl } from './link';
 import {
   cardFileName,
   renderShareCardBlob,
@@ -146,10 +147,10 @@ export function ShareButton({
     );
   }
 
-  const url = new URL(
-    buildShareLink({ lat: location.lat, lon: location.lon, eclipseId, label }),
+  const url = buildShareUrl(
+    { lat: location.lat, lon: location.lon, eclipseId, label },
     window.location.href,
-  ).toString();
+  );
 
   /** Pinta l'esglaó on s'ha acabat i torna a `idle` al cap d'un moment. */
   const settle = (outcome: State): void => {
@@ -165,6 +166,18 @@ export function ShareButton({
 
   const share = async (): Promise<void> => {
     const place = label ?? `${location.lat.toFixed(4)}, ${location.lon.toFixed(4)}`;
+    const central = circumstances.kind === 'total' || circumstances.kind === 'annular';
+    const detail = central
+      ? sh('share.detailCentral', locale, {
+          duration: formatDuration(
+            verdict?.centralVisibleSec ?? circumstances.centralDurationSec,
+          ),
+          time: formatClock(circumstances.contacts.max.time, locale),
+        })
+      : sh('share.detailPartial', locale, {
+          time: formatClock(circumstances.contacts.max.time, locale),
+        });
+    const shareText = sh('share.text', locale, { place, detail });
     // El model es munta abans de res i és síncron: totes dues escales el fan
     // servir, i al camí del porta-retalls no hi pot haver cap `await` entre el
     // clic i el `write()`.
@@ -193,7 +206,7 @@ export function ShareButton({
                 // (l'og) com a SEGONA imatge al costat de la targeta — dues
                 // fotos al mateix missatge, report de camp del 3-8-2026. El
                 // camí de tornada ja va IMPRÈS a la targeta, amb la marca.
-                text: sh('share.text', locale, { place }),
+                text: shareText,
                 files: [file],
               };
         // `canShare` s'ha de preguntar amb el fitxer a la mà: hi ha navegadors
@@ -206,7 +219,7 @@ export function ShareButton({
         } else {
           await navigator.share({
             title: sh('share.title', locale),
-            text: sh('share.text', locale, { place }),
+            text: shareText,
             url,
           });
           done('native_link');

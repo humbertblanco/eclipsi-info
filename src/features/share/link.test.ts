@@ -21,7 +21,18 @@
 
 import { describe, expect, it } from 'vitest';
 import { ECLIPSES } from '../../core/eclipses/catalog';
-import { buildShareLink, MAX_LABEL_CHARS, parseShareLink } from './link';
+import { buildShareLink, buildShareUrl, MAX_LABEL_CHARS, parseShareLink } from './link';
+
+describe('URL compartida completa', () => {
+  it('conserva l’idioma i la vista actual del mapa', () => {
+    expect(
+      buildShareUrl(
+        { lat: 42, lon: 1, eclipseId: '2026-08-12' },
+        'https://eclipsi.info/es/?vell=1#/mapa/llocs',
+      ),
+    ).toBe('https://eclipsi.info/es/?p=42,1&e=2026-08-12#/mapa/llocs');
+  });
+});
 
 describe('llegir un enllaç bo', () => {
   it('en treu el punt, l’eclipsi i el nom', () => {

@@ -19,25 +19,28 @@
 
 import type { Locale } from '../../i18n';
 
-type Entry = { ca: string; es: string };
+type Entry = { ca: string; es: string; en: string };
 
 const STRINGS = {
   /* --- capçalera ---------------------------------------------------------- */
-  title: { ca: 'Com funciona', es: 'Cómo funciona' },
+  title: { ca: 'Com funciona', es: 'Cómo funciona', en: 'How it works' },
   subtitle: {
     ca: 'Què calcula, d’on surt cada dada, i què no fa. Gratuït, per a tothom i sense ànim de lucre.',
     es: 'Qué calcula, de dónde sale cada dato, y qué no hace. Gratuito, para todo el mundo y sin ánimo de lucro.',
+    en: 'What it calculates, where each piece of data comes from, and what it does not do. Free, open to everyone, and not for profit.',
   },
 
   /* --- bloc 1: el càlcul es fa al dispositiu ------------------------------ */
-  'calc.overline': { ca: 'El càlcul', es: 'El cálculo' },
+  'calc.overline': { ca: 'El càlcul', es: 'El cálculo', en: 'The calculation' },
   'calc.title': {
     ca: 'Es fa al teu dispositiu, per al teu punt',
     es: 'Se hace en tu dispositivo, para tu punto',
+    en: 'Calculated on your device, for your exact location',
   },
   'calc.p1': {
     ca: 'Les hores de contacte, la magnitud i la durada no surten d’una taula per ciutats: es calculen per a les teves coordenades i la teva altitud, amb paral·laxi lunar i refracció. És un càlcul topocèntric — del teu punt, no del d’un catàleg.',
     es: 'Las horas de contacto, la magnitud y la duración no salen de una tabla por ciudades: se calculan para tus coordenadas y tu altitud, con paralaje lunar y refracción. Es un cálculo topocéntrico — de tu punto, no del de un catálogo.',
+    en: 'Contact times, magnitude, and duration do not come from a table of cities: they are calculated for your coordinates and elevation, including lunar parallax and refraction. It is a topocentric calculation—for your location, not a catalogue entry.',
   },
   /*
    * La salvaguarda («per calcular-te res») era correcta i l'acabava desfent
@@ -47,40 +50,47 @@ const STRINGS = {
   'calc.p2': {
     ca: 'I tot això passa aquí, al dispositiu: cap servidor no rep les teves coordenades per calcular-te res. Sí que les reben, en canvi, els dos serveis que posen nom al lloc i donen la previsió — i el relleu es baixa per tessel·les, que també diuen aproximadament on ets.',
     es: 'Y todo eso pasa aquí, en el dispositivo: ningún servidor recibe tus coordenadas para calcularte nada. Sí las reciben, en cambio, los dos servicios que ponen nombre al lugar y dan la previsión — y el relieve se descarga por teselas, que también dicen aproximadamente dónde estás.',
+    en: 'All of this happens here, on your device: no server receives your coordinates to perform the calculation. They are, however, sent to the two services that name the location and provide the forecast—and terrain is downloaded in tiles, which also reveal your approximate location.',
   },
 
   /* --- bloc 2: l'horitzó de veritat (la funció diferencial) ---------------- */
-  'horizon.overline': { ca: 'El terreny', es: 'El terreno' },
+  'horizon.overline': { ca: 'El terreny', es: 'El terreno', en: 'The terrain' },
   'horizon.title': {
     ca: 'El teu horitzó, no el de les taules',
     es: 'Tu horizonte, no el de las tablas',
+    en: 'Your horizon, not the one in the tables',
   },
   'horizon.p1': {
     ca: 'Del voltant del teu punt se’n baixa el model digital del terreny (AWS Terrain Tiles) i se’n traça l’horitzó real en 360°, amb curvatura terrestre i refracció atmosfèrica. Les taules suposen l’horitzó llis d’un mar; el teu té carenes.',
     es: 'Del entorno de tu punto se baja el modelo digital del terreno (AWS Terrain Tiles) y se traza el horizonte real en 360°, con curvatura terrestre y refracción atmosférica. Las tablas suponen el horizonte liso de un mar; el tuyo tiene sierras.',
+    en: 'A digital terrain model (AWS Terrain Tiles) is downloaded around your location and used to trace your actual 360° horizon, including Earth curvature and atmospheric refraction. Tables assume a flat sea horizon; yours has ridgelines.',
   },
   'horizon.p2': {
     ca: 'Per això la durada que l’app et diu pot ser més curta que la de les taules — i és la bona. El 12 d’agost de 2026 el Sol serà a pocs graus de l’horitzó, i una carena a ponent pot tapar la totalitat sencera. L’app t’ho diu en segons, abans que hi siguis.',
     es: 'Por eso la duración que la app te dice puede ser más corta que la de las tablas — y es la buena. El 12 de agosto de 2026 el Sol estará a pocos grados del horizonte, y una sierra a poniente puede tapar la totalidad entera. La app te lo dice en segundos, antes de que estés allí.',
+    en: 'That is why the duration shown by the app may be shorter than the duration in the tables—and why it is the right one. On 12 August 2026, the Sun will be only a few degrees above the horizon, and a ridge to the west could block the whole of totality. The app tells you how many seconds you will see before you get there.',
   },
 
   /* --- bloc 3: fonts ------------------------------------------------------- */
-  'sources.overline': { ca: 'Les fonts', es: 'Las fuentes' },
+  'sources.overline': { ca: 'Les fonts', es: 'Las fuentes', en: 'Sources' },
   'sources.title': {
     ca: 'D’on surten les dades',
     es: 'De dónde salen los datos',
+    en: 'Where the data comes from',
   },
   'sources.p1': {
     ca: 'Una app que et diu quan et pots treure una protecció ocular ha de poder dir contra què s’ha validat. Cada peça té un origen amb nom, i es pot anar a comprovar:',
     es: 'Una app que te dice cuándo puedes quitarte una protección ocular tiene que poder decir contra qué se ha validado. Cada pieza tiene un origen con nombre, y se puede ir a comprobar:',
+    en: 'An app that tells you when you can remove eye protection must be able to say what it was validated against. Every component has a named source that you can check:',
   },
 
   /* --- bloc 4: què no fa ---------------------------------------------------- */
-  'not.overline': { ca: 'Els límits', es: 'Los límites' },
-  'not.title': { ca: 'Què no fa', es: 'Qué no hace' },
+  'not.overline': { ca: 'Els límits', es: 'Los límites', en: 'Limitations' },
+  'not.title': { ca: 'Què no fa', es: 'Qué no hace', en: 'What it does not do' },
   'not.lang': {
     ca: 'No et detecta l’idioma: el tries tu al selector, i s’hi queda.',
     es: 'No te detecta el idioma: lo eliges tú en el selector, y ahí se queda.',
+    en: 'It does not detect your language: you choose it in the selector, and your choice is remembered.',
   },
   /*
    * AQUESTA DEIA «no envia la teva ubicació enlloc» I ERA FALSA: l'app la
@@ -93,10 +103,12 @@ const STRINGS = {
   'not.location': {
     ca: 'No desa la teva ubicació fora del dispositiu ni la envia enlloc més que als dos serveis que la necessiten: Photon, per posar nom al lloc, i Open-Meteo, per la previsió.',
     es: 'No guarda tu ubicación fuera del dispositivo ni la envía a ningún sitio más que a los dos servicios que la necesitan: Photon, para poner nombre al lugar, y Open-Meteo, para la previsión.',
+    en: 'It does not store your location outside your device or send it anywhere except to the two services that need it: Photon, to name the location, and Open-Meteo, for the forecast.',
   },
   'not.offline': {
     ca: 'No necessita connexió un cop preparat: el càlcul, la guia i el que hagis desat funcionen sense cobertura, que és com estarà la xarxa dins la franja aquell dia.',
     es: 'No necesita conexión una vez preparado: el cálculo, la guía y lo que hayas guardado funcionan sin cobertura, que es como estará la red dentro de la franja ese día.',
+    en: 'Once prepared, it does not need a connection: the calculation, guide, and anything you have saved work without coverage—which is likely how the network will be inside the eclipse path that day.',
   },
 
   /* --- enllaç a la guia ------------------------------------------------------
@@ -104,70 +116,82 @@ const STRINGS = {
   'safety.link': {
     ca: 'Seguretat ocular, a la guia',
     es: 'Seguridad ocular, en la guía',
+    en: 'Eye safety, in the guide',
   },
 
   /* --- premsa ---------------------------------------------------------------- */
-  'press.overline': { ca: 'Premsa', es: 'Prensa' },
-  'press.title': { ca: 'Per a periodistes', es: 'Para periodistas' },
-  'press.badge': { ca: '12 d’agost de 2026', es: '12 de agosto de 2026' },
+  'press.overline': { ca: 'Premsa', es: 'Prensa', en: 'Press' },
+  'press.title': { ca: 'Per a periodistes', es: 'Para periodistas', en: 'For journalists' },
+  'press.badge': { ca: '12 d’agost de 2026', es: '12 de agosto de 2026', en: '12 August 2026' },
   'press.fact': {
     ca: 'El 12 d’agost de 2026 un eclipsi total de Sol creuarà la península: el primer amb totalitat visible des d’aquí des del 1905. La dada que aquesta app afegeix: els segons REALS de totalitat des del punt exacte de cadascú, amb el relleu descomptat.',
     es: 'El 12 de agosto de 2026 un eclipse total de Sol cruzará la península: el primero con totalidad visible desde aquí desde 1905. El dato que esta app añade: los segundos REALES de totalidad desde el punto exacto de cada uno, con el relieve descontado.',
+    en: 'On 12 August 2026, a total solar eclipse will cross the Iberian Peninsula: the first with totality visible from here since 1905. What this app adds is the ACTUAL number of seconds of totality at each person’s exact location, after accounting for the terrain.',
   },
   'press.oneLinerLabel': {
     ca: 'Descripció d’una línia',
     es: 'Descripción de una línea',
+    en: 'One-line description',
   },
   'press.oneLiner': {
     ca: 'eclipsi.info et diu quants segons de l’eclipsi total del 12 d’agost de 2026 veuràs de debò des del punt exacte on seràs, muntanyes incloses.',
     es: 'eclipsi.info te dice cuántos segundos del eclipse total del 12 de agosto de 2026 verás de verdad desde el punto exacto donde estarás, montañas incluidas.',
+    en: 'eclipsi.info tells you how many seconds of the 12 August 2026 total eclipse you will actually see from your exact location, mountains included.',
   },
   'press.paragraphLabel': {
     ca: 'Descripció d’un paràgraf',
     es: 'Descripción de un párrafo',
+    en: 'One-paragraph description',
   },
   'press.paragraph': {
     ca: 'El 12 d’agost de 2026 un eclipsi total de Sol creuarà la península, el primer amb totalitat visible des d’aquí des del 1905, amb el Sol a pocs graus de l’horitzó. eclipsi.info calcula al mateix dispositiu, per a les coordenades i l’altitud de cadascú, les hores de contacte i els segons reals de totalitat: traça l’horitzó en 360° amb el model del terreny i descompta el que tapa cada carena — que amb el Sol tan baix pot ser la totalitat sencera. Funciona sense connexió un cop preparat, no desa la ubicació fora del dispositiu i només la comparteix amb els serveis necessaris per posar nom al lloc i donar la previsió. És de codi obert. Fet per Humbert Blanco i Damos en el Blanco.',
     es: 'El 12 de agosto de 2026 un eclipse total de Sol cruzará la península, el primero con totalidad visible desde aquí desde 1905, con el Sol a pocos grados del horizonte. eclipsi.info calcula en el propio dispositivo, para las coordenadas y la altitud de cada uno, las horas de contacto y los segundos reales de totalidad: traza el horizonte en 360° con el modelo del terreno y descuenta lo que tapa cada sierra — que con el Sol tan bajo puede ser la totalidad entera. Funciona sin conexión una vez preparado, no guarda la ubicación fuera del dispositivo y solo la comparte con los servicios necesarios para poner nombre al lugar y dar la previsión. Es de código abierto. Hecho por Humbert Blanco y Damos en el Blanco.',
+    en: 'On 12 August 2026, a total solar eclipse will cross the Iberian Peninsula—the first with totality visible from here since 1905—with the Sun only a few degrees above the horizon. eclipsi.info calculates contact times and the actual seconds of totality on the device for each person’s coordinates and elevation: it traces the 360° horizon from the terrain model and subtracts whatever each ridge blocks—which, with the Sun this low, could be the whole of totality. Once prepared, it works offline, does not store location outside the device, and shares it only with the services needed to name the place and provide the forecast. It is open source. Created by Humbert Blanco and Damos en el Blanco.',
   },
-  'press.copy': { ca: 'Copia', es: 'Copia' },
-  'press.copied': { ca: 'Copiat', es: 'Copiado' },
+  'press.copy': { ca: 'Copia', es: 'Copia', en: 'Copy' },
+  'press.copied': { ca: 'Copiat', es: 'Copiado', en: 'Copied' },
 
   /* --- material editorial --------------------------------------------------- */
-  'media.overline': { ca: 'Material de premsa', es: 'Material de prensa' },
+  'media.overline': { ca: 'Material de premsa', es: 'Material de prensa', en: 'Press materials' },
   'media.note': {
     ca: 'Imatges en alta resolució i nota de premsa, preparades per a ús editorial.',
     es: 'Imágenes en alta resolución y nota de prensa, preparadas para uso editorial.',
+    en: 'High-resolution images and a press release, prepared for editorial use.',
   },
-  'media.simulation': { ca: 'Simulació de l’eclipsi al mòbil', es: 'Simulación del eclipse en el móvil' },
+  'media.simulation': { ca: 'Simulació de l’eclipsi al mòbil', es: 'Simulación del eclipse en el móvil', en: 'Eclipse simulation on a phone' },
   'media.simulationAlt': {
     ca: 'Mòbil amb el recorregut simulat de l’eclipsi sobre una plaça',
     es: 'Móvil con el recorrido simulado del eclipse sobre una plaza',
+    en: 'Phone showing the simulated progress of the eclipse over a town square',
   },
-  'media.desktop': { ca: 'Vista de l’aplicació a l’escriptori', es: 'Vista de la aplicación en escritorio' },
+  'media.desktop': { ca: 'Vista de l’aplicació a l’escriptori', es: 'Vista de la aplicación en escritorio', en: 'Desktop view of the app' },
   'media.desktopAlt': {
     ca: 'Pantalla d’escriptori amb el compte enrere i la durada visible de l’eclipsi',
     es: 'Pantalla de escritorio con la cuenta atrás y la duración visible del eclipse',
+    en: 'Desktop screen showing the countdown and visible eclipse duration',
   },
-  'media.download': { ca: 'Descarrega', es: 'Descarga' },
-  'media.release': { ca: 'Descarrega la nota de premsa', es: 'Descarga la nota de prensa' },
+  'media.download': { ca: 'Descarrega', es: 'Descarga', en: 'Download' },
+  'media.release': { ca: 'Descarrega la nota de premsa', es: 'Descarga la nota de prensa', en: 'Download the press release' },
 
   /* --- actius de marca ------------------------------------------------------- */
-  'assets.overline': { ca: 'Actius de marca', es: 'Activos de marca' },
+  'assets.overline': { ca: 'Actius de marca', es: 'Activos de marca', en: 'Brand assets' },
   'assets.note': {
     ca: 'Lliures per a ús editorial. No en canviïs els colors ni les proporcions.',
     es: 'Libres para uso editorial. No cambies sus colores ni sus proporciones.',
+    en: 'Free for editorial use. Do not alter their colours or proportions.',
   },
-  'assets.logo': { ca: 'Logotip complet', es: 'Logotipo completo' },
-  'assets.mark': { ca: 'Marca sola', es: 'Marca sola' },
-  'assets.markMono': { ca: 'Marca monocroma', es: 'Marca monocroma' },
+  'assets.logo': { ca: 'Logotip complet', es: 'Logotipo completo', en: 'Full logo' },
+  'assets.mark': { ca: 'Marca sola', es: 'Marca sola', en: 'Logo mark' },
+  'assets.markMono': { ca: 'Marca monocroma', es: 'Marca monocroma', en: 'Monochrome logo mark' },
   'assets.daylight': {
     ca: 'Logotip per a fons clar',
     es: 'Logotipo para fondo claro',
+    en: 'Logo for light backgrounds',
   },
   'assets.og': {
     ca: 'Imatge social (1200 × 630)',
     es: 'Imagen social (1200 × 630)',
+    en: 'Social image (1200 × 630)',
   },
 
   /* --- contacte ---------------------------------------------------------------
@@ -175,8 +199,9 @@ const STRINGS = {
   'contact.lead': {
     ca: 'Per a entrevistes o dades del vostre punt concret, escriviu als autors:',
     es: 'Para entrevistas o datos de vuestro punto concreto, escribid a los autores:',
+    en: 'For interviews or data about a specific location, contact the authors:',
   },
-  'contact.and': { ca: 'i', es: 'y' },
+  'contact.and': { ca: 'i', es: 'y', en: 'and' },
 } as const satisfies Record<string, Entry>;
 
 export type AboutStringKey = keyof typeof STRINGS;
@@ -230,5 +255,8 @@ export interface AboutAuthor {
 
 export const ABOUT_AUTHORS: AboutAuthor[] = [
   { name: 'Humbert Blanco', url: 'https://x.com/humbertblanco' },
-  { name: 'Damos en el Blanco', url: 'https://damosenelblanco.com' },
+  {
+    name: 'Damos en el Blanco',
+    url: 'https://damosenelblanco.com/?utm_source=eclipsi.info&utm_medium=referral&utm_campaign=credits',
+  },
 ];

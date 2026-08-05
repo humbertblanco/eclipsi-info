@@ -143,7 +143,7 @@ export function cardText(input: CardTextInput): CardText {
   const isCentral =
     circumstances.kind === 'total' || circumstances.kind === 'annular';
 
-  const coords = formatCoords(place.lat, place.lon);
+  const coords = formatCoords(place.lat, place.lon, locale);
   const figures: CardFigure[] = [
     { label: sh('card.max', locale), value: formatClock(contacts.max.time, locale) },
   ];

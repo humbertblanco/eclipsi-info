@@ -166,7 +166,10 @@ export function AlignPanel({
           <span className="screen__overline">{al('target.chosen', locale)}</span>
           <p className="alignpanel__chosenname">
             {target.name}
-            <span className="eclipsi-data"> · {formatCoords(target.lat, target.lon)}</span>
+            <span className="eclipsi-data">
+              {' · '}
+              {formatCoords(target.lat, target.lon, locale)}
+            </span>
           </p>
           <Button variant="ghost" size="sm" onClick={() => setTarget(null)}>
             {al('target.clear', locale)}

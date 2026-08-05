@@ -27,6 +27,7 @@ import './guide.css';
 
 export interface GuideViewProps {
   eclipseId: string;
+  sunAltitudeDeg?: number | null;
 }
 
 /* ------------------------------------------------------------- blocs */
@@ -135,7 +136,7 @@ function Section({ section, critical, open, badge }: SectionProps) {
 
 /* -------------------------------------------------------------- vista */
 
-export function GuideView({ eclipseId }: GuideViewProps) {
+export function GuideView({ eclipseId, sunAltitudeDeg }: GuideViewProps) {
   const { locale, t } = useTranslation();
 
   // Si l'id no és al catàleg no volem que la guia peti: mostrem el contingut
@@ -148,7 +149,10 @@ export function GuideView({ eclipseId }: GuideViewProps) {
     }
   }, [eclipseId]);
 
-  const sections = useMemo(() => getGuide(locale, eclipseId), [locale, eclipseId]);
+  const sections = useMemo(
+    () => getGuide(locale, eclipseId, { sunAltitudeDeg }),
+    [locale, eclipseId, sunAltitudeDeg],
+  );
   const highlight = useMemo(
     () => getEclipseHighlight(eclipseId, locale),
     [eclipseId, locale],
@@ -201,7 +205,11 @@ export function GuideView({ eclipseId }: GuideViewProps) {
 
       <div className="guide__sections">
         {sections.map((section) => {
-          const critical = isCritical(section, eclipseId);
+          const critical =
+            isCritical(section, eclipseId) ||
+            (section.id === 'lowsun' &&
+              typeof sunAltitudeDeg === 'number' &&
+              sunAltitudeDeg <= 15);
           return (
             // La clau inclou la generació: canviar-la remunta el <details>
             // amb el nou `open` per defecte, que és la manera neta de fer

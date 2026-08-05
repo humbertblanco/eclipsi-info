@@ -3,7 +3,8 @@
     "name": "Català",
     "switch": "Idioma",
     "ca": "Català",
-    "es": "Castellà"
+    "es": "Castellà",
+    "en": "Anglès"
   },
   "guide": {
     "title": "Guia de l'eclipsi",

@@ -116,10 +116,18 @@ interface RasterAsset {
    *  · `opac` — amb canal alfa, però tots els píxels a 255. És el cas de les
    *             icones, que el porten perquè els sistemes operatius l'esperen.
    */
-  alpha: 'cap' | 'opac';
+  alpha: 'cap' | 'opac' | 'lliure';
 }
 
 const RASTER: RasterAsset[] = [
+  {
+    path: 'favicon-48.png',
+    role: 'favicon rasteritzat per a Google Search',
+    width: 48,
+    height: 48,
+    fullBleed: false,
+    alpha: 'lliure',
+  },
   {
     path: 'press/simulacio-eclipsi.png',
     role: 'imatge editorial de la simulació al mòbil',
@@ -388,9 +396,14 @@ describe('els actius ràster que es publiquen', () => {
             image.colorType,
             'aquest actiu el cou scripts/png.ts i ha de sortir RGB (tipus 2), sense canal alfa',
           ).toBe(2);
-        } else {
+        } else if (asset.alpha === 'opac') {
           expect(image.colorType, 'aquest actiu porta canal alfa a posta').toBe(6);
           expect(image.minAlpha).toBe(255);
+        } else {
+          // El favicon és una silueta: la transparència exterior és part de
+          // la marca, no un forat accidental en una icona de pantalla d'inici.
+          expect(image.colorType, 'el favicon conserva la silueta transparent').toBe(6);
+          expect(image.minAlpha).toBeLessThan(255);
         }
       });
 

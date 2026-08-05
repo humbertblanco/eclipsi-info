@@ -9,6 +9,7 @@
  */
 
 import type { EclipseSample, LocalCircumstances } from '../../core/astro/types';
+import type { Locale } from '../../i18n';
 import { projectToScreen, type CameraPointing, type Calibration } from './orientation';
 
 import type { Viewport } from "./cameraGeometry";
@@ -32,7 +33,7 @@ export interface OverlayOptions {
   currentTime: Date;
   /** Perfil d'horitzó del model del terreny, si ja s'ha calculat. */
   horizonProfile?: (azimuthDeg: number) => number;
-  locale: 'ca' | 'es';
+  locale: Locale;
   /**
    * Els colors i les tipografies del sistema de disseny.
    *
@@ -56,6 +57,7 @@ const TEXT_OUTLINE = 'rgba(0,0,0,0.65)';
 const CONTACT_LABELS = {
   ca: { c1: 'C1', c2: 'C2 · totalitat', max: 'màxim', c3: 'C3', c4: 'C4' },
   es: { c1: 'C1', c2: 'C2 · totalidad', max: 'máximo', c3: 'C3', c4: 'C4' },
+  en: { c1: 'C1', c2: 'C2 · totality', max: 'maximum', c3: 'C3', c4: 'C4' },
 } as const;
 
 export function renderOverlay(

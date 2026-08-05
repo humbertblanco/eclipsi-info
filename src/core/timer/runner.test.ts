@@ -25,8 +25,8 @@ function alert(id: string, atMs: number, validForMs = 30_000): VoiceAlert {
     kind: 'central-remaining',
     severity: 'info',
     validForMs,
-    speech: { ca: id, es: id },
-    label: { ca: id, es: id },
+    speech: { ca: id, es: id, en: id },
+    label: { ca: id, es: id, en: id },
   };
 }
 

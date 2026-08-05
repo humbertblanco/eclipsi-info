@@ -30,7 +30,7 @@
  *
  * ── EL PRESSUPOST D'UNA PASSADA, I QUÈ HI HA MESURAT I QUÈ EXTRAPOLAT ───────
  *
- * Passada plena: 800 cel·les (el sostre de `grid.ts`) d'1,82 km, enquadrament
+ * Banc original: 800 cel·les d'1,82 km, enquadrament
  * de 74 × 50 km al voltant de Sòria. Aquestes columnes SÓN MESURADES, però amb
  * un lector d'elevació sintètic: comptabilitzen l'aritmètica del garbell i no
  * la descodificació de les tessel·les de veritat.
@@ -70,8 +70,9 @@
  *     cap tessel·la.
  *  2. LA MEMÒRIA CAU EXISTEIX (`cache.ts`). La segona passada del mateix tros
  *     de mapa costa una lectura d'IndexedDB, no cinc segons ni 4,5 MB.
- *  3. EL SOSTRE ÉS 800. A 1.600 cel·les el 2028 se'n va als vint-i-cinc segons,
- *     i ningú no espera vint-i-cinc segons mirant un mapa.
+ *  3. EL SOSTRE ÉS 2.400. Permet reduir a la meitat el costat dels polígons
+ *     en una vista local, però continua sent un límit dur perquè el pitjor cas
+ *     del 2028 no creixi sense control.
  *
  * El 26-01-2028 segueix sent el pitjor cas dels tres eclipsis pel mateix motiu
  * que a `search.ts`: el Sol es pon DURANT l'anularitat, `sieveRangeKm` obre el

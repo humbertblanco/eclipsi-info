@@ -19,7 +19,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GeoLocation } from '../../core/astro/types';
 // Del mòdul concret i no del barril: aquest hook el fa servir el compte
 // enrere. Vegeu el raonament sencer a `CloudPanel.tsx`.
-import { CLOUD_ERROR_TEXT, CloudOutlookError, type CloudOutlook } from '../../core/weather/types';
+import {
+  CLOUD_ERROR_TEXT,
+  CloudOutlookError,
+  type CloudOutlook,
+  type WeatherLocale,
+} from '../../core/weather/types';
 import { getCloudOutlook } from '../../core/weather/outlook';
 import { FALLBACK_LOCALE, type Locale } from '../../i18n';
 
@@ -60,6 +65,13 @@ export interface UseCloudOutlookResult {
 /** Cada mig minut n'hi ha prou perquè el text de l'edat no menteixi. */
 const AGE_TICK_MS = 30_000;
 
+/** Keep the UI locale and the weather core locale explicitly in lockstep. */
+const WEATHER_LOCALE: Record<Locale, WeatherLocale> = {
+  ca: 'ca',
+  es: 'es',
+  en: 'en',
+};
+
 function useOnline(): boolean {
   const [online, setOnline] = useState(
     () => typeof navigator === 'undefined' || navigator.onLine !== false,
@@ -87,6 +99,7 @@ export function useCloudOutlook(params: UseCloudOutlookParams): UseCloudOutlookR
     sunAltitudeDeg,
     locale = FALLBACK_LOCALE,
   } = params;
+  const weatherLocale = WEATHER_LOCALE[locale];
 
   const [outlook, setOutlook] = useState<CloudOutlook | null>(null);
   const [loading, setLoading] = useState(false);
@@ -157,7 +170,7 @@ export function useCloudOutlook(params: UseCloudOutlookParams): UseCloudOutlookR
         sunAzimuthDeg: query.az,
         sunAltitudeDeg: query.alt,
       },
-      { signal: controller.signal, forceRefresh: force, locale },
+      { signal: controller.signal, forceRefresh: force, locale: weatherLocale },
     )
       .then((result) => {
         if (controller.signal.aborted) return;
@@ -172,7 +185,7 @@ export function useCloudOutlook(params: UseCloudOutlookParams): UseCloudOutlookR
         // acaba de fallar és el pitjor moment per parlar-li en un altre idioma.
         setError(
           CLOUD_ERROR_TEXT[cause instanceof CloudOutlookError ? cause.code : 'unknown'][
-            locale
+            weatherLocale
           ],
         );
       })
@@ -184,13 +197,13 @@ export function useCloudOutlook(params: UseCloudOutlookParams): UseCloudOutlookR
     // `key` resumeix totes les entrades arrodonides; `query` canvia d'identitat
     // però no de contingut, i seguir-lo dispararia peticions per no res.
     //
-    // `locale` SÍ que hi és: el text del `caveat` i el de l'error surten d'aquí
+    // `weatherLocale` SÍ que hi és: el text del `caveat` i el de l'error surten d'aquí
     // dins, i sense la dependència canviar d'idioma deixaria la frase anterior
     // a la pantalla. No costa cap petició: la clau de la memòria cau del nucli
     // no porta l'idioma i la frase es reescriu amb la dada ja desada (vegeu
     // `localiseCaveat` a `core/weather/outlook.ts`).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, reloadToken, locale]);
+  }, [key, reloadToken, weatherLocale]);
 
   // El rellotge només corre mentre hi ha alguna cosa a envellir.
   useEffect(() => {

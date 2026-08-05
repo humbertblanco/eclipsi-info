@@ -19,7 +19,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { computeLocalCircumstances } from './contacts';
-import { computeDurationGradient } from './gradient';
+import { bearingToCardinal, computeDurationGradient } from './gradient';
 import {
   RELATIVE_POSITION_ERROR_ARCSEC,
   centralProbabilityFromMargin,
@@ -31,6 +31,21 @@ import {
 import type { GeoLocation } from './types';
 
 const KM_PER_DEG_LAT = 111.3195;
+
+describe('bearingToCardinal', () => {
+  it('dona els vuit rumbs en anglès', () => {
+    expect(Array.from({ length: 8 }, (_, i) => bearingToCardinal(i * 45, 'en'))).toEqual([
+      'north',
+      'northeast',
+      'east',
+      'southeast',
+      'south',
+      'southwest',
+      'west',
+      'northwest',
+    ]);
+  });
+});
 
 /**
  * Punts triats a mà sobre el meridià −3,70°E, que travessa la franja del 2026

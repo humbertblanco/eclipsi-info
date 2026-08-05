@@ -29,14 +29,17 @@ import { s } from '../../screens/strings';
  * oficials i els miradors són llocs que hi són tant si penses en núvols com
  * si penses en durada.
  *
- * Les altres capes del mapa —el mapa de calor de visibilitat, la nuvolositat,
- * la fletxa del gradient i la vora d'incertesa— NO són aquí a posta: cada una
+ * La climatologia i el mapa de visibilitat també són aquí perquè poden tapar
+ * bona part del mapa i s'han de poder retirar. Les altres capes —la fletxa
+ * del gradient i la vora d'incertesa— NO són aquí a posta: cada una
  * és la cara cartogràfica d'una vista concreta de la fitxa i s'encén amb
  * ella. Posar-les també en aquest plafó voldria dir tenir dos comandaments
  * per a la mateixa cosa, i el dia que discrepessin no hi hauria manera de
  * saber quin mana.
  */
 export interface MapLayerState {
+  /** Franja de centralitat, vores i línia central de l'eclipsi. */
+  path: boolean;
   /** Relleu ombrejat amb el model d'elevació. */
   hillshade: boolean;
   /** Con de visió cap al Sol des del punt triat. */
@@ -47,6 +50,8 @@ export interface MapLayerState {
   viewpoints: boolean;
   /** Mapa de calor: quants segons sobreviuen al relleu, per cel·la. */
   heat: boolean;
+  /** Vel de nuvolositat de la vista meteorològica. */
+  clouds: boolean;
 }
 
 /*
@@ -54,7 +59,8 @@ export interface MapLayerState {
  * forma vella deixaria els camps nous indefinits, i un booleà indefinit no
  * apaga una capa: la deixa en un tercer estat que ningú no ha triat.
  */
-const STORAGE_KEY = 'eclipsi:mapLayers:v2';
+const STORAGE_KEY = 'eclipsi:mapLayers:v4';
+const LEGACY_STORAGE_KEY = 'eclipsi:mapLayers:v3';
 
 /**
  * L'estat desat, o el defecte que li passin. Exportada perquè `MapScreen`
@@ -62,7 +68,7 @@ const STORAGE_KEY = 'eclipsi:mapLayers:v2';
  */
 export function readStoredLayers(fallback: MapLayerState): MapLayerState {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
     if (raw === null) return fallback;
     const parsed: unknown = JSON.parse(raw);
     if (typeof parsed !== 'object' || parsed === null) return fallback;
@@ -71,6 +77,7 @@ export function readStoredLayers(fallback: MapLayerState): MapLayerState {
     // `viewpoints`, i el que hi manqui ha de caure al defecte en comptes de
     // deixar la capa apagada per sempre a qui ja havia fet servir l'app.
     return {
+      path: typeof record.path === 'boolean' ? record.path : fallback.path,
       hillshade:
         typeof record.hillshade === 'boolean' ? record.hillshade : fallback.hillshade,
       cone: typeof record.cone === 'boolean' ? record.cone : fallback.cone,
@@ -79,6 +86,7 @@ export function readStoredLayers(fallback: MapLayerState): MapLayerState {
       viewpoints:
         typeof record.viewpoints === 'boolean' ? record.viewpoints : fallback.viewpoints,
       heat: typeof record.heat === 'boolean' ? record.heat : fallback.heat,
+      clouds: typeof record.clouds === 'boolean' ? record.clouds : fallback.clouds,
     };
   } catch {
     // localStorage vetat (mode privat estricte): es viu amb el defecte.
@@ -134,6 +142,12 @@ export function LayerControl({ locale, value, onChange }: Props) {
       {open && (
         <div className="mapscreen__layerpanel" role="group" aria-label={s('map.layers.open', locale)}>
           <Switch
+            checked={value.path}
+            onChange={(path) => set({ ...value, path })}
+            label={s('map.layers.path', locale)}
+            description={s('map.layers.pathDesc', locale)}
+          />
+          <Switch
             checked={value.hillshade}
             onChange={(hillshade) => set({ ...value, hillshade })}
             label={s('map.layers.hillshade', locale)}
@@ -157,6 +171,12 @@ export function LayerControl({ locale, value, onChange }: Props) {
             description={s('map.layers.heatDesc', locale)}
           />
           <Switch
+            checked={value.clouds}
+            onChange={(clouds) => set({ ...value, clouds })}
+            label={s('map.layers.clouds', locale)}
+            description={s('map.layers.cloudsDesc', locale)}
+          />
+          <Switch
             checked={value.official}
             onChange={(official) => set({ ...value, official })}
             label={s('map.layers.official', locale)}
@@ -175,11 +195,8 @@ export function LayerControl({ locale, value, onChange }: Props) {
           />
 
           {/*
-            LA FRASE QUE EXPLICA PER QUÈ NO HI SÓN TOTES.
-            Sense ella, la pregunta òbvia en obrir això és «i la nuvolositat?
-            i la fletxa?». Hi són, però lligades a la seva vista de la fitxa,
-            que és on es fa la pregunta que responen. Dir-ho val una línia i
-            estalvia la sensació que falten coses.
+            La fletxa i el caire només existeixen mentre la seva pregunta és
+            activa; les dues malles grans, en canvi, es poden apagar aquí.
           */}
           <p className="mapscreen__layernote">{s('map.layers.byView', locale)}</p>
         </div>

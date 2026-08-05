@@ -368,6 +368,7 @@ export function useEclipseTimer(options: UseEclipseTimerOptions): EclipseTimerSt
       {
         ca: 'Avisos activats. Deixa el mòbil a la butxaca i mira el cel.',
         es: 'Avisos activados. Deja el móvil en el bolsillo y mira al cielo.',
+        en: 'Alerts enabled. Put your phone in your pocket and look at the sky.',
       },
       'info',
     );
@@ -381,7 +382,11 @@ export function useEclipseTimer(options: UseEclipseTimerOptions): EclipseTimerSt
 
   const testVoice = useCallback(() => {
     announcerRef.current?.announce(
-      { ca: 'Prova de veu. Se sent bé?', es: 'Prueba de voz. ¿Se oye bien?' },
+      {
+        ca: 'Prova de veu. Se sent bé?',
+        es: 'Prueba de voz. ¿Se oye bien?',
+        en: 'Voice test. Can you hear it clearly?',
+      },
       'info',
     );
   }, []);

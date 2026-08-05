@@ -257,20 +257,36 @@ const EXPOSURE_LABELS: Record<Locale, Record<string, string>> = {
     corona4: 'Corona exterior (4 R☉)',
     corona8: 'Luz cenicienta y corona lejana (8 R☉)',
   },
+  en: {
+    partial5: 'Partial or annular phase, ND 5.0 filter',
+    partial4: 'Partial phase, ND 4.0 filter',
+    beads: 'Baily’s beads and diamond ring',
+    chromo: 'Chromosphere',
+    prom: 'Prominences',
+    corona01: 'Inner corona (0.1 R☉)',
+    corona02: 'Corona (0.2 R☉)',
+    corona05: 'Middle corona (0.5 R☉)',
+    corona1: 'Corona (1 R☉)',
+    corona2: 'Outer corona (2 R☉)',
+    corona4: 'Outer corona (4 R☉)',
+    corona8: 'Earthshine and distant corona (8 R☉)',
+  },
 };
 
 const EXPOSURE_HEAD: Record<Locale, string[]> = {
   ca: ['Subjecte', 'Filtre', 'ISO 100 · f/8', 'Q'],
   es: ['Sujeto', 'Filtro', 'ISO 100 · f/8', 'Q'],
+  en: ['Subject', 'Filter', 'ISO 100 · f/8', 'Q'],
 };
 
 const EXPOSURE_CAPTION: Record<Locale, string> = {
   ca: 'Calculat amb t = f² / (ISO × 2^Q) i els factors Q de la guia d’exposició de la NASA (RP 1318, F. Espenak). Fes forquilla: ±2 passos a cada costat.',
   es: 'Calculado con t = f² / (ISO × 2^Q) y los factores Q de la guía de exposición de la NASA (RP 1318, F. Espenak). Haz horquilla: ±2 pasos a cada lado.',
+  en: 'Calculated with t = f² / (ISO × 2^Q) and the Q factors from NASA’s exposure guide (RP 1318, F. Espenak). Bracket by ±2 stops on either side.',
 };
 
-const FILTER_YES: Record<Locale, string> = { ca: 'Sí', es: 'Sí' };
-const FILTER_NO: Record<Locale, string> = { ca: 'NO', es: 'NO' };
+const FILTER_YES: Record<Locale, string> = { ca: 'Sí', es: 'Sí', en: 'Yes' };
+const FILTER_NO: Record<Locale, string> = { ca: 'NO', es: 'NO', en: 'NO' };
 
 function exposureTable(locale: Locale): TableBlock {
   const labels = EXPOSURE_LABELS[locale];
@@ -1054,9 +1070,271 @@ function guideEs(): GuideSection[] {
   ];
 }
 
+/* ----------------------------------------------------------- English guide */
+
+function guideEn(): GuideSection[] {
+  return [
+    {
+      id: 'safety',
+      title: 'Eye safety',
+      lead: 'The section you must read even if you read nothing else. A mistake here cannot be undone.',
+      defaultOpen: true,
+      blocks: [
+        {
+          kind: 'p',
+          text: 'The retina has no pain receptors. A solar retinal burn does not hurt while it is happening: you notice it hours later, when a dark spot appears in the centre of your field of vision and does not go away. There is no treatment. That is why the rules in this section allow no exceptions and no “just one second”.',
+        },
+        {
+          kind: 'callout',
+          tone: 'good',
+          title: 'The only thing that works: ISO 12312-2',
+          text: 'Eclipse glasses or solar-viewing film certified to ISO 12312-2. They transmit at most 0.0032% of visible light, block all ultraviolet and at least 97% of infrared. With certified glasses on, the Sun’s disc should be the only thing you can see: if you can see anything else around you, they are not safe.',
+        },
+        {
+          kind: 'list',
+          tone: 'bad',
+          items: [
+            'Sunglasses, however dark they are, even high-quality ones with a UV filter. They transmit thousands of times more light than is safe.',
+            'X-ray film and exposed photographic film. Modern film uses dyes instead of silver and provides no protection whatsoever.',
+            'Candle-smoked glass, welding glass below shade 12 and plastic mirrors.',
+            'CDs, DVDs, floppy disks, crisp packets, coloured plastics and negatives: they do not filter the infrared that cooks your retina without you noticing.',
+            '3D cinema glasses, helmet visors and window-tinting film.',
+            'Camera filters of insufficient density (ND 8, ND 64, polarisers and even ND 1000), and especially any filter screwed in BEHIND the lens or in front of a telescope eyepiece.',
+          ],
+        },
+        {
+          kind: 'p',
+          text: 'How dark a material looks has nothing to do with whether it protects you. What matters is what it does to infrared and ultraviolet, and you cannot judge that by looking at it.',
+        },
+        {
+          kind: 'callout',
+          tone: 'bad',
+          title: 'Telescopes, binoculars and telephoto lenses: the real danger',
+          text: 'An optical instrument concentrates sunlight. Looking through an unfiltered telescope or binoculars destroys the retina in a fraction of a second, and eclipse glasses will NOT protect you: the concentrated light melts them. The filter must ALWAYS be securely mounted over the front of the objective, never at the eyepiece or between the objective and your eye, so that a gust of wind cannot dislodge it. A screw-in solar eyepiece filter is never safe.',
+        },
+        {
+          kind: 'p',
+          text: 'If you do not have a front-mounted filter, projection is safe and spectacular: make a small hole in a piece of card and, with your back to the Sun, watch the image it projects onto the ground or another card. A kitchen colander makes dozens of tiny crescent Suns at once. Never look at the Sun through the hole.',
+        },
+        {
+          kind: 'callout',
+          tone: 'warn',
+          title: 'TOTAL ECLIPSE: the two minutes when you must look without a filter',
+          text: 'Only if you are INSIDE the path of totality, and only between second contact (C2) and third contact (C3), is the Sun completely covered; then you can — and should — remove your filter and view the corona with the unaided eye. It is the only way to see it: absolutely nothing is visible through a solar filter. Remove the filter only when the Sun disappears completely and darkness falls suddenly. Put it back on before any point of sunlight reappears at the Moon’s edge: at that instant your eyes must already be covered.',
+        },
+        {
+          kind: 'callout',
+          tone: 'bad',
+          title: 'ANNULAR ECLIPSE: there is never a safe moment. Ever.',
+          text: 'In an annular eclipse the Moon is too small to cover the Sun, so a bright ring always remains visible. That ring burns exactly like the full Sun. There is no instant during annularity when it is safe to look without a filter — not for one second, not for a photograph, and not even if the sky has darkened and the glare seems weaker. The eclipse of 26 January 2028 is annular: the filter stays on from C1 to C4.',
+        },
+        {
+          kind: 'p',
+          text: 'This is the most dangerous source of confusion in Spain’s eclipse trilogy. Many people will have experienced 2026 and 2027 by removing their glasses during totality and may instinctively do the same in 2028. Do not, and warn the people beside you.',
+        },
+        {
+          kind: 'callout',
+          tone: 'warn',
+          title: 'Partial phase outside the path',
+          text: 'If you are outside the central path, there is no safe moment even if obscuration reaches 99%. A filter is mandatory from beginning to end. The difference between 99% and 100% is not a matter of degree: it is something entirely different.',
+        },
+        {
+          kind: 'list',
+          tone: 'warn',
+          items: [
+            'Inspect the filter against the light before setting out: discard it if it has any scratch, pinhole or crack.',
+            'Put the filter on before looking up at the Sun, and remove it only after looking down again.',
+            'Watch children closely: they have the most accidents because they turn their glasses around or look underneath them.',
+            'Cardboard eclipse glasses are not for wearing continuously: use them to look at the Sun for a few seconds at a time.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'phases',
+      title: 'The phases, explained',
+      lead: 'C1, C2, C3, C4, magnitude and obscuration: what each means, and why 95% is not “almost”.',
+      blocks: [
+        {
+          kind: 'defs',
+          items: [
+            { term: 'C1 — first contact', text: 'The Moon’s edge touches the Sun’s edge and the first bite begins. You notice nothing with the unaided eye; through a filter you see a tiny notch. From here to C2 takes between fifty-five minutes (in 2026) and well over an hour and a quarter (in 2028).' },
+            { term: 'C2 — second contact', text: 'The Moon finishes covering the Sun (or, in an annular eclipse, moves fully inside it and closes the ring). This is the instant of Baily’s beads and the diamond ring. In a total eclipse, this — and no earlier — is when filters come off.' },
+            { term: 'C3 — third contact', text: 'The first point of sunlight reappears on the other side. Totality or annularity ends. Filters must be back on BEFORE it arrives.' },
+            { term: 'C4 — fourth contact', text: 'The Moon leaves the solar disc. The eclipse ends. This occurs between fifty minutes (in 2026) and just over an hour (in 2027 and 2028) after C3. Note that in 2026 and 2028 the Sun sets before C4 across almost the entire path — in Valencia in 2026, C4 would occur with the Sun 4° below the horizon; in Barcelona in 2028, nearly 12° below. Your eclipse ends at sunset, not at C4.' },
+            { term: 'Magnitude', text: 'The fraction of the Sun’s DIAMETER covered by the Moon. It is a ratio of diameters, not areas. It exceeds 1 in a total eclipse and remains below 1 in an annular eclipse.' },
+            { term: 'Obscuration', text: 'The fraction of the solar disc’s AREA that is covered. This is the figure people call the “eclipse percentage”. It has no one-to-one relationship with magnitude because the Moon’s apparent size changes along its orbit.' },
+          ],
+        },
+        {
+          kind: 'p',
+          text: 'An obscuration of 90% sounds like a lot, yet visually it is nothing. The figures usually quoted — 100,000 lux in full Sun and 1,000 lux at 99% obscuration — are for midday with the Sun high. Spain’s 2026 and 2028 eclipses are different: the Sun is only a few degrees above the horizon, shifting the entire range downward. In Asturias, with the Sun at 12°, a clear sky gives about 17,000 lux; about 1,200 remain at 90% coverage, and roughly one hundred at 99%. It is not the simple proportion you might expect: the Moon ultimately covers the centre of the disc, its brightest part. The percentage is just as deceptive, but from a much lower baseline.',
+        },
+        {
+          kind: 'p',
+          text: 'There are two reasons. First, the eye responds logarithmically: each tenfold reduction in light feels like one small step, not a plunge. Second, during the long partial phase your pupils gradually dilate without you noticing — from one millimetre to two, quadrupling the light admitted — and compensate for the loss as it happens.',
+        },
+        {
+          kind: 'callout',
+          tone: 'info',
+          title: 'The entire plunge comes in the final seconds',
+          text: 'From 99% to totality the light still falls by a factor of forty to eighty in less than a minute: far faster than the eye can adapt. With the Sun high, illumination drops from about 570 lux to about 7; with the Spanish Sun at 12°, from roughly one hundred to just over 2, already a night-sky level. The relative plunge is similar and feels just as dramatic. That is why totality does not “arrive”; it falls on top of you. And that is why 99% and 100% are different experiences, not the same one with a little more or less. The countdown calculates the figures for your location and your Sun altitude.',
+        },
+      ],
+    },
+    {
+      id: 'watch',
+      title: 'What to watch, and when',
+      lead: 'Totality is short. It is worth arriving knowing what to look for and in what order.',
+      blocks: [
+        {
+          kind: 'defs',
+          items: [
+            { term: 'Final minutes before C2', text: 'The light turns metallic and shadows become extraordinarily sharp — the Sun has become a line of light rather than a disc. Look at leaf shadows on the ground: every gap between the leaves acts as a pinhole and fills the ground with crescents.' },
+            { term: 'Shadow bands', text: 'One or two minutes before and after totality, faint rippling dark lines race across the ground like light on the bottom of a swimming pool. They are caused by atmospheric turbulence and do not always appear. To see them, spread a smooth white sheet on the ground before the eclipse begins.' },
+            { term: 'Baily’s beads', text: 'Right at C2, the final thread of sunlight breaks into separate bright points: sunlight is passing through valleys along the Moon’s edge. It lasts seconds.' },
+            { term: 'Diamond ring', text: 'When only one point remains and the corona is already beginning to show around it. This is the image everyone knows. It happens twice: before C2 and just after C3.' },
+            { term: 'Chromosphere', text: 'A thin, vivid pink arc around the Moon during the first and last seconds of totality. Its colour comes from hydrogen emission.' },
+            { term: 'Prominences', text: 'Reddish tongues of plasma projecting beyond the edge. They are striking through binoculars (now without filters, but ONLY during totality).' },
+            { term: 'Corona', text: 'The reason for the journey. A pearly, structured halo with streamers that may extend several solar radii. No photograph resembles it: no sensor can hold the dynamic range seen by the eye. Look first with the unaided eye, then with binoculars.' },
+            { term: '360° twilight', text: 'Look away from the Sun for a moment and turn around: the entire horizon has sunset colours in every direction, because you are beneath a shadow two or three hundred kilometres wide — about 305 km across Spain in 2026 — while daylight continues outside it.' },
+            { term: 'Planets and stars', text: 'With the sky at civil-twilight brightness, Venus and Jupiter appear easily, with Mercury and the brightest stars visible in clear conditions. On 12 August 2026, the eclipse also falls at the peak of the Perseids.' },
+            { term: 'Temperature and animals', text: 'The temperature drops very sharply within seconds, often accompanied by a sudden breeze. Birds abruptly fall silent or return to roost, crickets begin to sing and livestock head for shelter. It is worth listening as much as looking.' },
+          ],
+        },
+        {
+          kind: 'callout',
+          tone: 'warn',
+          title: 'Save the last ten seconds for doing nothing',
+          text: 'The 2026 totality is short, and your location matters enormously: the maximum over Spanish land is 1 min 50 s on the centreline as it reaches Asturias, falling rapidly towards the edges — 62 seconds in Valencia, 68 in Mahón and 58 in Tarragona. Spend that time checking focus and you will miss it. Decide beforehand which seconds belong to the camera and which to looking, and when C3 approaches, stop.',
+        },
+      ],
+    },
+    {
+      id: 'lowsun',
+      title: 'Low Sun: choosing a location',
+      lead: 'In 2026 and 2028 the central phase occurs with the Sun almost touching the horizon. Here, location decides everything.',
+      criticalFor: ['2026-08-12', '2028-01-26'],
+      blocks: [
+        {
+          kind: 'p',
+          text: 'On 12 August 2026, totality occurs near sunset, with the Sun between 12° and less than 2° above the horizon depending on your location: the farther east along the path, the lower it is — 12° in A Coruña, 8° in Burgos, 4.6° in Valencia and 1.8° in Mahón. On 26 January 2028, annularity arrives even lower: 8° in Huelva, 7° in Seville and 2.4° in Valencia; in Barcelona the Sun sets during annularity itself (0.2° at maximum), while in Girona and Mahón it has already set before annularity arrives. In both cases the problem is not the sky; it is what lies in front of you.',
+        },
+        {
+          kind: 'callout',
+          tone: 'warn',
+          title: 'Seeing the Sun’s disc is not enough',
+          text: 'What you have come to see is not the disc but the corona spreading around it. Coronal streamers commonly reach four to six solar radii, and because the Sun’s radius is about 0.26° in August, that means a halo between one and one and a half degrees in radius. Add the Sun’s continued descent during totality and atmospheric extinction at low altitude, and the practical rule is to leave about 3° clear above any obstacle, not zero. A hill that “only” blocks the sky up to 2° lets you see the Sun but steals half the corona.',
+        },
+        {
+          kind: 'p',
+          text: 'Three degrees is far more than it seems from the ground. A six-storey building one hundred metres away already spans 10°. A mountain ridge ten kilometres away that rises 500 m above you spans 2.9° — and you still need another three clear degrees above it. Your closed fist at arm’s length spans about 10°: if the western skyline from your planned spot lies below half a fist, the margin is tight.',
+        },
+        {
+          kind: 'list',
+          items: [
+            'The best horizon is open sea to the west; next best is a broad west-facing valley or a ridge with the terrain falling away in that direction.',
+            'Gaining altitude helps only if the obstruction is nearby. Against a distant mountain range, climbing one hundred metres solves nothing: you need to move sideways.',
+            'Beware of fog and haze: at low altitude you look through a vast amount of atmosphere, and haze invisible at 30° can hide the Sun completely at 2°. The sea readily produces low evening fog in August.',
+            'Atmospheric refraction raises the Sun’s apparent altitude, increasingly so as it approaches the horizon. It helps, but is not a planning figure: do not rely on it to save half a degree.',
+            'Scout the location a day beforehand at the same time and see exactly where the Sun sets. With the Sun this low, moving one hundred metres can change the outcome.',
+            'Arrive hours early on eclipse day. The best viewpoints will fill up, and being stuck on the road with the Sun at 5° means the journey was for nothing.',
+          ],
+        },
+        {
+          kind: 'callout',
+          tone: 'info',
+          title: 'The advantage of a low Sun',
+          text: 'There is a reward for all this: the corona above a foreground of landscape, sea or mountains makes the most beautiful eclipse photograph possible, and it cannot be made with the Sun high. Shadow bands and the 360° twilight are also far more visible with the Sun on the horizon.',
+        },
+      ],
+    },
+    {
+      id: 'photo',
+      title: 'Photography',
+      lead: 'Exposure by phase, focal length and framing — plus a warning not to spend totality staring at a screen.',
+      blocks: [
+        {
+          kind: 'callout',
+          tone: 'bad',
+          title: 'Front-mounted filter for everything except totality',
+          text: 'During every partial phase, and throughout the 2028 annularity, the lens must have a solar filter mounted over its front. Without one, the focused Sun can melt the sensor in seconds; with an SLR, looking through the optical viewfinder can melt your retina first. Remove the filter only between C2 and C3 of a TOTAL eclipse, and replace it before C3.',
+        },
+        exposureTable('en'),
+        {
+          kind: 'p',
+          text: 'The table is a starting point, not dogma: the corona has an enormous dynamic range and no single exposure captures it. Use a rapid manual bracket — the same aperture, with shutter speeds from 1/2000 s to 1 s — and combine the frames afterwards. Program and rehearse everything before eclipse day.',
+        },
+        {
+          kind: 'defs',
+          items: [
+            { term: 'Size of the Sun in the frame', text: 'The diameter of the Sun’s image in millimetres is approximately the focal length divided by 109. At 400 mm the Sun is 3.7 mm across: on a full-frame sensor (24 mm high) it occupies 15% of the frame height, leaving the corona to fill it well.' },
+            { term: 'Maximum focal length', text: 'For the whole disc, use at most about 2500 mm on full frame or 1700 mm on APS-C. For the corona with framing room, use about 1000 mm on full frame or 700 mm on APS-C.' },
+            { term: 'Recommended focal length', text: 'Between 200 and 500 mm gives room around the corona and makes framing less critical, which matters when you have only one or two minutes. If you carry two bodies, leave the second recording video with a fixed wide-angle view of the scene: it captures faces and the changing ambient light, which is what you will remember.' },
+            { term: 'Framing with a low Sun', text: 'In 2026 and 2028, a 24–70 mm lens showing the small eclipsed Sun above a sea or mountain silhouette makes a better image than a telephoto lens. It also removes the need for precise tracking.' },
+            { term: 'Focus', text: 'Focus manually at true infinity, set beforehand using live-view magnification on the filtered Sun’s edge or on a star. Lock it with tape. Autofocus will fail during totality.' },
+            { term: 'Tripod and shutter release', text: 'Essential from 200 mm upward. Use a remote release or a 2 s timer, and turn stabilisation off when the camera is on a tripod. With a low Sun, watch for wind.' },
+            { term: 'Phone', text: 'A phone will not make a decent photograph of the corona, but it can record an excellent video of the atmosphere and 360° twilight. Use manual mode if available, lock exposure before C2, and leave it recording unattended on a small tripod. Partial phases also require a filter over the phone lens.' },
+          ],
+        },
+        {
+          kind: 'callout',
+          tone: 'warn',
+          title: 'The rule that will spare you regret',
+          text: 'If this is your first total eclipse, do not take photographs — or automate the camera and do not look at it. Totality in 2026 lasts only a minute or a little more — 1 min 50 s at Spain’s best location, 62 seconds in Valencia — and in 2027 it lasts four and a half minutes at the Strait. You will never get it back; millions of corona photographs are better than yours will be. Watch it with your own eyes.',
+        },
+      ],
+    },
+    {
+      id: 'checklist',
+      title: 'Checklist and logistics',
+      lead: 'What to bring, how to get there, and why the app works without coverage.',
+      blocks: [
+        {
+          kind: 'list',
+          items: [
+            'ISO 12312-2 compliant eclipse glasses — plus a spare pair, because someone will ask for them or yours will break.',
+            'A front-mounted solar filter for every optical instrument you plan to use, plus tape to secure it.',
+            'Binoculars: the corona and prominences look spectacular through them during totality.',
+            'A red torch or headlamp in red mode: very little is visible during totality, and white lights disturb everyone.',
+            'A charged power bank and your phone at 100%. A saturated network and active GPS drain the battery fast.',
+            'Water and food for far longer than you expect, plus a folding chair.',
+            'Warm clothes: the temperature drops suddenly during totality, and the 2028 eclipse is in January at sunset.',
+            'A white sheet spread on the ground for viewing shadow bands.',
+            'Insect repellent for 2026, which occurs on an August evening at peak mosquito time. The 2027 eclipse is also in August but occurs in the morning: sunscreen and shade during the wait matter more there.',
+            'A compass or the app, to know exactly where the Sun will be from your chosen location.',
+          ],
+        },
+        {
+          kind: 'callout',
+          tone: 'info',
+          title: 'Mobile network: assume it is dead',
+          text: 'Tens of thousands of people concentrated within a few kilometres will overload the masts until they are unusable. You will not be able to look things up, send messages or use online maps. Download offline maps of the area before leaving, agree a meeting point with your group in advance and carry written directions. This app is designed to work without a connection for exactly that reason.',
+        },
+        {
+          kind: 'callout',
+          tone: 'info',
+          title: 'Traffic and crowds',
+          text: 'The pattern is always the same: people trickle in all day and everyone leaves at once within five minutes. Expect hours of queues afterwards. Fill the tank the day before, park facing the exit, and remember that a narrow viewpoint with a single access road is a trap. Many councils will restrict access to the best-known sites, so check beforehand.',
+        },
+        {
+          kind: 'p',
+          text: 'Weather: the final decision belongs to the last 24 hours. August is statistically favourable in Spain’s interior and worse on the Cantabrian coast, where low evening fog is common; January 2028 is the riskiest of the three. Prepare two or three alternative sites within the path and well separated from one another, then check high-resolution models and satellite images that morning. Being willing to drive one hundred kilometres on the day is what separates seeing it from missing it.',
+        },
+        {
+          kind: 'callout',
+          tone: 'good',
+          title: 'And if a cloud covers it after all',
+          text: 'You will still feel it: the sudden darkness, temperature drop, silence of the animals and twilight along the horizon all happen anyway. Do not keep staring at the cloud; look around you.',
+        },
+      ],
+    },
+  ];
+}
+
 /* ------------------------------------------------------------- accessors */
 
-const GUIDES: Record<Locale, () => GuideSection[]> = { ca: guideCa, es: guideEs };
+const GUIDES: Record<Locale, () => GuideSection[]> = { ca: guideCa, es: guideEs, en: guideEn };
 
 /**
  * Guia completa en l'idioma demanat, ja filtrada per l'eclipsi actiu.
@@ -1065,11 +1343,67 @@ const GUIDES: Record<Locale, () => GuideSection[]> = { ca: guideCa, es: guideEs 
  * eclipsis llistats. `criticalFor` no filtra, només marca (la vista l'obre i
  * la destaca), perquè amagar contingut de seguretat seria pitjor que sobrar.
  */
-export function getGuide(locale: Locale, eclipseId?: string): GuideSection[] {
+export function getGuide(
+  locale: Locale,
+  eclipseId?: string,
+  context?: { sunAltitudeDeg?: number | null },
+): GuideSection[] {
+  const altitude = context?.sunAltitudeDeg;
   return GUIDES[locale]().filter(
-    (section) =>
-      !section.onlyFor || (eclipseId !== undefined && section.onlyFor.includes(eclipseId)),
-  );
+    (section) => {
+      if (section.onlyFor && !(eclipseId !== undefined && section.onlyFor.includes(eclipseId))) {
+        return false;
+      }
+      if (section.id !== 'lowsun') return true;
+
+      if (typeof altitude === 'number' && Number.isFinite(altitude)) return altitude <= 15;
+
+      // Mentre encara no hi ha un punt calculat, el catàleg evita un flaix de
+      // contingut incorrecte. Tan bon punt hi ha geometria local, mana ella.
+      return eclipseId !== undefined && section.criticalFor?.includes(eclipseId) === true;
+    },
+  ).map((section) => {
+    if (
+      section.id !== 'lowsun' ||
+      typeof altitude !== 'number' ||
+      !Number.isFinite(altitude)
+    ) {
+      return section;
+    }
+
+    const degrees = new Intl.NumberFormat(
+      locale === 'es' ? 'es-ES' : locale === 'en' ? 'en-GB' : 'ca-ES', {
+      maximumFractionDigits: 1,
+      },
+    ).format(altitude);
+    const below = altitude < 0;
+    const first = section.blocks[0];
+    const dynamicIntro: ParagraphBlock = {
+      kind: 'p',
+      text:
+        locale === 'en'
+          ? below
+            ? `At your location, the Sun will already be ${degrees.replace('-', '')}° below the horizon at maximum eclipse. The central phase will not be visible even though the eclipse path geometrically crosses this point.`
+            : `At your location, the Sun will be only ${degrees}° above the horizon at maximum eclipse. This altitude comes from the eclipse calculation and changes with location: you need a genuinely clear horizon in the Sun’s direction.`
+          : locale === 'es'
+          ? below
+            ? `En tu ubicación, el Sol ya estará ${degrees.replace('-', '')}° bajo el horizonte en el máximo. La fase central no será visible aunque el eclipse pase geométricamente por este punto.`
+            : `En tu ubicación, el Sol estará a solo ${degrees}° en el máximo. Esta altura sale del cálculo del eclipse y cambia al cambiar de lugar: necesitas un horizonte realmente libre en la dirección del Sol.`
+          : below
+            ? `Al teu punt, el Sol ja serà ${degrees.replace('-', '')}° sota l’horitzó al màxim. La fase central no serà visible encara que l’eclipsi passi geomètricament per aquest punt.`
+            : `Al teu punt, el Sol serà a només ${degrees}° al màxim. Aquesta altura surt del càlcul de l’eclipsi i canvia quan canvies de lloc: necessites un horitzó realment lliure en la direcció del Sol.`,
+    };
+    return {
+      ...section,
+      lead:
+        locale === 'en'
+          ? `Calculated warning for your location: Sun at ${degrees}° at maximum eclipse.`
+          : locale === 'es'
+          ? `Aviso calculado para tu ubicación: Sol a ${degrees}° en el máximo.`
+          : `Avís calculat per al teu punt: Sol a ${degrees}° al màxim.`,
+      blocks: first?.kind === 'p' ? [dynamicIntro, ...section.blocks.slice(1)] : section.blocks,
+    };
+  });
 }
 
 /** Cert si la secció és especialment rellevant per a l'eclipsi donat. */
@@ -1108,6 +1442,11 @@ const HIGHLIGHTS: Record<string, Record<Locale, EclipseHighlight>> = {
       // Mirall castellà del rang del motor (Malpica 12,3°, Maó 1,8°).
       text: 'Durante la totalidad, y solo entonces, puedes quitarte el filtro. Pero el Sol estará de 12° a menos de 2° sobre el horizonte: el sitio que elijas, y qué tengas hacia poniente, decide si lo ves o no. Lee la sección de Sol bajo antes de decidir a dónde vas.',
     },
+    en: {
+      tone: 'warn',
+      title: 'Total, at sunset, with the Sun very low',
+      text: 'During totality, and only then, you may remove the filter. But the Sun will stand between 12° and less than 2° above the horizon: your chosen location, and whatever lies to the west, determines whether you see it at all. Read the Low Sun section before deciding where to go.',
+    },
   },
   '2027-08-02': {
     ca: {
@@ -1122,6 +1461,11 @@ const HIGHLIGHTS: Record<string, Record<Locale, EclipseHighlight>> = {
       tone: 'good',
       title: 'Total, por la mañana y con el Sol alto: el fácil de los tres',
       text: 'Sin problemas de horizonte y con la totalidad más larga. Durante la totalidad, y solo entre C2 y C3, quítate el filtro y mira la corona. Vuelve a ponértelo al primer punto de luz.',
+    },
+    en: {
+      tone: 'good',
+      title: 'Total, in the morning, with the Sun high: the easiest of the three',
+      text: 'No horizon problems, and the longest totality: no other eclipse visible from land will surpass it until 2114 (about four and a half minutes from the Strait). During totality, and only between C2 and C3, remove the filter and look at the corona. Put it back on at the first point of sunlight.',
     },
   },
   '2028-01-26': {
@@ -1141,6 +1485,11 @@ const HIGHLIGHTS: Record<string, Record<Locale, EclipseHighlight>> = {
       // Mirall castellà: 8,4° Ayamonte / 8,0° Huelva per dalt; Barcelona 0,16°,
       // Girona −0,39°, Maó −0,69° per baix.
       text: 'Este eclipse NO es total. Siempre queda un anillo de Sol visible y quema igual que el Sol entero. A diferencia de 2026 y 2027, aquí no hay ni un segundo en que se pueda mirar sin filtro homologado — ni durante la anularidad. Además, el Sol estará entre unos 8° en el suroeste de la franja y el ras del horizonte en el noreste: en Barcelona se pone durante la anularidad misma, y en Girona y en Mahón ya se ha puesto antes de que empiece. Aquí el horizonte despejado no es un consejo, es la condición.',
+    },
+    en: {
+      tone: 'bad',
+      title: 'ANNULAR: never remove the filter',
+      text: 'This eclipse is NOT total. A ring of sunlight remains visible throughout and burns just like the full Sun. Unlike 2026 and 2027, there is not a single second when it is safe to look without a certified filter — not even during annularity. The Sun will also range from about 8° in the south-west of the path to the horizon in the north-east: in Barcelona it sets during annularity itself, and in Girona and Mahón it has already set before annularity begins. Here, a clear horizon is not advice; it is the condition for seeing the eclipse.',
     },
   },
 };

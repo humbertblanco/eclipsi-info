@@ -13,7 +13,7 @@ export interface EclipseEntry {
   greatestEclipseUtc: string;
   kind: 'total' | 'annular';
   /** Etiquetes multilingües per a la interfície. */
-  label: { ca: string; es: string };
+  label: { ca: string; es: string; en: string };
   /**
    * Resum de la franja sobre territori espanyol.
    *
@@ -35,7 +35,7 @@ export interface EclipseEntry {
    * motor canvia, el test es posa vermell i el text s'actualitza — no al
    * revés.
    */
-  spain: { ca: string; es: string };
+  spain: { ca: string; es: string; en: string };
   /** Sèrie de Saros. */
   saros: number;
   /**
@@ -70,7 +70,7 @@ export interface EclipseEntry {
    * que ningú no llegiria i que igualment caldria traduir. Qui el pinti ha
    * d'aguantar que no hi sigui.
    */
-  tips?: { ca: string[]; es: string[] };
+  tips?: { ca: string[]; es: string[]; en: string[] };
 }
 
 export const ECLIPSES: EclipseEntry[] = [
@@ -81,6 +81,7 @@ export const ECLIPSES: EclipseEntry[] = [
     label: {
       ca: 'Eclipsi total del 12 d’agost de 2026',
       es: 'Eclipse total del 12 de agosto de 2026',
+      en: 'Total solar eclipse of 12 August 2026',
     },
     /*
      * LA FRASE QUE DEIXAVA VALÈNCIA FORA (corregida el 3-8-2026).
@@ -130,6 +131,7 @@ export const ECLIPSES: EclipseEntry[] = [
     spain: {
       ca: 'Franja de NO a SE: A Coruña, Oviedo i Gijón, Santander, Lleó, Burgos, Valladolid, Logronyo, Vitòria, Sòria, Saragossa, Tarragona, Castelló, València i les Balears. Al capvespre, amb el Sol de 12° a menys de 2° sobre l’horitzó. Barcelona, Pamplona i Vigo en queden fora per poc: parcial del 99 %, que no és el mateix. Madrid i Santiago es queden a la ratlla mateixa: el càlcul no els pot situar ni dins ni fora.',
       es: 'Franja de NO a SE: A Coruña, Oviedo y Gijón, Santander, León, Burgos, Valladolid, Logroño, Vitoria, Soria, Zaragoza, Tarragona, Castellón, Valencia y Baleares. Al atardecer, con el Sol de 12° a menos de 2° sobre el horizonte. Barcelona, Pamplona y Vigo se quedan fuera por poco: parcial del 99 %, que no es lo mismo. Madrid y Santiago se quedan en la raya misma: el cálculo no puede situarlos ni dentro ni fuera.',
+      en: 'The path runs NW to SE through A Coruña, Oviedo and Gijón, Santander, León, Burgos, Valladolid, Logroño, Vitoria, Soria, Zaragoza, Tarragona, Castellón, Valencia and the Balearic Islands. It happens at sunset, with the Sun from 12° to less than 2° above the horizon. Barcelona, Pamplona and Vigo narrowly miss totality: a 99% partial eclipse is not the same thing. Madrid and Santiago lie right on the edge, where the calculation cannot reliably place them inside or outside.',
     },
     saros: 126,
     lowSunOverSpain: true,
@@ -144,6 +146,11 @@ export const ECLIPSES: EclipseEntry[] = [
         'Comprueba el horizonte sobre el terreno, y antes del día mismo. Una foto del skyline de poniente desde el punto exacto donde piensas plantarte vale más que cualquier previsión.',
         'A ras de horizonte, la calima y las nubes bajas hacen el mismo trabajo que una montaña. Vale la pena tener un plan B a poca distancia y hacia otro horizonte.',
       ],
+      en: [
+        'This eclipse is decided by the horizon. With the Sun so low, what you have to the west matters more than the path map: a modest ridge can cost more than driving a hundred kilometres in the wrong direction.',
+        'Check the horizon on site before eclipse day. A photograph of the western skyline from the exact place where you plan to stand is worth more than any forecast.',
+        'Near the horizon, haze and low cloud can block the Sun just like a mountain. Keep a nearby plan B with a different horizon.',
+      ],
     },
   },
   {
@@ -153,6 +160,7 @@ export const ECLIPSES: EclipseEntry[] = [
     label: {
       ca: 'Eclipsi total del 2 d’agost de 2027',
       es: 'Eclipse total del 2 de agosto de 2027',
+      en: 'Total solar eclipse of 2 August 2027',
     },
     /*
      * LA DADA QUE FA AIXECAR CELLES, dita amb el matís exacte: el màxim de
@@ -173,6 +181,7 @@ export const ECLIPSES: EclipseEntry[] = [
     spain: {
       ca: 'Franja per l’estret de Gibraltar: Cadis, Màlaga, Ceuta i Melilla. Al matí i amb el Sol alt — l’eclipsi fàcil dels tres. I el gran: cap totalitat visible des de terra el superarà fins al 2114 (6 min 23 s al màxim, a Egipte; des de l’Estret, uns 4 min i mig).',
       es: 'Franja por el estrecho de Gibraltar: Cádiz, Málaga, Ceuta y Melilla. Por la mañana y con el Sol alto — el eclipse fácil de los tres. Y el grande: ninguna totalidad visible desde tierra lo superará hasta 2114 (6 min 23 s en el máximo, en Egipto; desde el Estrecho, unos 4 min y medio).',
+      en: 'The path crosses the Strait of Gibraltar: Cádiz, Málaga, Ceuta and Melilla. It happens in the morning with the Sun high—the easiest of the three eclipses. It is also the long one: no totality visible from land will surpass it until 2114 (6 min 23 s at maximum in Egypt; about 4½ minutes from the Strait).',
     },
     saros: 136,
     lowSunOverSpain: false,
@@ -187,6 +196,11 @@ export const ECLIPSES: EclipseEntry[] = [
         'Con el Sol alto mirarás hacia arriba mucho rato. Una silla reclinable y una rótula de trípode con suficiente juego son la diferencia entre disfrutarlo y acabar con el cuello bloqueado.',
         'Aquí sí compensa moverse por la previsión meteorológica: dentro de la franja, cualquier punto sirve igual de bien, cosa que en los otros dos no pasa.',
       ],
+      en: [
+        'The Sun will be high enough that a distant ridge is much less likely to spoil the view. Here, getting well inside the path matters more than finding a perfectly flat horizon.',
+        'Heat, traffic and access will be the practical constraints. Arrive early and do not rely on the last road into the path.',
+        'This is the most forgiving eclipse of the three, but clouds still win. Keep a mobile plan B within the path.',
+      ],
     },
   },
   {
@@ -196,6 +210,7 @@ export const ECLIPSES: EclipseEntry[] = [
     label: {
       ca: 'Eclipsi anular del 26 de gener de 2028',
       es: 'Eclipse anular del 26 de enero de 2028',
+      en: 'Annular solar eclipse of 26 January 2028',
     },
     /*
      * QUATRE CIUTATS PER A UNA FRANJA QUE TRAVESSA MIG PAÍS (corregit el
@@ -221,6 +236,7 @@ export const ECLIPSES: EclipseEntry[] = [
     spain: {
       ca: 'Franja de SO a NE: Huelva, Sevilla, Cadis, Còrdova, Jaén, Granada, Màlaga, Albacete, Múrcia, Alacant, València, Castelló, Tarragona, Barcelona i les Balears. Al capvespre, amb el Sol de 8° al sud-oest fins a ran d’horitzó al nord-est: a Barcelona i Palma es pon durant l’anularitat, i a Girona i Maó ja s’ha post. Madrid, Saragossa i Almeria en queden fora.',
       es: 'Franja de SO a NE: Huelva, Sevilla, Cádiz, Córdoba, Jaén, Granada, Málaga, Albacete, Murcia, Alicante, Valencia, Castellón, Tarragona, Barcelona y Baleares. Al atardecer, con el Sol de 8° en el suroeste hasta el ras del horizonte en el noreste: en Barcelona y Palma se pone durante la anularidad, y en Girona y Mahón ya se ha puesto. Madrid, Zaragoza y Almería se quedan fuera.',
+      en: 'The path runs SW to NE through Huelva, Seville, Cádiz, Córdoba, Jaén, Granada, Málaga, Albacete, Murcia, Alicante, Valencia, Castellón, Tarragona, Barcelona and the Balearic Islands. It happens at sunset, with the Sun from 8° high in the southwest down to the horizon in the northeast: it sets during annularity in Barcelona and Palma, and has already set in Girona and Maó. Madrid, Zaragoza and Almería lie outside the path.',
     },
     saros: 141,
     lowSunOverSpain: true,
@@ -234,6 +250,11 @@ export const ECLIPSES: EclipseEntry[] = [
         'Es anular: lo que queda a la vista cuando la Luna está en medio del Sol es un anillo de fotosfera. No hay ningún instante de este eclipse en el que se pueda mirar sin filtro certificado, ni siquiera dentro de la anularidad.',
         'No se parecerá a una totalidad. La luz baja y se vuelve metálica, pero no oscurece, no sale la corona y no se encienden las estrellas: quien vaya esperando la otra cosa volverá decepcionado.',
         'A cambio, el anillo aguanta minutos enteros y es estable. Es el eclipse de los tres donde sobra tiempo para probar filtros, proyección con unos prismáticos y encuadres, en vez de jugárselo todo en un minuto.',
+      ],
+      en: [
+        'This is an annular eclipse: the bright ring is exposed photosphere. Solar filters stay on throughout the event, with no exception.',
+        'The Sun will be extremely low across much of the path. The exact western horizon can decide whether you see the ring at all.',
+        'In the northeast the Sun sets during, or even before, annularity. Calculate your exact point and choose a clear sea or lowland horizon.',
       ],
     },
   },

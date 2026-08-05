@@ -29,7 +29,7 @@ import type { Locale } from '../../i18n';
 import { Button, Card } from '../../ui';
 import { SpotFunnelCost } from './SpotFunnelCost';
 import { SpotList } from './SpotList';
-import { formatPercent } from './format';
+import { durationText, formatPercent } from './format';
 import { sp, spotSearchFailureText } from './strings';
 import { useSpotSearch } from './useSpotSearch';
 import './spots.css';
@@ -39,6 +39,9 @@ export interface SpotSearchPanelProps {
   locale: Locale;
   /** `null` mentre no se sap on és l'usuari. El panell ho diu i espera. */
   origin: GeoLocation | null;
+  /** Durada visible i teòrica al punt actual, per comparar cada recomanació. */
+  currentVisibleSec?: number | null;
+  currentTotalSec?: number | null;
   /** Paràmetres de l'embut. Es llegeixen en prémer el botó. */
   options?: SpotsWorkerOptions;
   /** Fer d'un resultat el punt de l'app. Es passa avall fins a cada targeta. */
@@ -62,6 +65,8 @@ export function SpotSearchPanel({
   eclipseId,
   locale,
   origin,
+  currentVisibleSec,
+  currentTotalSec,
   options,
   onSelect,
   onResults,
@@ -126,6 +131,22 @@ export function SpotSearchPanel({
         )}
       </header>
 
+      {origin !== null && currentTotalSec !== undefined && currentTotalSec !== null && (
+        <Card tone="inset" padding="var(--sp-4)" className="spotpanel__origin">
+          <p className="spotpanel__originlabel">{sp('panel.origin', locale)}</p>
+          <p className="spotpanel__originvalue">
+            {currentTotalSec > 0
+              ? currentVisibleSec === undefined || currentVisibleSec === null
+                ? sp('panel.originPending', locale, { total: durationText(currentTotalSec) })
+                : sp('panel.originVisible', locale, {
+                    visible: durationText(currentVisibleSec),
+                    total: durationText(currentTotalSec),
+                  })
+              : sp('panel.originNoCentral', locale)}
+          </p>
+        </Card>
+      )}
+
       {origin === null && <p className="spotpanel__wait">{sp('panel.needOrigin', locale)}</p>}
 
       {/* El cost de dades es diu ABANS de prémer, que és quan encara es pot
@@ -188,7 +209,13 @@ export function SpotSearchPanel({
       )}
 
       {outcome && (
-        <SpotList outcome={outcome} locale={locale} eclipseId={eclipseId} onSelect={onSelect} />
+        <SpotList
+          outcome={outcome}
+          locale={locale}
+          eclipseId={eclipseId}
+          baselineVisibleSec={currentVisibleSec}
+          onSelect={onSelect}
+        />
       )}
 
       {showCost && outcome && (

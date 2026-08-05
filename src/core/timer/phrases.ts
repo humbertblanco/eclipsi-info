@@ -33,17 +33,17 @@ export interface AlertText {
  * allà mana el sistema de disseny i les xifres van en mono tabular.
  */
 const WORDS: Record<number, LocalisedText> = {
-  1: { ca: 'Un', es: 'Un' },
-  5: { ca: 'Cinc', es: 'Cinco' },
-  10: { ca: 'Deu', es: 'Diez' },
-  15: { ca: 'Quinze', es: 'Quince' },
-  30: { ca: 'Trenta', es: 'Treinta' },
-  60: { ca: 'Seixanta', es: 'Sesenta' },
+  1: { ca: 'Un', es: 'Un', en: 'One' },
+  5: { ca: 'Cinc', es: 'Cinco', en: 'Five' },
+  10: { ca: 'Deu', es: 'Diez', en: 'Ten' },
+  15: { ca: 'Quinze', es: 'Quince', en: 'Fifteen' },
+  30: { ca: 'Trenta', es: 'Treinta', en: 'Thirty' },
+  60: { ca: 'Seixanta', es: 'Sesenta', en: 'Sixty' },
 };
 
 /** Xifra en lletres; si no és a la taula, cau a la xifra mateixa. */
 function word(n: number): LocalisedText {
-  return WORDS[n] ?? { ca: String(n), es: String(n) };
+  return WORDS[n] ?? { ca: String(n), es: String(n), en: String(n) };
 }
 
 /** Compte enrere cap al primer contacte, a 10, 5 i 1 minut. */
@@ -52,6 +52,7 @@ export function c1Countdown(seconds: number): AlertText {
   const w = word(minutes);
   const unitCa = minutes === 1 ? 'minut' : 'minuts';
   const unitEs = minutes === 1 ? 'minuto' : 'minutos';
+  const unitEn = minutes === 1 ? 'minute' : 'minutes';
 
   // A deu minuts encara ets a temps de treure les ulleres de la motxilla; a un
   // minut ja no és un recordatori logístic sinó una instrucció.
@@ -67,15 +68,23 @@ export function c1Countdown(seconds: number): AlertText {
       : minutes === 1
         ? ' Mira el Sol solo con filtro.'
         : '';
+  const tailEn =
+    minutes >= 10
+      ? ' Get your eclipse glasses ready.'
+      : minutes === 1
+        ? ' Only look at the Sun through eclipse glasses.'
+        : '';
 
   return {
     speech: {
       ca: `${w.ca} ${unitCa} per al primer contacte.${tailCa}`,
       es: `${w.es} ${unitEs} para el primer contacto.${tailEs}`,
+      en: `${w.en} ${unitEn} until first contact.${tailEn}`,
     },
     label: {
       ca: `${minutes} min per a C1`,
       es: `${minutes} min para C1`,
+      en: `${minutes} min until C1`,
     },
   };
 }
@@ -85,9 +94,9 @@ export function c1Start(): AlertText {
   return {
     speech: {
       ca: 'Primer contacte. Comença l’eclipsi.',
-      es: 'Primer contacto. Empieza el eclipse.',
+      es: 'Primer contacto. Empieza el eclipse.', en: 'First contact. The eclipse begins.',
     },
-    label: { ca: 'C1 · comença l’eclipsi', es: 'C1 · empieza el eclipse' },
+    label: { ca: 'C1 · comença l’eclipsi', es: 'C1 · empieza el eclipse', en: 'C1 · the eclipse begins' },
   };
 }
 
@@ -104,11 +113,13 @@ export function centralCountdown(seconds: number, mode: CentralMode): AlertText 
   const w = word(isMinute ? Math.round(seconds / 60) : seconds);
   const unitCa = isMinute ? (seconds === 60 ? 'minut' : 'minuts') : 'segons';
   const unitEs = isMinute ? (seconds === 60 ? 'minuto' : 'minutos') : 'segundos';
+  const unitEn = isMinute ? (seconds === 60 ? 'minute' : 'minutes') : 'seconds';
 
   const nameCa =
     mode === 'annular' ? 'l’anularitat' : mode === 'total' ? 'la totalitat' : 'la fase central';
   const nameEs =
     mode === 'annular' ? 'la anularidad' : mode === 'total' ? 'la totalidad' : 'la fase central';
+  const nameEn = mode === 'annular' ? 'annularity' : mode === 'total' ? 'totality' : 'the central phase';
 
   // El matís importa: en totalitat el filtre es treu D'AQUÍ A UNA ESTONA, en
   // anularitat no es treu mai, i quan la geometria no ho garanteix tampoc.
@@ -124,15 +135,23 @@ export function centralCountdown(seconds: number, mode: CentralMode): AlertText 
       : mode === 'annular'
         ? ' El filtro no se quita nunca.'
         : ' Desde este punto no es seguro quitarse el filtro.';
+  const tailEn =
+    mode === 'total'
+      ? ' Do not remove your eclipse glasses yet.'
+      : mode === 'annular'
+        ? ' Keep your eclipse glasses on throughout.'
+        : ' It is not safe to remove your eclipse glasses at this location.';
 
   return {
     speech: {
       ca: `${w.ca} ${unitCa} per a ${nameCa}.${tailCa}`,
       es: `${w.es} ${unitEs} para ${nameEs}.${tailEs}`,
+      en: `${w.en} ${unitEn} until ${nameEn}.${tailEn}`,
     },
     label: {
       ca: `${isMinute ? `${Math.round(seconds / 60)} min` : `${seconds} s`} per a C2`,
       es: `${isMinute ? `${Math.round(seconds / 60)} min` : `${seconds} s`} para C2`,
+      en: `${isMinute ? `${Math.round(seconds / 60)} min` : `${seconds} s`} until C2`,
     },
   };
 }
@@ -150,17 +169,17 @@ export function centralStart(mode: 'annular' | 'no-filter-off'): AlertText {
     return {
       speech: {
         ca: 'Anularitat. Anell de foc. El filtre es queda posat.',
-        es: 'Anularidad. Anillo de fuego. El filtro se queda puesto.',
+        es: 'Anularidad. Anillo de fuego. El filtro se queda puesto.', en: 'Annularity. Ring of fire. Keep your eclipse glasses on.',
       },
-      label: { ca: 'C2 · anell de foc', es: 'C2 · anillo de fuego' },
+      label: { ca: 'C2 · anell de foc', es: 'C2 · anillo de fuego', en: 'C2 · ring of fire' },
     };
   }
   return {
     speech: {
       ca: 'Fase central. Des d’aquest punt el filtre no es treu.',
-      es: 'Fase central. Desde este punto el filtro no se quita.',
+      es: 'Fase central. Desde este punto el filtro no se quita.', en: 'Central phase. Do not remove your eclipse glasses at this location.',
     },
-    label: { ca: 'C2 · filtre posat', es: 'C2 · filtro puesto' },
+    label: { ca: 'C2 · filtre posat', es: 'C2 · filtro puesto', en: 'C2 · glasses on' },
   };
 }
 
@@ -192,9 +211,9 @@ export function filterOff(): AlertText {
   return {
     speech: {
       ca: "Si ja s'ha fet fosc i veus la corona, ara pots treure't el filtre. Si encara hi ha un punt de llum, espera.",
-      es: 'Si ya ha oscurecido y ves la corona, ahora puedes quitarte el filtro. Si todavía hay un punto de luz, espera.',
+      es: 'Si ya ha oscurecido y ves la corona, ahora puedes quitarte el filtro. Si todavía hay un punto de luz, espera.', en: 'If it is fully dark and you can see the corona, you may now remove your eclipse glasses. If any point of bright sunlight remains, wait.',
     },
-    label: { ca: 'Filtre fora', es: 'Filtro fuera' },
+    label: { ca: 'Filtre fora', es: 'Filtro fuera', en: 'Glasses off' },
   };
 }
 
@@ -204,17 +223,21 @@ export function centralRemaining(seconds: number, mode: CentralMode): AlertText 
   const w = word(isMinute ? Math.round(seconds / 60) : seconds);
   const unitCa = isMinute ? (seconds === 60 ? 'minut' : 'minuts') : 'segons';
   const unitEs = isMinute ? (seconds === 60 ? 'minuto' : 'minutos') : 'segundos';
+  const unitEn = isMinute ? (seconds === 60 ? 'minute' : 'minutes') : 'seconds';
   const nameCa = mode === 'annular' ? 'anularitat' : 'totalitat';
   const nameEs = mode === 'annular' ? 'anularidad' : 'totalidad';
+  const nameEn = mode === 'annular' ? 'annularity' : 'totality';
 
   return {
     speech: {
       ca: `${w.ca} ${unitCa} de ${nameCa}.`,
       es: `${w.es} ${unitEs} de ${nameEs}.`,
+      en: `${w.en} ${unitEn} of ${nameEn} remaining.`,
     },
     label: {
       ca: `Queden ${isMinute ? `${Math.round(seconds / 60)} min` : `${seconds} s`}`,
       es: `Quedan ${isMinute ? `${Math.round(seconds / 60)} min` : `${seconds} s`}`,
+      en: `${isMinute ? `${Math.round(seconds / 60)} min` : `${seconds} s`} remaining`,
     },
   };
 }
@@ -230,15 +253,18 @@ export function filterOn(seconds: number): AlertText {
   const w = word(seconds);
   const finalCa = seconds <= 5 ? ' Posa’t el filtre ara.' : ' Prepara el filtre.';
   const finalEs = seconds <= 5 ? ' Ponte el filtro ahora.' : ' Prepara el filtro.';
+  const finalEn = seconds <= 5 ? ' Put your eclipse glasses on now.' : ' Get your eclipse glasses ready.';
 
   return {
     speech: {
       ca: `${w.ca} segons.${finalCa}`,
       es: `${w.es} segundos.${finalEs}`,
+      en: `${w.en} seconds.${finalEn}`,
     },
     label: {
       ca: seconds <= 5 ? 'Filtre posat ARA' : `Filtre en ${seconds} s`,
       es: seconds <= 5 ? 'Filtro puesto YA' : `Filtro en ${seconds} s`,
+      en: seconds <= 5 ? 'Glasses on NOW' : `Glasses on in ${seconds} s`,
     },
   };
 }
@@ -249,17 +275,17 @@ export function sunReturned(mode: CentralMode): AlertText {
     return {
       speech: {
         ca: 'S’ha acabat l’anularitat. El filtre segueix posat.',
-        es: 'Se ha acabado la anularidad. El filtro sigue puesto.',
+        es: 'Se ha acabado la anularidad. El filtro sigue puesto.', en: 'Annularity is over. Keep your eclipse glasses on.',
       },
-      label: { ca: 'C3 · fi de l’anularitat', es: 'C3 · fin de la anularidad' },
+      label: { ca: 'C3 · fi de l’anularitat', es: 'C3 · fin de la anularidad', en: 'C3 · end of annularity' },
     };
   }
   return {
     speech: {
       ca: 'Torna el Sol. El filtre es queda posat fins al final.',
-      es: 'Vuelve el Sol. El filtro se queda puesto hasta el final.',
+      es: 'Vuelve el Sol. El filtro se queda puesto hasta el final.', en: 'The Sun returns. Keep your eclipse glasses on until the end.',
     },
-    label: { ca: 'C3 · torna el Sol', es: 'C3 · vuelve el Sol' },
+    label: { ca: 'C3 · torna el Sol', es: 'C3 · vuelve el Sol', en: 'C3 · the Sun returns' },
   };
 }
 
@@ -282,10 +308,15 @@ export function maximum(obscuration?: number): AlertText {
         pct === undefined
           ? 'Máximo del eclipse. No te quites el filtro.'
           : `Máximo del eclipse. ${pct} por ciento del Sol tapado. No te quites el filtro.`,
+      en:
+        pct === undefined
+          ? 'Maximum eclipse. Keep your eclipse glasses on.'
+          : `Maximum eclipse. ${pct} percent of the Sun is covered. Keep your eclipse glasses on.`,
     },
     label: {
       ca: pct === undefined ? 'Màxim' : `Màxim · ${pct} %`,
       es: pct === undefined ? 'Máximo' : `Máximo · ${pct} %`,
+      en: pct === undefined ? 'Maximum' : `Maximum · ${pct}%`,
     },
   };
 }
@@ -295,9 +326,9 @@ export function eclipseEnd(): AlertText {
   return {
     speech: {
       ca: 'Quart contacte. S’ha acabat l’eclipsi.',
-      es: 'Cuarto contacto. Se ha acabado el eclipse.',
+      es: 'Cuarto contacto. Se ha acabado el eclipse.', en: 'Fourth contact. The eclipse is over.',
     },
-    label: { ca: 'C4 · fi de l’eclipsi', es: 'C4 · fin del eclipse' },
+    label: { ca: 'C4 · fi de l’eclipsi', es: 'C4 · fin del eclipse', en: 'C4 · end of the eclipse' },
   };
 }
 
@@ -312,16 +343,16 @@ export function rehearsalStart(): AlertText {
   return {
     speech: {
       ca: 'Assaig. Sentiràs tota la seqüència d’avisos accelerada.',
-      es: 'Ensayo. Vas a oír toda la secuencia de avisos acelerada.',
+      es: 'Ensayo. Vas a oír toda la secuencia de avisos acelerada.', en: 'Rehearsal. You will hear the full alert sequence at an accelerated pace.',
     },
-    label: { ca: 'Assaig · comença', es: 'Ensayo · empieza' },
+    label: { ca: 'Assaig · comença', es: 'Ensayo · empieza', en: 'Rehearsal · start' },
   };
 }
 
 export function rehearsalEnd(): AlertText {
   return {
-    speech: { ca: 'Fi de l’assaig.', es: 'Fin del ensayo.' },
-    label: { ca: 'Assaig · fi', es: 'Ensayo · fin' },
+    speech: { ca: 'Fi de l’assaig.', es: 'Fin del ensayo.', en: 'End of rehearsal.' },
+    label: { ca: 'Assaig · fi', es: 'Ensayo · fin', en: 'Rehearsal · end' },
   };
 }
 
@@ -339,35 +370,34 @@ export function rehearsalEnd(): AlertText {
 export const FILTER_GATE_NOTE: Record<FilterGateReason, LocalisedText> = {
   ok: {
     ca: 'Només et pots treure el filtre entre l’avís de totalitat i el primer avís de tornar-te’l a posar.',
-    es: 'Solo puedes quitarte el filtro entre el aviso de totalidad y el primer aviso de volvértelo a poner.',
+    es: 'Solo puedes quitarte el filtro entre el aviso de totalidad y el primer aviso de volvértelo a poner.', en: 'Only remove your eclipse glasses after the totality alert and before the first alert telling you to put them back on.',
   },
   'no-eclipse': {
     ca: 'Des d’aquest punt no hi ha eclipsi.',
-    es: 'Desde este punto no hay eclipse.',
+    es: 'Desde este punto no hay eclipse.', en: 'From this point there is no eclipse.',
   },
   'partial-only': {
     ca: 'Des d’aquí l’eclipsi és parcial. No sentiràs mai l’avís de treure’t el filtre, perquè no hi ha cap moment segur.',
-    es: 'Desde aquí el eclipse es parcial. No oirás nunca el aviso de quitarte el filtro, porque no hay ningún momento seguro.',
+    es: 'Desde aquí el eclipse es parcial. No oirás nunca el aviso de quitarte el filtro, porque no hay ningún momento seguro.', en: 'From here the eclipse is partial. You will never hear the warning to remove the filter, because there is no safe time.',
   },
   annular: {
     ca: 'Eclipsi anular. L’anell que queda a la vista és fotosfera: el filtre no es treu en cap moment.',
-    es: 'Eclipse anular. El anillo que queda a la vista es fotosfera: el filtro no se quita en ningún momento.',
+    es: 'Eclipse anular. El anillo que queda a la vista es fotosfera: el filtro no se quita en ningún momento.', en: 'Annular eclipse. The visible ring is the Sun’s photosphere: keep your eclipse glasses on throughout.',
   },
   'missing-central-contacts': {
     ca: 'No s’han pogut fixar els contactes de la totalitat. Per seguretat, no hi haurà cap avís de treure el filtre.',
-    es: 'No se han podido fijar los contactos de la totalidad. Por seguridad, no habrá ningún aviso de quitar el filtro.',
+    es: 'No se han podido fijar los contactos de la totalidad. Por seguridad, no habrá ningún aviso de quitar el filtro.', en: 'The contacts of totality could not be established. For safety, there will be no alert to remove your eclipse glasses.',
   },
   'totality-too-short': {
     ca: 'Ets al límit de la franja i la totalitat calculada és massa curta per garantir-la. Filtre posat tota l’estona.',
-    es: 'Estás en el límite de la franja y la totalidad calculada es demasiado corta para garantizarla. Filtro puesto todo el rato.',
+    es: 'Estás en el límite de la franja y la totalidad calculada es demasiado corta para garantizarla. Filtro puesto todo el rato.', en: 'You are at the edge of the path and the calculated totality is too short to guarantee. Keep your eclipse glasses on throughout.',
   },
   'central-blocked-by-terrain': {
     ca: 'El terreny tapa la fase central des d’aquest punt. Filtre posat tota l’estona.',
-    es: 'El terreno tapa la fase central desde este punto. Filtro puesto todo el rato.',
+    es: 'El terreno tapa la fase central desde este punto. Filtro puesto todo el rato.', en: 'Terrain blocks the central phase at this location. Keep your eclipse glasses on throughout.',
   },
   'edge-uncertain': {
     ca: 'Ets al caire de la franja i no podem dir amb prou seguretat si hi haurà totalitat. Filtre posat tota l’estona; si et mous cap endins, tornem-ho a mirar.',
-    es: 'Estás en el borde de la franja y no podemos decir con suficiente seguridad si habrá totalidad. Filtro puesto todo el rato; si te mueves hacia dentro, lo volvemos a mirar.',
+    es: 'Estás en el borde de la franja y no podemos decir con suficiente seguridad si habrá totalidad. Filtro puesto todo el rato; si te mueves hacia dentro, lo volvemos a mirar.', en: 'You are at the edge of the path and we cannot confirm totality safely. Keep your eclipse glasses on throughout; move further inside the path and recalculate.',
   },
 };
-

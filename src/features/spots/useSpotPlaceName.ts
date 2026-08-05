@@ -80,5 +80,5 @@ export function useSpotPlaceName(lat: number, lon: number, locale: Locale): Plac
 
   // La redacció («Cervera», «a 4 km de Cervera», la comarca sola) la decideix
   // el motor, que és qui sap què és veritat a cada distància.
-  return describePlace(place, locale === 'es' ? 'es' : 'ca');
+  return describePlace(place, locale);
 }
