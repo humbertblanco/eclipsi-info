@@ -194,6 +194,9 @@ const RASTER: RasterAsset[] = [
   },
 ];
 
+/** Contenidor ICO de compatibilitat; replica el favicon de 48 px ja auditat. */
+const COMPATIBILITY_IMAGES = ['favicon.ico'] as const;
+
 /**
  * Els SVG. No tenen píxels, i per això la comprovació és una altra: que hi
  * hagi geometria PINTADA fora de `<defs>`. Un SVG amb formes només dins de
@@ -506,7 +509,11 @@ describe('l’inventari', () => {
     };
     walk(PUBLIC);
 
-    const watched = [...RASTER.map((a) => a.path), ...VECTOR.map((a) => a.path)];
+    const watched = [
+      ...RASTER.map((a) => a.path),
+      ...VECTOR.map((a) => a.path),
+      ...COMPATIBILITY_IMAGES,
+    ];
     expect(found.sort()).toEqual(watched.sort());
   });
 });
