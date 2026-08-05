@@ -12,6 +12,7 @@ import { pointsForEclipse } from './data/observation-points/catalog';
 import { SEO_CITIES } from './content/seo/cities';
 import { Card } from './ui';
 import { usePlaceSearch } from './features/location/usePlaceSearch';
+import { LocateFixed, Search } from 'lucide-react';
 import './styles/index.css';
 import './index.css';
 import './seo-widgets.css';
@@ -61,9 +62,9 @@ function HeaderLocationTools({ locale, eclipseId }: { locale: Locale; eclipseId:
     );
   };
   return <div className={`seo-header-tools${open ? ' is-open' : ''}`}>
-    <button className="seo-header-tools__toggle" type="button" aria-expanded={open} onClick={() => setOpen(value => !value)} aria-label={copy.placeholder}>⌕</button>
+    <button className="seo-header-tools__toggle" type="button" aria-expanded={open} onClick={() => setOpen(value => !value)} aria-label={copy.placeholder}><Search aria-hidden="true" /></button>
     <form className="seo-header-search" role="search" onSubmit={submit}>
-      <span aria-hidden="true">⌕</span>
+      <Search aria-hidden="true" />
       <input value={search.query} onFocus={() => setOpen(true)} onChange={event => { search.setQuery(event.target.value); setOpen(true); }} placeholder={copy.placeholder} aria-label={copy.placeholder} autoComplete="off" />
       {open && search.query.trim().length >= 2 && <div className="seo-header-search__results">
         {search.loading && <span className="seo-header-search__status">…</span>}
@@ -71,7 +72,7 @@ function HeaderLocationTools({ locale, eclipseId }: { locale: Locale; eclipseId:
         {!search.loading && search.outcome === 'empty' && <span className="seo-header-search__status">{copy.empty}</span>}
       </div>}
     </form>
-    <button className="seo-header-locate" type="button" onClick={locate} disabled={locating} title={copy.locate}><span aria-hidden="true">◎</span><span>{locating ? copy.locating : copy.locate}</span></button>
+    <button className="seo-header-locate" type="button" onClick={locate} disabled={locating} title={copy.locate}><LocateFixed aria-hidden="true" /><span>{locating ? copy.locating : copy.locate}</span></button>
   </div>;
 }
 
