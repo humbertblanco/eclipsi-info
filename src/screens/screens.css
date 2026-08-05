@@ -2356,3 +2356,43 @@
   flex-direction: column;
   gap: var(--sp-3);
 }
+/* Entrada editorial des de la portada cap a les pàgines indexables. Manté la
+   jerarquia de Card del producte i reserva l'ambre per a l'acció principal. */
+.home__planning {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.home__planning p {
+  margin: 0;
+  color: var(--text-secondary);
+  font: var(--text-body-sm);
+}
+
+.home__planninglinks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.home__planninglinks a {
+  min-height: var(--tap-min);
+  display: flex;
+  align-items: center;
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  color: var(--text-body);
+  font: var(--text-label);
+}
+
+.home__planningall {
+  width: fit-content;
+  color: var(--text-link);
+  font: var(--text-label);
+}
+
+@media (max-width: 390px) {
+  .home__planninglinks { grid-template-columns: 1fr; }
+}

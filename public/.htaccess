@@ -3,6 +3,15 @@
 # nostra 404 fosca i bilingüe.
 ErrorDocument 404 /404.html
 
+# Les primeres pàgines editorials es van publicar amb la data ISO al camí.
+# La canònica pública és europea (dia-mes-any); aquestes redireccions 301
+# preserven query i fragment i eviten duplicats o enllaços morts.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^((?:es|en|fr)/)?(eclipsi|eclipse)/(\d{4})-(\d{2})-(\d{2})/?$ /$1$2/$5-$4-$3/ [R=301,L,NE]
+  RewriteRule ^((?:es|en|fr)/)?(ciutat|ciudad|city|ville|punt-oficial|punto-oficial|official-site|site-officiel)/([^/]+)/(\d{4})-(\d{2})-(\d{2})/?$ /$1$2/$3/$6-$5-$4/ [R=301,L,NE]
+</IfModule>
+
 # =============================================================================
 # QUANT DURA CADA COSA AL NAVEGADOR
 #

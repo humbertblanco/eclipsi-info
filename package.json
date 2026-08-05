@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && tsx scripts/build-seo-pages.ts",
-    "build:seo": "tsx scripts/build-seo-pages.ts",
+    "build": "tsc -b && vite build && tsx scripts/run-build-seo.ts",
+    "build:seo": "tsx scripts/run-build-seo.ts",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",

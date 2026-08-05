@@ -19,14 +19,14 @@ describe('slugs llegibles', () => {
       'es',
     );
     expect(url).toBe(
-      'https://eclipsi.info/es/ciudad/tarragona/2026-08-12/?p=41.11888,1.24449&e=2026-08-12&n=Tarragona#/compte',
+      'https://eclipsi.info/es/ciudad/tarragona/12-08-2026/?p=41.11888,1.24449&e=2026-08-12&n=Tarragona#/compte',
     );
   });
 
   it('usa el slug traduït', () => {
     const place = findReadablePlace({ lat: 41.3874, lon: 2.16857 });
     expect(place).not.toBeNull();
-    expect(readablePlacePath(place!, 'fr', '2026-08-12')).toBe('/fr/ville/barcelona/2026-08-12/');
+    expect(readablePlacePath(place!, 'fr', '2026-08-12')).toBe('/fr/ville/barcelona/12-08-2026/');
   });
 
   it('manté l’URL compatible per a un punt lliure', () => {
@@ -54,7 +54,7 @@ describe('registre oficial', () => {
       id: 'ast-aller-alto-de-coto-bello',
       eclipseId: '2026-08-12',
     });
-    expect(readablePlacePath(place!, 'ca')).toBe('/punt-oficial/ast-aller-alto-de-coto-bello/2026-08-12/');
+    expect(readablePlacePath(place!, 'ca')).toBe('/punt-oficial/ast-aller-alto-de-coto-bello/12-08-2026/');
   });
 
   it('no atribueix el punt oficial a un altre eclipsi', () => {
@@ -76,10 +76,12 @@ describe('registre oficial', () => {
 
 describe('resolució de pathname', () => {
   it('resol els quatre segments localitzats', () => {
+    expect(resolveReadablePlacePath('/ciutat/zaragoza/12-08-2026/')?.place.id).toBe('zaragoza');
+    expect(resolveReadablePlacePath('/es/ciudad/zaragoza/12-08-2026')?.place.id).toBe('zaragoza');
+    expect(resolveReadablePlacePath('/en/city/zaragoza/12-08-2026/')?.locale).toBe('en');
+    expect(resolveReadablePlacePath('/fr/ville/zaragoza/12-08-2026/')?.locale).toBe('fr');
+    // Compatibilitat durant la migració dels primers enllaços publicats.
     expect(resolveReadablePlacePath('/ciutat/zaragoza/2026-08-12/')?.place.id).toBe('zaragoza');
-    expect(resolveReadablePlacePath('/es/ciudad/zaragoza/2026-08-12')?.place.id).toBe('zaragoza');
-    expect(resolveReadablePlacePath('/en/city/zaragoza/2026-08-12/')?.locale).toBe('en');
-    expect(resolveReadablePlacePath('/fr/ville/zaragoza/2026-08-12/')?.locale).toBe('fr');
   });
 
   it('rebutja segments i slugs desconeguts', () => {

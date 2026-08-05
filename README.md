@@ -1,5 +1,7 @@
 # eclipsi.info
 
+La documentació de l’arquitectura i les regles de les landings SEO és a [docs/SEO_LANDINGS.md](docs/SEO_LANDINGS.md).
+
 **Des del punt exacte on seràs: quants segons d'eclipsi veuràs de debò, a quina
 hora, cap a on has de mirar, i si hi ha una muntanya al mig.**
 

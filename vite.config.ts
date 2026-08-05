@@ -394,4 +394,12 @@ export default defineConfig(({ command }) => ({
     // Escolta a totes les interfícies perquè el mòbil hi pugui arribar.
     host: true,
   },
+  build: {
+    rollupOptions: {
+      input: {
+        app: resolve('index.html'),
+        seoWidgets: resolve('src/seo-widgets.tsx'),
+      },
+    },
+  },
 }))

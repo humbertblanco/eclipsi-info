@@ -113,10 +113,10 @@ const TEXT = {
 } as const;
 
 const SEO_PATHS: Record<Locale, { eclipse: string; guide: string }> = {
-  ca: { eclipse: '/eclipsi/2026-08-12/', guide: '/guia/seguretat-eclipsi-solar/' },
-  es: { eclipse: '/es/eclipse/2026-08-12/', guide: '/es/guia/seguridad-eclipse-solar/' },
-  en: { eclipse: '/en/eclipse/2026-08-12/', guide: '/en/guide/solar-eclipse-safety/' },
-  fr: { eclipse: '/fr/eclipse/2026-08-12/', guide: '/fr/guide/securite-eclipse-solaire/' },
+  ca: { eclipse: '/eclipsi/12-08-2026/', guide: '/guia/' },
+  es: { eclipse: '/es/eclipse/12-08-2026/', guide: '/es/guia/' },
+  en: { eclipse: '/en/eclipse/12-08-2026/', guide: '/en/guide/' },
+  fr: { eclipse: '/fr/eclipse/12-08-2026/', guide: '/fr/guide/' },
 };
 
 const REPO_URL = 'https://github.com/humbertblanco/eclipsi-info';

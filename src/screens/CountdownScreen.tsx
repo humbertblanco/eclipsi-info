@@ -29,6 +29,8 @@ import { computeShadowMotion } from '../core/astro/shadow';
 import { Countdown } from '../ui/eclipse/Countdown';
 import { skyStateFromSample, toCss } from '../core/sky';
 import { getEclipse } from '../core/eclipses/catalog';
+import { SEO_CITIES } from '../content/seo/cities';
+import { eclipseDateSlug } from '../content/seo/dateSlug';
 import type { EclipseSample } from '../core/astro/types';
 import type { EclipseContext } from './context';
 import { EphemerisTable } from './EphemerisTable';
@@ -74,6 +76,25 @@ const KIND_TONE: Record<string, Tone> = {
   partial: 'cloudy',
   none: 'neutral',
 };
+
+const PLAN_TEXT = {
+  ca: { title: 'Planifica-ho per lloc', intro: 'Consulta horaris, altura del Sol, climatologia i punts oficials de cada zona.', all: 'Veure totes les ciutats i punts oficials' },
+  es: { title: 'Planifícalo por lugar', intro: 'Consulta horarios, altura del Sol, climatología y puntos oficiales de cada zona.', all: 'Ver todas las ciudades y puntos oficiales' },
+  en: { title: 'Plan by location', intro: 'Check times, Sun altitude, climatology and official observing sites for each area.', all: 'See all cities and official sites' },
+  fr: { title: 'Préparer par lieu', intro: 'Consultez les horaires, la hauteur du Soleil, la climatologie et les sites officiels.', all: 'Voir toutes les villes et sites officiels' },
+} as const;
+
+const FEATURED_CITY_IDS = ['tarragona', 'zaragoza', 'valencia', 'palma'] as const;
+
+function planningPath(locale: EclipseContext['locale'], kind: 'eclipse' | 'city', id: string, eclipseId: string): string {
+  const language=locale==='ca'?'':`/${locale}`;
+  const segment=kind==='eclipse'
+    ? (locale==='ca'?'eclipsi':'eclipse')
+    : ({ca:'ciutat',es:'ciudad',en:'city',fr:'ville'} as const)[locale];
+  return kind==='eclipse'
+    ? `${language}/${segment}/${eclipseDateSlug(eclipseId)}/`
+    : `${language}/${segment}/${id}/${eclipseDateSlug(eclipseId)}/`;
+}
 
 /**
  * Pantalla "Compte enrere" — la portada.
@@ -455,6 +476,21 @@ export function CountdownScreen({
           verdict={verdict}
           locale={locale}
         />
+
+        <Card className="home__planning">
+          <span className="screen__overline">{PLAN_TEXT[locale].title}</span>
+          <p>{PLAN_TEXT[locale].intro}</p>
+          <div className="home__planninglinks">
+            {SEO_CITIES.filter((city) => FEATURED_CITY_IDS.includes(city.id as typeof FEATURED_CITY_IDS[number])).map((city) => (
+              <a key={city.id} href={planningPath(locale, 'city', city.id, eclipseId)}>
+                {city.name[locale]}
+              </a>
+            ))}
+          </div>
+          <a className="home__planningall" href={planningPath(locale, 'eclipse', eclipseId, eclipseId)}>
+            {PLAN_TEXT[locale].all} →
+          </a>
+        </Card>
       </div>
 
       <div className="screen__col screen__col--side">

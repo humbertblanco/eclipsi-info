@@ -428,6 +428,9 @@ export function EclipseMap({
   // sempre la darrera franja calculada, no la que hi havia quan es va crear.
   const geojsonRef = useRef(geojson);
   geojsonRef.current = geojson;
+  // Només governa el primer enquadrament del mapa; els canvis posteriors els
+  // continua gestionant l'efecte de `focus` de sota.
+  const initialFocusRef = useRef(focus);
 
   /*
    * Les capes opcionals segueixen el mateix règim que la franja: l'estil pot
@@ -662,6 +665,17 @@ export function EclipseMap({
     const apply = (): void => {
       applyPath(map, geojsonRef.current);
       syncLayers(map);
+      // Quan el mapa neix ja amb un resultat enfocat (p. ex. una landing
+      // local), l'efecte de `focus` pot haver corregut abans que `mapRef`
+      // estigués disponible. Enquadra'l també en carregar l'estil perquè la
+      // primera vista sigui realment local i no tota la península.
+      const initialFocus = initialFocusRef.current;
+      if (initialFocus !== null) {
+        map.jumpTo({
+          center: [initialFocus.location.lon, initialFocus.location.lat],
+          zoom: FOCUS_ZOOM,
+        });
+      }
       // El primer enquadrament ha d'arribar sense esperar cap gest.
       emitViewport();
     };

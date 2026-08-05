@@ -4,6 +4,7 @@ import { pointsForEclipse } from '../../data/observation-points/catalog';
 import { SEO_CITIES } from './cities';
 import { SEO_LOCALES, prefix } from './strings';
 import { SEO_EVENT_WINDOWS } from './events';
+import { eclipseDateSlug, eclipseIdFromSlug } from './dateSlug';
 
 describe('catàleg de pàgines SEO', () => {
   it('té identificadors i coordenades de ciutat únics i vàlids', () => {
@@ -41,5 +42,12 @@ describe('catàleg de pàgines SEO', () => {
       expect(Date.parse(window.end)).toBeGreaterThan(maximum);
       for (const locale of SEO_LOCALES) expect(window.area[locale]).not.toBe('');
     }
+  });
+
+  it('presenta les dates públiques en format europeu sense canviar l’id del motor', () => {
+    expect(eclipseDateSlug('2026-08-12')).toBe('12-08-2026');
+    expect(eclipseIdFromSlug('12-08-2026')).toBe('2026-08-12');
+    expect(eclipseIdFromSlug('2026-08-12')).toBe('2026-08-12');
+    expect(eclipseIdFromSlug('12/08/2026')).toBeNull();
   });
 });

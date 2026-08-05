@@ -10,6 +10,7 @@ import {
   pointsForEclipse,
 } from '../../data/observation-points/catalog';
 import { SEO_CITIES } from '../../content/seo/cities';
+import { eclipseDateSlug, eclipseIdFromSlug } from '../../content/seo/dateSlug';
 import type { Locale } from '../../i18n';
 import { buildShareLink, type ShareLinkParams } from './link';
 
@@ -136,7 +137,7 @@ export function readablePlacePath(
   if (event === null) return `/${language}`;
   // Els ids coincideixen amb els del generador estàtic i són estables encara
   // que canviï una traducció del topònim.
-  return `/${language}${SEGMENT[locale][place.kind]}/${place.id}/${event}/`;
+  return `/${language}${SEGMENT[locale][place.kind]}/${place.id}/${eclipseDateSlug(event)}/`;
 }
 
 /**
@@ -168,7 +169,8 @@ export function resolveReadablePlacePath(pathname: string): {
       const segment = SEGMENT[locale][kind];
       const routePrefix = locale === 'ca' ? `/${segment}/` : `/${locale}/${segment}/`;
       if (!clean.startsWith(routePrefix)) continue;
-      const [id, eclipseId] = clean.slice(routePrefix.length, -1).split('/');
+      const [id, eclipseSlug] = clean.slice(routePrefix.length, -1).split('/');
+      const eclipseId = eclipseSlug ? eclipseIdFromSlug(eclipseSlug) : null;
       const place = READABLE_PLACES.find((entry) => entry.kind === kind && entry.id === id);
       if (!place || !eclipseId || (place.eclipseId !== null && place.eclipseId !== eclipseId)) return null;
       return { place, locale };
