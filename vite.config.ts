@@ -2,12 +2,13 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import { VitePWA } from 'vite-plugin-pwa'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
 /** HTML castellà real per a Google i les previsualitzacions de `/es`. */
 function spanishIndex(html: string): string {
   return html
+    .replaceAll('brand/og-ca.png', 'brand/og-es.png')
     .replace('<html lang="ca">', '<html lang="es">')
     .replace(
       '<title>Eclipsi solar 2026: visibilitat i durada al teu punt | eclipsi.info</title>',
@@ -59,6 +60,7 @@ function spanishIndex(html: string): string {
 /** HTML anglès real per a cercadors i previsualitzacions de `/en`. */
 function englishIndex(html: string): string {
   return html
+    .replaceAll('brand/og-ca.png', 'brand/og-en.png')
     .replace('<html lang="ca">', '<html lang="en">')
     .replace(
       '<title>Eclipsi solar 2026: visibilitat i durada al teu punt | eclipsi.info</title>',
@@ -109,6 +111,7 @@ function englishIndex(html: string): string {
 
 function frenchIndex(html: string): string {
   return html
+    .replaceAll('brand/og-ca.png', 'brand/og-fr.png')
     .replace('<html lang="ca">', '<html lang="fr">')
     .replace('<title>Eclipsi solar 2026: visibilitat i durada al teu punt | eclipsi.info</title>', '<title>Éclipse solaire 2026 : visibilité et durée à votre position | eclipsi.info</title>')
     .replace(`rel="canonical" href="${SITE_URL}"`, `rel="canonical" href="${SITE_URL}fr/"`)
@@ -219,6 +222,13 @@ export default defineConfig(({ command }) => ({
       transformIndexHtml: (html: string) => html.replaceAll('%SITE_URL%', SITE_URL),
     },
     {
+      name: 'eclipsi-public-html-without-comments',
+      transformIndexHtml: {
+        order: 'post',
+        handler: (html: string) => html.replace(/<!--[^]*?-->/g, ''),
+      },
+    },
+    {
       name: 'eclipsi-localised-indexes',
       async writeBundle(options) {
         const outDir = resolve(options.dir ?? 'dist')
@@ -229,6 +239,22 @@ export default defineConfig(({ command }) => ({
         await writeFile(resolve(outDir, 'es/index.html'), spanishIndex(html), 'utf8')
         await writeFile(resolve(outDir, 'en/index.html'), englishIndex(html), 'utf8')
         await writeFile(resolve(outDir, 'fr/index.html'), frenchIndex(html), 'utf8')
+      },
+    },
+    {
+      name: 'eclipsi-strip-comments-from-copied-html',
+      async writeBundle(options) {
+        const visit = async (directory: string): Promise<void> => {
+          for (const entry of await readdir(directory, { withFileTypes: true })) {
+            const file = resolve(directory, entry.name)
+            if (entry.isDirectory()) await visit(file)
+            else if (entry.name.endsWith('.html')) {
+              const html = await readFile(file, 'utf8')
+              await writeFile(file, html.replace(/<!--[^]*?-->/g, ''), 'utf8')
+            }
+          }
+        }
+        await visit(resolve(options.dir ?? 'dist'))
       },
     },
     VitePWA({
@@ -266,7 +292,7 @@ export default defineConfig(({ command }) => ({
         // El material editorial només es baixa quan algú el demana a Premsa;
         // no ha d'afegir més de 3 MB a la primera instal·lació de tothom.
         globIgnores: [
-          '**/brand/og.png',
+          '**/brand/og*.png',
           '**/press/**',
           // Les pàgines SEO són documents HTML independents, generats després
           // de Workbox. Indexables i compartibles, però no formen part de la

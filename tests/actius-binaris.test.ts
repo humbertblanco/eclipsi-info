@@ -146,12 +146,20 @@ const RASTER: RasterAsset[] = [
   },
   {
     path: 'brand/og.png',
-    role: 'targeta social (og:image i twitter:image) — la fa scripts/build-og.ts',
+    role: 'targeta social catalana de compatibilitat — la fa scripts/build-og.ts',
     width: 1200,
     height: 630,
     fullBleed: true,
     alpha: 'cap',
   },
+  ...(['ca', 'es', 'en', 'fr'] as const).map((locale) => ({
+    path: `brand/og-${locale}.png`,
+    role: `targeta social en idioma ${locale} — la fa scripts/build-og.ts`,
+    width: 1200,
+    height: 630,
+    fullBleed: true,
+    alpha: 'cap' as const,
+  })),
   {
     path: 'brand/minimapa-iberia.png',
     role: 'imatge base del mini-mapa de la portada — la fa scripts/build-minimap.ts',
@@ -211,6 +219,7 @@ const VECTOR: { path: string; role: string }[] = [
   { path: 'brand/logo-mark-mono.svg', role: 'marca monocroma — kit de premsa' },
   { path: 'brand/logo-daylight.svg', role: 'logotip sobre fons clar — kit de premsa' },
   { path: 'brand/favicon.svg', role: 'favicon de marca — kit de premsa' },
+  { path: 'brand/favicon-eclipse.svg', role: 'favicon canònic amb URL renovada' },
 ];
 
 /* ── Els talls ───────────────────────────────────────────────────────────── */
@@ -445,11 +454,11 @@ describe('el que el projecte promet d’aquests actius', () => {
   it('les etiquetes Open Graph declaren la mida que la targeta fa de debò', () => {
     // WhatsApp i X reserven la caixa amb aquests dos números abans de baixar
     // la imatge: si menteixen, la targeta surt deformada o retallada.
-    const card = measurePng(readFileSync(join(PUBLIC, 'brand', 'og.png')));
+    const card = measurePng(readFileSync(join(PUBLIC, 'brand', 'og-ca.png')));
     expect(metaContent('og:image:width')).toBe(String(card.width));
     expect(metaContent('og:image:height')).toBe(String(card.height));
-    expect(metaContent('og:image')).toMatch(/brand\/og\.png$/);
-    expect(metaContent('twitter:image')).toMatch(/brand\/og\.png$/);
+    expect(metaContent('og:image')).toMatch(/brand\/og-ca\.png$/);
+    expect(metaContent('twitter:image')).toMatch(/brand\/og-ca\.png$/);
   });
 });
 

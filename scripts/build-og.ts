@@ -88,7 +88,7 @@
  * serpentines. Els tres llindars de `tests/actius-binaris.test.ts` (40 / 8 / 10)
  * queden igual de lluny.
  *
- * ÚS:  npx tsx scripts/build-og.ts          escriu public/brand/og.png
+ * ÚS:  npx tsx scripts/build-og.ts          escriu una targeta per idioma
  *      npx tsx scripts/build-og.ts --dry    ho comprova tot i no escriu res
  *
  * COST: cap xarxa, cap binari natiu. Llegeix tres `.woff` de node_modules i
@@ -104,7 +104,7 @@ import { fillContours, loadFont, type Font } from './truetype';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(here, '..');
-const OUT = join(ROOT, 'public', 'brand', 'og.png');
+const OUT_DIR = join(ROOT, 'public', 'brand');
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -364,7 +364,19 @@ interface Line {
  * El titular és el mateix que `<title>`, que `og:title` i que `og:image:alt`
  * de l'`index.html`: si algun dia divergeixen, el que menteix és la targeta.
  */
-const LINES: Line[] = [
+type Locale = 'ca' | 'es' | 'en' | 'fr';
+
+const COPY: Record<Locale, { title: [string, string]; meta: [string, string] }> = {
+  ca: { title: ['Quants segons d’eclipsi', 'veuràs des d’on seràs?'], meta: ['Eclipsi total de Sol · 12 d’agost de 2026', 'Calculat per al teu punt exacte. Funciona sense connexió.'] },
+  es: { title: ['¿Cuántos segundos de eclipse', 'verás desde donde estarás?'], meta: ['Eclipse total de Sol · 12 de agosto de 2026', 'Calculado para tu ubicación exacta. Funciona sin conexión.'] },
+  en: { title: ['How many seconds of eclipse', 'will you see where you’ll be?'], meta: ['Total solar eclipse · 12 August 2026', 'Calculated for your exact location. Works offline.'] },
+  fr: { title: ['Combien de secondes d’éclipse', 'verrez-vous où vous serez ?'], meta: ['Éclipse totale de Soleil · 12 août 2026', 'Calculé pour votre position exacte. Fonctionne hors ligne.'] },
+};
+
+function linesFor(locale: Locale): Line[] {
+  const copy = COPY[locale];
+  const titleSize = locale === 'ca' ? 67 : locale === 'en' ? 55 : 52;
+  return [
   {
     name: 'rètol',
     text: 'ECLIPSI.INFO',
@@ -374,11 +386,11 @@ const LINES: Line[] = [
     colour: TEXT_MARK,
     trackingEm: 0.14,
   },
-  { name: 'titular 1', text: 'Quants segons d’eclipsi', font: display, size: 67, baseline: 258, colour: TEXT_TITLE },
-  { name: 'titular 2', text: 'veuràs des d’on seràs?', font: display, size: 67, baseline: 340, colour: TEXT_TITLE },
+  { name: 'titular 1', text: copy.title[0], font: display, size: titleSize, baseline: 258, colour: TEXT_TITLE },
+  { name: 'titular 2', text: copy.title[1], font: display, size: titleSize, baseline: 340, colour: TEXT_TITLE },
   {
     name: 'dada 1',
-    text: 'Eclipsi total de Sol · 12 d’agost de 2026',
+    text: copy.meta[0],
     font: body,
     size: 30,
     baseline: 430,
@@ -386,14 +398,15 @@ const LINES: Line[] = [
   },
   {
     name: 'dada 2',
-    text: 'Calculat per al teu punt exacte. Funciona sense connexió.',
+    text: copy.meta[1],
     font: body,
     size: 30,
     baseline: 473,
     colour: TEXT_META,
   },
   { name: 'peu', text: '2026 · 2027 · 2028', font: mono, size: 24, baseline: 554, colour: TEXT_META },
-];
+  ];
+}
 
 interface PaintedLine extends Line {
   /** La caixa que ha ocupat la tinta de debò, per comprovar-la després. */
@@ -401,9 +414,9 @@ interface PaintedLine extends Line {
   inkPixels: number;
 }
 
-function paintText(): PaintedLine[] {
+function paintText(lines: Line[]): PaintedLine[] {
   const painted: PaintedLine[] = [];
-  for (const line of LINES) {
+  for (const line of lines) {
     const contours = line.font.outline(
       line.text,
       line.size,
@@ -524,26 +537,26 @@ function verify(painted: PaintedLine[]): void {
 /* ── Fer-la ──────────────────────────────────────────────────────────────── */
 
 function main(): void {
-  for (let i = 0; i < canvas.length; i += 3) {
-    canvas[i] = INK[0];
-    canvas[i + 1] = INK[1];
-    canvas[i + 2] = INK[2];
+  for (const locale of Object.keys(COPY) as Locale[]) {
+    for (let i = 0; i < canvas.length; i += 3) {
+      canvas[i] = INK[0];
+      canvas[i + 1] = INK[1];
+      canvas[i + 2] = INK[2];
+    }
+    paintCorona();
+    const painted = paintText(linesFor(locale));
+    verify(painted);
+    const png = encodePng({ width: WIDTH, height: HEIGHT, data: canvas });
+    if (process.argv.includes('--dry')) {
+      console.log(`Assaig ${locale}: ${(png.length / 1024).toFixed(1)} kB. No s'ha escrit res.`);
+      continue;
+    }
+    mkdirSync(OUT_DIR, { recursive: true });
+    const out = join(OUT_DIR, `og-${locale}.png`);
+    writeFileSync(out, png);
+    if (locale === 'ca') writeFileSync(join(OUT_DIR, 'og.png'), png);
+    console.log(`Escrit ${out}: ${WIDTH}×${HEIGHT}, RGB sense alfa, ${(png.length / 1024).toFixed(1)} kB`);
   }
-
-  paintCorona();
-  const painted = paintText();
-  verify(painted);
-
-  const png = encodePng({ width: WIDTH, height: HEIGHT, data: canvas });
-
-  if (process.argv.includes('--dry')) {
-    console.log(`Assaig: la targeta passa la revisió i faria ${(png.length / 1024).toFixed(1)} kB. No s'ha escrit res.`);
-    return;
-  }
-
-  mkdirSync(dirname(OUT), { recursive: true });
-  writeFileSync(OUT, png);
-  console.log(`Escrit ${OUT}: ${WIDTH}×${HEIGHT}, RGB sense alfa, ${(png.length / 1024).toFixed(1)} kB`);
 }
 
 try {
