@@ -109,6 +109,11 @@ const NO_SON_FONTS: Readonly<Record<string, string>> = {
     'font: `scripts/check-favicon.ts` hi va a veure quina icona NOSTRA té desada Google, ' +
     'per saber si encara ensenya el llamp de la plantilla de Vite. No en baixem cap dada ' +
     'de ningú, no s’ensenya res a l’app i l’script no entra al paquet publicat',
+  'www.google.com':
+    'la sortida a Street View des de la fitxa del mapa (`features/sim/streetView.ts`): ' +
+    'l’app només FABRICA una adreça i la posa en un enllaç. No s’hi fa cap petició, no ' +
+    'se’n baixa cap imatge i no s’ensenya res de Google dins de l’app — el que hi hagi ' +
+    'a l’altra banda es veu a la pestanya de Google, amb els seus crèdits',
 
   /*
    * LA COBERTURA EDITORIAL VA EN DIRECCIÓ CONTRÀRIA A UNA FONT.

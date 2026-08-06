@@ -263,6 +263,10 @@ const STRINGS = {
     ca: 'Obre-ho al compte enrere',
     es: 'Ábrelo en la cuenta atrás', en: 'Open in countdown', fr: 'Ouvrir dans le compte à rebours',
   },
+  'map.streetView': {
+    ca: 'Veure Google Street View',
+    es: 'Ver Google Street View', en: 'See Google Street View', fr: 'Voir Google Street View',
+  },
   'map.toLimit': {
     ca: 'Al límit {side}',
     es: 'Al límite {side}', en: 'On the edge {side}', fr: 'Sur le bord {side}',
