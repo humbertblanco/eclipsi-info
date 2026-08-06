@@ -467,18 +467,36 @@ async function main() {
   const widgetStylesheet=assets.find(name=>/^seoWidgets-.*\.css$/.test(name));
   const guideStylesheet=assets.find(name=>/^GuideScreen-.*\.css$/.test(name));
   seoWidgetScript=widgetAsset?`<script type="module" src="/assets/${widgetAsset}"></script>`:'';
-  appStylesheets=[...appShell.matchAll(/<link rel="stylesheet"[^>]*href="([^"]+)"[^>]*>/g)]
-    .map(([,href])=>`<link rel="stylesheet" href="${href}">`).join('')+(guideStylesheet?`<link rel="stylesheet" href="/assets/${guideStylesheet}">`:'')+(widgetStylesheet?`<link rel="stylesheet" href="/assets/${widgetStylesheet}">`:'')+seoWidgetScript+DATA_VISUAL_CSS;
+  appStylesheets=`<link rel="icon" type="image/svg+xml" sizes="any" href="/brand/favicon.svg">`+
+    [...appShell.matchAll(/<link rel="stylesheet"[^>]*href="([^"]+)"[^>]*>/g)]
+      .map(([,href])=>`<link rel="stylesheet" href="${href}">`).join('')+(guideStylesheet?`<link rel="stylesheet" href="/assets/${guideStylesheet}">`:'')+(widgetStylesheet?`<link rel="stylesheet" href="/assets/${widgetStylesheet}">`:'')+seoWidgetScript+DATA_VISUAL_CSS;
   const generated: Array<{locale: Locale; route: Route; url: string}> = [];
+  const canonicalUrls=new Set<string>();
   for (const locale of SEO_LOCALES) {
     const pages: Page[] = [guideHubPage(locale),...EDITORIAL_GUIDE_IDS.map(id=>guidePage(locale,id))];
     for (const eclipse of ECLIPSES) pages.push(eclipsePage(locale,eclipse),...SEO_CITIES.map(city=>cityPage(locale,eclipse,city)),...pointsForEclipse(eclipse.id).map(point=>pointPage(locale,eclipse,point)));
     for (const page of pages) {
+      const html=page.html.replace(`<link rel="icon" href="${SEO_SITE}favicon.ico">`,'');
+      const canonicals=[...html.matchAll(/<link rel="canonical" href="([^"]+)"/g)].map(match=>match[1]);
+      const expected=urlFor(locale,page.route);
+      if(canonicals.length!==1||canonicals[0]!==expected) throw new Error(`Canonical incorrecta: ${expected}`);
+      if(canonicalUrls.has(expected)) throw new Error(`Canonical duplicada: ${expected}`);
+      if(!html.includes(`<html lang="${locale}">`)) throw new Error(`Idioma HTML incorrecte: ${expected}`);
+      canonicalUrls.add(expected);
       const directory=resolve(OUT,pathFor(locale,page.route));
       await mkdir(directory,{recursive:true});
-      await writeFile(resolve(directory,'index.html'),page.html);
+      await writeFile(resolve(directory,'index.html'),html);
       generated.push({locale,route:page.route,url:urlFor(locale,page.route)});
     }
+  }
+  for(const locale of SEO_LOCALES){
+    const rootUrl=`${SEO_SITE}${prefix(locale)}`;
+    const rootHtml=await readFile(resolve(OUT,prefix(locale),'index.html'),'utf8');
+    const canonicals=[...rootHtml.matchAll(/<link rel="canonical" href="([^"]+)"/g)].map(match=>match[1]);
+    if(canonicals.length!==1||canonicals[0]!==rootUrl) throw new Error(`Canonical d’arrel incorrecta: ${rootUrl}`);
+    if(canonicalUrls.has(rootUrl)) throw new Error(`Canonical d’arrel duplicada: ${rootUrl}`);
+    if(!rootHtml.includes(`<html lang="${locale}">`)) throw new Error(`Idioma d’arrel incorrecte: ${rootUrl}`);
+    canonicalUrls.add(rootUrl);
   }
   const rootRoutes=SEO_LOCALES.map(locale=>`<url><loc>${SEO_SITE}${prefix(locale)}</loc>${SEO_LOCALES.map(language=>`<xhtml:link rel="alternate" hreflang="${language}" href="${SEO_SITE}${prefix(language)}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${SEO_SITE}"/></url>`).join('');
   const entries=generated.map(({url,route})=>`<url><loc>${url}</loc>${SEO_LOCALES.map(locale=>`<xhtml:link rel="alternate" hreflang="${locale}" href="${urlFor(locale,route)}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${urlFor('ca',route)}"/></url>`).join('');
