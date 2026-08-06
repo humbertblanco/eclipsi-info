@@ -13,6 +13,7 @@ import {
   Cloudy,
   Compass,
   Crosshair,
+  ExternalLink,
   Eye,
   EyeOff,
   Info,
@@ -86,6 +87,7 @@ export type IconName =
   | 'aperture'
   | 'eye'
   | 'eye-off'
+  | 'external-link'
   | 'bell'
   | 'book-open'
   | 'share-2'
@@ -204,6 +206,7 @@ const REGISTRY: Record<IconName, ComponentType<LucideProps>> = {
   aperture: Aperture,
   eye: Eye,
   'eye-off': EyeOff,
+  'external-link': ExternalLink,
   bell: Bell,
   'book-open': BookOpen,
   'share-2': Share2,
