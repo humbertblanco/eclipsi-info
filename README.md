@@ -1,7 +1,5 @@
 # eclipsi.info
 
-La documentació de l’arquitectura i les regles de les landings SEO és a [docs/SEO_LANDINGS.md](docs/SEO_LANDINGS.md).
-
 **Des del punt exacte on seràs: quants segons d'eclipsi veuràs de debò, a quina
 hora, cap a on has de mirar, i si hi ha una muntanya al mig.**
 
@@ -54,14 +52,22 @@ que és el document de traspàs real del projecte.
 
 ## Com córrer-ho
 
+Cal Node.js 22.12 o posterior i npm 10 o posterior. No cal cap compte extern,
+clau d'API ni credencial de servidor.
+
 ```bash
-npm install
+npm ci
 npm run dev        # servidor de desenvolupament, amb HTTPS: sense context
                    # segur, iOS no dona ni càmera ni sensors d'orientació
 npm run build      # compilació de producció
 npm test           # bateria de proves
 npm run lint
 ```
+
+Vite mostrarà l'adreça local. Per provar càmera i sensors en un mòbil, el
+dispositiu ha d'acceptar el certificat HTTPS local. El projecte funciona sense
+variables d'entorn; les opcions `ECLIPSI_BASE`, `ECLIPSI_SITE_URL` i
+`ECLIPSI_OUT_DIR` només serveixen per personalitzar una compilació.
 
 ## Com està fet
 
@@ -84,6 +90,21 @@ són les vistes; `src/ui` és el sistema de disseny.
 cada cosa és com és, sovint amb la mesura que ho va decidir. És a posta: en un
 projecte on un error de quatre segons desplaça una franja d'ombra cinquanta-cinc
 quilòmetres, saber d'on surt una constant importa més que saber què fa.
+
+La documentació de l'arquitectura i les landings SEO és a
+[docs/SEO_LANDINGS.md](docs/SEO_LANDINGS.md). Les decisions, les validacions i
+els riscos coneguts es mantenen a [ESTAT.md](ESTAT.md).
+
+## Col·laborar
+
+Les incidències i les pull requests són benvingudes. Abans de començar, llegeix
+[CONTRIBUTING.md](CONTRIBUTING.md): explica l'estructura, les regles de
+seguretat ocular i privacitat, les comprovacions obligatòries i com preparar
+una proposta fàcil de revisar.
+
+No publiquis vulnerabilitats, credencials ni dades personals en una incidència.
+Per comunicar un problema de seguretat de manera privada, segueix
+[SECURITY.md](SECURITY.md).
 
 ## Fonts
 

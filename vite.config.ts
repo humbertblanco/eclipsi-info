@@ -149,14 +149,12 @@ const ONE_YEAR_S = 60 * 60 * 24 * 365
 /**
  * Subdirectori on es publica l'app.
  *
- * En desenvolupament es serveix a l'arrel; en producció va a
- * https://lacuinade.estic.online/eclipsi/. Servir des d'un subdirectori no és
- * només cosmètic: afecta les rutes dels actius, l'àmbit del service worker
+ * En desenvolupament i al lloc oficial se serveix a l'arrel. Servir una
+ * bifurcació des d'un subdirectori no és només cosmètic: afecta les rutes dels actius, l'àmbit del service worker
  * —que NO pot controlar res per damunt del seu propi directori— i el manifest.
  *
- * Es pot sobreescriure amb la variable d'entorn ECLIPSI_BASE per publicar-ho
- * a un altre lloc sense tocar codi — el desplegament de llegat al camí
- * /eclipsi/ de lacuinade.estic.online passa `ECLIPSI_BASE=/eclipsi/`.
+ * Es pot sobreescriure amb `ECLIPSI_BASE` per publicar una bifurcació en un
+ * altre lloc sense tocar el codi, per exemple `ECLIPSI_BASE=/eclipsi/`.
  */
 const BASE = process.env.ECLIPSI_BASE ?? '/'
 
@@ -169,10 +167,8 @@ const BASE = process.env.ECLIPSI_BASE ?? '/'
  * ha d'haver l'origen escrit, i val més que sigui aquí que escampat per
  * l'`index.html`.
  *
- * EL DOMINI JA ÉS NOSTRE. eclipsi.info es va comprar i el vhost viu al
- * servidor (2 d'agost de 2026): aquesta és la línia que la nota d'aquí sota
- * deia que es canviaria aquell dia, canviada. El desplegament de llegat al
- * camí de lacuinade passa `ECLIPSI_SITE_URL` explícita si mai cal refer-lo.
+ * El valor oficial és eclipsi.info. Una bifurcació pot passar
+ * `ECLIPSI_SITE_URL` explícitament per generar les seves pròpies canòniques.
  */
 const SITE_URL = (
   process.env.ECLIPSI_SITE_URL ?? 'https://eclipsi.info/'
