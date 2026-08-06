@@ -8,7 +8,7 @@ hora, cap a on has de mirar, i si hi ha una muntanya al mig.**
 Simulador dels tres eclipsis solars que es veuran des d'Espanya aquesta dècada.
 No és un compte enrere: la pregunta que respon és una altra.
 
-→ **[Prova'l](https://lacuinade.estic.online/eclipsi/)**
+→ **[Prova'l](https://eclipsi.info/)**
 
 ![La franja de totalitat del 12 d'agost de 2026 creuant el nord d'Espanya, amb
 la línia central, els límits nord i sud, i la fitxa del punt tocat: durada,
@@ -101,6 +101,12 @@ d'Open-Meteo. Seguretat ocular segons l'IGN, l'AAS i la norma ISO 12312-2.
 
 ## Llicència
 
-Encara sense decidir. Mentre no ho estigui, el codi es publica per poder-lo
-llegir i comprovar —que en una app que diu si et pots treure una protecció
-ocular no és un detall menor—, no per reutilitzar-lo.
+Projecte de codi obert amb atribució:
+
+- el codi es publica sota la [llicència MIT](LICENSE);
+- els textos, les imatges i la resta de contingut original es publiquen sota
+  [CC BY 4.0](LICENSE-CONTENT.md).
+
+En reutilitzar-lo, cal citar **eclipsi.info — Humbert Blanco / Damos en el
+Blanco**, conservar l'avís de copyright del codi i indicar els canvis. Les
+dades i els recursos de tercers mantenen les seves llicències i atribucions.

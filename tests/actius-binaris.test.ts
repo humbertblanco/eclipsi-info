@@ -210,6 +210,7 @@ const VECTOR: { path: string; role: string }[] = [
   { path: 'brand/logo-mark.svg', role: 'marca sola — kit de premsa' },
   { path: 'brand/logo-mark-mono.svg', role: 'marca monocroma — kit de premsa' },
   { path: 'brand/logo-daylight.svg', role: 'logotip sobre fons clar — kit de premsa' },
+  { path: 'brand/favicon.svg', role: 'favicon de marca — kit de premsa' },
 ];
 
 /* ── Els talls ───────────────────────────────────────────────────────────── */

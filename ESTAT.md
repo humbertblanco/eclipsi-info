@@ -11,22 +11,19 @@ no s'ha de tornar a trencar**. Actualitzat el 3 d'agost de 2026.
 
 ## 1. Com es desplega
 
-**EL DOMINI PRINCIPAL ÉS eclipsi.info** (vhost propi al mateix servidor,
-subscripció `eclipsi.info` del client cosesdelhumbert, creat el 2-8-2026;
-usuari de sistema `eclipsiinfo`). El build per defecte ja surt amb base `/` i
-canònica `https://eclipsi.info/`.
+El domini principal és `https://eclipsi.info/`. El build per defecte ja surt
+amb base `/` i aquesta URL canònica.
 
-**DNS PENDENT (2-8-2026):** els registres A de `@` i `www` cap a
-37.187.151.83 els ha de posar l'Humbert al panell del registrador. Fins
-llavors el vhost només respon per IP amb capçalera Host. Quan el DNS resolgui,
-emetre el certificat Let's Encrypt des de Plesk (`plesk bin extension --exec
-letsencrypt cli.php ...` o el botó SSL/TLS del panell) — sense certificat, la
-càmera i el GPS no funcionen perquè el navegador exigeix HTTPS:
+Aquest repositori públic **no documenta ni desa credencials, usuaris, hosts,
+adreces IP, rutes internes ni ordres d'accés a producció**. La configuració de
+desplegament viu fora del repositori i s'ha d'injectar des d'un gestor de
+secrets. Abans de publicar:
 
 ```bash
-npm run build                     # SI AIXÒ FALLA, PARA. Vegeu l'avís de sota.
-rsync -az --delete dist/ root@server.estic.online:/var/www/vhosts/eclipsi.info/httpdocs/
-ssh root@server.estic.online 'chown -R eclipsiinfo:psaserv /var/www/vhosts/eclipsi.info/httpdocs/'
+npm ci
+npm test
+npm run lint
+npm run build
 ```
 
 Després **verifica per checksum**, no per vista:
@@ -37,23 +34,15 @@ shasum -a 256 dist/assets/$BUNDLE
 curl -s "https://eclipsi.info/assets/$BUNDLE" | shasum -a 256
 ```
 
-El desplegament de LLEGAT al camí antic (lacuinade.estic.online/eclipsi/), si
-mai cal refer-lo, necessita les dues variables:
-
-```bash
-ECLIPSI_BASE=/eclipsi/ ECLIPSI_SITE_URL=https://lacuinade.estic.online/eclipsi/ npm run build
-rsync -az --delete dist/ root@server.estic.online:/var/www/vhosts/lacuinade.estic.online/httpdocs/eclipsi/
-```
-
 **AVÍS QUE JA HA COSTAT DUES VEGADES:** `npm run build` pot fallar per un error
-de tipus i deixar el `dist/` anterior intacte. Si després corres el `rsync`, el
-que puges és la versió vella i sembla que el desplegament ha anat bé. Encadena
-les dues comandes amb `&&` o mira la sortida del build abans de pujar.
+de tipus i deixar el `dist/` anterior intacte. Si després publiques la carpeta,
+pots pujar la versió vella i semblar que el desplegament ha anat bé. Comprova
+sempre que el build ha acabat correctament abans de publicar.
 
 **HI HA CLOUDFLARE AL DAVANT, I CACHEJA ELS 404 QUATRE HORES.** Això va tombar
 el lloc el 3-8-2026 i la causa era la comprovació mateixa: es va demanar
 `https://eclipsi.info/assets/index-XXXX.js` per curiositat ABANS de fer el
-`rsync`. Aquella petició va tornar 404 —encara no hi era—, Cloudflare se'l va
+desplegament. Aquella petició va tornar 404 —encara no hi era—, Cloudflare se'l va
 desar amb `max-age=14400`, i quan el fitxer va arribar al servidor el CDN va
 seguir servint el 404 durant hores. El resultat per a l'usuari: `index.html`
 es serveix fresc (`cf-cache-status: DYNAMIC`), demana el seu paquet i rep un
@@ -64,10 +53,9 @@ Tres regles que en surten:
 
 1. **MAI demanis una URL d'actiu abans de pujar-la.** Ni per comprovar, ni per
    curiositat. Si el nom encara no existeix, l'estàs enverinant.
-2. **La verificació per checksum va DESPRÉS del `rsync`, sempre**, i s'ha de
-   fer per la URL pública, no per `ssh`: el fitxer al disc pot ser perfecte
-   mentre el CDN serveix una altra cosa. `sha256sum` per `ssh` només serveix
-   per distingir un problema de pujada d'un problema de cau.
+2. **La verificació per checksum va DESPRÉS del desplegament, sempre**, i s'ha
+   de fer per la URL pública: l'origen pot ser correcte mentre el CDN serveix
+   una altra cosa.
 3. **Si passa, la sortida ràpida és tornar a compilar.** El peu de l'app duu la
    data i hora de compilació, o sigui que cada build canvia el contingut del
    paquet i, amb ell, el seu nom amb hash. Un nom nou no té cap 404 desat i
@@ -77,10 +65,6 @@ Tres regles que en surten:
 Per saber si el que serveix el CDN és el que hi ha al disc, `?cb=<a l'atzar>`
 salta la cau i respon amb l'origen: si amb el paràmetre el checksum quadra i
 sense no, el problema és de cau i no de desplegament.
-
-**El servidor és compartit.** `lacuinade.estic.online` allotja desenes de
-vhosts. Toca NOMÉS `httpdocs/eclipsi/`. Res de reiniciar serveis, tocar
-configuració global ni res que surti d'aquella carpeta.
 
 ### Saber quina versió corres
 
