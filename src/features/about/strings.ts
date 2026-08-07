@@ -132,6 +132,17 @@ const STRINGS = {
     fr: 'Sécurité oculaire, dans le guide',
   },
 
+  /* --- cobertura editorial -------------------------------------------------- */
+  'mentions.overline': { ca: 'Als mitjans', es: 'En los medios', en: 'In the media', fr: 'Dans les médias' },
+  'mentions.title': { ca: 'Han parlat d’eclipsi.info', es: 'Han hablado de eclipsi.info', en: 'eclipsi.info in the press', fr: 'La presse parle d’eclipsi.info' },
+  'mentions.note': {
+    ca: 'Una selecció de mitjans que han explicat el projecte. La llista continuarà creixent.',
+    es: 'Una selección de medios que han explicado el proyecto. La lista seguirá creciendo.',
+    en: 'A selection of outlets that have covered the project. More will be added over time.',
+    fr: 'Une sélection de médias qui ont présenté le projet. La liste continuera de s’enrichir.',
+  },
+  'mentions.read': { ca: 'Llegeix la peça', es: 'Lee el artículo', en: 'Read the story', fr: 'Lire l’article' },
+
   /* --- premsa ---------------------------------------------------------------- */
   'press.overline': { ca: 'Premsa', es: 'Prensa', en: 'Press', fr: 'Presse' },
   'press.title': { ca: 'Per a periodistes', es: 'Para periodistas', en: 'For journalists', fr: 'Pour les journalistes' },

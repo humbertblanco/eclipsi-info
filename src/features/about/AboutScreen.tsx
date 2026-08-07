@@ -60,6 +60,51 @@ const PRESS_ASSETS: PressAsset[] = [
   { file: 'og.png', labelKey: 'assets.og' },
 ];
 
+interface MediaMention {
+  name: string;
+  logoClass: string;
+  url: string;
+}
+
+/** Cobertura editorial, ordenada per abast del mitjà i rellevància de la peça. */
+const MEDIA_MENTIONS: MediaMention[] = [
+  {
+    name: 'Time Out Barcelona',
+    logoClass: 'timeout',
+    url: 'https://www.timeout.es/barcelona/es/noticias/un-disenador-catalan-crea-una-app-para-el-eclipse-solar-que-te-permite-comprobar-si-un-edificio-o-un-arbol-te-tapara-la-vision-080626',
+  },
+  {
+    name: 'Diari de Tarragona',
+    logoClass: 'tarragona',
+    url: 'https://www.diaridetarragona.com/tarragona/267731/eclipse-solar-total-2026-web-gratuita-buscar-mejor-sitio-tarragona-ver-12-agosto_amp.html',
+  },
+  {
+    name: 'Diari de Barcelona',
+    logoClass: 'barcelona',
+    url: 'https://www.diaridebarcelona.cat/w/saps-on-veuras-eclipsi-web-ajuda-decisio?redirect=%2F',
+  },
+  {
+    name: 'MetaData',
+    logoClass: 'metadata',
+    url: 'https://www.metadata.cat/reportatge/6458/eclipsi-tecnologic-historia-eines-digitals-millor-punt-sol',
+  },
+  {
+    name: 'dBalears',
+    logoClass: 'dbalears',
+    url: 'https://www.dbalears.cat/balears/balears/2026/08/06/421691/eclipsi-info-eina-gratuita-ajuda-trobar-millor-lloc-per-veure-eclipsi.html',
+  },
+  {
+    name: 'el 3 de vuit',
+    logoClass: 'tresdevuit',
+    url: 'https://el3devuit.cat/2026/08/06/143001/actualitat/expectacio-per-veure-leclipsi-solar-de-dimecres/',
+  },
+  {
+    name: 'Diari de Catalunya',
+    logoClass: 'catalunya',
+    url: 'https://diaricatalunya.cat/baix-penedes/general/expectacio-per-leclipsi-solar-total-al-penedes',
+  },
+];
+
 /** Quant dura el «Copiat» abans de tornar a ser un botó de copiar. */
 const COPIED_FEEDBACK_MS = 2000;
 
@@ -198,6 +243,28 @@ export function AboutScreen({ locale, initialSection, onOpenGuideSafety }: About
             <li>{ab('not.lang', locale)}</li>
             <li>{ab('not.location', locale)}</li>
             <li>{ab('not.offline', locale)}</li>
+          </ul>
+        </Card>
+
+        <Card>
+          <span className="about__overline">{ab('mentions.overline', locale)}</span>
+          <h3 className="about__blocktitle">{ab('mentions.title', locale)}</h3>
+          <p className="about__p">{ab('mentions.note', locale)}</p>
+          <ul className="about__mentions" aria-label={ab('mentions.title', locale)}>
+            {MEDIA_MENTIONS.map((mention, index) => (
+              <li key={mention.url} className={index === 0 ? 'about__mention--lead' : undefined}>
+                <a href={mention.url} target="_blank" rel="noreferrer noopener">
+                  <span
+                    className={`about__mentionlogo about__mentionlogo--${mention.logoClass}`}
+                    aria-hidden="true"
+                  >
+                    {mention.name}
+                  </span>
+                  <span className="ui-visually-hidden">{mention.name}</span>
+                  <span className="about__mentioncta">{ab('mentions.read', locale)} ↗</span>
+                </a>
+              </li>
+            ))}
           </ul>
         </Card>
 
