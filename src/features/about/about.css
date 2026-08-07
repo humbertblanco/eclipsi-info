@@ -220,6 +220,14 @@ button.about__guidelink {
   text-transform: uppercase;
 }
 
+.about__mentionlogo--vilaweb {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: var(--fs-title-2);
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: -0.07em;
+}
+
 .about__mentionlogo--tarragona,
 .about__mentionlogo--barcelona,
 .about__mentionlogo--catalunya {

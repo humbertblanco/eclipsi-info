@@ -69,6 +69,11 @@ interface MediaMention {
 /** Cobertura editorial, ordenada per abast del mitjà i rellevància de la peça. */
 const MEDIA_MENTIONS: MediaMention[] = [
   {
+    name: 'VilaWeb',
+    logoClass: 'vilaweb',
+    url: 'https://www.vilaweb.cat/noticies/on-veure-eclipsi-12-agost-coses-tenir-compte-veure-platja/',
+  },
+  {
     name: 'Time Out Barcelona',
     logoClass: 'timeout',
     url: 'https://www.timeout.es/barcelona/es/noticias/un-disenador-catalan-crea-una-app-para-el-eclipse-solar-que-te-permite-comprobar-si-un-edificio-o-un-arbol-te-tapara-la-vision-080626',
