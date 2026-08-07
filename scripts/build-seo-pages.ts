@@ -503,9 +503,36 @@ async function main() {
     canonicalUrls.add(rootUrl);
   }
   const lastModified='2026-08-07';
-  const rootRoutes=SEO_LOCALES.map(locale=>`<url><loc>${SEO_SITE}${prefix(locale)}</loc><lastmod>${lastModified}</lastmod>${SEO_LOCALES.map(language=>`<xhtml:link rel="alternate" hreflang="${language}" href="${SEO_SITE}${prefix(language)}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${SEO_SITE}"/></url>`).join('');
-  const entries=generated.map(({url,route})=>`<url><loc>${url}</loc><lastmod>${lastModified}</lastmod>${SEO_LOCALES.map(locale=>`<xhtml:link rel="alternate" hreflang="${locale}" href="${urlFor(locale,route)}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${urlFor('ca',route)}"/></url>`).join('');
-  await writeFile(resolve(OUT,'sitemap.xml'),`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">${rootRoutes}${entries}</urlset>`);
+  const sitemapEntry=(url:string,alternates:string,xDefault:string)=>[
+    '  <url>',
+    `    <loc>${url}</loc>`,
+    `    <lastmod>${lastModified}</lastmod>`,
+    alternates,
+    `    <xhtml:link rel="alternate" hreflang="x-default" href="${xDefault}"/>`,
+    '  </url>',
+  ].join('\n');
+  const rootRoutes=SEO_LOCALES.map(locale=>sitemapEntry(
+    `${SEO_SITE}${prefix(locale)}`,
+    SEO_LOCALES.map(language=>`    <xhtml:link rel="alternate" hreflang="${language}" href="${SEO_SITE}${prefix(language)}"/>`).join('\n'),
+    SEO_SITE,
+  ));
+  const entries=generated
+    .toSorted((a,b)=>a.url.localeCompare(b.url,'en'))
+    .map(({url,route})=>sitemapEntry(
+      url,
+      SEO_LOCALES.map(locale=>`    <xhtml:link rel="alternate" hreflang="${locale}" href="${urlFor(locale,route)}"/>`).join('\n'),
+      urlFor('ca',route),
+    ));
+  const sitemap=[
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
+    '        xmlns:xhtml="http://www.w3.org/1999/xhtml">',
+    ...rootRoutes,
+    ...entries,
+    '</urlset>',
+    '',
+  ].join('\n');
+  await writeFile(resolve(OUT,'sitemap.xml'),sitemap);
   console.log(`Generated ${generated.length} useful SEO pages in ${OUT}`);
 }
 
