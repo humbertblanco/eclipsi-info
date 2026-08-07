@@ -104,6 +104,11 @@ const NO_SON_FONTS: Readonly<Record<string, string>> = {
     'la màquina mateixa: els guions de premsa (`press-*.ts`) hi parlen amb el Chrome ' +
     'que condueixen i hi serveixen les seves pròpies plantilles. No hi ha cap dada de ' +
     'ningú al darrere ni res que l’app ensenyi, i no surt del paquet publicat',
+  'www.google.com':
+    'la sortida a Street View des de la fitxa del mapa (`features/sim/streetView.ts`): ' +
+    'l’app només FABRICA una adreça i la posa en un enllaç. No s’hi fa cap petició, no ' +
+    'se’n baixa cap imatge i no s’ensenya res de Google dins de l’app — el que hi hagi ' +
+    'a l’altra banda es veu a la pestanya de Google, amb els seus crèdits',
 };
 
 /* ── El codi que es publica ───────────────────────────────────────────────── */

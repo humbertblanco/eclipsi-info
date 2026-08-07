@@ -44,6 +44,7 @@ import { readPalette } from '../styles/palette';
 import { horizonDistanceAt } from '../core/horizon/profile';
 import { track } from '../core/analytics';
 import { TrajectoryThumb } from '../features/sim/TrajectoryThumb';
+import { streetViewUrl } from '../features/sim/streetView';
 import { ShareButton } from '../features/share';
 /*
  * La cerca de topònims és LA MATEIXA que la de la fulla d'ubicació: mateix
@@ -526,6 +527,16 @@ export function MapScreen({
     };
   }, [view, eclipseId, circumstances, location]);
 
+  const streetView = useMemo(() => {
+    if (location === null || contacts === null) return null;
+    return streetViewUrl(
+      location.lat,
+      location.lon,
+      contacts.max.sun.azimuth,
+      contacts.max.sun.altitudeApparent,
+    );
+  }, [location, contacts]);
+
   /*
    * ELS CINC CONTACTES PER A LA LÍNIA DE TEMPS DEL MÒBIL.
    *
@@ -971,6 +982,19 @@ export function MapScreen({
                       onClick={onOpenCountdown}
                     >
                       {s('map.trajCta', locale)}
+                    </Button>
+                  )}
+                  {streetView !== null && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon="external-link"
+                      as="a"
+                      href={streetView}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
+                      {s('map.streetView', locale)}
                     </Button>
                   )}
                 </div>
