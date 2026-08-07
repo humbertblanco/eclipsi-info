@@ -4,6 +4,23 @@ import basicSsl from '@vitejs/plugin-basic-ssl'
 import { VitePWA } from 'vite-plugin-pwa'
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { transform } from 'esbuild'
+
+async function publicHtml(html: string): Promise<string> {
+  let clean = html
+    .replace(/<!--[^]*?-->/g, '')
+    .replace(/(<style\b[^>]*>)([^]*?)(<\/style>)/g, (_, open, css, close) =>
+      `${open}${String(css).replace(/\/\*[^]*?\*\//g, '')}${close}`,
+    )
+  const scripts = [...clean.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>([^]*?)<\/script>/g)]
+  for (const match of scripts.reverse()) {
+    if (/type=["']application\/ld\+json["']/.test(match[1]) || match.index === undefined) continue
+    const result = await transform(match[2], { loader: 'js', minify: true, legalComments: 'none' })
+    const replacement = `<script${match[1]}>${result.code.trim()}</script>`
+    clean = clean.slice(0, match.index) + replacement + clean.slice(match.index + match[0].length)
+  }
+  return clean
+}
 
 /** HTML castellà real per a Google i les previsualitzacions de `/es`. */
 function spanishIndex(html: string): string {
@@ -225,7 +242,7 @@ export default defineConfig(({ command }) => ({
       name: 'eclipsi-public-html-without-comments',
       transformIndexHtml: {
         order: 'post',
-        handler: (html: string) => html.replace(/<!--[^]*?-->/g, ''),
+        handler: publicHtml,
       },
     },
     {
@@ -250,7 +267,7 @@ export default defineConfig(({ command }) => ({
             if (entry.isDirectory()) await visit(file)
             else if (entry.name.endsWith('.html')) {
               const html = await readFile(file, 'utf8')
-              await writeFile(file, html.replace(/<!--[^]*?-->/g, ''), 'utf8')
+              await writeFile(file, await publicHtml(html), 'utf8')
             }
           }
         }
