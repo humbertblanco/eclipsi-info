@@ -56,10 +56,10 @@
  *     actiu                        mides      màx     mitj    desv
  *     brand/minimapa-iberia.png    725×564    129,0   44,67   27,79
  *     brand/og.png                1200×630    240,1   21,70   47,22
- *     icons/apple-touch-icon.png   180×180    244,5   17,57   26,59
- *     icons/icon-192.png           192×192    245,4   17,60   26,62
- *     icons/icon-512.png           512×512    247,2   17,59   27,20
- *     icons/icon-maskable-512.png  512×512    246,8   10,81   17,96
+ *     app-icons/apple-touch-icon.png   180×180    244,5   17,57   26,59
+ *     app-icons/icon-192.png           192×192    245,4   17,60   26,62
+ *     app-icons/icon-512.png           512×512    247,2   17,59   27,20
+ *     app-icons/icon-maskable-512.png  512×512    246,8   10,81   17,96
  *
  * La targeta social feia 25,77 de mitjana quan estava cuita a mà; ara la fa
  * `scripts/build-og.ts` i en fa 21,70, perquè la corona nova concentra la llum
@@ -177,7 +177,7 @@ const RASTER: RasterAsset[] = [
     alpha: 'cap',
   },
   {
-    path: 'icons/icon-192.png',
+    path: 'app-icons/icon-192.png',
     role: 'icona del manifest, mida petita',
     width: 192,
     height: 192,
@@ -185,7 +185,7 @@ const RASTER: RasterAsset[] = [
     alpha: 'opac',
   },
   {
-    path: 'icons/icon-512.png',
+    path: 'app-icons/icon-512.png',
     role: 'icona del manifest, mida gran',
     width: 512,
     height: 512,
@@ -193,7 +193,7 @@ const RASTER: RasterAsset[] = [
     alpha: 'opac',
   },
   {
-    path: 'icons/icon-maskable-512.png',
+    path: 'app-icons/icon-maskable-512.png',
     role: 'icona maskable d’Android — Android hi retalla la forma que vulgui',
     width: 512,
     height: 512,
@@ -201,7 +201,7 @@ const RASTER: RasterAsset[] = [
     alpha: 'opac',
   },
   {
-    path: 'icons/apple-touch-icon.png',
+    path: 'app-icons/apple-touch-icon.png',
     role: 'pantalla d’inici d’iOS, que ignora el manifest i només llegeix això',
     width: 180,
     height: 180,
@@ -221,7 +221,7 @@ const COMPATIBILITY_IMAGES = ['favicon.ico'] as const;
  */
 const VECTOR: { path: string; role: string }[] = [
   { path: 'favicon.svg', role: 'icona de la pestanya' },
-  { path: 'icons/icon.svg', role: 'icona vectorial del manifest' },
+  { path: 'app-icons/icon.svg', role: 'icona vectorial del manifest' },
   { path: 'brand/logo.svg', role: 'logotip de la capçalera de l’app' },
   { path: 'brand/logo-mark.svg', role: 'marca sola — kit de premsa' },
   { path: 'brand/logo-mark-mono.svg', role: 'marca monocroma — kit de premsa' },
