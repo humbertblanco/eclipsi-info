@@ -101,7 +101,7 @@ import { ConsentBanner } from './features/consent/ConsentBanner';
 import { useConsent } from './features/consent/useConsent';
 import { ConnectionBadge } from './offline/ConnectionBadge';
 import { useOnlineStatus } from './offline/useOnlineStatus';
-import { LOCALES } from './i18n';
+import { LOCALES, pathnameForLocale, type Locale } from './i18n';
 import { SiteFooter } from './screens/SiteFooter';
 import { useCameraSupport } from './features/ar/useCameraSupport';
 import { LocaleProvider, useTranslation } from './i18n';
@@ -247,6 +247,17 @@ const HASH_BY_TAB: Record<Tab, string> = {
   about: '#/com-funciona',
 };
 
+const ABOUT_SEGMENT = 'com-funciona';
+
+function aboutPath(locale: Locale, section: string | null = null): string {
+  return `${pathnameForLocale(locale)}${ABOUT_SEGMENT}/${section === null ? '' : `${section}/`}`;
+}
+
+function pathAboutSection(pathname: string): string | null | undefined {
+  const match = /\/(?:es\/|en\/|fr\/)?com-funciona(?:\/(premsa))?\/?$/.exec(pathname);
+  return match === null ? undefined : (match[1] ?? null);
+}
+
 /*
  * LA VISTA DEL MAPA, AL SEGON SEGMENT DEL FRAGMENT (`#/mapa/llocs`), amb el
  * mateix contracte que les seccions de la guia (`#/guia/<seccio>`): el nom
@@ -328,6 +339,9 @@ function parseHashRoute(hash: string): HashRoute {
 function readInitialRoute(): HashRoute {
   if (typeof window === 'undefined')
     return { tab: 'countdown', section: null, view: null };
+  const aboutSection = pathAboutSection(window.location.pathname);
+  if (aboutSection !== undefined)
+    return { tab: 'about', section: aboutSection, view: null };
   return parseHashRoute(window.location.hash);
 }
 
@@ -579,7 +593,9 @@ function Shell() {
         next === 'map' && mapViewTarget !== undefined && mapViewTarget !== 'band'
           ? `${HASH_BY_TAB.map}/${MAP_SEGMENT_BY_VIEW[mapViewTarget]}`
           : HASH_BY_TAB[next];
-      const target = `${window.location.pathname}${window.location.search}${fragment}`;
+      const target = next === 'about'
+        ? aboutPath(locale)
+        : `${pathnameForLocale(locale)}${window.location.search}${fragment}`;
       const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
       // Tocar la pestanya on ja s'és no és anar enlloc: sense la guarda,
       // cada toc redundant apilaria una entrada que fa l'enrere més llarg.
@@ -587,7 +603,7 @@ function Shell() {
       window.history.pushState(null, '', target);
       appPushes.current += 1;
     },
-    [tab],
+    [locale, tab],
   );
 
   /*
@@ -623,7 +639,10 @@ function Shell() {
   useEffect(() => {
     const onPopState = () => {
       appPushes.current = Math.max(0, appPushes.current - 1);
-      const next = parseHashRoute(window.location.hash);
+      const aboutSection = pathAboutSection(window.location.pathname);
+      const next = aboutSection === undefined
+        ? parseHashRoute(window.location.hash)
+        : { tab: 'about' as const, section: aboutSection, view: null };
       // El cel d'un historial vell en un aparell sense càmera: mateixa regla
       // que la guarda de sota, la portada i sense tocar l'historial.
       if (next.tab === 'sky' && !camera.unknown && !camera.supported) {
@@ -654,11 +673,14 @@ function Shell() {
    * val la pena, i fins ara no en sabíem res.
    */
   useEffect(() => {
+    if (route.tab === 'about' && pathAboutSection(window.location.pathname) === undefined) {
+      window.history.replaceState(window.history.state, '', aboutPath(locale, route.section));
+    }
     if (route.tab === 'map' && route.view !== null) {
       track('map_view_open', { view: route.view, via: 'link' });
     }
     if (shared !== null) track('point_set', { method: 'shared_link', had_point: 'no' });
-  }, [route, shared]);
+  }, [locale, route, shared]);
 
   /*
    * EL VEREDICTE SENCER, amb el terreny ja comptat: quants segons en queden i
@@ -723,6 +745,7 @@ function Shell() {
     l'API d'historial i acaba llançant, i seria una excepció per no fer res.
   */
   useEffect(() => {
+    if (tab === 'about') return;
     if (observer.location === null) return;
 
     const search = buildShareLink({
@@ -742,7 +765,7 @@ function Shell() {
       '',
       `${window.location.pathname}${search}${window.location.hash}`,
     );
-  }, [observer.location, observer.fix?.label, eclipseId]);
+  }, [tab, observer.location, observer.fix?.label, eclipseId]);
 
   const fixed = FIXED_TABS.includes(tab);
 

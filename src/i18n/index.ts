@@ -203,10 +203,16 @@ export function LocaleProvider({
     // lectors de pantalla i per a la partició de mots del navegador.
     if (typeof document !== 'undefined') document.documentElement.lang = next;
     if (typeof window !== 'undefined') {
+      const about = /\/(?:es\/|en\/|fr\/)?com-funciona(?:\/(premsa))?\/?$/.exec(window.location.pathname);
+      const pathname = about === null
+        ? pathnameForLocale(next)
+        : `${pathnameForLocale(next)}com-funciona/${about[1] === undefined ? '' : 'premsa/'}`;
       window.history.replaceState(
         window.history.state,
         '',
-        `${pathnameForLocale(next)}${window.location.search}${window.location.hash}`,
+        about === null
+          ? `${pathname}${window.location.search}${window.location.hash}`
+          : pathname,
       );
     }
   }, []);

@@ -62,7 +62,7 @@ const PRESS_ASSETS: PressAsset[] = [
 
 interface MediaMention {
   name: string;
-  logoClass: string;
+  logo: string;
   url: string;
 }
 
@@ -70,42 +70,42 @@ interface MediaMention {
 const MEDIA_MENTIONS: MediaMention[] = [
   {
     name: 'VilaWeb',
-    logoClass: 'vilaweb',
+    logo: 'vilaweb.svg',
     url: 'https://www.vilaweb.cat/noticies/on-veure-eclipsi-12-agost-coses-tenir-compte-veure-platja/',
   },
   {
     name: 'Time Out Barcelona',
-    logoClass: 'timeout',
+    logo: 'timeout.svg',
     url: 'https://www.timeout.es/barcelona/es/noticias/un-disenador-catalan-crea-una-app-para-el-eclipse-solar-que-te-permite-comprobar-si-un-edificio-o-un-arbol-te-tapara-la-vision-080626',
   },
   {
     name: 'Diari de Tarragona',
-    logoClass: 'tarragona',
+    logo: 'diari-tarragona.svg',
     url: 'https://www.diaridetarragona.com/tarragona/267731/eclipse-solar-total-2026-web-gratuita-buscar-mejor-sitio-tarragona-ver-12-agosto_amp.html',
   },
   {
     name: 'Diari de Barcelona',
-    logoClass: 'barcelona',
+    logo: 'diari-barcelona.png',
     url: 'https://www.diaridebarcelona.cat/w/saps-on-veuras-eclipsi-web-ajuda-decisio?redirect=%2F',
   },
   {
     name: 'MetaData',
-    logoClass: 'metadata',
+    logo: 'metadata.svg',
     url: 'https://www.metadata.cat/reportatge/6458/eclipsi-tecnologic-historia-eines-digitals-millor-punt-sol',
   },
   {
     name: 'dBalears',
-    logoClass: 'dbalears',
+    logo: 'dbalears.svg',
     url: 'https://www.dbalears.cat/balears/balears/2026/08/06/421691/eclipsi-info-eina-gratuita-ajuda-trobar-millor-lloc-per-veure-eclipsi.html',
   },
   {
     name: 'el 3 de vuit',
-    logoClass: 'tresdevuit',
+    logo: 'el3devuit.svg',
     url: 'https://el3devuit.cat/2026/08/06/143001/actualitat/expectacio-per-veure-leclipsi-solar-de-dimecres/',
   },
   {
     name: 'Diari de Catalunya',
-    logoClass: 'catalunya',
+    logo: 'diari-catalunya.png',
     url: 'https://diaricatalunya.cat/baix-penedes/general/expectacio-per-leclipsi-solar-total-al-penedes',
   },
 ];
@@ -259,12 +259,13 @@ export function AboutScreen({ locale, initialSection, onOpenGuideSafety }: About
             {MEDIA_MENTIONS.map((mention, index) => (
               <li key={mention.url} className={index === 0 ? 'about__mention--lead' : undefined}>
                 <a href={mention.url} target="_blank" rel="noreferrer noopener">
-                  <span
-                    className={`about__mentionlogo about__mentionlogo--${mention.logoClass}`}
-                    aria-hidden="true"
-                  >
-                    {mention.name}
-                  </span>
+                  <img
+                    className="about__mentionlogo"
+                    src={`${PRESS_BASE}media-logos/${mention.logo}`}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <span className="ui-visually-hidden">{mention.name}</span>
                   <span className="about__mentioncta">{ab('mentions.read', locale)} ↗</span>
                 </a>

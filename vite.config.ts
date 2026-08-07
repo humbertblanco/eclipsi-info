@@ -256,6 +256,19 @@ export default defineConfig(({ command }) => ({
         await writeFile(resolve(outDir, 'es/index.html'), spanishIndex(html), 'utf8')
         await writeFile(resolve(outDir, 'en/index.html'), englishIndex(html), 'utf8')
         await writeFile(resolve(outDir, 'fr/index.html'), frenchIndex(html), 'utf8')
+        for (const locale of ['', 'es', 'en', 'fr']) {
+          const localeDir = resolve(outDir, locale)
+          const localeHtml = await readFile(resolve(localeDir, 'index.html'), 'utf8')
+          for (const suffix of ['com-funciona', 'com-funciona/premsa']) {
+            const directory = resolve(localeDir, suffix)
+            const target = `${SITE_URL}${locale === '' ? '' : `${locale}/`}${suffix}/`
+            const pageHtml = localeHtml
+              .replace(/<link rel="canonical" href="[^"]+" \/>/, `<link rel="canonical" href="${target}" />`)
+              .replace(/<meta property="og:url" content="[^"]+" \/>/, `<meta property="og:url" content="${target}" />`)
+            await mkdir(directory, { recursive: true })
+            await writeFile(resolve(directory, 'index.html'), pageHtml, 'utf8')
+          }
+        }
       },
     },
     {

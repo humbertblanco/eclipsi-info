@@ -112,11 +112,11 @@ const TEXT = {
   guides: { ca: 'Guies pràctiques', es: 'Guías prácticas', en: 'Practical guides', fr: 'Guides pratiques' },
 } as const;
 
-const SEO_PATHS: Record<Locale, { eclipse: string; guide: string }> = {
-  ca: { eclipse: '/eclipsi/12-08-2026/', guide: '/guia/' },
-  es: { eclipse: '/es/eclipse/12-08-2026/', guide: '/es/guia/' },
-  en: { eclipse: '/en/eclipse/12-08-2026/', guide: '/en/guide/' },
-  fr: { eclipse: '/fr/eclipse/12-08-2026/', guide: '/fr/guide/' },
+const SEO_PATHS: Record<Locale, { eclipse: string; guide: string; about: string }> = {
+  ca: { eclipse: '/eclipsi/12-08-2026/', guide: '/guia/', about: '/com-funciona/' },
+  es: { eclipse: '/es/eclipse/12-08-2026/', guide: '/es/guia/', about: '/es/com-funciona/' },
+  en: { eclipse: '/en/eclipse/12-08-2026/', guide: '/en/guide/', about: '/en/com-funciona/' },
+  fr: { eclipse: '/fr/eclipse/12-08-2026/', guide: '/fr/guide/', about: '/fr/com-funciona/' },
 };
 
 const REPO_URL = 'https://github.com/humbertblanco/eclipsi-info';
@@ -213,9 +213,9 @@ export function SiteFooter({ locale, consentState, onChangeConsent }: SiteFooter
           Enllaç d'àncora i no botó: el canvi de hash el recull el popstate de
           l'App i la pantalla «Com funciona» s'obre com qualsevol altra ruta.
         */}
-        <a href="#/com-funciona">{TEXT.sourcesLink[locale]}</a>
+        <a href={SEO_PATHS[locale].about}>{TEXT.sourcesLink[locale]}</a>
         {' · '}
-        <a href="#/com-funciona/premsa">{TEXT.pressLink[locale]}</a>
+        <a href={`${SEO_PATHS[locale].about}premsa/`}>{TEXT.pressLink[locale]}</a>
         {' · '}
         <a href={REPO_URL} target="_blank" rel="noreferrer noopener">
           {TEXT.code[locale]}

@@ -516,6 +516,13 @@ async function main() {
     SEO_LOCALES.map(language=>`    <xhtml:link rel="alternate" hreflang="${language}" href="${SEO_SITE}${prefix(language)}"/>`).join('\n'),
     SEO_SITE,
   ));
+  const projectRoutes=['com-funciona/','com-funciona/premsa/'].flatMap(suffix=>
+    SEO_LOCALES.map(locale=>sitemapEntry(
+      `${SEO_SITE}${prefix(locale)}${suffix}`,
+      SEO_LOCALES.map(language=>`    <xhtml:link rel="alternate" hreflang="${language}" href="${SEO_SITE}${prefix(language)}${suffix}"/>`).join('\n'),
+      `${SEO_SITE}${suffix}`,
+    )),
+  );
   const entries=generated
     .toSorted((a,b)=>a.url.localeCompare(b.url,'en'))
     .map(({url,route})=>sitemapEntry(
@@ -528,6 +535,7 @@ async function main() {
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
     '        xmlns:xhtml="http://www.w3.org/1999/xhtml">',
     ...rootRoutes,
+    ...projectRoutes,
     ...entries,
     '</urlset>',
     '',

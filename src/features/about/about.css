@@ -176,6 +176,7 @@ button.about__guidelink {
   min-height: calc(var(--sp-13) + var(--sp-8));
   height: 100%;
   flex-direction: column;
+  align-items: center;
   justify-content: space-between;
   gap: var(--sp-5);
   padding: var(--sp-4);
@@ -196,56 +197,17 @@ button.about__guidelink {
 
 .about__mentionlogo {
   display: block;
-  width: fit-content;
-  max-width: 100%;
-  color: var(--white);
-  font-size: var(--fs-body-lg);
-  font-weight: var(--fw-bold);
-  line-height: 1;
-  letter-spacing: var(--ls-tight);
-}
-
-.about__mentionlogo--timeout {
-  padding: 0.16em 0.24em 0.1em;
-  background: var(--white);
-  color: var(--ink-950);
-  font-weight: var(--fw-black, 800);
-  letter-spacing: -0.08em;
-  text-transform: uppercase;
-}
-
-.about__mentionlogo--metadata {
-  font-family: var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.about__mentionlogo--vilaweb {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: var(--fs-title-2);
-  font-style: italic;
-  font-weight: 700;
-  letter-spacing: -0.07em;
-}
-
-.about__mentionlogo--tarragona,
-.about__mentionlogo--barcelona,
-.about__mentionlogo--catalunya {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 700;
-}
-
-.about__mentionlogo--dbalears { font-weight: 750; }
-
-.about__mentionlogo--tresdevuit {
-  font-weight: 800;
-  letter-spacing: -0.06em;
-  text-transform: lowercase;
+  width: min(100%, 12rem);
+  height: var(--sp-9);
+  object-fit: contain;
+  object-position: center;
+  filter: grayscale(1) brightness(0) invert(1);
 }
 
 .about__mentioncta {
   font-size: var(--fs-micro);
   color: var(--text-muted);
+  text-align: center;
 }
 
 /* ---------------------------------------------------------------- premsa */
