@@ -21,7 +21,7 @@ await visit(out);
 for (const file of htmlFiles) {
   const html = await readFile(file, 'utf8');
   if (html.includes('<!--')) throw new Error(`Comentari HTML públic: ${file}`);
-  if (!html.includes('brand/favicon-eclipse.svg')) throw new Error(`Favicon no canònic: ${file}`);
+  if (!html.includes('brand/favicon-google-96.png')) throw new Error(`Favicon no canònic: ${file}`);
   const locale = /<html lang="(ca|es|en|fr)"/.exec(html)?.[1];
   const noindex = /<meta[^>]+name="robots"[^>]+content="noindex"/.test(html);
   if (!noindex && locale !== undefined && !html.includes(`brand/og-${locale}.png`)) {

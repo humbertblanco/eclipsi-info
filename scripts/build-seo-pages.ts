@@ -471,7 +471,7 @@ async function main() {
   const widgetStylesheet=assets.find(name=>/^seoWidgets-.*\.css$/.test(name));
   const guideStylesheet=assets.find(name=>/^GuideScreen-.*\.css$/.test(name));
   seoWidgetScript=widgetAsset?`<script type="module" src="/assets/${widgetAsset}"></script>`:'';
-  appStylesheets=`<link rel="icon" type="image/svg+xml" sizes="any" href="/brand/favicon-eclipse.svg">`+
+  appStylesheets=`<link rel="icon" type="image/png" sizes="96x96" href="/brand/favicon-google-96.png">`+
     [...appShell.matchAll(/<link rel="stylesheet"[^>]*href="([^"]+)"[^>]*>/g)]
       .map(([,href])=>`<link rel="stylesheet" href="${href}">`).join('')+(guideStylesheet?`<link rel="stylesheet" href="/assets/${guideStylesheet}">`:'')+(widgetStylesheet?`<link rel="stylesheet" href="/assets/${widgetStylesheet}">`:'')+seoWidgetScript+DATA_VISUAL_CSS;
   const generated: Array<{locale: Locale; route: Route; url: string}> = [];
@@ -502,8 +502,9 @@ async function main() {
     if(!rootHtml.includes(`<html lang="${locale}">`)) throw new Error(`Idioma d’arrel incorrecte: ${rootUrl}`);
     canonicalUrls.add(rootUrl);
   }
-  const rootRoutes=SEO_LOCALES.map(locale=>`<url><loc>${SEO_SITE}${prefix(locale)}</loc>${SEO_LOCALES.map(language=>`<xhtml:link rel="alternate" hreflang="${language}" href="${SEO_SITE}${prefix(language)}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${SEO_SITE}"/></url>`).join('');
-  const entries=generated.map(({url,route})=>`<url><loc>${url}</loc>${SEO_LOCALES.map(locale=>`<xhtml:link rel="alternate" hreflang="${locale}" href="${urlFor(locale,route)}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${urlFor('ca',route)}"/></url>`).join('');
+  const lastModified='2026-08-07';
+  const rootRoutes=SEO_LOCALES.map(locale=>`<url><loc>${SEO_SITE}${prefix(locale)}</loc><lastmod>${lastModified}</lastmod>${SEO_LOCALES.map(language=>`<xhtml:link rel="alternate" hreflang="${language}" href="${SEO_SITE}${prefix(language)}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${SEO_SITE}"/></url>`).join('');
+  const entries=generated.map(({url,route})=>`<url><loc>${url}</loc><lastmod>${lastModified}</lastmod>${SEO_LOCALES.map(locale=>`<xhtml:link rel="alternate" hreflang="${locale}" href="${urlFor(locale,route)}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${urlFor('ca',route)}"/></url>`).join('');
   await writeFile(resolve(OUT,'sitemap.xml'),`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">${rootRoutes}${entries}</urlset>`);
   console.log(`Generated ${generated.length} useful SEO pages in ${OUT}`);
 }

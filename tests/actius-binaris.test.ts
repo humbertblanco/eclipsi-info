@@ -129,6 +129,14 @@ const RASTER: RasterAsset[] = [
     alpha: 'lliure',
   },
   {
+    path: 'brand/favicon-google-96.png',
+    role: 'favicon canònic de Google Search amb URL pròpia',
+    width: 96,
+    height: 96,
+    fullBleed: false,
+    alpha: 'lliure',
+  },
+  {
     path: 'press/simulacio-eclipsi.png',
     role: 'imatge editorial de la simulació al mòbil',
     width: 1122,
