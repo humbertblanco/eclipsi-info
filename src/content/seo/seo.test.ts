@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ECLIPSES } from '../../core/eclipses/catalog';
 import { pointsForEclipse } from '../../data/observation-points/catalog';
+import { EDITORIAL_GUIDE_IDS } from '../editorial-guides';
 import { SEO_CITIES } from './cities';
 import { SEO_LOCALES, prefix } from './strings';
 import { SEO_EVENT_WINDOWS } from './events';
@@ -27,19 +28,51 @@ describe('catàleg de pàgines SEO', () => {
     expect(SEO_LOCALES).toEqual(['ca', 'es', 'en', 'fr']);
     expect(prefix('ca')).toBe('');
     expect(prefix('fr')).toBe('fr/');
-    const entities = ECLIPSES.length + ECLIPSES.length * SEO_CITIES.length
-      + ECLIPSES.reduce((sum, eclipse) => sum + pointsForEclipse(eclipse.id).length, 0);
-    // Les entitats locals més les tres guies editorials, totes en 4 idiomes.
-    expect((entities + 3) * SEO_LOCALES.length).toBe(1312);
+    /*
+     * EL NOMBRE ES DERIVA; EL 1312 ESCRIT A MÀ NO ERA EL QUE ES GENERAVA.
+     *
+     * Aquesta línia deia `toBe(1312)` i el generador n'escrivia 1.316. La
+     * diferència són els quatre índexs de guies, un per idioma, que el compte
+     * es deixava. Passava en verd perquè el compte i l'expectativa eren el
+     * mateix error escrit dues vegades: cap dels dos costats no havia mirat mai
+     * el generador.
+     *
+     * Ara el compte diu d'on surt cada terme, i el que el compara amb la
+     * realitat és `scripts/check-built-html.ts`, que recorre el `dist/` de debò
+     * al final de cada build.
+     */
+    const perLocale =
+      ECLIPSES.length + // una fitxa per eclipsi
+      ECLIPSES.length * SEO_CITIES.length + // cada ciutat a cada eclipsi
+      ECLIPSES.reduce((sum, eclipse) => sum + pointsForEclipse(eclipse.id).length, 0) +
+      EDITORIAL_GUIDE_IDS.length + // les guies editorials
+      1; // el seu índex
+    // 1.568 = 4 idiomes × (3 eclipsis + 3×37 ciutats + 274 punts + 3 guies + 1
+    // índex). Va pujar de 1.316 el dia que el catàleg de ciutats va deixar de
+    // ser només el de la franja del 2026: vegeu la capçalera de `cities.ts`.
+    expect(perLocale * SEO_LOCALES.length).toBe(1568);
   });
 
-  it('cada interval global conté el màxim de l’eclipsi', () => {
+  it('cada eclipsi té una àrea escrita en els quatre idiomes', () => {
+    /*
+     * AQUESTA PROVA ES DEIA «cada interval global conté el màxim de l'eclipsi» I
+     * COMPROVAVA UNA COSA FALSA.
+     *
+     * El màxim global de l'anular del 2028 és a les 15:08:59 UTC i el primer
+     * contacte entre tots els llocs que publiquem és a les 15:32:13: l'ombra
+     * arriba a la península vint-i-quatre minuts més tard. Exigir que la
+     * finestra contingui el màxim global obligava a inflar-la —la del 2028
+     * començava dues hores i mitja abans que cap contacte real— i la prova
+     * passava en verd mentre el JSON-LD contradeia la taula de la mateixa
+     * pàgina.
+     *
+     * L'interval ara el deriva del motor `content/seo/events.ts`, i qui el
+     * compara amb els contactes publicats és `content/seo/events.test.ts`. Aquí
+     * hi queda el que sí que és d'aquest fitxer: que el topònim hi sigui.
+     */
     for (const eclipse of ECLIPSES) {
       const window = SEO_EVENT_WINDOWS[eclipse.id];
       expect(window).toBeDefined();
-      const maximum = Date.parse(eclipse.greatestEclipseUtc);
-      expect(Date.parse(window.start)).toBeLessThan(maximum);
-      expect(Date.parse(window.end)).toBeGreaterThan(maximum);
       for (const locale of SEO_LOCALES) expect(window.area[locale]).not.toBe('');
     }
   });
