@@ -121,11 +121,23 @@ const ECLIPSE_IDS = ECLIPSES.map((e) => e.id);
  */
 const SPAIN_BOUNDS = { minLat: 35.5, maxLat: 44.2, minLon: -9.6, maxLon: 4.6 };
 
-/** Els punts que hi ha a `2026-08-12.json` no s'han de perdre per accident. */
-const EXPECTED_2026_COUNT = 274;
+/**
+ * Els punts que hi ha a `2026-08-12.json` no s'han de perdre per accident.
+ *
+ * Va ser 274 fins al 8 d'agost del 2026, quan es van repassar les vuit fonts
+ * una per una i es va veure que quatre punts que publicàvem ja no hi eren:
+ * Astúries havia retirat Grandas de Salime i Yernes y Tameza i havia substituït
+ * la platja de la Franca pel mirador de Pimiango, i Aragó havia tret Monreal
+ * del Campo. Publicar un emplaçament que l'administració ha retirat és enviar
+ * algú a un lloc on no hi haurà ningú esperant-lo.
+ *
+ * Amb els dos punts nous confirmats a la font (Pimiango i el castell d'Onda),
+ * 272.
+ */
+const EXPECTED_2026_COUNT = 272;
 
 /** D'aquests, els que veuen la totalitat i els que només veuen la parcial. */
-const EXPECTED_2026_CENTRAL = 262;
+const EXPECTED_2026_CENTRAL = 260;
 const EXPECTED_2026_PARTIAL = 12;
 
 /** Vegeu la capçalera: 147,0 km és el màxim mesurat entre els centrals; 160 deixa marge. */
