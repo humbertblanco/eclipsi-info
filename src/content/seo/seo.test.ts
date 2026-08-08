@@ -47,10 +47,10 @@ describe('catàleg de pàgines SEO', () => {
       ECLIPSES.reduce((sum, eclipse) => sum + pointsForEclipse(eclipse.id).length, 0) +
       EDITORIAL_GUIDE_IDS.length + // les guies editorials
       1; // el seu índex
-    // 1.560 = 4 idiomes × (3 eclipsis + 3×37 ciutats + 272 punts + 3 guies + 1
+    // 1.592 = 4 idiomes × (3 eclipsis + 3×37 ciutats + 280 punts + 3 guies + 1
     // índex). Va pujar de 1.316 el dia que el catàleg de ciutats va deixar de
     // ser només el de la franja del 2026: vegeu la capçalera de `cities.ts`.
-    expect(perLocale * SEO_LOCALES.length).toBe(1560);
+    expect(perLocale * SEO_LOCALES.length).toBe(1592);
   });
 
   it('cada eclipsi té una àrea escrita en els quatre idiomes', () => {

@@ -2544,6 +2544,126 @@
   "phase": "central"
  },
  {
+  "id": "can-bareyo-faro-de-ajo",
+  "name": {
+   "ca": "Faro d’Ajo — Bareyo",
+   "es": "Faro de Ajo — Bareyo",
+   "en": "Ajo lighthouse — Bareyo",
+   "fr": "Phare d’Ajo — Bareyo"
+  },
+  "lat": 43.512,
+  "lon": -3.595,
+  "precision": "estimated",
+  "source": {
+   "who": "Gobierno de Cantabria",
+   "url": "https://turismodecantabria.com/eclipse-total-de-sol-del-dia-12-de-agosto-de-2026/"
+  },
+  "kind": "official",
+  "note": {
+   "ca": "Zona amb dispositiu especial de seguretat i informació del Govern de Cantàbria. La font no en publica la coordenada; aquesta ve d’OpenStreetMap i s’ha comprovat contra la durada que la font mateixa anuncia. Els fars de la costa de Cantàbria estan tancats el dia 12 i no s’hi pot accedir.",
+   "es": "Zona con dispositivo especial de seguridad e información del Gobierno de Cantabria. La fuente no publica su coordenada; esta viene de OpenStreetMap y se ha contrastado con la duración que la propia fuente anuncia.",
+   "en": "Area with a special safety and information deployment by the Government of Cantabria. The source does not publish its coordinate; this one comes from OpenStreetMap and was checked against the duration the source itself announces.",
+   "fr": "Zone avec dispositif spécial de sécurité et d’information du Gouvernement de Cantabrie. La source ne publie pas ses coordonnées ; celles-ci viennent d’OpenStreetMap et ont été recoupées avec la durée annoncée par la source elle-même."
+  },
+  "phase": "central"
+ },
+ {
+  "id": "can-medio-cudeyo-pena-cabarga",
+  "name": {
+   "ca": "Mirador de Peña Cabarga — Medio Cudeyo",
+   "es": "Mirador de Peña Cabarga — Medio Cudeyo",
+   "en": "Peña Cabarga viewpoint — Medio Cudeyo",
+   "fr": "Belvédère de Peña Cabarga — Medio Cudeyo"
+  },
+  "lat": 43.379,
+  "lon": -3.779,
+  "precision": "estimated",
+  "source": {
+   "who": "Gobierno de Cantabria",
+   "url": "https://turismodecantabria.com/eclipse-total-de-sol-del-dia-12-de-agosto-de-2026/"
+  },
+  "kind": "official",
+  "note": {
+   "ca": "Zona amb dispositiu especial de seguretat i informació del Govern de Cantàbria. La font no en publica la coordenada; aquesta ve d’OpenStreetMap i s’ha comprovat contra la durada que la font mateixa anuncia. Sense accés en vehicle privat: cal entrada i llançadora.",
+   "es": "Zona con dispositivo especial de seguridad e información del Gobierno de Cantabria. La fuente no publica su coordenada; esta viene de OpenStreetMap y se ha contrastado con la duración que la propia fuente anuncia.",
+   "en": "Area with a special safety and information deployment by the Government of Cantabria. The source does not publish its coordinate; this one comes from OpenStreetMap and was checked against the duration the source itself announces.",
+   "fr": "Zone avec dispositif spécial de sécurité et d’information du Gouvernement de Cantabrie. La source ne publie pas ses coordonnées ; celles-ci viennent d’OpenStreetMap et ont été recoupées avec la durée annoncée par la source elle-même."
+  },
+  "phase": "central"
+ },
+ {
+  "id": "can-pielagos-costa-quebrada",
+  "name": {
+   "ca": "Costa Quebrada — Piélagos",
+   "es": "Costa Quebrada — Piélagos",
+   "en": "Costa Quebrada — Piélagos",
+   "fr": "Costa Quebrada — Piélagos"
+  },
+  "lat": 43.445,
+  "lon": -3.975,
+  "precision": "estimated",
+  "source": {
+   "who": "Gobierno de Cantabria",
+   "url": "https://turismodecantabria.com/eclipse-total-de-sol-del-dia-12-de-agosto-de-2026/"
+  },
+  "kind": "official",
+  "note": {
+   "ca": "Zona amb dispositiu especial de seguretat i informació del Govern de Cantàbria. La font no en publica la coordenada; aquesta ve d’OpenStreetMap i s’ha comprovat contra la durada que la font mateixa anuncia.",
+   "es": "Zona con dispositivo especial de seguridad e información del Gobierno de Cantabria. La fuente no publica su coordenada; esta viene de OpenStreetMap y se ha contrastado con la duración que la propia fuente anuncia.",
+   "en": "Area with a special safety and information deployment by the Government of Cantabria. The source does not publish its coordinate; this one comes from OpenStreetMap and was checked against the duration the source itself announces.",
+   "fr": "Zone avec dispositif spécial de sécurité et d’information du Gouvernement de Cantabrie. La source ne publie pas ses coordonnées ; celles-ci viennent d’OpenStreetMap et ont été recoupées avec la durée annoncée par la source elle-même."
+  },
+  "phase": "central"
+ },
+ {
+  "id": "can-suances-punta-del-dichoso",
+  "name": {
+   "ca": "Punta del Dichoso — Suances",
+   "es": "Punta del Dichoso — Suances",
+   "en": "Punta del Dichoso — Suances",
+   "fr": "Punta del Dichoso — Suances"
+  },
+  "lat": 43.444,
+  "lon": -4.046,
+  "precision": "estimated",
+  "source": {
+   "who": "Gobierno de Cantabria",
+   "url": "https://turismodecantabria.com/eclipse-total-de-sol-del-dia-12-de-agosto-de-2026/"
+  },
+  "kind": "official",
+  "note": {
+   "ca": "Zona amb dispositiu especial de seguretat i informació del Govern de Cantàbria. La font no en publica la coordenada; aquesta ve d’OpenStreetMap i s’ha comprovat contra la durada que la font mateixa anuncia.",
+   "es": "Zona con dispositivo especial de seguridad e información del Gobierno de Cantabria. La fuente no publica su coordenada; esta viene de OpenStreetMap y se ha contrastado con la duración que la propia fuente anuncia.",
+   "en": "Area with a special safety and information deployment by the Government of Cantabria. The source does not publish its coordinate; this one comes from OpenStreetMap and was checked against the duration the source itself announces.",
+   "fr": "Zone avec dispositif spécial de sécurité et d’information du Gouvernement de Cantabrie. La source ne publie pas ses coordonnées ; celles-ci viennent d’OpenStreetMap et ont été recoupées avec la durée annoncée par la source elle-même."
+  },
+  "phase": "central"
+ },
+ {
+  "id": "can-valderredible-paramo-de-la-lora",
+  "name": {
+   "ca": "Páramo de La Lora — Valderredible",
+   "es": "Páramo de La Lora — Valderredible",
+   "en": "Páramo de La Lora — Valderredible",
+   "fr": "Páramo de La Lora — Valderredible"
+  },
+  "lat": 42.771,
+  "lon": -3.945,
+  "precision": "estimated",
+  "source": {
+   "who": "Gobierno de Cantabria",
+   "url": "https://turismodecantabria.com/eclipse-total-de-sol-del-dia-12-de-agosto-de-2026/"
+  },
+  "kind": "official",
+  "note": {
+   "ca": "Zona amb dispositiu especial de seguretat i informació del Govern de Cantàbria. La font no en publica la coordenada; aquesta ve d’OpenStreetMap i s’ha comprovat contra la durada que la font mateixa anuncia. Al costat de l’Observatori Astronòmic de Cantàbria.",
+   "es": "Zona con dispositivo especial de seguridad e información del Gobierno de Cantabria. La fuente no publica su coordenada; esta viene de OpenStreetMap y se ha contrastado con la duración que la propia fuente anuncia.",
+   "en": "Area with a special safety and information deployment by the Government of Cantabria. The source does not publish its coordinate; this one comes from OpenStreetMap and was checked against the duration the source itself announces.",
+   "fr": "Zone avec dispositif spécial de sécurité et d’information du Gouvernement de Cantabrie. La source ne publie pas ses coordonnées ; celles-ci viennent d’OpenStreetMap et ont été recoupées avec la durée annoncée par la source elle-même."
+  },
+  "phase": "central"
+ },
+ {
   "id": "cat-alcanar-placa-de-bous",
   "name": {
    "ca": "Alcanar — Plaça de bous",
@@ -6217,19 +6337,19 @@
    "en": "Aras de los Olmos",
    "fr": "Aras de los Olmos"
   },
-  "lat": 39.92423,
-  "lon": -1.13323,
-  "precision": "estimated",
+  "lat": 39.92289,
+  "lon": -1.12038,
+  "precision": "exact",
   "source": {
    "who": "Generalitat Valenciana",
    "url": "https://eclipses.gva.es/vive-el-eclipse/"
   },
   "kind": "official",
   "note": {
-   "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-   "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
-   "en": "Official observing site of the Generalitat Valenciana. The source does not publish its coordinate; this one comes from OpenStreetMap.",
-   "fr": "Site d'observation officiel de la Generalitat Valenciana. La source ne publie pas ses coordonnées ; celui-ci vient d'OpenStreetMap."
+   "ca": "Recinte oficial de la Generalitat Valenciana; la coordenada la publica la font. La font el marca com a provisional.",
+   "es": "Recinto oficial de la Generalitat Valenciana; la coordenada la publica la fuente. La fuente lo marca como provisional.",
+   "en": "Official Generalitat Valenciana site; the coordinate is published by the source, which marks it as provisional.",
+   "fr": "Site officiel de la Generalitat Valenciana ; la coordonnée est publiée par la source, qui l’indique comme provisoire."
   },
   "phase": "central"
  },
@@ -6241,19 +6361,43 @@
    "en": "Benassal — ermita de Sant Cristòfol",
    "fr": "Benassal — ermita de Sant Cristòfol"
   },
-  "lat": 40.35977,
-  "lon": -0.13938,
-  "precision": "estimated",
+  "lat": 40.35922,
+  "lon": -0.13959,
+  "precision": "exact",
   "source": {
    "who": "Generalitat Valenciana",
    "url": "https://eclipses.gva.es/vive-el-eclipse/"
   },
   "kind": "official",
   "note": {
-   "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-   "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
-   "en": "Official observing site of the Generalitat Valenciana. The source does not publish its coordinate; this one comes from OpenStreetMap.",
-   "fr": "Site d'observation officiel de la Generalitat Valenciana. La source ne publie pas ses coordonnées ; celui-ci vient d'OpenStreetMap."
+   "ca": "Recinte oficial de la Generalitat Valenciana; la coordenada la publica la font. La font el marca com a provisional.",
+   "es": "Recinto oficial de la Generalitat Valenciana; la coordenada la publica la fuente. La fuente lo marca como provisional.",
+   "en": "Official Generalitat Valenciana site; the coordinate is published by the source, which marks it as provisional.",
+   "fr": "Site officiel de la Generalitat Valenciana ; la coordonnée est publiée par la source, qui l’indique comme provisoire."
+  },
+  "phase": "central"
+ },
+ {
+  "id": "val-borriana-mercat-de-la-mar",
+  "name": {
+   "ca": "Borriana — Mercat de la Mar",
+   "es": "Burriana — Mercat de la Mar",
+   "en": "Borriana — Mercat de la Mar",
+   "fr": "Borriana — Mercat de la Mar"
+  },
+  "lat": 39.86891,
+  "lon": -0.06684,
+  "precision": "exact",
+  "source": {
+   "who": "Generalitat Valenciana",
+   "url": "https://eclipses.gva.es/vive-el-eclipse/"
+  },
+  "kind": "official",
+  "note": {
+   "ca": "Recinte oficial de la Generalitat Valenciana, marcat com a provisional. Av. Mediterrània 85. Aforament d’unes 10.000 persones; sense pernocta.",
+   "es": "Recinto oficial de la Generalitat Valenciana, marcado como provisional. Av. Mediterrània 85. Aforament d’unes 10.000 persones; sense pernocta.",
+   "en": "Official Generalitat Valenciana site, marked provisional. Av. Mediterrània 85. Aforament d’unes 10.000 persones; sense pernocta.",
+   "fr": "Site officiel de la Generalitat Valenciana, indiqué comme provisoire. Av. Mediterrània 85. Aforament d’unes 10.000 persones; sense pernocta."
   },
   "phase": "central"
  },
@@ -6265,43 +6409,67 @@
    "en": "Castellón de la Plana — entorno del Planetario",
    "fr": "Castellón de la Plana — entorno del Planetario"
   },
-  "lat": 39.97931,
-  "lon": 0.02206,
-  "precision": "estimated",
+  "lat": 39.97986,
+  "lon": 0.02303,
+  "precision": "exact",
   "source": {
    "who": "Generalitat Valenciana",
    "url": "https://eclipses.gva.es/vive-el-eclipse/"
   },
   "kind": "official",
   "note": {
-   "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-   "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
-   "en": "Official observing site of the Generalitat Valenciana. The source does not publish its coordinate; this one comes from OpenStreetMap.",
-   "fr": "Site d'observation officiel de la Generalitat Valenciana. La source ne publie pas ses coordonnées ; celui-ci vient d'OpenStreetMap."
+   "ca": "Recinte oficial de la Generalitat Valenciana; la coordenada la publica la font. La font el marca com a provisional.",
+   "es": "Recinto oficial de la Generalitat Valenciana; la coordenada la publica la fuente. La fuente lo marca como provisional.",
+   "en": "Official Generalitat Valenciana site; the coordinate is published by the source, which marks it as provisional.",
+   "fr": "Site officiel de la Generalitat Valenciana ; la coordonnée est publiée par la source, qui l’indique comme provisoire."
+  },
+  "phase": "central"
+ },
+ {
+  "id": "val-les-useres-parc-municipal",
+  "name": {
+   "ca": "Les Useres — parc municipal",
+   "es": "Les Useres — parque municipal",
+   "en": "Les Useres — municipal park",
+   "fr": "Les Useres — parc municipal"
+  },
+  "lat": 40.15836,
+  "lon": -0.16111,
+  "precision": "exact",
+  "source": {
+   "who": "Generalitat Valenciana",
+   "url": "https://eclipses.gva.es/vive-el-eclipse/"
+  },
+  "kind": "official",
+  "note": {
+   "ca": "Recinte oficial de la Generalitat Valenciana, marcat com a provisional. C. Figueroles d’Alcalatén. Aforament d’unes 2.000 persones.",
+   "es": "Recinto oficial de la Generalitat Valenciana, marcado como provisional. C. Figueroles d’Alcalatén. Aforament d’unes 2.000 persones.",
+   "en": "Official Generalitat Valenciana site, marked provisional. C. Figueroles d’Alcalatén. Aforament d’unes 2.000 persones.",
+   "fr": "Site officiel de la Generalitat Valenciana, indiqué comme provisoire. C. Figueroles d’Alcalatén. Aforament d’unes 2.000 persones."
   },
   "phase": "central"
  },
  {
   "id": "val-macastre",
   "name": {
-   "ca": "Macastre",
-   "es": "Macastre",
-   "en": "Macastre",
-   "fr": "Macastre"
+   "ca": "Macastre — castell",
+   "es": "Macastre — castillo",
+   "en": "Macastre — castle",
+   "fr": "Macastre — château"
   },
-  "lat": 39.38204,
-  "lon": -0.78549,
-  "precision": "estimated",
+  "lat": 39.37972,
+  "lon": -0.78892,
+  "precision": "exact",
   "source": {
    "who": "Generalitat Valenciana",
    "url": "https://eclipses.gva.es/vive-el-eclipse/"
   },
   "kind": "official",
   "note": {
-   "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-   "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
-   "en": "Official observing site of the Generalitat Valenciana. The source does not publish its coordinate; this one comes from OpenStreetMap.",
-   "fr": "Site d'observation officiel de la Generalitat Valenciana. La source ne publie pas ses coordonnées ; celui-ci vient d'OpenStreetMap."
+   "ca": "Recinte oficial de la Generalitat Valenciana; la coordenada la publica la font. La font el marca com a provisional.",
+   "es": "Recinto oficial de la Generalitat Valenciana; la coordenada la publica la fuente. La fuente lo marca como provisional.",
+   "en": "Official Generalitat Valenciana site; the coordinate is published by the source, which marks it as provisional.",
+   "fr": "Site officiel de la Generalitat Valenciana ; la coordonnée est publiée par la source, qui l’indique comme provisoire."
   },
   "phase": "central"
  },
@@ -6332,24 +6500,24 @@
  {
   "id": "val-peniscola",
   "name": {
-   "ca": "Peníscola",
-   "es": "Peñíscola",
-   "en": "Peñíscola",
-   "fr": "Peñíscola"
+   "ca": "Peníscola — aparcament dissuasiu",
+   "es": "Peñíscola — aparcamiento disuasorio",
+   "en": "Peníscola — park and ride",
+   "fr": "Peníscola — parking relais"
   },
-  "lat": 40.35778,
-  "lon": 0.40738,
-  "precision": "estimated",
+  "lat": 40.38798,
+  "lon": 0.40397,
+  "precision": "exact",
   "source": {
    "who": "Generalitat Valenciana",
    "url": "https://eclipses.gva.es/vive-el-eclipse/"
   },
   "kind": "official",
   "note": {
-   "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-   "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
-   "en": "Official observing site of the Generalitat Valenciana. The source does not publish its coordinate; this one comes from OpenStreetMap.",
-   "fr": "Site d'observation officiel de la Generalitat Valenciana. La source ne publie pas ses coordonnées ; celui-ci vient d'OpenStreetMap."
+   "ca": "Recinte oficial de la Generalitat Valenciana; la coordenada la publica la font. La font el marca com a provisional.",
+   "es": "Recinto oficial de la Generalitat Valenciana; la coordenada la publica la fuente. La fuente lo marca como provisional.",
+   "en": "Official Generalitat Valenciana site; the coordinate is published by the source, which marks it as provisional.",
+   "fr": "Site officiel de la Generalitat Valenciana ; la coordonnée est publiée par la source, qui l’indique comme provisoire."
   },
   "phase": "central"
  },
@@ -6380,24 +6548,24 @@
  {
   "id": "val-utiel",
   "name": {
-   "ca": "Utiel",
-   "es": "Utiel",
-   "en": "Utiel",
-   "fr": "Utiel"
+   "ca": "Utiel — la Celadilla",
+   "es": "Utiel — la Celadilla",
+   "en": "Utiel — la Celadilla",
+   "fr": "Utiel — la Celadilla"
   },
-  "lat": 39.56808,
-  "lon": -1.20516,
-  "precision": "estimated",
+  "lat": 39.5731,
+  "lon": -1.21211,
+  "precision": "exact",
   "source": {
    "who": "Generalitat Valenciana",
    "url": "https://eclipses.gva.es/vive-el-eclipse/"
   },
   "kind": "official",
   "note": {
-   "ca": "Punt oficial de la Generalitat Valenciana. La font no en publica la coordenada; aquesta ve d’OpenStreetMap.",
-   "es": "Punto oficial de la Generalitat Valenciana. La fuente no publica su coordenada; esta viene de OpenStreetMap.",
-   "en": "Official observing site of the Generalitat Valenciana. The source does not publish its coordinate; this one comes from OpenStreetMap.",
-   "fr": "Site d'observation officiel de la Generalitat Valenciana. La source ne publie pas ses coordonnées ; celui-ci vient d'OpenStreetMap."
+   "ca": "Recinte oficial de la Generalitat Valenciana; la coordenada la publica la font. La font el marca com a provisional.",
+   "es": "Recinto oficial de la Generalitat Valenciana; la coordenada la publica la fuente. La fuente lo marca como provisional.",
+   "en": "Official Generalitat Valenciana site; the coordinate is published by the source, which marks it as provisional.",
+   "fr": "Site officiel de la Generalitat Valenciana ; la coordonnée est publiée par la source, qui l’indique comme provisoire."
   },
   "phase": "central"
  },
@@ -6422,6 +6590,30 @@
    "es": "Recinto oficial de la Generalitat Valenciana en la playa de la Malvarrosa. La coordenada la publica la fuente; la anterior era del centro de la ciudad, a unos 4,6 km.",
    "en": "Official Generalitat Valenciana site on Malvarrosa beach. The coordinate is published by the source; the previous one was the city centre, some 4.6 km away.",
    "fr": "Site officiel de la Generalitat Valenciana sur la plage de la Malvarrosa. La coordonnée est publiée par la source ; la précédente était le centre-ville, à environ 4,6 km."
+  },
+  "phase": "central"
+ },
+ {
+  "id": "val-vilafranca-el-llosar",
+  "name": {
+   "ca": "Vilafranca — el Llosar",
+   "es": "Villafranca del Cid — el Losar",
+   "en": "Vilafranca — el Llosar",
+   "fr": "Vilafranca — el Llosar"
+  },
+  "lat": 40.44309,
+  "lon": -0.26827,
+  "precision": "exact",
+  "source": {
+   "who": "Generalitat Valenciana",
+   "url": "https://eclipses.gva.es/vive-el-eclipse/"
+  },
+  "kind": "official",
+  "note": {
+   "ca": "Recinte oficial de la Generalitat Valenciana, marcat com a provisional. Emplaçament rural. Aforament d’unes 1.000 persones.",
+   "es": "Recinto oficial de la Generalitat Valenciana, marcado como provisional. Emplaçament rural. Aforament d’unes 1.000 persones.",
+   "en": "Official Generalitat Valenciana site, marked provisional. Emplaçament rural. Aforament d’unes 1.000 persones.",
+   "fr": "Site officiel de la Generalitat Valenciana, indiqué comme provisoire. Emplaçament rural. Aforament d’unes 1.000 persones."
   },
   "phase": "central"
  }

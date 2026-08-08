@@ -131,13 +131,14 @@ const SPAIN_BOUNDS = { minLat: 35.5, maxLat: 44.2, minLon: -9.6, maxLon: 4.6 };
  * del Campo. Publicar un emplaçament que l'administració ha retirat és enviar
  * algú a un lloc on no hi haurà ningú esperant-lo.
  *
- * Amb els dos punts nous confirmats a la font (Pimiango i el castell d'Onda),
- * 272.
+ * Amb els cinc punts nous confirmats a la font —Pimiango, i el castell d'Onda,
+ * el Mercat de la Mar de Borriana, el parc de les Useres i el Llosar de
+ * Vilafranca, tots quatre amb coordenada publicada—, 275.
  */
-const EXPECTED_2026_COUNT = 272;
+const EXPECTED_2026_COUNT = 280;
 
 /** D'aquests, els que veuen la totalitat i els que només veuen la parcial. */
-const EXPECTED_2026_CENTRAL = 260;
+const EXPECTED_2026_CENTRAL = 268;
 const EXPECTED_2026_PARTIAL = 12;
 
 /** Vegeu la capçalera: 147,0 km és el màxim mesurat entre els centrals; 160 deixa marge. */
@@ -372,9 +373,9 @@ describe('el motor i el fitxer', () => {
 });
 
 describe('les fonts', () => {
-  it('són vuit administracions per al 2026, sense repetits i ordenades', () => {
+  it('són nou administracions per al 2026, sense repetits i ordenades', () => {
     const sources = observationSourcesFor('2026-08-12');
-    expect(sources).toHaveLength(8);
+    expect(sources).toHaveLength(9);
     expect(new Set(sources.map((s) => s.url)).size).toBe(sources.length);
     const noms = sources.map((s) => s.who);
     expect([...noms].sort((a, b) => a.localeCompare(b, 'ca'))).toEqual(noms);
