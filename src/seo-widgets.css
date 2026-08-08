@@ -1,40 +1,252 @@
+/*
+ * ELS WIDGETS VIUS DE LES PÀGINES EDITORIALS.
+ *
+ * Aquí hi ha el que munta `seo-widgets.tsx` i que per tant NO existeix a l'HTML
+ * publicat: el cercador de la barra, el simulador, la previsió i els dos mapes.
+ * Els blocs estàtics són a `seo-pages.css`, que també explica per què tot porta
+ * el prefix `seo-` (aquestes pàgines carreguen els fulls de l'app sencers i un
+ * nom genèric hi xoca en silenci).
+ *
+ * ── LES ALÇADES DELS MAPES SÓN TOKENS I NO `clamp()` ESCRITS A MÀ ───────────
+ *
+ * Vivien de dues maneres alhora: un `clamp(430px,58vw,650px)` dins del blob del
+ * generador (per a un `.map-embed` que ja no s'emetia enlloc) i, aquí, tres
+ * parelles de `min-height`/`height` amb 390, 520 i 330 px repetits i una
+ * consulta de mitjans només per baixar-ne un. Un mapa que canvia d'alçada té
+ * DOS nombres a mantenir sincronitzats —el mínim del contenidor i el del
+ * llenç—, i quan un dels dos es movia el mapa quedava tallat o amb una franja
+ * negra a sota.
+ *
+ * Ara cada mapa té UNA variable i les tres regles la llegeixen. Els límits del
+ * `clamp` són mides de llenç, no de ritme vertical: com `--h-canvas-sky` a
+ * `tokens/spacing.css`, són constants de composició i per això es declaren aquí
+ * amb el seu motiu al costat. El de punts pròxims ha de deixar veure el punt i
+ * cinc xinxetes; el general, la franja sencera de la península.
+ */
+.seo-page {
+  --seo-map-nearby-h: clamp(320px, 44vw, 430px);
+  --seo-map-overview-h: clamp(360px, 56vw, 560px);
+}
+
+/* ══ El cercador de la barra superior ═══════════════════════════════════════ */
+
+.seo-header-tools {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.seo-header-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: min(250px, 22vw);
+  min-width: 190px;
+  height: var(--tap-min);
+  padding: 0 var(--sp-4);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-pill);
+  background: var(--bg-inset);
+}
+
+.seo-header-search > svg {
+  flex: 0 0 auto;
+  width: var(--sp-6);
+  color: var(--text-muted);
+}
+
+.seo-header-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: var(--text-body-sm);
+}
+
+.seo-header-search input::placeholder {
+  color: var(--text-muted);
+}
+
+.seo-header-search__results {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + var(--sp-3));
+  right: 0;
+  left: 0;
+  padding: var(--sp-2);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  /* `--shadow-lg` no existeix i la regla queia en silenci: el desplegable
+     surava sense cap separació del text de sota. L'ombra del sistema és
+     `--sh-3`, la del full flotant. */
+  box-shadow: var(--sh-3);
+}
+
+.seo-header-search__results button {
+  display: grid;
+  gap: var(--sp-1);
+  width: 100%;
+  padding: var(--sp-3);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.seo-header-search__results button:hover {
+  background: var(--surface-card-hover);
+}
+
+.seo-header-search__results small,
+.seo-header-search__status {
+  color: var(--text-muted);
+  font: var(--text-body-sm);
+}
+
+.seo-header-search__status {
+  display: block;
+  padding: var(--sp-3);
+}
+
+.seo-header-locate,
+.seo-header-tools__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--tap-min);
+  padding: 0 var(--sp-5);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-pill);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: var(--text-label);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.seo-header-tools__toggle {
+  display: none;
+  width: var(--tap-min);
+  padding: 0;
+}
+
+.seo-header-locate svg,
+.seo-header-tools__toggle svg {
+  flex: 0 0 auto;
+  width: var(--sp-6);
+  height: var(--sp-6);
+}
+
+/* El bloc bessó que hi ha al peu no és una barra: la caixa de cerca hi pot ser
+   sencera i no cal amagar-hi cap rètol. */
+.seo-foot__tools .seo-header-search {
+  width: min(260px, 100%);
+}
+
+/*
+ * A LA BARRA, «La meva ubicació» ÉS NOMÉS LA CREU DE MIRA. SEMPRE.
+ *
+ * Amb el rètol sencer, les eines fan 408 px i la fila completa —marca 150 +
+ * navegació 190 + eines 408 + botó 91 + idiomes 166 + separacions— en fa 1.085
+ * dins d'una columna de 1.040: a 1440 px la barra es partia en dues files igual
+ * que al mòbil. Estava amagat per sota de 1.100 px i el problema era que la
+ * suma no cabia a CAP amplada.
+ *
+ * El nom no es perd: el botó porta `aria-label` i `title`, i el bloc bessó del
+ * peu —que té tot l'espai del món— el manté escrit amb la frase que l'explica.
+ */
+.seo-head__tools .seo-header-locate span:last-child {
+  display: none;
+}
+
+.seo-head__tools .seo-header-locate {
+  width: var(--tap-min);
+  padding: 0;
+}
+
+/*
+ * A partir d'aquí la barra va a dues files (vegeu el punt de ruptura de 1.080 a
+ * `seo-pages.css`) i la caixa de cerca ja no cap al costat de la marca i del
+ * botó de l'app. Es replega en un botó que la desplega per sota.
+ *
+ * LES DUES REGLES VAN DINS DE `.seo-head__tools` A POSTA: el mateix widget es
+ * munta una segona vegada al PEU, i allà no hi ha cap barra ni cap manca
+ * d'espai. Sense l'ascendent, el peu ensenyava el botó de la lupa I la caixa de
+ * cerca alhora, que és una lupa que no fa res al costat d'un camp obert.
+ */
+@media (max-width: 1080px) {
+  .seo-head__tools .seo-header-tools__toggle {
+    display: inline-flex;
+  }
+
+  .seo-head__tools .seo-header-search {
+    display: none;
+    position: absolute;
+    top: calc(100% + var(--sp-3));
+    right: 0;
+    width: min(340px, calc(100vw - var(--sp-8)));
+  }
+
+  .seo-head__tools .seo-header-tools.is-open .seo-header-search {
+    display: flex;
+  }
+}
+
+@media (max-width: 520px) {
+  .seo-foot__tools .seo-header-tools {
+    justify-content: flex-start;
+  }
+
+  /*
+   * `.simclock__read` porta `flex: 0 0 auto` perquè dins de l'app viu en una
+   * fila que sempre té espai. Aquí no: a 375 px l'hora i la frase «4 d 7 h per
+   * davant de l'hora real» sortien quatre píxels per la dreta. Deixar-la
+   * encongir n'activa el `flex-wrap` intern, que ja hi és.
+   */
+  .seo-live-section--simulation .simclock__read {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+}
+
+/* ══ La graella dels tres widgets locals ════════════════════════════════════ */
+
 .seo-live-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.85fr) minmax(300px, .85fr);
+  grid-template-columns: minmax(0, 1.85fr) minmax(300px, 0.85fr);
   align-items: start;
   gap: var(--sp-7);
 }
 
-.seo-header-tools { position: relative; display: flex; align-items: center; gap: var(--sp-2); margin-left: auto; }
-.seo-nav__links a[rel="external"] { display: none; }
-.seo-langs > span:last-child { white-space: nowrap; }
-.seo-header-search { position: relative; width: min(250px, 20vw); min-width: 190px; height: 42px; display: flex; align-items: center; gap: var(--sp-2); padding: 0 var(--sp-3); border: 1px solid var(--border-hairline); border-radius: var(--r-pill); background: var(--bg-inset); }
-.seo-header-search > svg { flex: 0 0 auto; width: 18px; color: var(--text-muted); }
-.seo-header-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text-primary); font: var(--text-body-sm); }
-.seo-header-search input::placeholder { color: var(--text-muted); }
-.seo-header-search__results { position: absolute; z-index: 50; top: calc(100% + 8px); left: 0; right: 0; padding: var(--sp-2); border: 1px solid var(--border-hairline); border-radius: var(--r-md); background: var(--surface-card); box-shadow: var(--shadow-lg); }
-.seo-header-search__results button { width: 100%; display: grid; gap: 2px; padding: var(--sp-3); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-primary); text-align: left; cursor: pointer; }
-.seo-header-search__results button:hover { background: var(--surface-card-hover); }
-.seo-header-search__results small,.seo-header-search__status { color: var(--text-muted); font: var(--text-body-sm); }
-.seo-header-search__status { display: block; padding: var(--sp-3); }
-.seo-header-locate,.seo-header-tools__toggle { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2); padding: 0 var(--sp-4); border: 1px solid var(--border-hairline); border-radius: var(--r-pill); background: var(--surface-card); color: var(--text-primary); font: var(--text-label); cursor: pointer; white-space: nowrap; }
-.seo-header-tools__toggle { display: none; width: 42px; padding: 0; font-size: 21px; }
-.seo-header-locate svg,.seo-header-tools__toggle svg { width: 18px; height: 18px; }
-.seo-sitefooter__tools { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: var(--sp-6); padding: var(--sp-5); border: 1px solid var(--border-hairline); border-radius: var(--r-lg); background: var(--surface-card); }
-.seo-sitefooter__tools strong { margin: 0; color: var(--text-primary); font: var(--text-title-3); letter-spacing: normal; text-transform: none; }
-.seo-sitefooter__tools p { margin: var(--sp-1) 0 0; color: var(--text-muted); font: var(--text-body-sm); }
-.seo-sitefooter__tools .seo-header-search { width: 260px; }
+.seo-live-layout .seo-live-section {
+  min-width: 0;
+}
 
-.seo-live-layout .seo-live-section { min-width: 0; }
+.seo-live-section > h2 {
+  margin-bottom: var(--sp-5);
+  font: var(--text-title-2);
+}
 
 .seo-live-section--simulation,
-.seo-live-minimap { width: 100%; }
+.seo-live-minimap {
+  width: 100%;
+}
 
 .seo-live-section--weather {
+  position: sticky;
+  top: var(--seo-sticky-top);
   grid-column: 2;
   grid-row: 1 / span 2;
-  position: sticky;
-  top: 96px;
 }
 
 .seo-live-section--map {
@@ -42,89 +254,111 @@
   grid-row: 2;
 }
 
+/*
+ * L'ÚNIC `!important` D'AQUESTES DUES FULLES, I CONTRA QUÈ LLUITA.
+ *
+ * `Card` posa l'encoixinat com a estil EN LÍNIA (`style={{ padding }}`, per
+ * defecte `var(--sp-6)`), i un estil en línia guanya qualsevol regla d'un full
+ * sense `!important`. Aquesta targeta conté un mapa que ha d'anar de vora a
+ * vora: amb 20 px de coixí, el llenç quedava emmarcat i la llegenda no tocava
+ * la línia que la separa. No es pot resoldre amb especificitat.
+ */
+.seo-live-minimap {
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+@media (max-width: 980px) {
+  .seo-live-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .seo-live-section--weather {
+    position: static;
+    grid-column: auto;
+    grid-row: 2;
+  }
+
+  .seo-live-section--map {
+    grid-column: auto;
+    grid-row: 3;
+  }
+}
+
+/* ══ Els dos mapes ══════════════════════════════════════════════════════════ */
+
 .seo-pointsmap__canvas,
 .seo-pointsmap__canvas .map,
 .seo-pointsmap__canvas .map__frame {
-  min-height: 390px;
+  height: var(--seo-map-nearby-h);
 }
 
-.seo-pointsmap__canvas .map__frame { height: 390px; }
-.seo-pointsmap__fallback { padding: var(--sp-6); }
+.seo-pointsmap__fallback {
+  padding: var(--sp-6);
+}
 
 .seo-overviewmap__canvas,
 .seo-overviewmap__canvas .map,
 .seo-overviewmap__canvas .map__frame {
-  min-height: 520px;
+  height: var(--seo-map-overview-h);
 }
 
-.seo-overviewmap__canvas .map__frame { height: 520px; }
-.seo-overviewmap__canvas:has(.seo-overviewmap__fallback) { min-height: 0; }
-.seo-overviewmap__fallback .home__minimap { border-radius: 0; }
+/* Quan MapLibre no arrenca, el recanvi és el minimapa estàtic i té la seva
+   pròpia proporció: forçar-li l'alçada del mapa el deformava. */
+.seo-overviewmap__canvas:has(.seo-overviewmap__fallback) {
+  height: auto;
+}
 
+.seo-overviewmap__fallback .home__minimap {
+  border-radius: 0;
+}
+
+.seo-pointsmap__legend,
 .seo-overviewmap__legend {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--sp-2);
   margin: 0;
-  padding: var(--sp-4);
-  border-top: 1px solid var(--border-hairline);
+  padding: var(--sp-5);
+  border-top: var(--bw-hair) solid var(--border-hairline);
   list-style: none;
 }
 
+.seo-overviewmap__legend {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.seo-pointsmap__legend {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.seo-pointsmap__legend a,
 .seo-overviewmap__legend a {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  min-height: 40px;
+  gap: var(--sp-3);
+  min-height: var(--tap-min);
+  min-width: 0;
   border: 0;
   color: var(--text-body);
   font: var(--text-body-sm);
 }
 
+.seo-pointsmap__legend span,
 .seo-overviewmap__legend span {
-  flex: 0 0 24px;
-  height: 24px;
+  flex: 0 0 var(--sp-7);
   display: grid;
   place-items: center;
+  height: var(--sp-7);
   border-radius: 50%;
   background: var(--status-info);
   color: var(--ink-950);
-  font: var(--text-data-sm);
+  font: var(--text-overline);
 }
 
 @media (max-width: 760px) {
-  .official-identity { grid-template-columns: minmax(0, 1fr) !important; }
-  .official-identity p { grid-column: 1 !important; }
-  .editorial-guide__toc { display: block !important; }
-  .seo-overviewmap__legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (max-width: 980px) {
-  .seo-live-layout { grid-template-columns: minmax(0, 1fr); }
-  .seo-live-section--weather { grid-column: auto; grid-row: 2; position: static; }
-  .seo-live-section--map { grid-column: auto; grid-row: 3; }
-}
-
-@media (max-width: 1100px) {
-  .seo-header-locate span:last-child { display: none; }
-  .seo-header-locate { width: 42px; padding: 0; }
-}
-
-@media (max-width: 760px) {
-  .seo-header-tools { margin-left: auto; }
-  .seo-header-tools__toggle { display: inline-flex; }
-  .seo-header-search { display: none; position: absolute; top: calc(100% + 10px); right: 0; width: min(340px, calc(100vw - 28px)); }
-  .seo-header-tools.is-open .seo-header-search { display: flex; }
-  .seo-sitefooter__tools { grid-template-columns: minmax(0,1fr); }
-  .seo-sitefooter__tools .seo-header-tools { margin: 0; }
-}
-
-@media (max-width: 520px) {
-  .seo-pointsmap__canvas,
-  .seo-pointsmap__canvas .map,
-  .seo-pointsmap__canvas .map__frame {
-    min-height: 330px;
+  .seo-overviewmap__legend,
+  .seo-pointsmap__legend {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--sp-4);
   }
-
-  .seo-pointsmap__canvas .map__frame { height: 330px; }
 }

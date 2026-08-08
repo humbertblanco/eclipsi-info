@@ -1,0 +1,1836 @@
+/*
+ * ELS BLOCS DE LES PÀGINES EDITORIALS, EN UN FULL DE DEBÒ.
+ *
+ * ── D'ON VE AQUEST FITXER ───────────────────────────────────────────────────
+ *
+ * Tot aquest CSS vivia dins d'una plantilla de cadena de `build-seo-pages.ts`,
+ * minificat en vint-i-cinc línies de mil caràcters, amb una seixantena de
+ * `!important` i desenes d'hexadecimals escrits a mà (`#ffa51f`, `#05060b`,
+ * `rgba(255,165,31,.20)`). No es podia llegir, no es podia revisar en un diff i
+ * no es podia corregir sense afegir-hi una capa nova per sobre — que és
+ * exactament el que havia anat passant.
+ *
+ * Aquell blob (`DATA_VISUAL_CSS`) i el `<style>` incrustat a cada pàgina JA NO
+ * EXISTEIXEN: tots dos són ara la cadena buida, amb el motiu escrit al costat.
+ * S'emetien DESPRÉS dels fulls enllaçats, o sigui que guanyaven sempre;
+ * mentre hi eren, qualsevol regla d'aquest fitxer que toqués una classe que
+ * ells també toquessin perdia en silenci. Una tercera part d'aquell CSS
+ * estilava marcatge que no s'emetia enlloc (45 classes: `.hero`, `.facts`,
+ * `.timeline`, `.locator`, `.map-*`, `.visual-grid`, `.seo-local-phase`…).
+ *
+ * El full l'importa `seo-widgets.tsx`, o sigui que Vite el compila, li posa un
+ * hash al nom i el minifica ell; i el generador el troba sol perquè ja busca el
+ * `seoWidgets-*.css`. L'ordre de càrrega és `styles/index.css` → `index.css` →
+ * `guide.css` → `seo-widgets.css` → aquest: som els últims, i per això aquí
+ * dins no cal ni un sol `!important` per guanyar una regla de l'app.
+ *
+ * ── EL PREFIX `seo-` NO ÉS ESTIL: ÉS UNA COMPORTA ───────────────────────────
+ *
+ * Aquestes pàgines enllacen els fulls de l'APP SENCERS —tipografies, tokens,
+ * `index.css`, `ui.css`, `guide.css`— perquè el sistema de disseny ha de ser
+ * el mateix. La conseqüència és que qualsevol classe amb un nom genèric que
+ * inventem aquí pot xocar amb un component viu, en silenci i només a les
+ * pàgines on aquell component es munta.
+ *
+ * Ja va passar, i val la pena deixar-ho escrit amb detall perquè no torni a
+ * passar: el veredicte d'aquestes pàgines es deia `.verdict`, i `.verdict` ja
+ * existia a `src/index.css:111` — és la targeta de resultat de
+ * `features/sim/SimulationView.tsx`, el mateix simulador que aquestes pàgines
+ * munten com a widget viu més avall. Les dues regles convivien al mateix
+ * document i el nostre encapçalament n'heretava `background: var(--surface-card)`,
+ * `border` i `border-radius`: semblava una targeta perquè ho era, per accident,
+ * i com que la nostra regla hi posava `padding: … 0 …`, el text tocava la vora.
+ * A sobre, l'espai de noms sencer xocava (`.verdict__kind`, `__dur`, `__lost`,
+ * `__obsc` de l'app contra `__lead`, `__figure`, `__dial`, `__eyebrow` nostres),
+ * i `.verdict h1 { font: … }` podia caure damunt de la targeta del simulador.
+ *
+ * La regla, doncs: TOT el que aquestes pàgines inventin porta `seo-`. Les
+ * classes que no el porten (`.links`, `.cta`, `.spot-list`, `.guide-*`,
+ * `.city-group`…) venen de funcions del generador que no es poden reanomenar
+ * ara mateix, i per això van totes escrites sota `.seo-main` o `.seo-page`:
+ * l'ascendent fa de comporta mentre el nom no la fa.
+ *
+ * ── LA DECISIÓ DE DISSENY QUE MANA SOBRE LA RESTA ───────────────────────────
+ *
+ * La pàgina d'una ciutat o d'un punt no és un article sobre un eclipsi: és un
+ * VEREDICTE sobre un lloc. Per tant s'obre com un veredicte, i el primer que es
+ * veu és la xifra que decideix —els segons de fase central, o el tant per cent
+ * de disc tapat— composta amb la tipografia de dades i a la mida més gran del
+ * sistema.
+ *
+ * ── UNA SOLA COLUMNA, I PER QUÈ ─────────────────────────────────────────────
+ *
+ * Hi havia tres amplades barrejades: 1.040 px per a les targetes, 980 px per
+ * als blocs de guia i 800 px per als paràgrafs i per a `.official-identity`,
+ * totes tres centrades. El resultat és el que l'usuari va descriure com
+ * «sembla trencat»: la vora esquerra del text no coincidia amb la vora
+ * esquerra de la targeta de sobre ni amb la de sota, i un `<aside>` de 800
+ * surava enmig de blocs de 1.040.
+ *
+ * Ara hi ha UNA columna (`--seo-col`) i tot hi comença a la mateixa vertical.
+ * El text llarg no s'eixampla fins als 1.040 —seria illegible— però es limita
+ * per MESURA (`--seo-measure`, en `ch`) i alineat a l'esquerra, no centrat: el
+ * que fa que una pàgina es llegeixi ordenada és que les vores esquerres
+ * coincideixin, no que cada bloc estigui centrat respecte de si mateix.
+ *
+ * ── L'AMBRE ─────────────────────────────────────────────────────────────────
+ *
+ * N'hi ha UN per pantalla i és el de la xifra del veredicte. Per això el botó
+ * «Obre l'app» de la barra superior és de contorn i no massís: abans competien
+ * tots dos. El vermell segueix volent dir només seguretat ocular.
+ *
+ * La distinció que ho fa consistent: l'ambre MASSÍS és l'acció (`.cta`), i
+ * només n'hi pot haver una a la vista; l'ambre de la xifra és tipografia de
+ * dades, no un control. Els ordinals decoratius (`01`, `02`, `03` dels passos i
+ * de la ruta de guies) i els rètols de categoria eren ambre i han deixat de
+ * ser-ho: numerar no és decidir. El que SÍ que segueix sent ambre sense
+ * competir és `--status-partial`, perquè aquell ambre és una dada de la paleta
+ * de visibilitat —el caire de la franja, la fase parcial— i no jerarquia.
+ */
+
+/* ══ Constants de composició d'aquestes pàgines ═════════════════════════════
+ *
+ * Es declaren sobre `.seo-page` i no sobre `:root` perquè el full també es
+ * carrega quan els widgets vius munten components de l'app: si algun dia una
+ * pantalla de l'app importés aquest fitxer, aquests noms no li han de tocar
+ * res.
+ *
+ * `--seo-head-h` es composa de tokens a posta: és una fila d'objectiu tàctil
+ * (`--tap-min`, 44 px) amb coixins simètrics (`--sp-8`, 32 px). Escriure-hi
+ * «76px» hauria estat el mateix nombre sense la raó.
+ */
+.seo-page {
+  --seo-col: 1040px;
+  --seo-measure: 68ch;
+  --seo-head-h: calc(var(--tap-min) + var(--sp-8));
+  --seo-block: var(--sp-9);
+  --seo-block-lg: var(--sp-10);
+  --seo-sticky-top: calc(var(--seo-head-h) + var(--sp-6));
+}
+
+/*
+ * AQUÍ HI HAVIA `html,body{overflow-x:hidden}` I S'HA TRET A POSTA.
+ *
+ * Amagava el desbordament en comptes de corregir-lo, i sobretot el feia
+ * invisible a qui el buscava: amb `overflow-x:hidden`, `document.body.scrollWidth`
+ * es queda clavat a l'amplada de la finestra i la comprovació que hauria
+ * d'avisar-nos dona sempre bona. El commutador d'idioma es tallava a 375 px
+ * exactament per això: ningú no podia mesurar-ho.
+ */
+
+/*
+ * `--seo-col` és l'única amplada de la pàgina. El marge lateral surt de
+ * l'escala: 16 px per banda al mòbil (`--sp-8` repartit) i 32 a partir de
+ * 760 px (`--sp-11`).
+ */
+.seo-wrap {
+  width: min(var(--seo-col), 100% - var(--sp-8));
+  margin-inline: auto;
+}
+
+@media (min-width: 760px) {
+  .seo-wrap {
+    width: min(var(--seo-col), 100% - var(--sp-11));
+  }
+}
+
+/* ══ La barra superior ══════════════════════════════════════════════════════ */
+
+/*
+ * LA BARRA ÉS OPACA, I NO ÉS UNA QÜESTIÓ DE GUST.
+ *
+ * Portava `--surface-glass` (62 % d'opacitat) amb `--blur-glass`. El resultat
+ * mesurat amb el Chrome, a la fitxa de Sevilla amb 400 px de desplaçament: la
+ * línia de data —«12 D'AGOST DEL 2026 · CÀLCUL TOPOCÈNTRIC LOCAL»— es llegia
+ * PER DAMUNT del logotip i de la navegació. `getComputedStyle` donava
+ * `backdrop-filter: none` tot i que el token existeix i és vàlid, o sigui que
+ * el desenfocament no s'aplicava i quedava només el 38 % de transparència.
+ *
+ * El vidre funciona sobre el mapa, que és una imatge: sobre TEXT que hi passa
+ * per sota, no. Dues línies de text superposades no són un efecte, són un
+ * defecte, i n'hi ha prou que el desenfocament falli en un navegador —o en un
+ * dispositiu que l'estalvia per bateria— perquè torni a passar.
+ *
+ * Aquestes pàgines són text de dalt a baix. Una barra opaca no perd res i no
+ * pot fallar de cap de les dues maneres.
+ */
+.seo-head {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
+  background: var(--bg-page);
+}
+
+/*
+ * L'ORDRE DEL DOM ÉS EL DE LECTURA; LA COMPOSICIÓ NOMÉS EL RECOL·LOCA.
+ *
+ * Marca · navegació · eines · botó · idioma. Amb prou amplada cap tot en una
+ * fila; quan no, es parteix en dues sense que cap element canviï de lloc a
+ * l'HTML: a dalt la marca, les eines i el botó de l'app —que és el que aquestes
+ * pàgines volen que passi— i a baix la navegació i l'idioma.
+ *
+ * ES FA AMB FLEX I NO AMB GRAELLA, i el motiu val la pena escriure'l perquè el
+ * primer intent va ser una graella i va fallar d'una manera que no es veu
+ * llegint el CSS. Amb `grid-template-areas: 'brand tools cta' / 'nav nav lang'`,
+ * la tercera columna la dimensionen DOS elements alhora: el botó de l'app (91
+ * px) i el commutador d'idioma (166 px). Guanyava el commutador, la columna del
+ * mig es quedava amb 25 px per a unes eines que en fan 92, i les eines
+ * sobreeixien cap a l'esquerra i es pintaven damunt del logotip — que és per
+ * què semblava que el logotip estigués tallat. Amb flex, cada element conserva
+ * la seva mida i el salt de línia el fa un pseudoelement d'amplada completa.
+ */
+.seo-head__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-6);
+  min-height: var(--seo-head-h);
+}
+
+.seo-head__brand {
+  flex: 0 0 auto;
+  display: block;
+  border: 0;
+}
+
+/*
+ * La marca es mesura per ALÇADA i no per amplada: el sistema fixa una alçada
+ * mínima de 22 px per al logotip, i mesurar-la així deixa que l'escala de
+ * l'espai (`--sp-8` = 32, `--sp-7` = 24) sigui l'única font de nombres.
+ */
+.seo-head__brand img {
+  display: block;
+  width: auto;
+  height: var(--sp-8);
+}
+
+.seo-head__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.seo-head__nav::-webkit-scrollbar {
+  display: none;
+}
+
+.seo-head__nav a {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  border: 0;
+  color: var(--text-secondary);
+  font: var(--text-label);
+  white-space: nowrap;
+}
+
+.seo-head__nav a:hover {
+  color: var(--text-primary);
+}
+
+/* Les eines empenyen la resta cap a la dreta: és l'única cosa que s'estira. */
+.seo-head__tools {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: auto;
+}
+
+/*
+ * EL BOTÓ ÉS DE CONTORN, I ÉS L'ÚNIC LLOC ON AQUESTA DECISIÓ ES POT PRENDRE.
+ *
+ * Amb el botó massís d'ambre a la barra i la xifra del veredicte a sota, la
+ * primera pantalla tenia dos ambres competint i guanyava el que MENYS decideix.
+ * Es va provar de corregir-ho abans des d'aquí i no va funcionar, perquè el
+ * blob incrustat s'emetia després amb `!important`. Ara el blob no hi és i la
+ * regla no en necessita cap.
+ *
+ * I NO DESAPAREIX MAI. Per sota de 760 px era `display:none`, o sigui que al
+ * mòbil no hi havia cap manera d'obrir l'app des d'una pàgina que existeix per
+ * portar-hi gent.
+ */
+.seo-head__cta {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--sp-5);
+  border: var(--bw-hair) solid var(--accent);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-accent);
+  font: var(--text-label);
+  white-space: nowrap;
+}
+
+.seo-head__cta:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-quiet);
+  color: var(--accent-hover);
+}
+
+.seo-head__langs {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.seo-head__langs a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--sp-9);
+  min-height: var(--tap-min);
+  padding: 0 var(--sp-2);
+  border: 0;
+  border-radius: var(--r-pill);
+  color: var(--text-muted);
+  font: var(--text-label);
+}
+
+.seo-head__langs a:hover {
+  color: var(--text-primary);
+}
+
+.seo-head__langs a[aria-current] {
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+
+/*
+ * EL PUNT DE RUPTURA ÉS 1080 px I NO 760, i surt d'una suma, no d'un número
+ * rodó: marca 150 + navegació ~200 + cercador 238 + ubicació 44 + botó 91 +
+ * idiomes 166 + quatre separacions de 20 = 989 px de contingut. Amb la columna
+ * de 1.040 i els marges, la primera amplada on tot això hi cap de debò és a
+ * tocar dels 1.080. Posar-lo a 900, com estava, volia dir que entre 900 i 1.080
+ * la fila s'apilava sola i de mala manera.
+ */
+@media (max-width: 1080px) {
+  /*
+   * Es redeclara sobre `.seo-page` i no sobre `.seo-head` perquè
+   * `--seo-sticky-top` —que és qui separa l'índex de la guia i el plafó del
+   * temps de la barra— es resol a l'element que el fa servir llegint
+   * `--seo-head-h` heretat de l'arrel de la pàgina. Declarat a `.seo-head`, el
+   * canvi no hi arribava i els dos plafons quedaven quatre píxels per sota.
+   */
+  .seo-page {
+    --seo-head-h: calc(2 * var(--tap-min) + var(--sp-7));
+  }
+
+  .seo-head__row {
+    padding-block: var(--sp-3);
+  }
+
+  /* El salt de línia: un element buit d'amplada completa entre el botó i la
+     navegació. Cap element no canvia d'ordre al DOM ni de mida. */
+  .seo-head__row::after {
+    content: '';
+    flex: 1 0 100%;
+    order: 4;
+    height: 0;
+  }
+
+  .seo-head__brand { order: 1; }
+  .seo-head__tools { order: 2; }
+  .seo-head__cta { order: 3; }
+  .seo-head__nav { order: 5; }
+
+  .seo-head__langs {
+    order: 6;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  /*
+   * A DUES FILES I FIXA, UNA CAPÇALERA ES MENJA 112 px D'UNA PANTALLA DE 780:
+   * el catorze per cent, permanentment, en unes pàgines que són text llarg. Per
+   * sota de 760 deixa d'enganxar-se; per sobre, on la pantalla és ampla, es
+   * queda.
+   */
+  .seo-head {
+    position: static;
+  }
+
+  .seo-head__brand img {
+    height: var(--sp-7);
+  }
+
+  .seo-head__row {
+    column-gap: var(--sp-4);
+  }
+
+  .seo-head__nav {
+    gap: var(--sp-5);
+  }
+}
+
+@media (max-width: 480px) {
+  /*
+   * A 375 px la fila de baix ha de contenir la navegació I el commutador
+   * d'idioma sense tallar-se —que és el defecte que es va reportar— i no hi
+   * caben tres enllaços més quatre idiomes. Cau l'enllaç a la fitxa de
+   * l'eclipsi, i és el que menys costa: el camí de molles que hi ha just a
+   * sota ja hi porta, amb el nom sencer.
+   */
+  .seo-head__nav .seo-head__eclipse {
+    display: none;
+  }
+
+  /*
+   * TRES FILES, I ÉS UNA DECISIÓ, NO UNA RENDICIÓ.
+   *
+   * Mesurat a 375 px (columna útil de 343): marca 128 + eines 92 + botó 93 en
+   * català, 100 en castellà, 102 en francès i 113 en anglès. Amb les
+   * separacions, la fila NO hi cap en tres dels quatre idiomes, i el que
+   * passava és que el botó queia sol a una segona línia alineat a l'esquerra:
+   * semblava un error.
+   *
+   * Cabria retallant el commutador d'idioma a 28 px per enllaç, però això és
+   * fer objectius tàctils de 28 px de costat separats per 2 px, que és
+   * demanar que la gent piqui l'idioma equivocat.
+   *
+   * Així que es reparteix a consciència: a dalt la marca i les eines; al mig
+   * la navegació I EL BOTÓ DE L'APP, que són el que aquestes pàgines volen que
+   * es toqui; a baix, sol i a la dreta, el commutador d'idioma, que és el
+   * control que menys s'usa. Funciona igual a 320 px.
+   */
+  .seo-head__row::after {
+    order: 3;
+  }
+
+  .seo-head__row::before {
+    content: '';
+    flex: 1 0 100%;
+    order: 7;
+    height: 0;
+  }
+
+  .seo-head__cta {
+    order: 6;
+    margin-left: auto;
+    padding: 0 var(--sp-4);
+  }
+
+  .seo-head__langs {
+    order: 8;
+  }
+}
+
+/* ══ El camí de molles ══════════════════════════════════════════════════════ */
+
+.seo-crumbs {
+  padding-top: var(--sp-5);
+}
+
+.seo-crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: var(--text-body-sm);
+}
+
+.seo-crumbs li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  min-width: 0;
+}
+
+.seo-crumbs li + li::before {
+  content: '/';
+  color: var(--text-muted);
+}
+
+.seo-crumbs a,
+.seo-crumbs span {
+  overflow: hidden;
+  border: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.seo-crumbs a {
+  color: var(--text-secondary);
+}
+
+.seo-crumbs a:hover {
+  color: var(--text-primary);
+}
+
+.seo-crumbs [aria-current] {
+  color: var(--text-muted);
+}
+
+@media (max-width: 760px) {
+  /*
+   * «Eclipsi total del 12 d'agost de 2026» ocupa dues línies a 375 px i el camí
+   * passa a ser el bloc més gran de la pantalla. Retallat per mesura es queda
+   * en una línia i segueix sent clicable, que és tot el que se li demana.
+   */
+  .seo-crumbs a {
+    max-width: 20ch;
+  }
+}
+
+/* ══ El veredicte, que és el primer que es llegeix ══════════════════════════ */
+
+.seo-verdict {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--sp-6) var(--sp-9);
+  padding: var(--sp-8) 0 var(--seo-block);
+}
+
+.seo-verdict__lead {
+  min-width: 0;
+}
+
+.seo-verdict__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+  color: var(--status-info);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+}
+
+.seo-verdict__eyebrow::before {
+  content: '';
+  /* 6 px, i escrits amb la suma que ja fa servir `.ui-badge__dot` a `ui.css`:
+     l'escala de l'espai no té cap pas entre 4 i 8, i és el mateix punt. */
+  width: calc(var(--sp-2) + var(--sp-1));
+  height: calc(var(--sp-2) + var(--sp-1));
+  border-radius: 50%;
+  background: currentcolor;
+}
+
+.seo-verdict h1 {
+  margin: 0;
+  overflow-wrap: break-word;
+  color: var(--text-primary);
+  font: var(--text-display-2);
+  letter-spacing: var(--ls-display);
+  text-wrap: balance;
+}
+
+/*
+ * La frase que diu què vol dir la xifra. No és la meta descripció: aquella
+ * s'escriu per a la SERP i abans ocupava aquest lloc, cosa que feia que el
+ * lector llegís un resum del que estava a punt de llegir.
+ */
+.seo-verdict__consequence {
+  max-width: 58ch;
+  margin: var(--sp-5) 0 0;
+  color: var(--text-secondary);
+  font: var(--text-body-lg);
+}
+
+.seo-verdict__answer {
+  display: grid;
+  justify-items: end;
+  gap: var(--sp-4);
+}
+
+.seo-verdict__figure {
+  display: grid;
+  justify-items: end;
+  gap: var(--sp-2);
+  margin: 0;
+  text-align: right;
+}
+
+/*
+ * `nowrap` I `text-wrap` NO SÓN COSMÈTICA AQUÍ.
+ *
+ * «59,2 s» partit en dues línies —«59,2» a dalt i «s» a sota— deixa de ser una
+ * xifra i passa a ser dues coses. La unitat és part del número: o hi caben
+ * totes dues a la mateixa línia o la mida ha de baixar.
+ */
+.seo-verdict__figure strong {
+  color: var(--accent);
+  font: var(--fw-medium) var(--fs-data-xl) / var(--lh-tight) var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--ls-data);
+  white-space: nowrap;
+}
+
+/*
+ * Al caire i sense eclipsi la xifra és una PARAULA («Al caire», «On the edge»),
+ * no un número, i una paraula a 76 px de monoespaiada ocupa mitja pantalla.
+ * Aleshores el generador hi posa `--word` i baixa a mida de titular, amb la
+ * tipografia de text: una paraula composta amb la de dades sembla una avaria.
+ */
+.seo-verdict__figure--word strong {
+  max-width: 12ch;
+  font: var(--text-title-1);
+  letter-spacing: var(--ls-title);
+  white-space: normal;
+}
+
+.seo-verdict__figure span {
+  color: var(--text-muted);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+}
+
+/*
+ * El dibuix de la fase va AL COSTAT de la xifra i a mida petita: aquí és prova,
+ * no decoració. Amb `obscuration` i `totality` reals, un 99,8 % parcial i una
+ * totalitat es distingeixen a cop d'ull, que és el que el disc negre d'abans no
+ * podia fer perquè era sempre el mateix.
+ */
+.seo-verdict__dial {
+  display: grid;
+  justify-items: end;
+}
+
+@media (max-width: 760px) {
+  .seo-verdict {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-5);
+    padding: var(--sp-6) 0 var(--sp-8);
+  }
+
+  /*
+   * A 375 px, `--fs-display-2` són 36 px i «del 2026 a Barcelona» no hi cap:
+   * el titular sortia per la dreta. Baixa un pas de l'escala (cap valor nou) i
+   * `overflow-wrap` fa de xarxa per als noms de punt oficial més llargs.
+   */
+  .seo-verdict h1 {
+    font: var(--text-title-1);
+    letter-spacing: var(--ls-title);
+  }
+
+  .seo-verdict__consequence {
+    font: var(--text-body-md);
+  }
+
+  /* Al mòbil la xifra va PRIMER: és la resposta, i la resposta no fa scroll. */
+  .seo-verdict__answer,
+  .seo-verdict__figure {
+    order: -1;
+    justify-items: start;
+    text-align: left;
+  }
+
+  .seo-verdict__dial {
+    display: none;
+  }
+}
+
+/* ══ La fila de metadades ═══════════════════════════════════════════════════ */
+
+/*
+ * `max-width: none` NO ÉS REDUNDANT: aquesta fila és un `<p>` i `.seo-main > p`
+ * el limitaria a 68 caràcters, que és la mesura del text corregut. Una fila de
+ * metadades no és text corregut i es partia en dues línies per aquest motiu.
+ */
+.seo-dateline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-8);
+  max-width: none;
+  margin: 0;
+  padding-bottom: var(--sp-4);
+  border-bottom: var(--bw-hair) solid var(--border-subtle);
+  color: var(--text-muted);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+}
+
+/* ══ El cos ═════════════════════════════════════════════════════════════════
+ *
+ * Aquí sota hi ha classes SENSE prefix (`.links`, `.cta`, `.spot-list`,
+ * `.city-group`, `.guide-*`…): venen de funcions del generador que aquest
+ * encàrrec no podia reanomenar. Van totes descendents de `.seo-main` a posta —
+ * vegeu la nota de la comporta a la capçalera.
+ */
+
+/*
+ * SENSE `padding-bottom`: la separació amb el peu la posa el peu i prou. Amb
+ * les dues coses hi havia 160 px de negre entre l'últim bloc i la línia del
+ * peu, que a 1440 és una pantalla mitja buida.
+ */
+.seo-main {
+  padding-bottom: 0;
+}
+
+.seo-main p,
+.seo-main li {
+  line-height: var(--lh-loose);
+}
+
+/*
+ * `:not([class])` NO ÉS UN FLORITURA. La mesura és per al text CORREGUT, i
+ * dins de `<main>` hi ha `<p>` que no ho són: la fila de metadades
+ * (`.seo-dateline`) i les notes de directori. `.seo-main > p` és més específic
+ * que `.seo-dateline`, o sigui que els limitava a 68 caràcters i els partia en
+ * dues línies amb la seva línia de separació a mig camí. Un paràgraf sense
+ * classe és, per construcció, text corregut; qualsevol altre porta la seva.
+ */
+.seo-main > p:not([class]) {
+  max-width: var(--seo-measure);
+}
+
+/*
+ * ELS ENCAPÇALAMENTS NO ES SEPAREN AMB `h2 { margin-top }` GLOBAL.
+ *
+ * El que hi havia era un selector d'element (`main>h2,h2{margin-top:48px}`)
+ * que arribava als títols de dins de les targetes i dels widgets vius, i que
+ * per compensar-ho tenia una segona regla (`section h2{margin-top:0}`) — també
+ * d'element. Dues regles genèriques per fer una feina que és de dues línies.
+ */
+.seo-main h2 {
+  margin: 0 0 var(--sp-5);
+  color: var(--text-primary);
+}
+
+.seo-main > h2 {
+  margin-top: var(--seo-block-lg);
+}
+
+/* ── L'acció ambre, i és una per pantalla ─────────────────────────────────── */
+
+.seo-main .cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min);
+  margin: var(--seo-block) 0 0;
+  padding: 0 var(--sp-6);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: var(--text-label);
+}
+
+.seo-main .cta:hover {
+  background: var(--accent-hover);
+  box-shadow: var(--glow-corona);
+}
+
+.tool-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4);
+  margin: var(--seo-block) 0;
+}
+
+.tool-actions .cta {
+  margin: 0;
+}
+
+.tool-actions > a:not(.cta) {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--sp-5);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-pill);
+  background: var(--surface-card);
+  color: var(--text-body);
+  font: var(--text-label);
+}
+
+/*
+ * «Mira el cel» apunta la CÀMERA al cel. En un escriptori no vol dir res, i per
+ * això només surt quan hi ha una pantalla que es pot aixecar.
+ */
+.tool-actions__sky {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .tool-actions__sky {
+    display: inline-flex;
+  }
+}
+
+/* ── La cronologia de contactes ───────────────────────────────────────────── */
+
+/*
+ * `visual-card__head` era el rètol d'una targeta que ja no existeix (la classe
+ * `.visual-card` era codi mort). Aquí es queda com el que de debò fa: el rètol
+ * d'una secció de dades.
+ */
+.seo-main .visual-card__head {
+  margin-top: var(--seo-block);
+  color: var(--text-muted);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+}
+
+.timeline-widget {
+  margin: var(--sp-5) 0 var(--sp-8);
+}
+
+/*
+ * CINC CONTACTES NO CABEN A 375 px I EL DARRER SORTIA PER LA DRETA.
+ *
+ * `TimelineTrack` reparteix els contactes amb `space-between` i una separació
+ * de 8 px. Una fitxa amb totalitat en té cinc (C1, C2, MÀX, C3, C4) i cada hora
+ * mesura 62 px de monoespaiada: 310 + 32 de separacions = 342 dins d'una
+ * columna de 343 en català, i nou píxels de més en castellà. El component és de
+ * `src/ui` i el fa servir tota l'app: la correcció ha de ser d'aquí i només per
+ * a aquestes pàgines.
+ *
+ * Primer es redueix la separació, que és el que sobra; i el contenidor es fa
+ * desplaçable com a xarxa per a les pantalles de 320, on ni així hi cap. El
+ * coixí vertical hi és perquè `overflow-x` també retalla per dalt i per baix, i
+ * els punts de la via sobresurten quatre píxels de la línia.
+ */
+@media (max-width: 520px) {
+  .timeline-widget {
+    overflow-x: auto;
+    padding-block: var(--sp-3);
+  }
+
+  .timeline-widget .ui-timeline__labels {
+    gap: var(--sp-1);
+  }
+
+  /*
+   * `width: max-content` I NO UN `min-width` ESCRIT A MÀ.
+   *
+   * Amb el contenidor desplaçable, els contactes seguien encongint-se i el text
+   * se solapava —en anglès les hores són «08:29:10 PM», onze caràcters, i les
+   * cinc en fan 425 px. Amb amplada de contingut, la VIA creix igual que les
+   * etiquetes i els punts segueixen caient damunt de la seva hora; si es
+   * fixés només un mínim, la via i les etiquetes es desincronitzarien i el
+   * punt del màxim marcaria un contacte que no és.
+   */
+  .timeline-widget .ui-timeline {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .timeline-widget .ui-timeline__contact {
+    flex: 0 0 auto;
+  }
+}
+
+/*
+ * UNA FRASE NO ÉS UNA PÍNDOLA.
+ *
+ * `Badge` porta `white-space: nowrap` —correcte per a «Dins la franja central»—
+ * i aquí hi cap qualsevol dels tres textos que dona `facts()`. Al caire de la
+ * franja el text és una frase sencera («Sur la limite : le modèle ne peut pas
+ * confirmer la phase centrale»): a 375 px la insígnia mesurava 581 px i era
+ * l'única cosa que feia desbordar la pàgina en francès i en anglès.
+ *
+ * Se li deixa partir línia i se li baixa el radi: una píndola de tres línies no
+ * és una píndola, i el sistema reserva la forma de píndola per als controls.
+ */
+.seo-position {
+  max-width: 100%;
+  margin: 0 0 var(--sp-5);
+  border-radius: var(--r-md);
+  text-align: left;
+  white-space: normal;
+}
+
+/*
+ * L'ENCOIXINAT NO ES DECLARA AQUÍ: `Card` el posa en línia (`var(--sp-6)`) i un
+ * estil en línia guanya sempre. Escriure-hi `padding` era una regla que no
+ * feia res i que despistava el següent que la llegís.
+ */
+.seo-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-6);
+}
+
+.eclipse-summary {
+  display: grid;
+  gap: var(--sp-5);
+  margin: var(--seo-block) 0;
+  justify-items: start;
+}
+
+.eclipse-summary .seo-stats {
+  width: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 760px) {
+  .seo-stats,
+  .eclipse-summary .seo-stats {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-5);
+  }
+}
+
+/* ── El punt oficial: qui el publica ──────────────────────────────────────── */
+
+/*
+ * FEIA 800 px ENMIG DE BLOCS DE 1.040 i quedava surant al mig, que és el cas
+ * que l'usuari va assenyalar com a «sembla trencat». Ocupa la columna sencera.
+ */
+.official-identity {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--sp-3) var(--sp-6);
+  margin: 0 0 var(--seo-block);
+  padding: var(--sp-6);
+  border: var(--bw-hair) solid var(--status-info);
+  border-radius: var(--r-lg);
+  background: var(--surface-card);
+}
+
+.official-identity__eyebrow {
+  color: var(--status-info);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+}
+
+.official-identity strong {
+  color: var(--text-primary);
+  font: var(--text-title-3);
+}
+
+.official-identity p {
+  grid-column: 1 / -1;
+  max-width: var(--seo-measure);
+  margin: 0;
+  color: var(--text-secondary);
+  font: var(--text-body-sm);
+}
+
+.official-identity a {
+  border: 0;
+}
+
+@media (max-width: 760px) {
+  .official-identity {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--sp-5);
+  }
+
+  .official-identity p {
+    grid-column: 1;
+  }
+}
+
+/* ── Els widgets vius ─────────────────────────────────────────────────────── */
+
+.seo-live-widgets {
+  display: grid;
+  gap: var(--sp-8);
+  margin: var(--seo-block-lg) 0;
+}
+
+/* ── Llistes d'enllaços ───────────────────────────────────────────────────── */
+
+.seo-main .links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin: 0 0 var(--seo-block);
+  padding: 0;
+  list-style: none;
+}
+
+.seo-main .links li {
+  min-width: 0;
+  padding: var(--sp-4) var(--sp-5);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+}
+
+.seo-main .links a {
+  border: 0;
+  font: var(--text-label);
+}
+
+.spot-list {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0 0 var(--seo-block);
+  padding: 0;
+  list-style: none;
+}
+
+.spot-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--sp-2) var(--sp-6);
+  padding: var(--sp-5);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+}
+
+.spot-list a {
+  border: 0;
+  font: var(--text-label);
+}
+
+.spot-list strong {
+  color: var(--text-primary);
+  font: var(--text-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.spot-list span {
+  grid-column: 1 / -1;
+  color: var(--text-muted);
+  font: var(--text-body-sm);
+}
+
+/*
+ * ── D'UNA CIUTAT A UNA ALTRA ──────────────────────────────────────────────
+ *
+ * Aquest bloc no existia: des d'una fitxa de ciutat no s'arribava a cap altra
+ * ciutat. La distància i el veredicte van a la mateixa fila que el nom perquè
+ * la comparació —que és el que la persona ha vingut a fer— es pugui llegir
+ * sense clicar res.
+ */
+.seo-nextcities {
+  margin: var(--seo-block-lg) 0 0;
+}
+
+.seo-nextcities h2 {
+  margin-bottom: var(--sp-5);
+}
+
+.seo-nextcities ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seo-nextcities a {
+  display: grid;
+  gap: var(--sp-2);
+  height: 100%;
+  padding: var(--sp-5);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+  color: var(--text-body);
+}
+
+.seo-nextcities a:hover {
+  border-color: var(--border-subtle);
+  background: var(--surface-card-hover);
+}
+
+.seo-nextcities strong {
+  color: var(--text-primary);
+  font: var(--text-title-3);
+}
+
+.seo-nextcities span {
+  color: var(--text-secondary);
+  font: var(--text-body-sm);
+}
+
+.seo-nextcities span:last-child {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .seo-nextcities ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .seo-nextcities ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── El mapa general de la fitxa d'eclipsi ────────────────────────────────── */
+
+.overview-map {
+  margin: 0 0 var(--seo-block-lg);
+}
+
+/* ── Els directoris de ciutats i de punts ─────────────────────────────────── */
+
+.city-directory,
+.point-directory {
+  display: grid;
+  gap: var(--sp-3);
+  margin-bottom: var(--seo-block);
+}
+
+.city-group,
+.point-group {
+  overflow: hidden;
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+}
+
+.city-group summary,
+.point-group summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  min-height: calc(var(--tap-min) + var(--sp-4));
+  padding: 0 var(--sp-5);
+  color: var(--text-primary);
+  font: var(--text-label);
+  cursor: pointer;
+}
+
+.city-group summary strong,
+.point-group summary strong {
+  color: var(--text-muted);
+  font: var(--text-body-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.city-group ul,
+.point-group ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border-top: var(--bw-hair) solid var(--border-hairline);
+  list-style: none;
+}
+
+.city-group li,
+.point-group li {
+  min-width: 0;
+  border-bottom: var(--bw-hair) solid var(--border-hairline);
+}
+
+.city-group li:nth-child(odd),
+.point-group li:nth-child(odd) {
+  border-right: var(--bw-hair) solid var(--border-hairline);
+}
+
+.city-group a,
+.point-group li {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-5);
+}
+
+.city-group a,
+.point-group a {
+  border: 0;
+}
+
+.city-group strong,
+.point-group a {
+  color: var(--text-primary);
+  font: var(--text-label);
+}
+
+.city-group span,
+.point-group li span {
+  color: var(--text-muted);
+  font: var(--text-body-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * El punt de color diu de quina banda de la franja parlem, i surt de la paleta
+ * de VISIBILITAT (`--status-*`), no de l'accent: aquí el color és dada.
+ */
+.directory-outcome {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.directory-outcome::before {
+  content: '';
+  width: calc(var(--sp-2) + var(--sp-1));
+  height: calc(var(--sp-2) + var(--sp-1));
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.directory-outcome--central::before {
+  background: var(--status-clear);
+}
+
+.directory-outcome--edge::before {
+  background: var(--status-partial);
+}
+
+@media (max-width: 760px) {
+  .city-group ul,
+  .point-group ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .city-group li:nth-child(odd),
+  .point-group li:nth-child(odd) {
+    border-right: 0;
+  }
+}
+
+/* ── La fitxa d'eclipsi: intro i passos ───────────────────────────────────── */
+
+.event-intro {
+  margin: var(--seo-block-lg) 0;
+}
+
+.event-intro__lead {
+  max-width: var(--seo-measure);
+  color: var(--text-primary);
+  font: var(--text-body-lg);
+}
+
+.event-intro ul {
+  max-width: var(--seo-measure);
+  padding-left: var(--sp-6);
+}
+
+.event-directory-note {
+  max-width: var(--seo-measure);
+  margin: 0 0 var(--sp-6);
+  color: var(--text-secondary);
+}
+
+.event-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.event-steps li {
+  min-width: 0;
+  padding: var(--sp-5);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface-card);
+  counter-increment: step;
+}
+
+/* Numerar no és decidir: l'ordinal no gasta l'ambre de la pàgina. */
+.event-steps li::before {
+  content: '0' counter(step);
+  display: block;
+  margin-bottom: var(--sp-4);
+  color: var(--text-muted);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+}
+
+.event-steps strong {
+  display: block;
+  margin-bottom: var(--sp-2);
+  color: var(--text-primary);
+}
+
+.event-steps span {
+  color: var(--text-secondary);
+  font: var(--text-body-sm);
+}
+
+@media (max-width: 760px) {
+  .event-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ══ Les guies ══════════════════════════════════════════════════════════════ */
+
+.seo-guide-safety {
+  margin: var(--seo-block) 0;
+}
+
+.guide-decision {
+  margin: var(--seo-block) 0;
+  padding: var(--sp-6);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface-card);
+}
+
+.guide-decision__head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  margin-bottom: var(--sp-6);
+}
+
+.guide-decision__head h2 {
+  margin: 0;
+}
+
+.guide-decision__head p {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--text-muted);
+  font: var(--text-body-sm);
+}
+
+.guide-decision__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+.guide-decision__item {
+  min-width: 0;
+  padding: var(--sp-5);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.guide-decision__item span {
+  display: block;
+  margin-bottom: var(--sp-3);
+  color: var(--text-muted);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+}
+
+.guide-decision__item strong {
+  display: block;
+  color: var(--text-primary);
+  font: var(--text-title-3);
+}
+
+.guide-decision__item p {
+  max-width: none;
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font: var(--text-body-sm);
+}
+
+/* El vermell aquí vol dir el que sempre vol dir: seguretat ocular. */
+.guide-decision__item--safe {
+  border-color: color-mix(in oklab, var(--status-clear) 42%, transparent);
+}
+
+.guide-decision__item--safe strong {
+  color: var(--status-clear);
+}
+
+.guide-decision__item--danger {
+  border-color: color-mix(in oklab, var(--status-danger) 42%, transparent);
+}
+
+.guide-decision__item--danger strong {
+  color: var(--status-danger);
+}
+
+.guide-essentials {
+  margin: var(--seo-block-lg) 0;
+}
+
+.guide-essentials > h2 {
+  margin-bottom: var(--sp-5);
+}
+
+.guide-tool-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  margin: var(--seo-block) 0;
+  padding: var(--sp-6);
+  border: var(--bw-hair) solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  background: var(--surface-card-hover);
+}
+
+.guide-tool-link strong {
+  display: block;
+  color: var(--text-primary);
+}
+
+.guide-tool-link p {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-muted);
+  font: var(--text-body-sm);
+}
+
+.guide-tool-link a {
+  flex: 0 0 auto;
+}
+
+/*
+ * L'AVÍS DE FILTRE ÉS L'ÚNIC VERMELL DE LES GUIES que no és la fitxa de
+ * seguretat. No es fa dismissible i no es fa petit.
+ */
+.guide-filter-note {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  margin: var(--seo-block) 0;
+  padding: var(--sp-5);
+  border: var(--bw-hair) solid color-mix(in oklab, var(--status-danger) 35%, transparent);
+  border-radius: var(--r-md);
+  background: var(--status-danger-quiet);
+}
+
+.guide-filter-note strong {
+  color: var(--status-danger);
+}
+
+.guide-filter-note span {
+  flex: 1;
+  color: var(--text-secondary);
+  font: var(--text-body-sm);
+}
+
+.guide-filter-note a {
+  flex: 0 0 auto;
+  border: 0;
+  font: var(--text-label);
+}
+
+.guide-sources {
+  margin: var(--seo-block-lg) 0 0;
+}
+
+.guide-sources p {
+  max-width: var(--seo-measure);
+  color: var(--text-muted);
+  font: var(--text-body-sm);
+}
+
+.guide-sources ul {
+  padding-left: var(--sp-6);
+}
+
+.guide-sources li {
+  margin: var(--sp-2) 0;
+  font: var(--text-body-sm);
+}
+
+/* ── L'article de guia amb el seu índex ───────────────────────────────────── */
+
+.editorial-guide {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--sp-9);
+  margin: var(--seo-block-lg) 0 0;
+}
+
+.editorial-guide__toc {
+  position: sticky;
+  top: var(--seo-sticky-top);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.editorial-guide__toc .guidescreen__toclist {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-2);
+  width: 100%;
+  padding: 0;
+}
+
+.editorial-guide__toc li {
+  min-width: 0;
+}
+
+.editorial-guide__toc a {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  border: 0;
+  text-align: left;
+  white-space: normal;
+}
+
+.editorial-guide__body {
+  min-width: 0;
+}
+
+.editorial-guide__body > h2 {
+  margin-bottom: var(--sp-5);
+}
+
+.editorial-guide__body .guide__section {
+  background: var(--surface-card);
+}
+
+.editorial-guide__faq {
+  margin-top: var(--seo-block-lg);
+}
+
+@media (max-width: 900px) {
+  .editorial-guide {
+    display: block;
+  }
+
+  .editorial-guide__toc {
+    position: static;
+    overflow-x: auto;
+    margin-bottom: var(--sp-6);
+  }
+
+  .editorial-guide__toc .guidescreen__toclist {
+    display: flex;
+    flex-wrap: nowrap;
+  }
+
+  .editorial-guide__toc li {
+    flex: 0 0 auto;
+  }
+
+  .guide-decision__head,
+  .guide-tool-link,
+  .guide-filter-note {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .guide-decision__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── El centre de guies ───────────────────────────────────────────────────── */
+
+.guide-hub__intro {
+  max-width: var(--seo-measure);
+  color: var(--text-secondary);
+  font: var(--text-body-lg);
+}
+
+/*
+ * L'entradeta del centre de guies s'emetia dues vegades (vegeu la
+ * desduplicació de `shell()`); ara que només hi és una, la graella pot ser el
+ * primer element de la secció i no ha d'arrossegar el marge superior que la
+ * separava del paràgraf que ja no hi és.
+ */
+.guide-hub > :first-child {
+  margin-top: 0;
+}
+
+.guide-hub__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin: var(--seo-block-lg) 0;
+}
+
+.guide-hub__card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--sp-6);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface-card);
+}
+
+.guide-hub__card > span {
+  color: var(--text-muted);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+}
+
+.guide-hub__card h2 {
+  margin: var(--sp-4) 0 var(--sp-3);
+  font: var(--text-title-2);
+}
+
+.guide-hub__card p {
+  flex: 1;
+  margin: 0 0 var(--sp-6);
+  color: var(--text-secondary);
+  font: var(--text-body-sm);
+}
+
+.guide-hub__card .btn {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  border-bottom-color: var(--border-hairline);
+}
+
+.guide-hub__route {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: route;
+}
+
+.guide-hub__route li {
+  padding: var(--sp-5) 0 0;
+  border-top: var(--bw-hair) solid var(--border-strong);
+  counter-increment: route;
+}
+
+.guide-hub__route li::before {
+  content: '0' counter(route);
+  display: block;
+  margin-bottom: var(--sp-3);
+  color: var(--text-muted);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+}
+
+.guide-hub__route strong {
+  display: block;
+  color: var(--text-primary);
+}
+
+.guide-hub__route span {
+  display: block;
+  margin-top: var(--sp-2);
+  color: var(--text-muted);
+  font: var(--text-body-sm);
+}
+
+@media (max-width: 900px) {
+  .guide-hub__grid,
+  .guide-hub__route {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ══ El peu ═════════════════════════════════════════════════════════════════
+ *
+ * Què s'ha corregit, perquè no eren detalls:
+ *
+ * · Vivia DINS de `<main>`. Ara és germà seu.
+ * · Els encapçalaments de columna no s'alineaven perquè el bloc d'eines era el
+ *   primer element de la MATEIXA graella i n'estirava la primera fila. Són dues
+ *   graelles diferents: les eines a dalt, les columnes a sota.
+ * · L'encapçalament de la columna de guies era un `<strong>` amb un enllaç a
+ *   dins. Ara és un `<h2>` normal i la porta al centre de guies és el primer
+ *   element de la llista, on s'espera trobar-la.
+ * · L'única frase honesta del conjunt s'emetia amagada amb `display:none`. Ara
+ *   es veu, i a més és `PRIVACY_NOTE` —la mateixa que signa el peu de l'app—
+ *   en comptes d'una bessona escrita al generador.
+ */
+
+.seo-foot {
+  margin-top: var(--sp-12);
+  border-top: var(--bw-hair) solid var(--border-hairline);
+  padding: var(--sp-10) 0 var(--sp-11);
+}
+
+.seo-foot__inner {
+  display: grid;
+  gap: var(--sp-10);
+}
+
+.seo-foot__tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-6);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface-card);
+}
+
+.seo-foot__tools strong {
+  color: var(--text-primary);
+  font: var(--text-title-3);
+}
+
+.seo-foot__tools p {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-muted);
+  font: var(--text-body-sm);
+}
+
+.seo-foot__cols {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--sp-8);
+}
+
+.seo-foot__brand img {
+  display: block;
+  width: auto;
+  height: var(--sp-8);
+}
+
+.seo-foot__brand p {
+  max-width: 34ch;
+  margin: var(--sp-5) 0 0;
+  color: var(--text-muted);
+  font: var(--text-body-sm);
+}
+
+/*
+ * Els rètols de columna són `<h2>` de debò i tenen tots la mateixa alçada de
+ * línia i el mateix marge, que és l'única manera que quedin alineats entre ells
+ * i amb el logotip de l'esquerra.
+ */
+.seo-foot__col h2 {
+  margin: 0 0 var(--sp-5);
+  color: var(--text-muted);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+}
+
+.seo-foot__col ul {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seo-foot__col a {
+  border: 0;
+  color: var(--text-secondary);
+  font: var(--text-body-sm);
+}
+
+.seo-foot__col a:hover {
+  color: var(--text-primary);
+}
+
+/*
+ * La línia de separació travessa la columna sencera i el text que hi ha a sota
+ * es limita per mesura. Amb el límit damunt de l'element que porta la vora, la
+ * ratlla s'aturava a mig peu i semblava un error de composició.
+ */
+.seo-foot__legal {
+  padding-top: var(--sp-6);
+  border-top: var(--bw-hair) solid var(--border-hairline);
+}
+
+.seo-foot__legal p {
+  max-width: var(--seo-measure);
+  margin: 0;
+  color: var(--text-muted);
+  font: var(--text-body-sm);
+}
+
+@media (max-width: 900px) {
+  .seo-foot__cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-8);
+  }
+
+  .seo-foot__brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
+  .seo-foot {
+    padding-top: var(--sp-8);
+  }
+
+  /*
+   * El camp de cerca i «La meva ubicació» fan 190 + 169 px i el bloc del peu
+   * en té 311 d'útils a 375: es partien per la dreta. Aquí el rètol del botó
+   * NO s'amaga —el peu té espai i la frase de sobre l'explica—, així que el que
+   * es parteix és la fila.
+   */
+  .seo-foot__tools .seo-header-tools {
+    flex-wrap: wrap;
+  }
+
+  .seo-foot__tools .seo-header-search {
+    width: 100%;
+  }
+
+  .seo-foot__inner {
+    gap: var(--sp-8);
+  }
+
+  .seo-foot__tools {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--sp-5);
+  }
+
+  .seo-foot__cols {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-7);
+  }
+
+  .seo-foot__brand {
+    grid-column: auto;
+  }
+}
+
+/* ── On anar, que és la meitat que faltava ────────────────────────────────── */
+
+/*
+ * Aquest bloc respon la pregunta que la fitxa deixava oberta: «i si des d'aquí
+ * no s'hi veu prou, què faig?». Va JUST SOTA la taula de dades i abans de tota
+ * la resta —prosa, simulador, mapa— perquè és una decisió, i les decisions no
+ * es posen al final.
+ *
+ * NO ÉS UNA TARGETA. La resposta principal (`.seo-verdict`) és un encapçalament
+ * pla i aquesta n'és la continuació; emmarcar-la la convertiria en un afegit al
+ * costat del contingut, que és exactament el contrari del que és. El que la
+ * separa és una regla fina a dalt i l'aire, com la resta de seccions.
+ */
+/*
+ * Marge a baix i no només a dalt: sense ell, el paràgraf següent arrencava
+ * enganxat al botó i semblava que en formés part.
+ */
+.seo-travel {
+  margin: var(--seo-block-lg) 0;
+  padding-top: var(--sp-7);
+  border-top: var(--bw-hair) solid var(--border-hairline);
+}
+
+.seo-travel h2 {
+  margin: 0 0 var(--sp-5);
+}
+
+.seo-travel p {
+  max-width: var(--seo-measure);
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+}
+
+/*
+ * L'enllaç és el pas següent, i per això és un botó i no una frase subratllada
+ * enmig del text: qui llegeix «Tarragona, a 83 km, amb 58 segons» ja ha pres la
+ * decisió i el que li falta és el gest. `margin-top` propi perquè no quedi
+ * enganxat al paràgraf que l'ha justificat.
+ */
+.seo-travel .btn {
+  margin-top: var(--sp-2);
+}

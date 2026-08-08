@@ -1,5 +1,5 @@
 /** Genera pàgines editorials estàtiques després de Vite, fora del precache PWA. */
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -13,7 +13,21 @@ import { SEO_CITIES } from '../src/content/seo/cities';
 import { eclipseDateSlug } from '../src/content/seo/dateSlug';
 import { SEO_EVENT_WINDOWS } from '../src/content/seo/events';
 import type { SeoCity } from '../src/content/seo/types';
-import { SEO_LOCALES, SEO_SITE, prefix, seoStrings } from '../src/content/seo/strings';
+import { SEO_LOCALES, SEO_SITE, prefix, seoLocalHeading, seoLocalTitle, seoOfficialTitle, seoStrings, seoTravel, seoVerdict } from '../src/content/seo/strings';
+import { seoOutcome } from '../src/content/seo/verdict';
+import { travelAdvice } from '../src/content/seo/travel';
+import type { SeoVerdictCopy } from '../src/content/seo/strings';
+/*
+ * LA FRASE DE PRIVADESA S'IMPORTA, NO ES REESCRIU.
+ *
+ * El peu d'aquestes 1.316 pàgines deia una frase pròpia («Calculat al
+ * dispositiu. Sense comptes ni anuncis.») escrita aquí mateix, i el peu de
+ * l'app en deia una altra. `credits.ts` explica per què n'hi ha d'haver UNA:
+ * la seva versió anterior prometia que la ubicació no sortia del dispositiu i
+ * era falsa —Photon i Open-Meteo reben les coordenades—, i es va corregir en
+ * un sol lloc. Una còpia aquí hauria conservat la mentida.
+ */
+import { PRIVACY_NOTE } from '../src/features/about/credits';
 import type { Locale } from '../src/i18n';
 import { Badge, Card, PhaseDial, SafetyNotice, Stat, TimelineTrack } from '../src/ui';
 import type { BadgeProps, CardProps, SafetyNoticeProps } from '../src/ui';
@@ -24,32 +38,32 @@ interface Route { kind: Kind; id: string; eclipseId?: string }
 interface Page { route: Route; html: string }
 let appStylesheets = '';
 let seoWidgetScript = '';
-const DATA_VISUAL_CSS = `<style>
-html,body{max-width:100%;overflow-x:hidden}.visual-card{margin:0}.hero h1{max-width:100%;overflow-wrap:anywhere;font-size:clamp(2.5rem,5.5vw,4.5rem)!important}.hero__eyebrow{display:inline-flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-4);font:var(--text-overline);letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--status-info)}.hero__eyebrow:before{content:'';width:8px;height:8px;border-radius:50%;background:var(--status-info);box-shadow:0 0 0 5px color-mix(in srgb,var(--status-info) 15%,transparent)}body[data-page-kind="point"] .hero{padding-bottom:var(--sp-6)}
-.map-embed{position:relative;overflow:hidden;border:1px solid var(--border-hairline);border-radius:var(--r-lg);background:var(--bg-inset)}.map-embed iframe{display:block;width:100%;height:clamp(430px,58vw,650px);border:0;background:var(--bg-inset)}.map-embed__label{position:absolute;left:var(--sp-4);bottom:var(--sp-4);z-index:2;display:inline-flex;align-items:center;min-height:42px;padding:0 var(--sp-4);border:1px solid var(--border-subtle);border-radius:var(--r-pill);background:var(--surface-glass);backdrop-filter:var(--blur-glass);color:var(--text-primary);font:var(--text-label);pointer-events:none}
-.locator{display:block;position:relative;aspect-ratio:725/532!important;overflow:hidden;border-top:1px solid var(--border-hairline);background:var(--bg-inset)!important;border-bottom:0}
-.locator svg{display:block;width:100%;height:100%}.map-band{fill:rgba(255,165,31,.20)}.map-limit{fill:none;stroke:var(--sun-400,#ffc257);stroke-width:2}.map-center{fill:none;stroke:var(--corona-100,#fffaf2);stroke-width:1.5;stroke-dasharray:7 8;opacity:.8}.map-official{fill:var(--status-info,#4fa8e8);stroke:var(--ink-950,#05060b);stroke-width:3}.map-user circle:first-child{fill:var(--ink-950,#05060b);stroke:var(--corona-100,#fffaf2);stroke-width:4}.map-user circle:last-child{fill:var(--accent,#ffa51f)}.map-legend{position:absolute;left:14px;right:14px;bottom:12px;padding:9px 11px;border:1px solid var(--border-subtle);border-radius:var(--r-pill);background:var(--surface-glass);backdrop-filter:var(--blur-glass);color:var(--text-body);font:var(--text-body-sm);display:flex;align-items:center;gap:8px}.map-legend i{width:20px;height:7px;background:var(--accent-quiet);border:1px solid var(--accent);display:inline-block}
-.seo-nav{position:sticky;top:0;z-index:30;width:100%;padding-left:var(--gutter-web);padding-right:var(--gutter-web);background:var(--surface-glass);backdrop-filter:var(--blur-glass)}.seo-nav__links{display:flex;gap:var(--sp-7);align-items:center;margin-left:auto}.seo-nav__links a{border:0;color:var(--text-secondary);font:var(--text-body-sm)}.seo-nav__links .seo-nav__cta{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:auto!important;height:44px!important;min-height:44px!important;margin:0!important;padding:0 var(--sp-5)!important;background:var(--accent)!important;color:var(--on-accent)!important;border-radius:var(--r-pill)!important;font:var(--text-label)!important;line-height:1!important;white-space:nowrap}.seo-dateline{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--sp-2) var(--sp-8);padding:var(--sp-4) 0;border-bottom:1px solid var(--border-subtle);font:var(--text-overline);letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--text-muted)}
-.spot-list{display:grid;gap:10px;padding:0;list-style:none}.spot-list li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 18px;padding:16px 18px;border:1px solid var(--border-hairline);border-radius:var(--r-md);background:var(--surface-card)}.spot-list a{font:var(--text-label);border:0}.spot-list strong{font:var(--text-data);color:var(--text-primary);font-variant-numeric:tabular-nums}.spot-list span{grid-column:1/-1;color:var(--text-muted);font:var(--text-body-sm)}
-.tool-actions{max-width:800px;margin:28px auto 42px;display:flex;align-items:center;flex-wrap:wrap;gap:10px}.tool-actions .cta{margin:0}.tool-actions>a:not(.cta){min-height:44px;display:inline-flex;align-items:center;padding:0 16px;border:1px solid var(--border-hairline);border-radius:var(--r-pill);background:var(--surface-card);color:var(--text-body);font:var(--text-label)}.tool-actions__sky{display:none!important}.seo-live-widgets{display:grid;gap:var(--sp-8);margin:var(--sp-10) 0}.seo-live-section{max-width:none!important;margin:0!important}.seo-live-section>.simulation,.seo-live-section>.cloudpanel{margin-top:var(--sp-5)}.seo-live-minimap{padding:0!important;overflow:hidden}.visual-grid--phase{grid-template-columns:minmax(0,1fr);max-width:800px;margin-left:auto;margin-right:auto}.seo-pointsmap{position:relative}.seo-pointsmap__markers{position:absolute;inset:0;pointer-events:none}.seo-pointsmap__marker{position:absolute;z-index:3;display:grid;place-items:center;width:30px;height:30px;transform:translate(-50%,-50%);border:3px solid var(--ink-950);border-radius:50%;background:var(--status-info);color:var(--ink-950);font:var(--text-data-sm);pointer-events:auto;box-shadow:0 2px 12px rgba(0,0,0,.45)}.seo-pointsmap__legend{list-style:none;margin:0;padding:var(--sp-4);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-2);border-top:1px solid var(--border-hairline)}.seo-pointsmap__legend a{display:flex;align-items:center;gap:var(--sp-3);min-height:44px;border:0;color:var(--text-body);font:var(--text-body-sm)}.seo-pointsmap__legend span{flex:0 0 26px;height:26px;display:grid;place-items:center;border-radius:50%;background:var(--status-info);color:var(--ink-950);font:var(--text-data-sm)}
-.timeline-widget{margin:var(--sp-5) 0 var(--sp-9);padding:0 var(--sp-5)}.seo-position{margin:0 0 var(--sp-3)}.seo-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-5);margin:var(--sp-5) 0}.seo-guide-safety{max-width:800px;margin:var(--sp-8) auto}.guide-index{max-width:800px;margin:var(--sp-8) auto}.guide-index ol{list-style:none;padding:0;margin:0;border-top:1px solid var(--border-strong)}.guide-index a{display:grid;grid-template-columns:42px minmax(0,1fr);gap:var(--sp-4);padding:var(--sp-4) 0;border-bottom:1px solid var(--border-hairline);font:var(--text-label)}.guide-index span{font:var(--text-overline);color:var(--text-accent)}
-.seo-local-phase{height:100%;display:grid!important;grid-template-columns:180px minmax(0,1fr);align-items:center;gap:var(--sp-6);padding:var(--sp-6)!important}.seo-local-phase__visual{display:grid;justify-items:center;gap:var(--sp-3)}.seo-local-phase__visual span{font:var(--text-overline);color:var(--text-muted);text-align:center}.seo-local-phase__stats{display:grid;grid-template-columns:1fr;gap:var(--sp-5)}.seo-local-detail{max-width:800px;margin:var(--sp-8) auto}.seo-local-detail>.ui-card{padding:var(--sp-6)}.seo-local-detail .fingerprint{max-width:none}.seo-local-detail__intro{margin-bottom:var(--sp-4);color:var(--text-secondary)}
-.official-identity{max-width:800px;margin:0 auto var(--sp-7);padding:var(--sp-5);border:1px solid var(--status-info);border-radius:var(--r-lg);background:var(--surface-card);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--sp-3) var(--sp-6)}.official-identity__eyebrow{font:var(--text-overline);letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--status-info)}.official-identity strong{font:var(--text-title-3);color:var(--text-primary)}.official-identity p{grid-column:1/-1;margin:0;color:var(--text-secondary)}.official-identity a{border:0}
-.editorial-guide{display:grid;grid-template-columns:230px minmax(0,1fr);align-items:start;gap:var(--sp-9);max-width:980px;margin:var(--sp-8) auto}.editorial-guide__toc{display:block!important;position:sticky;top:96px}.editorial-guide__toc a{justify-content:flex-start;width:100%;text-align:left;border:0}.editorial-guide__body{min-width:0}.editorial-guide__body .guide__section{background:var(--surface-card)}.editorial-guide__faq{margin-top:var(--sp-9)}
-.guide-decision{max-width:980px;margin:var(--sp-7) auto var(--sp-9);padding:var(--sp-5);border:1px solid var(--border-hairline);border-radius:var(--r-lg);background:var(--surface-card)}.guide-decision__head{display:flex;justify-content:space-between;align-items:end;gap:var(--sp-5);margin-bottom:var(--sp-5)}.guide-decision__head h2{margin:0}.guide-decision__head p{max-width:46ch;margin:0;color:var(--text-muted);font:var(--text-body-sm)}.guide-decision__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-3)}.guide-decision__item{min-width:0;padding:var(--sp-4);border:1px solid var(--border-hairline);border-radius:var(--r-md);background:var(--bg-inset)}.guide-decision__item span{display:block;margin-bottom:var(--sp-3);font:var(--text-overline);letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--text-muted)}.guide-decision__item strong{display:block;color:var(--text-primary);font:var(--text-title-3)}.guide-decision__item p{margin:var(--sp-2) 0 0;color:var(--text-secondary);font:var(--text-body-sm)}.guide-decision__item--safe{border-color:color-mix(in oklab,var(--status-clear) 42%,transparent)}.guide-decision__item--safe strong{color:var(--status-clear)}.guide-decision__item--danger{border-color:color-mix(in oklab,var(--status-danger) 42%,transparent)}.guide-decision__item--danger strong{color:var(--status-danger)}.guide-decision__item--accent strong{color:var(--accent)}.guide-essentials{max-width:980px;margin:var(--sp-9) auto}.guide-essentials>h2{margin-bottom:var(--sp-5)}.guide-essentials__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-4)}.guide-essentials article{padding:var(--sp-5);border:1px solid var(--border-hairline);border-radius:var(--r-lg);background:var(--surface-card)}.guide-essentials article h3{margin:0 0 var(--sp-3);color:var(--text-primary)}.guide-essentials article p{margin:0;color:var(--text-secondary);font:var(--text-body-sm)}.guide-essentials article ul{margin:var(--sp-4) 0 0;padding-left:var(--sp-5);font:var(--text-body-sm)}.guide-tool-link{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);max-width:980px;margin:var(--sp-7) auto;padding:var(--sp-5);border:1px solid var(--border-subtle);border-radius:var(--r-lg);background:var(--surface-card-hover)}.guide-tool-link strong{display:block;color:var(--text-primary)}.guide-tool-link p{margin:var(--sp-1) 0 0;color:var(--text-muted);font:var(--text-body-sm)}.guide-tool-link a{flex:0 0 auto}.guide-sources{max-width:800px;margin:var(--sp-10) auto}.guide-sources p{color:var(--text-muted);font:var(--text-body-sm)}.guide-sources ul{padding-left:var(--sp-5)}.guide-sources li{margin:var(--sp-2) 0;font:var(--text-body-sm)}
-.guide-hub{max-width:980px;margin:0 auto}.guide-hub__intro{max-width:760px;color:var(--text-secondary);font:var(--text-body-lg)}.guide-hub__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-4);margin:var(--sp-8) 0}.guide-hub__card{display:flex;min-width:0;flex-direction:column;padding:var(--sp-5);border:1px solid var(--border-hairline);border-radius:var(--r-lg);background:var(--surface-card)}.guide-hub__card>span{font:var(--text-overline);letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--text-accent)}.guide-hub__card h2{margin:var(--sp-4) 0 var(--sp-3);font:var(--text-title-2)}.guide-hub__card p{flex:1;margin:0 0 var(--sp-5);color:var(--text-secondary);font:var(--text-body-sm)}.guide-hub__card a{align-self:flex-start}.guide-hub__route{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-4);padding:0;list-style:none;counter-reset:route}.guide-hub__route li{counter-increment:route;padding:var(--sp-5);border-top:1px solid var(--border-strong)}.guide-hub__route li:before{content:'0' counter(route);display:block;margin-bottom:var(--sp-3);font:var(--text-overline);color:var(--text-accent)}.guide-hub__route strong{display:block;color:var(--text-primary)}.guide-hub__route span{display:block;margin-top:var(--sp-2);color:var(--text-muted);font:var(--text-body-sm)}
-.guide-filter-note{display:flex;align-items:center;gap:var(--sp-4);max-width:800px;margin:var(--sp-6) auto;padding:var(--sp-4);border:1px solid color-mix(in oklab,var(--status-danger) 35%,transparent);border-radius:var(--r-md);background:var(--status-danger-quiet)}.guide-filter-note strong{color:var(--status-danger)}.guide-filter-note span{flex:1;color:var(--text-secondary);font:var(--text-body-sm)}.guide-filter-note a{flex:0 0 auto;border:0;font:var(--text-label)}
-.overview-map{margin:0 0 var(--sp-9);max-width:none}.city-directory,.point-directory{display:grid;gap:10px}.city-group,.point-group{border:1px solid var(--border-hairline);border-radius:var(--r-md);background:var(--surface-card);overflow:hidden}.city-group summary,.point-group summary{min-height:56px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 18px;cursor:pointer;color:var(--text-primary);font:var(--text-label)}.city-group summary strong,.point-group summary strong{font:var(--text-data-sm);color:var(--text-muted)}.city-group ul,.point-group ul{list-style:none;padding:0;margin:0;border-top:1px solid var(--border-hairline);display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.city-group li,.point-group li{min-width:0;border-bottom:1px solid var(--border-hairline)}.city-group li:nth-child(odd),.point-group li:nth-child(odd){border-right:1px solid var(--border-hairline)}.city-group a,.point-group li{display:grid;gap:6px;padding:14px 18px}.city-group a,.point-group a{border:0}.city-group strong,.point-group a{font:var(--text-label);color:var(--text-primary)}.city-group span,.point-group li span{font:var(--text-data-sm);color:var(--text-muted);font-variant-numeric:tabular-nums}.directory-outcome{display:inline-flex;align-items:center;gap:var(--sp-2)}.directory-outcome:before{content:'';width:7px;height:7px;border-radius:50%;background:var(--text-muted)}.directory-outcome--central:before{background:var(--status-clear)}.directory-outcome--edge:before{background:var(--status-partial)}
-.event-intro{max-width:800px;margin:var(--sp-8) auto}.event-intro__lead{font:var(--text-body-lg);color:var(--text-primary)}.event-steps{counter-reset:step;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-4);padding:0;list-style:none}.event-steps li{counter-increment:step;padding:var(--sp-5);border:1px solid var(--border-hairline);border-radius:var(--r-lg);background:var(--surface-card)}.event-steps li:before{content:'0' counter(step);display:block;margin-bottom:var(--sp-4);font:var(--text-overline);color:var(--text-accent)}.event-steps strong{display:block;margin-bottom:var(--sp-2);color:var(--text-primary)}.event-steps span{font:var(--text-body-sm);color:var(--text-secondary)}.event-directory-note{max-width:800px;margin:0 auto var(--sp-6);color:var(--text-secondary)}
-.seo-footer{display:none}.seo-sitefooter{margin-top:var(--sp-12);padding:var(--sp-10) 0;border-top:1px solid var(--border-hairline);display:grid;grid-template-columns:1.35fr repeat(4,minmax(0,1fr));gap:var(--sp-8)}.seo-sitefooter__brand img{width:164px;height:auto}.seo-sitefooter__brand p{max-width:28ch;color:var(--text-muted);font:var(--text-body-sm)}.seo-sitefooter strong{display:block;margin-bottom:var(--sp-5);font:var(--text-overline);letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--text-muted)}.seo-sitefooter ul{list-style:none;padding:0;margin:0;display:grid;gap:var(--sp-4)}.seo-sitefooter a{border:0;color:var(--text-secondary);font:var(--text-body-sm)}
-@media(max-width:900px){.seo-sitefooter{grid-template-columns:repeat(2,minmax(0,1fr))}.seo-sitefooter__brand{grid-column:1/-1}.editorial-guide{display:block}.editorial-guide__toc{position:static;overflow-x:auto;margin-bottom:var(--sp-6)}.editorial-guide__toc .guidescreen__toclist{display:flex!important;flex-wrap:nowrap}.editorial-guide__toc li{flex:0 0 auto}}@media(max-width:760px){main.seo-wrap{width:calc(100% - 28px)!important;max-width:1040px!important}.seo-nav{width:100%!important;max-width:none!important;padding-left:14px;padding-right:14px}.seo-nav__links{display:none}.seo-nav__cta{display:none}.seo-langs{min-width:0;font-size:12px!important;gap:3px!important}.seo-langs>span:last-child{white-space:nowrap}.tool-actions__sky{display:inline-flex!important}.hero,.visual-grid{width:100%;grid-template-columns:minmax(0,1fr)!important}.hero>*,.visual-card{min-width:0;max-width:100%}.seo-local-phase{grid-template-columns:116px minmax(0,1fr);padding:var(--sp-4)!important;gap:var(--sp-4)}.event-steps{grid-template-columns:1fr}.guide-decision__head,.guide-tool-link{align-items:flex-start;flex-direction:column}.guide-decision__grid,.guide-essentials__grid{grid-template-columns:1fr}.map-legend{font-size:12px}.seo-dateline{display:grid;grid-template-columns:1fr}.seo-stats,.city-directory,.point-group ul{grid-template-columns:1fr}.point-group li:nth-child(odd){border-right:0}.seo-sitefooter{grid-template-columns:1fr;gap:var(--sp-7)}.seo-sitefooter__brand{grid-column:auto}}
-@media(max-width:900px){.guide-hub__grid,.guide-hub__route{grid-template-columns:1fr}}
-@media(max-width:760px){.city-group ul{grid-template-columns:1fr}.city-group li:nth-child(odd){border-right:0}}
-@media(max-width:900px){.guide-filter-note{align-items:flex-start;flex-direction:column}}
-.seo-nav{width:100%!important;max-width:none!important;margin:0!important;padding-left:max(var(--gutter-web),calc((100vw - 1040px)/2))!important;padding-right:max(var(--gutter-web),calc((100vw - 1040px)/2))!important}
-.guide-sources{max-width:none;margin:var(--sp-10) 0}
-@media(min-width:901px){.editorial-guide__toc{min-width:0;overflow:hidden}.editorial-guide__toc .guidescreen__toclist{display:grid!important;grid-template-columns:minmax(0,1fr);gap:var(--sp-2);width:100%;padding:0}.editorial-guide__toc li{min-width:0}.editorial-guide__toc a{display:flex;justify-content:flex-start;width:100%;max-width:100%;white-space:normal;overflow-wrap:anywhere}}
-</style>`;
+/*
+ * AQUEST BLOB ESTÀ BUIT A POSTA, I BUIDAR-LO ERA LA FEINA.
+ *
+ * Aquí hi vivien vint-i-cinc línies de CSS minificat —franja de 25.000
+ * caràcters, una seixantena de `!important`, hexadecimals escrits a mà— que el
+ * generador enganxava a CADA pàgina DESPRÉS de tots els fulls enllaçats. Com
+ * que s'emetia l'últim, guanyava sempre: qualsevol regla neta de
+ * `src/seo-pages.css` que toqués una classe que ell també tocava perdia en
+ * silenci, i l'única manera de corregir res era afegir-hi una capa nova a
+ * sobre. Que és exactament com havia crescut.
+ *
+ * Una tercera part estilava marcatge que no s'emetia enlloc: `.hero`, `.facts`,
+ * `.fact`, `.timeline`, `.locator`, `.altitude`, `.eclipse-diagram`,
+ * `.map-embed`, `.map-band`, `.map-limit`, `.map-center`, `.map-official`,
+ * `.map-user`, `.map-legend`, `.visual-card`, `.visual-grid`, `.guide-index`,
+ * `.seo-local-phase`, `.seo-local-detail`, `.seo-pointsmap__marker`, `.faq`,
+ * `.guide-essentials__grid` — 45 classes declarades, cap d'elles a l'HTML.
+ *
+ * Tot el que era viu ha passat a `src/seo-pages.css`, que Vite compila,
+ * minifica i posa amb hash, i que el generador ja enllaça perquè busca el
+ * `seoWidgets-*.css`. La constant es queda com a cadena buida i no com a
+ * variable esborrada perquè `appStylesheets` la concatena: així el punt on
+ * s'enganxava queda documentat i ningú no hi torna a abocar res sense llegir
+ * això.
+ */
+const DATA_VISUAL_CSS = '';
 
 const SEGMENTS: Record<Locale, Record<Kind, string>> = {
   ca: { eclipse: 'eclipsi', city: 'ciutat', point: 'punt-oficial', guide: 'guia', guides:'guia' },
@@ -85,11 +99,6 @@ const appUrl = (locale: Locale, lat: number, lon: number, eclipseId: string, lab
   `${SEO_SITE}${prefix(locale)}?p=${lat.toFixed(5)},${lon.toFixed(5)}&amp;e=${eclipseId}&amp;n=${encodeURIComponent(label)}`;
 const fmtTime = (locale: Locale, date: Date) => new Intl.DateTimeFormat(locale, { timeZone:'Europe/Madrid', hour:'2-digit', minute:'2-digit', second:'2-digit' }).format(date);
 const fmtLongDate = (locale:Locale,eclipseId:string) => new Intl.DateTimeFormat(locale,{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Madrid'}).format(new Date(`${eclipseId}T12:00:00Z`));
-const localPageHeading = (locale:Locale,eclipse:EclipseEntry,name:string) => locale==='ca'
-  ? `Eclipsi ${eclipseKind(locale,eclipse)} del ${fmtLongDate(locale,eclipse.id)} a ${name}`
-  : locale==='es' ? `Eclipse ${eclipseKind(locale,eclipse)} del ${fmtLongDate(locale,eclipse.id)} en ${name}`
-  : locale==='fr' ? `Éclipse ${eclipseKind(locale,eclipse)} du ${fmtLongDate(locale,eclipse.id)} à ${name}`
-  : `${fmtLongDate(locale,eclipse.id)} ${eclipseKind(locale,eclipse)} eclipse in ${name}`;
 const fmtNum = (locale: Locale, value: number, digits=1) => new Intl.NumberFormat(locale, { maximumFractionDigits:digits, minimumFractionDigits:digits }).format(value);
 const distance2 = (aLat:number,aLon:number,bLat:number,bLon:number) => (aLat-bLat)**2 + ((aLon-bLon)*Math.cos(aLat*Math.PI/180))**2;
 const distanceKm = (aLat:number,aLon:number,bLat:number,bLon:number) => {
@@ -107,17 +116,28 @@ const eclipsePath = (eclipseId:string) => {
 };
 function eclipseOverviewMap(locale:Locale,eclipseId:string):string {
   const label=locale==='ca'?'Mapa interactiu de la franja':locale==='es'?'Mapa interactivo de la franja':locale==='fr'?'Carte interactive de la bande':'Interactive eclipse-path map';
-  return `<section class="overview-map"><h2>${esc(label)}</h2><div data-eclipse-overview-widget data-eclipse="${eclipseId}" data-locale="${locale}" data-label="${esc(label)}" data-map-url="${prefix(locale)}?e=${eclipseId}#/mapa"></div></section>`;
+  return `<section class="overview-map"><h2>${esc(label)}</h2><div data-eclipse-overview-widget data-eclipse="${eclipseId}" data-locale="${locale}" data-label="${esc(label)}" data-map-url="/${prefix(locale)}?e=${eclipseId}#/mapa"></div></section>`;
 }
 const nearbyPoints = (eclipseId:string,lat:number,lon:number,exclude?:string) => [...pointsForEclipse(eclipseId)].filter(point=>point.id!==exclude).sort((a,b)=>distance2(lat,lon,a.lat,a.lon)-distance2(lat,lon,b.lat,b.lon)).slice(0,3);
 
 function nearbyPointCards(locale:Locale,eclipse:EclipseEntry,lat:number,lon:number,exclude?:string):string {
-  const durationLabel=locale==='ca'?'fase central':locale==='es'?'fase central':locale==='fr'?'phase centrale':'central phase';
-  const partialLabel=locale==='ca'?'parcial':locale==='es'?'parcial':locale==='fr'?'partielle':'partial';
   const altitudeLabel=locale==='ca'?'Sol':locale==='es'?'Sol':locale==='fr'?'Soleil':'Sun';
   return nearbyPoints(eclipse.id,lat,lon,exclude).map(point=>{
     const local=computeLocalCircumstances(eclipse.id,{lat:point.lat,lon:point.lon,elevation:point.elevationM??0});
-    const phase=local.centralDurationSec>0?`${fmtNum(locale,local.centralDurationSec)} s ${durationLabel}`:`${fmtNum(locale,local.contacts.max.obscuration*100)} % ${partialLabel}`;
+    /*
+     * EL MATEIX VEREDICTE QUE LA FITXA QUE HI HA A L'ALTRE COSTAT DE L'ENLLAÇ.
+     *
+     * Aquesta llista es calculava a part: mirava només `centralDurationSec` i,
+     * si era zero, imprimia l'obscuració arrodonida a un decimal. Amb un 99,96 %
+     * en sortia «100,0 % parcial» —cent per cent i parcial a la mateixa línia— i
+     * un punt al caire de la franja apareixia aquí amb una durada que la seva
+     * pròpia fitxa es nega a publicar. Dues pàgines nostres es contradeien.
+     */
+    const phase=seoVerdict(locale,seoOutcome(local),{
+      duration:fmtNum(locale,local.centralDurationSec),
+      obscuration:fmtNum(locale,local.contacts.max.obscuration*100),
+      total:local.kind==='total',
+    }).summary;
     return `<li><a href="${urlFor(locale,{kind:'point',id:point.id,eclipseId:eclipse.id})}">${esc(point.name[locale])}</a><strong>${fmtNum(locale,distanceKm(lat,lon,point.lat,point.lon))} km</strong><span>${phase} · ${altitudeLabel} ${fmtNum(locale,local.contacts.max.sun.altitudeApparent)}° · ${esc(point.source.who)}</span></li>`;
   }).join('');
 }
@@ -134,57 +154,331 @@ function alternateLinks(route: Route): string {
   return `${SEO_LOCALES.map(locale => `<link rel="alternate" hreflang="${locale}" href="${urlFor(locale,route)}">`).join('')}<link rel="alternate" hreflang="x-default" href="${urlFor('ca',route)}">`;
 }
 
-function seoSiteFooter(locale:Locale):string {
-  const labels={
-    ca:{producte:'Producte',mapa:'Mapa de la franja',compte:'Compte enrere',guies:'Guies',eclipsis:'Eclipsis',projecte:'Projecte',metode:'Metodologia i fonts',codi:'Codi a GitHub',about:'Com funciona',note:'Calculat al dispositiu. Sense comptes ni anuncis.'},
-    es:{producte:'Producto',mapa:'Mapa de la franja',compte:'Cuenta atrás',guies:'Guías',eclipsis:'Eclipses',projecte:'Proyecto',metode:'Metodología y fuentes',codi:'Código en GitHub',about:'Cómo funciona',note:'Calculado en el dispositivo. Sin cuentas ni anuncios.'},
-    en:{producte:'Product',mapa:'Eclipse path map',compte:'Countdown',guies:'Guides',eclipsis:'Eclipses',projecte:'Project',metode:'Methods and sources',codi:'Code on GitHub',about:'How it works',note:'Calculated on your device. No accounts or ads.'},
-    fr:{producte:'Produit',mapa:'Carte de la bande',compte:'Compte à rebours',guies:'Guides',eclipsis:'Éclipses',projecte:'Projet',metode:'Méthode et sources',codi:'Code sur GitHub',about:'Fonctionnement',note:'Calculé sur votre appareil. Sans compte ni publicité.'},
-  }[locale];
-  const eclipseLinks=ECLIPSES.map(eclipse=>`<li><a href="${urlFor(locale,{kind:'eclipse',id:eclipse.id})}">${esc(eclipse.label[locale])}</a></li>`).join('');
-  const guideLinks=EDITORIAL_GUIDE_IDS.map(id=>{const guide=getEditorialGuide(id,locale);return `<li><a href="${urlFor(locale,{kind:'guide',id})}">${esc(guide.title)}</a></li>`;}).join('');
-  return `<footer class="seo-sitefooter"><div class="seo-sitefooter__brand"><img src="/brand/logo.svg" width="164" height="35" alt="eclipsi.info"><p>${esc(labels.note)}</p></div><nav aria-label="${esc(labels.producte)}"><strong>${esc(labels.producte)}</strong><ul><li><a href="${SEO_SITE}${prefix(locale)}#/mapa">${esc(labels.mapa)}</a></li><li><a href="${SEO_SITE}${prefix(locale)}#/compte">${esc(labels.compte)}</a></li><li><a href="${SEO_SITE}${prefix(locale)}#/guia">${esc(labels.guies)}</a></li></ul></nav><nav aria-label="${esc(labels.eclipsis)}"><strong>${esc(labels.eclipsis)}</strong><ul>${eclipseLinks}</ul></nav><nav aria-label="${esc(labels.guies)}"><strong><a href="${urlFor(locale,{kind:'guides',id:'index'})}">${esc(labels.guies)}</a></strong><ul>${guideLinks}</ul></nav><nav aria-label="${esc(labels.projecte)}"><strong>${esc(labels.projecte)}</strong><ul><li><a href="${SEO_SITE}${prefix(locale)}#/com-funciona">${esc(labels.about)}</a></li><li><a href="${SEO_SITE}${prefix(locale)}#/com-funciona">${esc(labels.metode)}</a></li><li><a href="https://github.com/humbertblanco/eclipsi-info" rel="external">${esc(labels.codi)}</a></li></ul></nav></footer>`;
+/*
+ * ELS RÈTOLS DE LA CAPÇALERA I DEL PEU, EN UN SOL LLOC.
+ *
+ * Estaven repartits entre tres funcions i dos `locale==='ca'?…:…` encadenats,
+ * i per això el peu oferia «Guies» dues vegades —una a `#/guia` i una altra a
+ * `/guia/`— i «Com funciona» dues vegades amb la MATEIXA adreça. Ningú no
+ * podia veure la duplicació perquè no hi havia cap lloc on la llista sencera
+ * fos visible d'un cop d'ull. Ara sí.
+ */
+interface ChromeLabels {
+  nav: string; lang: string; crumbs: string; open: string; mapShort: string; guideShort: string; eclipseShort: string;
+  product: string; map: string; countdown: string; sky: string;
+  eclipses: string; guides: string; allGuides: string;
+  project: string; how: string; press: string; code: string;
+  toolsTitle: string; toolsText: string;
+  nextCities: string; distance: string;
+}
+const CHROME: Record<Locale, ChromeLabels> = {
+  ca: { nav:'Navegació del lloc', lang:'Idioma', crumbs:'Ets aquí', open:'Obre l’app', mapShort:'Mapa', guideShort:'Guia', eclipseShort:'Eclipsi',
+        product:'Producte', map:'Mapa de la franja', countdown:'Compte enrere', sky:'Càmera del cel',
+        eclipses:'Eclipsis', guides:'Guies', allGuides:'Totes les guies',
+        project:'Projecte', how:'Com funciona', press:'Premsa', code:'Codi a GitHub',
+        toolsTitle:'Calcula l’eclipsi al teu punt', toolsText:'Cerca on seràs o fes servir la ubicació del dispositiu.',
+        nextCities:'Compara amb altres ciutats', distance:'de distància' },
+  es: { nav:'Navegación del sitio', lang:'Idioma', crumbs:'Estás aquí', open:'Abre la app', mapShort:'Mapa', guideShort:'Guía', eclipseShort:'Eclipse',
+        product:'Producto', map:'Mapa de la franja', countdown:'Cuenta atrás', sky:'Cámara del cielo',
+        eclipses:'Eclipses', guides:'Guías', allGuides:'Todas las guías',
+        project:'Proyecto', how:'Cómo funciona', press:'Prensa', code:'Código en GitHub',
+        toolsTitle:'Calcula el eclipse en tu ubicación', toolsText:'Busca dónde estarás o usa la ubicación del dispositivo.',
+        nextCities:'Compara con otras ciudades', distance:'de distancia' },
+  en: { nav:'Site navigation', lang:'Language', crumbs:'You are here', open:'Open the app', mapShort:'Map', guideShort:'Guide', eclipseShort:'Eclipse',
+        product:'Product', map:'Eclipse path map', countdown:'Countdown', sky:'Sky camera',
+        eclipses:'Eclipses', guides:'Guides', allGuides:'All guides',
+        project:'Project', how:'How it works', press:'Press', code:'Code on GitHub',
+        toolsTitle:'Calculate the eclipse at your location', toolsText:'Search where you will be or use your device location.',
+        nextCities:'Compare with other cities', distance:'away' },
+  fr: { nav:'Navigation du site', lang:'Langue', crumbs:'Vous êtes ici', open:'Ouvrir l’app', mapShort:'Carte', guideShort:'Guide', eclipseShort:'Éclipse',
+        product:'Produit', map:'Carte de la bande', countdown:'Compte à rebours', sky:'Caméra du ciel',
+        eclipses:'Éclipses', guides:'Guides', allGuides:'Tous les guides',
+        project:'Projet', how:'Fonctionnement', press:'Presse', code:'Code sur GitHub',
+        toolsTitle:'Calculez l’éclipse à votre position', toolsText:'Recherchez votre lieu ou utilisez la position de l’appareil.',
+        nextCities:'Comparer avec d’autres villes', distance:'de distance' },
+};
+
+/*
+ * LES COLUMNES DEL PEU, AMB CADA ENLLAÇ UNA SOLA VEGADA I A LA SEVA MENA DE RUTA.
+ *
+ * Què hi havia i per què era pitjor que no tenir-ne:
+ *
+ * · «Com funciona» sortia dues vegades, totes dues cap a `#/com-funciona`, que
+ *   és una ruta de hash de l'app. La pàgina editorial existeix i és
+ *   `/com-funciona/` (i `/es/com-funciona/`, etc.): cap de les 1.316 pàgines no
+ *   hi enllaçava, o sigui que la pàgina publicada no rebia ni un sol enllaç
+ *   intern. Un hash no és una URL per a un cercador.
+ * · «Guies» sortia dues vegades: una a `#/guia` dins de Producte i una altra
+ *   com a encapçalament de la seva pròpia columna.
+ * · L'única porta al centre de guies vivia DINS d'un `<strong>` que fa
+ *   d'encapçalament de columna. Un encapçalament no s'espera que sigui un
+ *   enllaç, i per això ningú no el clicava.
+ *
+ * La regla que ho ordena: si existeix una pàgina publicada, s'hi enllaça pel
+ * camí (`/guia/`, `/com-funciona/`, `/eclipsi/12-08-2026/`). El hash es reserva
+ * per a les vistes que NOMÉS viuen dins de l'app i no tenen pàgina: el mapa, el
+ * compte enrere i la càmera del cel.
+ */
+function seoSiteFooterInner(locale:Locale):string {
+  const L=CHROME[locale], home=`/${prefix(locale)}`;
+  const column=(label:string,items:string)=>`<nav class="seo-foot__col" aria-label="${esc(label)}"><h2>${esc(label)}</h2><ul>${items}</ul></nav>`;
+  const link=(href:string,label:string,rel='')=>`<li><a href="${href}"${rel}>${esc(label)}</a></li>`;
+  const product=link(`${home}#/mapa`,L.map)+link(`${home}#/compte`,L.countdown)+link(`${home}#/cel`,L.sky);
+  const eclipses=ECLIPSES.map(eclipse=>link(`/${pathFor(locale,{kind:'eclipse',id:eclipse.id})}`,eclipse.label[locale])).join('');
+  const guides=link(`/${pathFor(locale,{kind:'guides',id:'index'})}`,L.allGuides)
+    +EDITORIAL_GUIDE_IDS.map(id=>link(`/${pathFor(locale,{kind:'guide',id})}`,getEditorialGuide(id,locale).title)).join('');
+  const project=link(`${home}com-funciona/`,L.how)+link(`${home}com-funciona/premsa/`,L.press)
+    +link('https://github.com/humbertblanco/eclipsi-info',L.code,' rel="external"');
+  return `<div class="seo-foot__brand"><img src="/brand/logo.svg" width="164" height="35" alt="eclipsi.info"><p>${esc(PRIVACY_NOTE[locale])}</p></div>`
+    +column(L.product,product)+column(L.eclipses,eclipses)+column(L.guides,guides)+column(L.project,project);
 }
 
 function seoFooterUtility(locale:Locale,eclipseId='2026-08-12'):string {
-  const copy=locale==='ca'
-    ? {title:'Calcula l’eclipsi al teu punt',text:'Cerca on seràs o fes servir la ubicació del dispositiu.'}
-    : locale==='es'
-      ? {title:'Calcula el eclipse en tu ubicación',text:'Busca dónde estarás o usa la ubicación del dispositivo.'}
-      : locale==='fr'
-        ? {title:'Calculez l’éclipse à votre position',text:'Recherchez votre lieu ou utilisez la position de l’appareil.'}
-        : {title:'Calculate the eclipse at your location',text:'Search where you will be or use your device location.'};
-  return `<div class="seo-sitefooter__tools"><div><strong>${esc(copy.title)}</strong><p>${esc(copy.text)}</p></div><span data-seo-header-tools data-locale="${locale}" data-eclipse="${eclipseId}"></span></div>`;
+  const L=CHROME[locale];
+  return `<div class="seo-foot__tools"><div><strong>${esc(L.toolsTitle)}</strong><p>${esc(L.toolsText)}</p></div><span data-seo-header-tools data-locale="${locale}" data-eclipse="${eclipseId}"></span></div>`;
 }
 
 function ogImage(locale: Locale): string {
   return `${SEO_SITE}brand/og-${locale}.png`;
 }
 
-function shell(locale: Locale, route: Route, title: string, description: string, h1: string, body: string, schemas: unknown[]): string {
-  const canonical = urlFor(locale, route), s = seoStrings(locale);
-  const languageLinks = SEO_LOCALES.map(language => `<a href="/${pathFor(language,route)}"${language===locale?' aria-current="page"':''}>${language.toUpperCase()}</a>`).join(' · ');
-  const mapLabel=locale==='ca'?'Mapa':locale==='es'?'Mapa':locale==='fr'?'Carte':'Map';
-  const guideLabel=locale==='ca'?'Guia':locale==='es'?'Guía':locale==='fr'?'Guide':'Guide';
-  const openLabel=locale==='ca'?'Obre l’app':locale==='es'?'Abre la app':locale==='fr'?'Ouvrir l’app':'Open the app';
-  const eclipseId=route.kind==='eclipse'?route.id:route.eclipseId;
-  const languages = `<span class="seo-nav__links"><a href="/${prefix(locale)}#/mapa">${mapLabel}</a><a href="/${pathFor(locale,{kind:'guides',id:'index'})}">${guideLabel}</a><a href="https://github.com/humbertblanco/eclipsi-info" rel="external">GitHub</a><a class="seo-nav__cta" href="/${prefix(locale)}">${openLabel}</a></span><span data-seo-header-tools data-locale="${locale}" data-eclipse="${eclipseId??'2026-08-12'}"></span><span>${languageLinks}</span>`;
-  if(eclipseId){
-    const eclipse=ECLIPSES.find(entry=>entry.id===eclipseId);
-    if(eclipse) body=`<div class="seo-dateline"><span>${esc(eclipse.label[locale])}</span><span>${esc(eclipseDateSlug(eclipse.id).replaceAll('-', ' · '))}</span><span>${locale==='ca'?'Càlcul topocèntric local':locale==='es'?'Cálculo topocéntrico local':locale==='fr'?'Calcul topocentrique local':'Local topocentric calculation'}</span></div>${body}`;
-  }
-  body+=`<footer class="seo-sitefooter">${seoFooterUtility(locale,eclipseId)}${seoSiteFooter(locale).replace(/^<footer class="seo-sitefooter">|<\/footer>$/g,'')}</footer>`;
-  body=body.replaceAll(`href="${SEO_SITE}`, 'href="/');
-  const officialEyebrow=route.kind==='point'?(locale==='ca'?'Punt oficial d’observació':locale==='es'?'Punto oficial de observación':locale==='fr'?'Site officiel d’observation':'Official viewing site'):'';
-  return `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#05060b"><meta name="color-scheme" content="dark"><title>${esc(title)}</title><meta name="description" content="${esc(description)}"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1"><link rel="canonical" href="${canonical}">${alternateLinks(route)}<meta property="og:type" content="article"><meta property="og:site_name" content="eclipsi.info"><meta property="og:locale" content="${locale}"><meta property="og:url" content="${canonical}"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:image" content="${ogImage(locale)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${esc(h1)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(description)}"><meta name="twitter:image" content="${ogImage(locale)}"><meta name="twitter:image:alt" content="${esc(h1)}"><link rel="icon" href="${SEO_SITE}favicon.ico">${appStylesheets}${schemas.map(schema=>`<script type="application/ld+json">${json(schema)}</script>`).join('')}<script>if(new URLSearchParams(location.search).has('p'))location.replace('${SEO_SITE}${prefix(locale)}'+location.search+location.hash)</script><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:var(--bg-page,#05060b);color:var(--text-body,#c9d1e2)}.seo-wrap{width:min(1040px,calc(100% - 40px));margin:auto}.seo-nav{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px;border-bottom:1px solid var(--border-hairline,#283044)}.seo-brand{border:0;display:block}.seo-brand img{display:block;width:164px;height:auto}.seo-langs{display:flex;gap:8px;align-items:center;font:var(--text-label,600 14px system-ui)}.seo-langs a{padding:8px 10px;border:0;border-radius:999px;color:var(--text-secondary,#9aa5bc)}.seo-langs a[aria-current]{background:var(--surface-card,#121623);color:var(--text-primary,#fff)}.hero{display:grid;grid-template-columns:minmax(0,1fr) 270px;align-items:center;gap:48px;padding:64px 0 44px}.hero h1{font:var(--text-display,700 clamp(2.4rem,7vw,4.6rem)/.98 system-ui);letter-spacing:var(--ls-display,-.04em);margin:0 0 20px;color:var(--text-primary,#fff)}.lede{font:var(--text-body-lg,400 18px/1.6 system-ui);color:var(--text-secondary,#aeb8cc);margin:0}.hero-eclipse{width:220px;aspect-ratio:1;margin:auto;border-radius:50%;position:relative;background:radial-gradient(circle,#05060b 0 55%,#121623 56% 61%,transparent 62%),radial-gradient(circle,rgba(255,165,31,.44),rgba(255,165,31,.08) 51%,transparent 69%);filter:drop-shadow(0 0 22px rgba(255,165,31,.2))}.hero-eclipse:after{content:'';position:absolute;inset:11%;border:1px solid var(--border-strong,#4a5670);border-radius:50%}.visual-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin:0 0 22px}.visual-card,.fact,section{background:var(--surface-card,#121623);border:1px solid var(--border-hairline,#283044);border-radius:var(--r-lg,18px)}.visual-card{overflow:hidden;min-height:250px;position:relative}.visual-card__head{padding:18px 20px 14px;font:var(--text-overline,600 12px/1.3 monospace);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted,#8994aa)}.locator{aspect-ratio:725/410;background:url('/brand/minimapa-iberia.png') center/cover;position:relative;border-top:1px solid var(--border-hairline,#283044)}.locator__point{position:absolute;width:18px;height:18px;border-radius:50%;background:var(--accent,#ffa51f);border:4px solid var(--ink-950,#05060b);box-shadow:0 0 0 2px var(--accent,#ffa51f),0 0 24px var(--accent,#ffa51f);transform:translate(-50%,-50%)}.eclipse-diagram{height:180px;display:grid;place-items:center}.eclipse-diagram svg{width:160px;height:160px;overflow:visible}.sun-disc{fill:var(--accent,#ffa51f);filter:drop-shadow(0 0 16px rgba(255,165,31,.55))}.moon-disc{fill:var(--ink-950,#05060b);stroke:var(--border-strong,#536079)}.altitude{padding:0 22px 22px}.altitude svg{width:100%;height:112px;overflow:visible}.altitude__horizon{stroke:var(--border-strong,#536079);stroke-width:2}.altitude__path{stroke:var(--mint-400,#55d6b3);stroke-width:3;fill:none;stroke-linecap:round}.altitude__sun{fill:var(--accent,#ffa51f);filter:drop-shadow(0 0 8px rgba(255,165,31,.5))}.altitude text{fill:var(--text-muted,#8994aa);font:12px var(--font-mono,monospace)}.timeline{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;position:relative;padding:16px 4px 2px;margin:22px 0 30px}.timeline:before{content:'';position:absolute;left:7%;right:7%;top:22px;height:2px;background:var(--border-strong,#536079)}.timeline__point{position:relative;z-index:1;display:grid;justify-items:center;gap:8px;min-width:70px;font:var(--text-data-sm,500 13px monospace);color:var(--text-primary,#fff)}.timeline__point i{width:14px;height:14px;background:var(--mint-400,#55d6b3);border:3px solid var(--bg-page,#05060b);border-radius:50%;box-shadow:0 0 0 1px var(--mint-400,#55d6b3)}.timeline__point--max i{background:var(--accent,#ffa51f);box-shadow:0 0 0 1px var(--accent,#ffa51f)}.timeline__point small{color:var(--text-muted,#8994aa)}.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0}.fact{padding:18px}.fact small{display:block;color:var(--text-muted,#8994aa);font:var(--text-overline,600 11px monospace);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}.fact strong{font:var(--text-data,500 21px monospace);font-variant-numeric:tabular-nums;color:var(--text-primary,#fff)}main>p,main>section,main>h2,main>.links,main>.cta{max-width:800px;margin-left:auto;margin-right:auto}main>p,p,li{line-height:1.65}main>h2,h2{margin-top:48px;color:var(--text-primary,#fff)}section{padding:22px;margin-top:28px;margin-bottom:28px}section h2{margin-top:0}.cta{display:block;width:max-content;margin-top:28px;margin-bottom:38px;padding:15px 22px;border:0;border-radius:999px;background:var(--accent,#ffa51f);color:var(--on-accent,#05060b);font:var(--text-label,700 15px system-ui);text-decoration:none}.links{padding:0;list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.links li{background:var(--surface-card,#121623);border:1px solid var(--border-hairline,#283044);border-radius:var(--r-md,14px);padding:14px 16px}.links a{border:0}.faq{padding:18px 0;border-top:1px solid var(--border-hairline,#283044)}.faq h3{margin:0 0 8px}.seo-footer{padding:42px 0;margin-top:60px;border-top:1px solid var(--border-hairline,#283044);color:var(--text-muted,#8994aa)}@media(max-width:760px){.seo-wrap{width:min(100% - 28px,1040px)}.seo-nav{min-height:66px}.seo-brand img{width:142px}.seo-langs{gap:2px}.seo-langs a{padding:7px}.hero{grid-template-columns:1fr;padding:38px 0 30px;gap:26px}.hero-eclipse{width:150px;grid-row:1}.visual-grid{grid-template-columns:1fr}.facts{grid-template-columns:repeat(2,minmax(0,1fr))}.links{grid-template-columns:1fr}.timeline__point{min-width:52px;font-size:11px}.timeline__point small{font-size:10px}}@media(max-width:390px){.seo-brand img{width:126px}.seo-langs a{font-size:12px;padding:6px 5px}.facts{grid-template-columns:1fr 1fr}.fact{padding:14px}.fact strong{font-size:17px}}</style></head><body data-page-kind="${route.kind}"><nav class="seo-nav seo-wrap"><a class="seo-brand" href="${SEO_SITE}${prefix(locale)}" aria-label="eclipsi.info"><img src="/brand/logo.svg" width="164" height="35" alt="eclipsi.info"></a><span class="seo-langs" aria-label="Languages">${languages}</span></nav><main class="seo-wrap"><header class="hero"><div>${officialEyebrow?`<span class="hero__eyebrow">${esc(officialEyebrow)}</span>`:''}<h1>${esc(h1)}</h1><p class="lede">${esc(description)}</p></div><div class="hero-eclipse" aria-hidden="true"></div></header>${body}</main><footer class="seo-footer seo-wrap">eclipsi.info · ${esc(s.disclaimer)}</footer></body></html>`;
+/**
+ * Les peces d'una pàgina, dites com a objecte i no com a set arguments seguits.
+ *
+ * Amb la llista posicional, afegir el veredicte volia dir tocar sis crides i
+ * comptar comes; i sobretot volia dir que `hero` i `lede` es podien intercanviar
+ * sense que el compilador digués res. Aquí no.
+ */
+interface Shell {
+  route: Route;
+  /** El que veu Google. Porta la xifra del veredicte a posta. */
+  title: string;
+  /** La meta descripció. NO és el text que llegeix qui obre la pàgina. */
+  description: string;
+  h1: string;
+  /** El text que llegeix qui obre la pàgina, sota l'h1. */
+  lede: string;
+  /**
+   * La xifra que decideix, quan la pàgina n'és una de local.
+   *
+   * ÉS L'ÚNIC AMBRE DE LA PÀGINA. Abans aquest lloc l'ocupava un `<div>` amb un
+   * degradat rodó i `aria-hidden`: quaranta per cent de la primera pantalla del
+   * mòbil gastats en un disc negre que no deia res, mentre la resposta —la
+   * durada, l'ocultació— quedava dues pantalles avall.
+   */
+  verdict?: SeoVerdictCopy;
+  /** El dibuix de la fase al màxim, si la pàgina té un punt concret. */
+  dial?: string;
+  eyebrow?: string;
+  body: string;
+  schemas: unknown[];
 }
 
-function breadcrumb(locale:Locale, route:Route, name:string) {
+/*
+ * EL CAMÍ DE MOLLES, I PER QUÈ L'HTML I EL JSON-LD SURTEN DEL MATEIX OBJECTE.
+ *
+ * El `BreadcrumbList` de les 1.296 fitxes de ciutat i de punt es SALTAVA
+ * l'eclipsi, que és el seu pare: deia Inici → Barcelona, quan la jerarquia de
+ * debò és Inici → Eclipsi del 12 d'agost de 2026 → Barcelona. I no n'hi havia
+ * cap versió visible: qui obria la pàgina no tenia cap manera de pujar un
+ * nivell.
+ *
+ * Les dues coses es corregeixen alhora, i a posta amb UNA sola font: aquesta
+ * funció construeix la llista, `shell()` la pinta llegint el mateix objecte que
+ * ja va a l'`<script type="application/ld+json">`. No hi ha cap manera que el
+ * que llegeix una persona i el que llegeix Google divergeixin, perquè són
+ * literalment les mateixes dades. És el patró que aquest projecte ja ha hagut
+ * d'aprendre tres vegades: allò que no es compara amb res acaba mentint.
+ */
+interface CrumbList { '@context':string; '@type':string; itemListElement:Array<Record<string,unknown>> }
+
+function breadcrumb(locale:Locale, route:Route, name:string):CrumbList {
   const s=seoStrings(locale);
   const items:Array<Record<string,unknown>>=[{'@type':'ListItem',position:1,name:s.home,item:`${SEO_SITE}${prefix(locale)}`}];
-  if(route.kind==='guide') items.push({'@type':'ListItem',position:2,name:s.guides,item:urlFor(locale,{kind:'guides',id:'index'})});
-  items.push({'@type':'ListItem',position:items.length+1,name,item:urlFor(locale,route)});
+  const push=(label:string,url:string)=>items.push({'@type':'ListItem',position:items.length+1,name:label,item:url});
+  if(route.kind==='guide') push(s.guides,urlFor(locale,{kind:'guides',id:'index'}));
+  if((route.kind==='city'||route.kind==='point')&&route.eclipseId){
+    const eclipse=ECLIPSES.find(entry=>entry.id===route.eclipseId);
+    if(eclipse) push(eclipse.label[locale],urlFor(locale,{kind:'eclipse',id:eclipse.id}));
+  }
+  push(name,urlFor(locale,route));
   return {'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:items};
+}
+
+/*
+ * DES D'UNA FITXA DE CIUTAT NO S'ARRIBAVA A CAP ALTRA CIUTAT.
+ *
+ * Barcelona enllaçava tres punts oficials, l'eclipsi i les guies; Girona, no.
+ * Qui compara llocs —que és tot el motiu d'aquestes pàgines: decidir on
+ * plantar-se— havia de tornar a la fitxa de l'eclipsi i baixar fins al
+ * directori. Aquestes sis ciutats són les més pròximes al punt de la pàgina i
+ * porten el seu veredicte al costat, perquè la comparació es pugui fer sense
+ * clicar.
+ *
+ * LA XIFRA SURT DEL MOTOR, com a `nearbyPointCards`: si aquesta llista digués
+ * «100,0 % parcial» on la fitxa de l'altre costat en diu 99,96 %, tornaríem a
+ * tenir dues pàgines nostres contradient-se.
+ */
+const CITY_LOCAL=new Map<string,ReturnType<typeof computeLocalCircumstances>>();
+const cityLocal=(eclipseId:string,city:SeoCity)=>{
+  const key=`${eclipseId}|${city.id}`;
+  const cached=CITY_LOCAL.get(key);
+  if(cached) return cached;
+  const computed=computeLocalCircumstances(eclipseId,{lat:city.lat,lon:city.lon,elevation:0});
+  CITY_LOCAL.set(key,computed);
+  return computed;
+};
+
+function nearbyCityNav(locale:Locale,eclipseId:string,lat:number,lon:number,excludeId?:string):string {
+  const L=CHROME[locale];
+  const items=[...SEO_CITIES]
+    .filter(city=>city.id!==excludeId)
+    .sort((a,b)=>distance2(lat,lon,a.lat,a.lon)-distance2(lat,lon,b.lat,b.lon))
+    .slice(0,6)
+    .map(city=>{
+      const local=cityLocal(eclipseId,city);
+      const verdict=seoVerdict(locale,seoOutcome(local),{
+        duration:fmtNum(locale,local.centralDurationSec),
+        obscuration:fmtNum(locale,local.contacts.max.obscuration*100),
+        total:local.kind==='total',
+      });
+      return `<li><a href="/${pathFor(locale,{kind:'city',id:city.id,eclipseId})}"><strong>${esc(city.name[locale])}</strong><span>${esc(verdict.summary)}</span><span>${fmtNum(locale,distanceKm(lat,lon,city.lat,city.lon),0)} km ${esc(L.distance)}</span></a></li>`;
+    }).join('');
+  return items?`<nav class="seo-nextcities" aria-label="${esc(L.nextCities)}"><h2>${esc(L.nextCities)}</h2><ul>${items}</ul></nav>`:'';
+}
+
+function shell(locale: Locale, page: Shell): string {
+  const { route, title, description, h1, lede, schemas } = page;
+  let body = page.body;
+  const canonical = urlFor(locale, route), s = seoStrings(locale), L = CHROME[locale];
+  const eclipseId=route.kind==='eclipse'?route.id:route.eclipseId;
+  const home=`/${prefix(locale)}`;
+
+  /*
+   * LA BARRA SUPERIOR, REFETA SENCERA. El que hi havia i per què no servia:
+   *
+   * · Per sota de 760 px, `.seo-nav__links` i `.seo-nav__cta` eren
+   *   `display:none`. O sigui que al MÒBIL —d'on ve la major part del trànsit
+   *   d'aquestes pàgines— no hi havia cap manera d'anar a l'app des d'una
+   *   pàgina que existeix precisament per portar-hi gent. Ara el botó no
+   *   desapareix mai: el que canvia és on es col·loca, no si hi és.
+   * · Tot el menú vivia dins d'un `<span class="seo-langs" aria-label="Languages">`.
+   *   Un lector de pantalla anunciava «Languages» —en anglès, als quatre
+   *   idiomes— i a dins hi trobava el mapa, la guia, el cercador i el botó de
+   *   l'app. Ara són dues `<nav>` amb el seu nom traduït: la del lloc i la de
+   *   l'idioma.
+   * · S'hi emetia un enllaç «GitHub» a totes les pàgines que el CSS amagava amb
+   *   `display:none`. Un enllaç invisible multiplicat per 1.316. És al peu, que
+   *   és on toca, i aquí ja no hi és.
+   *
+   * L'ordre del DOM és el de lectura i el de la importància: marca, navegació,
+   * eines, botó, idioma. La graella el recol·loca per amplada sense tornar-lo a
+   * ordenar, que és el que permet que al mòbil el botó pugi a la primera fila.
+   */
+  const eclipseNav=eclipseId&&route.kind!=='eclipse'
+    ? `<a class="seo-head__eclipse" href="/${pathFor(locale,{kind:'eclipse',id:eclipseId})}">${esc(L.eclipseShort)} ${eclipseId.slice(0,4)}</a>`
+    : '';
+  const head=`<header class="seo-head"><div class="seo-head__row seo-wrap">`
+    +`<a class="seo-head__brand" href="${home}" aria-label="eclipsi.info"><img src="/brand/logo.svg" width="164" height="35" alt="eclipsi.info"></a>`
+    +`<nav class="seo-head__nav" aria-label="${esc(L.nav)}"><a href="${home}#/mapa">${esc(L.mapShort)}</a>${eclipseNav}<a href="/${pathFor(locale,{kind:'guides',id:'index'})}">${esc(L.guideShort)}</a></nav>`
+    +`<span class="seo-head__tools" data-seo-header-tools data-locale="${locale}" data-eclipse="${eclipseId??'2026-08-12'}"></span>`
+    +`<a class="seo-head__cta" href="${home}">${esc(L.open)}</a>`
+    +`<nav class="seo-head__langs" aria-label="${esc(L.lang)}">${SEO_LOCALES.map(language=>`<a href="/${pathFor(language,route)}"${language===locale?' aria-current="page"':''}>${language.toUpperCase()}</a>`).join('')}</nav>`
+    +`</div></header>`;
+
+  // El camí visible i el JSON-LD són el MATEIX objecte: vegeu `breadcrumb()`.
+  const trail=schemas.find(schema=>(schema as {'@type'?:string})?.['@type']==='BreadcrumbList') as CrumbList|undefined;
+  const crumbs=trail?`<nav class="seo-crumbs seo-wrap" aria-label="${esc(L.crumbs)}"><ol>${trail.itemListElement.map((item,index,all)=>{
+    const label=String(item.name), url=String(item.item);
+    const href=url.startsWith(SEO_SITE)?`/${url.slice(SEO_SITE.length)}`:url;
+    return index===all.length-1
+      ?`<li><span aria-current="page">${esc(label)}</span></li>`
+      :`<li><a href="${href}">${esc(label)}</a></li>`;
+  }).join('')}</ol></nav>`:'';
+
+  /*
+   * LA FILA DE METADADES JA NO REPETEIX EL NOM DE L'ECLIPSI.
+   *
+   * Deia tres coses: el nom de l'eclipsi, la data en xifres i «Càlcul
+   * topocèntric local». El nom ara és al camí de molles, tres línies més amunt,
+   * i la data en xifres era la mateixa data escrita dues vegades seguides.
+   * Queden les dues que aporten alguna cosa: quan és, i amb quin mètode.
+   */
+  if(eclipseId){
+    const eclipse=ECLIPSES.find(entry=>entry.id===eclipseId);
+    if(eclipse) body=`<p class="seo-dateline"><span>${esc(fmtLongDate(locale,eclipse.id))}</span><span>${locale==='ca'?'Càlcul topocèntric local':locale==='es'?'Cálculo topocéntrico local':locale==='fr'?'Calcul topocentrique local':'Local topocentric calculation'}</span></p>${body}`;
+  }
+
+  /*
+   * ELS ENLLAÇOS LATERALS ES MUNTEN AQUÍ i no dins de `cityPage()`/`pointPage()`
+   * perquè les dues menes de fitxa els necessiten iguals i la regla és una: des
+   * d'un lloc s'ha de poder saltar a un altre lloc comparable.
+   */
+  const origin=route.kind==='city'
+    ? SEO_CITIES.find(city=>city.id===route.id)
+    : route.kind==='point'&&route.eclipseId ? pointsForEclipse(route.eclipseId).find(point=>point.id===route.id) : undefined;
+  if(origin&&eclipseId) body+=nearbyCityNav(locale,eclipseId,origin.lat,origin.lon,route.kind==='city'?route.id:undefined);
+
+  /*
+   * EL PEU SURT DE `<main>`, I NO ÉS UNA MINÚCIA D'ETIQUETES.
+   *
+   * Hi havia DOS `<footer>`: el de les columnes, dins de `<main>` —o sigui,
+   * anunciat com a contingut principal de la pàgina—, i un segon
+   * `<footer class="seo-footer">` a fora amb l'única frase honesta del conjunt,
+   * que el CSS amagava amb `display:none`. S'emetia 1.328 vegades i no la va
+   * llegir mai ningú.
+   *
+   * Ara n'hi ha un, a fora de `<main>`, i la frase es veu. A més ja no és una
+   * bessona escrita aquí: és `PRIVACY_NOTE`, la mateixa que signa el peu de
+   * l'app i «Com funciona» (vegeu l'import de dalt).
+   */
+  const footer=`<footer class="seo-foot"><div class="seo-foot__inner seo-wrap">${seoFooterUtility(locale,eclipseId)}<div class="seo-foot__cols">${seoSiteFooterInner(locale)}</div><div class="seo-foot__legal"><p>eclipsi.info · ${esc(s.disclaimer)}</p></div></div></footer>`;
+
+  /*
+   * LA MATEIXA FRASE DUES VEGADES SEGUIDES.
+   *
+   * Les guies passen `guide.intro` com a `lede` —que és el text que va sota
+   * l'h1— i el seu cos torna a començar amb `<p>{guide.intro}</p>`. A la
+   * pàgina publicada es llegia el mateix paràgraf dos cops, un amb el cos gran
+   * i l'altre amb el normal, separats per un espai en blanc.
+   *
+   * Passa a les tres guies (`<p>{intro}</p>` al principi del cos) i al centre
+   * de guies (`<p class="guide-hub__intro">{intro}</p>` dins de la secció).
+   *
+   * Es treu aquí i no a `guidePage()` perquè la duplicació NO és un error
+   * d'aquelles funcions: és el resultat de dues decisions correctes preses per
+   * separat (l'entradeta va sota el titular; l'article comença per la seva
+   * entrada). Qui les veu totes dues és aquest embolcall, i la comparació és
+   * exacta —la mateixa cadena escapada— o no es toca res.
+   */
+  for(const duplicated of [`<p>${esc(lede)}</p>`,`<p class="guide-hub__intro">${esc(lede)}</p>`]) {
+    body=body.replace(duplicated,'');
+  }
+
+  body=body.replaceAll(`href="${SEO_SITE}`, 'href="/');
+
+  /*
+   * EL VEREDICTE ÉS UN ENCAPÇALAMENT PLA, NO UNA TARGETA, i abans ho era per
+   * accident: `.verdict` (`src/index.css:111`) és la targeta del simulador i
+   * aquestes pàgines carreguen els fulls de l'app sencers, o sigui que li
+   * heretava fons, vora i radi sense que ningú ho decidís. Amb el nom canviat a
+   * `seo-verdict` la decisió torna a ser nostra, i és aquesta: la primera
+   * pantalla no porta capsa. Si la portés, tot el que ve a sota —la cronologia,
+   * la taula, el simulador— serien targetes dins d'una targeta, que és
+   * exactament el que el sistema prohibeix. La jerarquia la fan la mida de la
+   * xifra i l'ambre, no una vora.
+   */
+  const eyebrowMarkup=page.eyebrow?`<span class="seo-verdict__eyebrow">${esc(page.eyebrow)}</span>`:'';
+  /*
+   * El bloc de la xifra només existeix si la pàgina en té una. L'índex de guies
+   * i la fitxa d'un eclipsi no parlen de cap punt concret, i inventar-los una
+   * xifra seria pitjor que no tenir-ne cap: la graella cau a una sola columna i
+   * el títol s'estén, que és el que toca quan no hi ha veredicte a donar.
+   */
+  const verdictMarkup=page.verdict
+    ?`<div class="seo-verdict__answer">${page.dial??''}<p class="seo-verdict__figure${/\d/.test(page.verdict.figure)?'':' seo-verdict__figure--word'}"><strong>${esc(page.verdict.figure)}</strong><span>${esc(page.verdict.unit)}</span></p></div>`
+    :'';
+  return `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#05060b"><meta name="color-scheme" content="dark"><title>${esc(title)}</title><meta name="description" content="${esc(description)}"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1"><link rel="canonical" href="${canonical}">${alternateLinks(route)}<meta property="og:type" content="article"><meta property="og:site_name" content="eclipsi.info"><meta property="og:locale" content="${locale}"><meta property="og:url" content="${canonical}"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:image" content="${ogImage(locale)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${esc(h1)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(description)}"><meta name="twitter:image" content="${ogImage(locale)}"><meta name="twitter:image:alt" content="${esc(h1)}"><link rel="icon" href="/favicon.ico" sizes="48x48"><link rel="icon" type="image/svg+xml" href="/favicon.svg">${appStylesheets}${schemas.map(schema=>`<script type="application/ld+json">${json(schema)}</script>`).join('')}<script>if(/^#\/(compte|mapa|cel|guia|com-funciona)/.test(location.hash)&&new URLSearchParams(location.search).has('p'))location.replace('${SEO_SITE}${prefix(locale)}'+location.search+location.hash)</script></head><body class="seo-page" data-page-kind="${route.kind}">${head}${crumbs}<main class="seo-main seo-wrap"><header class="seo-verdict"><div class="seo-verdict__lead">${eyebrowMarkup}<h1>${esc(h1)}</h1><p class="seo-verdict__consequence">${esc(lede)}</p></div>${verdictMarkup}</header>${body}</main>${footer}</body></html>`;
 }
 
 function guideLinks(locale: Locale, eclipseId?: string): string {
@@ -258,7 +552,7 @@ function eclipsePage(locale: Locale, eclipse: EclipseEntry): Page {
   const body=`${eclipseOverviewMap(locale,eclipse.id)}${eclipseSummary(locale,eclipse)}<section class="event-intro"><h2>${esc(s.eclipse)}</h2><p class="event-intro__lead">${esc(eclipse.spain[locale])}</p>${eclipse.tips?`<ul>${eclipse.tips[locale].map(tip=>`<li>${esc(tip)}</li>`).join('')}</ul>`:''}<a class="cta" href="${SEO_SITE}${prefix(locale)}#/mapa">${esc(locale==='ca'?'Calcula el teu punt al mapa':locale==='es'?'Calcula tu punto en el mapa':locale==='fr'?'Calculez votre lieu sur la carte':'Calculate your location on the map')}</a></section>${eclipseJourney(locale)}<h2>${esc(s.cities)}</h2><p class="event-directory-note">${esc(directoryNote)}</p><div class="city-directory">${cityLinks}</div>${pointLinks?`<h2>${esc(s.points)}</h2><p class="event-directory-note">${esc(locale==='ca'?'Punts publicats per administracions i organitzadors, agrupats per territori. Comprova sempre accés, aforament i avisos oficials abans de sortir.':locale==='es'?'Puntos publicados por administraciones y organizadores, agrupados por territorio. Comprueba siempre acceso, aforo y avisos oficiales antes de salir.':locale==='fr'?'Sites publiés par les administrations et organisateurs, regroupés par territoire. Vérifiez toujours accès, capacité et avis officiels avant le départ.':'Sites published by public bodies and organisers, grouped by region. Always check access, capacity and official notices before travelling.')}</p><div class="point-directory">${pointLinks}</div>`:''}<h2>${esc(s.guides)}</h2><ul class="links">${guideLinks(locale,eclipse.id)}</ul>`;
   const window=SEO_EVENT_WINDOWS[eclipse.id];
   const event={ '@context':'https://schema.org','@type':'Event','@id':`${urlFor(locale,route)}#event`,name:eclipse.label[locale],startDate:window.start,endDate:window.end,eventStatus:'https://schema.org/EventScheduled',eventAttendanceMode:'https://schema.org/OfflineEventAttendanceMode',description:eclipse.spain[locale],url:urlFor(locale,route),image:`${ogImage(locale)}`,location:{'@type':'Place',name:window.area[locale]} };
-  return {route,html:shell(locale,route,title,description,eclipse.label[locale],body,[event,breadcrumb(locale,route,eclipse.label[locale])])};
+  return {route,html:shell(locale,{route,title,description,h1:eclipse.label[locale],lede:eclipse.spain[locale],body,schemas:[event,breadcrumb(locale,route,eclipse.label[locale])]})};
 }
 
 function edgeText(locale:Locale):string {
@@ -276,11 +570,20 @@ function localContext(locale:Locale,c:{edgeUncertain:boolean;sunBelowHorizonDuri
 }
 type LocalCircumstances = ReturnType<typeof computeLocalCircumstances>;
 
-function visualDashboard(locale: Locale, c: LocalCircumstances): string {
-  const phaseLabel=locale==='ca'?'Aspecte al màxim':locale==='es'?'Aspecto en el máximo':locale==='fr'?'Aspect au maximum':'Appearance at maximum';
+/**
+ * La cronologia local dels contactes. NOMÉS la cronologia.
+ *
+ * Aquesta funció es deia `visualDashboard` i pintava tres coses: el dibuix de la
+ * fase, tres estadístiques i la línia de contactes. Les tres estadístiques
+ * —disc tapat, altura del Sol, azimut— tornaven a sortir setanta píxels més
+ * avall, dins de la targeta de dades de `facts()`, amb una altra composició i
+ * els mateixos números. El dibuix de la fase ara viu al veredicte, que és on
+ * pot dir alguna cosa.
+ *
+ * El que queda és el que no es repetia enlloc.
+ */
+function localTimeline(locale: Locale, c: LocalCircumstances): string {
   const contactsLabel=locale==='ca'?'Cronologia local':locale==='es'?'Cronología local':locale==='fr'?'Chronologie locale':'Local timeline';
-  const obscuration=Math.max(0,Math.min(1,c.contacts.max.obscuration));
-  const altitude=c.contacts.max.sun.altitudeApparent;
   const contactEntries=[
     c.contacts.c1&&['C1',c.contacts.c1.time],
     c.contacts.c2&&['C2',c.contacts.c2.time],
@@ -293,37 +596,42 @@ function visualDashboard(locale: Locale, c: LocalCircumstances): string {
     activeIndex:contactEntries.findIndex(([label])=>label==='MAX'),
     className:'seo-timeline',
   }));
-  const phaseCard=renderToStaticMarkup(createElement(Card,{className:'seo-local-phase'} as CardProps,
-    createElement('div',{className:'seo-local-phase__visual'},
-      createElement('span',null,phaseLabel),
-      createElement(PhaseDial,{obscuration,totality:c.kind==='total'&&c.centralDurationSec>0&&!c.edgeUncertain,size:160,glow:true}),
-    ),
-    createElement('div',{className:'seo-local-phase__stats'},
-      createElement(Stat,{label:locale==='ca'?'Disc solar cobert':locale==='es'?'Disco solar cubierto':locale==='fr'?'Disque solaire couvert':'Solar disc obscured',value:`${fmtNum(locale,obscuration*100)} %`,size:'lg',tone:'accent'}),
-      createElement(Stat,{label:locale==='ca'?'Sol sobre l’horitzó astronòmic':locale==='es'?'Sol sobre el horizonte astronómico':locale==='fr'?'Soleil au-dessus de l’horizon astronomique':'Sun above astronomical horizon',value:`${fmtNum(locale,altitude)}°`}),
-      createElement(Stat,{label:locale==='ca'?'Direcció al màxim':locale==='es'?'Dirección en el máximo':locale==='fr'?'Direction au maximum':'Direction at maximum',value:`${fmtNum(locale,c.contacts.max.sun.azimuth,0)}°`,unit:locale==='ca'||locale==='es'?'azimut':locale==='fr'?'azimut':'azimuth'}),
-    ),
-  ));
-  return `<div class="visual-grid visual-grid--phase" style="display:block;max-width:800px;margin-left:auto;margin-right:auto">${phaseCard}</div><div class="visual-card__head">${esc(contactsLabel)}</div><div class="timeline-widget">${timeline}</div>`;
+  return `<div class="visual-card__head">${esc(contactsLabel)}</div><div class="timeline-widget">${timeline}</div>`;
 }
 
 function liveLocalWidgets(locale:Locale,eclipseId:string,lat:number,lon:number,elevation:number,name:string):string {
-  const mapUrl=`${prefix(locale)}?p=${lat.toFixed(5)},${lon.toFixed(5)}&amp;e=${eclipseId}&amp;n=${encodeURIComponent(name)}#/mapa`;
+  // AMB BARRA DAVANT. Sense ella el camí és RELATIU: des de
+  // `/es/ciudad/barcelona/12-08-2026/`, un `es/?p=…` va a parar a
+  // `/es/ciudad/barcelona/12-08-2026/es/`, que és un 404. En català passava
+  // desapercebut perquè `prefix('ca')` és buit i el resultat quedava a la
+  // mateixa pàgina; als altres tres idiomes, no.
+  const mapUrl=`/${prefix(locale)}?p=${lat.toFixed(5)},${lon.toFixed(5)}&amp;e=${eclipseId}&amp;n=${encodeURIComponent(name)}#/mapa`;
   return `<div class="seo-live-widgets" data-eclipse-local-widget data-eclipse="${eclipseId}" data-lat="${lat}" data-lon="${lon}" data-elevation="${elevation}" data-locale="${locale}" data-label="${esc(name)}" data-map-url="${mapUrl}"></div>`;
 }
 
 function facts(locale:Locale, eclipse:EclipseEntry, lat:number, lon:number, elevation=0) {
   const s=seoStrings(locale), circumstances=computeLocalCircumstances(eclipse.id,{lat,lon,elevation});
   const centerDistance=distanceToCenterLineKm({lat,lon},eclipsePath(eclipse.id).center);
-  const central=circumstances.edgeUncertain?edgeText(locale):circumstances.centralDurationSec>0?`${fmtNum(locale,circumstances.centralDurationSec)} s`:s.noCentral;
   const starts=locale==='ca'?'Comença la fase parcial (C1)':locale==='es'?'Empieza la fase parcial (C1)':locale==='fr'?'Début de la phase partielle (C1)':'Partial phase begins (C1)';
   const ends=locale==='ca'?'Acaba la fase parcial (C4)':locale==='es'?'Termina la fase parcial (C4)':locale==='fr'?'Fin de la phase partielle (C4)':'Partial phase ends (C4)';
+  const outcome=seoOutcome(circumstances);
   const stats=[
     circumstances.contacts.c1&&createElement(Stat,{key:'c1',label:starts,value:fmtTime(locale,circumstances.contacts.c1.time)}),
     createElement(Stat,{key:'max',label:s.maximum,value:fmtTime(locale,circumstances.contacts.max.time)}),
     circumstances.contacts.c4&&createElement(Stat,{key:'c4',label:ends,value:fmtTime(locale,circumstances.contacts.c4.time)}),
-    createElement(Stat,{key:'duration',label:s.duration,value:central,tone:circumstances.centralDurationSec>0?'accent':'default'}),
-    createElement(Stat,{key:'obscuration',label:s.obscuration,value:`${fmtNum(locale,circumstances.contacts.max.obscuration*100)} %`}),
+    /*
+     * LA XIFRA QUE JA ÉS EL TITULAR NO ES REPETEIX AQUÍ.
+     *
+     * La taula sortia sencera i, a la mateixa pantalla, el veredicte deia el
+     * mateix número amb una altra composició. Pitjor encara: a les fitxes sense
+     * fase central, la fila «Durada de la fase central» tenia com a valor la
+     * frase «Sense fase central en aquest punt» —una frase dins d'una cel·la de
+     * dades, on la resta són hores i graus.
+     *
+     * La regla és senzilla: la durada només és una dada quan n'hi ha, i la que
+     * ja ocupa el veredicte no torna a sortir.
+     */
+    outcome==='central'?null:createElement(Stat,{key:'obscuration',label:s.obscuration,value:`${fmtNum(locale,circumstances.contacts.max.obscuration*100)} %`}),
     createElement(Stat,{key:'sun',label:s.sun,value:`${fmtNum(locale,circumstances.contacts.max.sun.altitudeApparent)}°`}),
     centerDistance!==null&&createElement(Stat,{key:'center',label:locale==='ca'?'Distància a la central':locale==='es'?'Distancia a la central':locale==='fr'?'Distance à la ligne centrale':'Distance to centre line',value:fmtNum(locale,centerDistance),unit:'km'}),
   ].filter(Boolean);
@@ -332,7 +640,46 @@ function facts(locale:Locale, eclipse:EclipseEntry, lat:number, lon:number, elev
     ? (locale==='ca'?'Dins la franja central':locale==='es'?'Dentro de la franja central':locale==='fr'?'Dans la bande centrale':'Inside the central path')
     : (locale==='ca'?'Fora de la franja: fase parcial':locale==='es'?'Fuera de la franja: fase parcial':locale==='fr'?'Hors de la bande : phase partielle':'Outside the path: partial phase');
   const position=renderToStaticMarkup(createElement(Badge,{tone:circumstances.centralDurationSec>0&&!circumstances.edgeUncertain?'clear':'partial',dot:true,className:'seo-position'} as BadgeProps,positionLabel));
-  return { circumstances, html:`${visualDashboard(locale,circumstances)}${position}${statsMarkup}`};
+
+  /*
+   * EL VEREDICTE SURT DEL MOTOR, NO DEL CATÀLEG.
+   *
+   * `seoOutcome()` mira `kind`, `edgeUncertain` i `centralDurationSec` de les
+   * circumstàncies d'AQUESTES coordenades. El títol i l'encapçalament que en
+   * surten no poden dir «total» on el motor no dona fase central, que és
+   * exactament el que passava: Barcelona anunciava un eclipsi total i, dues
+   * pantalles més avall, la mateixa pàgina en deia 99,8 % i «parcial».
+   */
+  const obscuration=Math.max(0,Math.min(1,circumstances.contacts.max.obscuration));
+  const verdict=seoVerdict(locale,outcome,{
+    duration:fmtNum(locale,circumstances.centralDurationSec),
+    obscuration:fmtNum(locale,obscuration*100),
+    total:circumstances.kind==='total',
+  });
+  // El dibuix va al costat de la xifra i petit: aquí és prova, no decoració.
+  const dial=renderToStaticMarkup(createElement('div',{className:'seo-verdict__dial'},
+    createElement(PhaseDial,{obscuration,totality:outcome==='central'&&circumstances.kind==='total',size:132,glow:outcome==='central'}),
+  ));
+
+  return { circumstances, outcome, verdict, dial, html:`${localTimeline(locale,circumstances)}${position}${statsMarkup}`};
+}
+
+/**
+ * La meta descripció d'una fitxa local.
+ *
+ * PROMET NOMÉS EL QUE LA PÀGINA DONA. La que hi havia deia «Simulador amb
+ * relleu, previsió del temps i punts oficials pròxims» a totes les fitxes,
+ * inclosa la del 2028, on una previsió del temps no vol dir res.
+ *
+ * Ara el primer que hi ha és el veredicte —que és la resposta i el que fa que
+ * valgui la pena el clic— i després només les dues dades que hi són sempre.
+ */
+function localDescription(locale:Locale,year:string,place:string,summary:string,c:LocalCircumstances):string {
+  const time=fmtTime(locale,c.contacts.max.time), altitude=fmtNum(locale,c.contacts.max.sun.altitudeApparent);
+  return locale==='ca'?`Eclipsi ${year} des de ${place}: ${summary}, màxim a les ${time} i Sol a ${altitude}° sobre l’horitzó. Contactes, relleu i punts oficials a prop.`
+    :locale==='es'?`Eclipse ${year} desde ${place}: ${summary}, máximo a las ${time} y Sol a ${altitude}° sobre el horizonte. Contactos, relieve y puntos oficiales cercanos.`
+    :locale==='fr'?`Éclipse ${year} depuis ${place} : ${summary}, maximum à ${time} et Soleil à ${altitude}° sur l’horizon. Contacts, relief et sites officiels proches.`
+    :`${year} eclipse from ${place}: ${summary}, maximum at ${time} with the Sun ${altitude}° above the horizon. Contacts, terrain and nearby official sites.`;
 }
 
 const nearbyHeading=(locale:Locale,name:string,alternative=false)=>locale==='ca'
@@ -341,17 +688,93 @@ const nearbyHeading=(locale:Locale,name:string,alternative=false)=>locale==='ca'
   : locale==='fr' ? `${alternative?'Autres sites':'Sites'} officiels près de ${name}`
   : `${alternative?'Other official sites':'Official sites'} near ${name}`;
 
+/**
+ * «I si des d'aquí no s'hi veu, on he d'anar?»
+ *
+ * La meitat que faltava. La fitxa deia el seu tant per cent i s'aturava; qui la
+ * llegeix no ha vingut a saber un número, ha vingut a decidir on es planta. El
+ * càlcul és a `content/seo/travel.ts` —amb els dos llindars i el motiu de
+ * cadascun escrits allà— i aquí només se'n pinta el resultat.
+ */
+function travelSection(locale:Locale,eclipse:EclipseEntry,lat:number,lon:number,place:string,selfCityId?:string):string {
+  const advice=travelAdvice(eclipse.id,{lat,lon},SEO_CITIES,ECLIPSES.map(entry=>entry.id));
+  if(advice.centerLineKm===null) return '';
+  const target=advice.target
+    ? { targetName:SEO_CITIES.find(city=>city.id===advice.target!.id)!.name[locale],
+        targetKm:fmtNum(locale,advice.target.km,0),
+        targetSeconds:fmtNum(locale,advice.target.durationSec) }
+    : {};
+  const other=advice.betterEclipse
+    ? { otherDate:fmtLongDate(locale,advice.betterEclipse.eclipseId),
+        otherSeconds:fmtNum(locale,advice.betterEclipse.durationSec),
+        otherTotal:advice.betterEclipse.total }
+    : {};
+  const copy=seoTravel(locale,{ centerKm:fmtNum(locale,advice.centerLineKm,0), place, ...target, ...other });
+  const link=advice.target
+    ? `<a class="btn" href="${urlFor(locale,{kind:'city',id:advice.target.id,eclipseId:eclipse.id})}">${esc(SEO_CITIES.find(city=>city.id===advice.target!.id)!.name[locale])}</a>`
+    : advice.betterEclipse
+      /*
+       * L'enllaç porta al MATEIX lloc en l'altre eclipsi quan aquell lloc té
+       * fitxa pròpia —que és el cas d'una ciutat— i, si no en té, a la fitxa
+       * d'aquell eclipsi. Un punt oficial només existeix per al 2026: no té
+       * pàgina del 2027 on anar, i inventar-li-la seria un enllaç trencat.
+       */
+      ? `<a class="btn" href="${selfCityId!==undefined
+          ? urlFor(locale,{kind:'city',id:selfCityId,eclipseId:advice.betterEclipse.eclipseId})
+          : urlFor(locale,{kind:'eclipse',id:advice.betterEclipse.eclipseId})}">${esc(fmtLongDate(locale,advice.betterEclipse.eclipseId))}</a>`
+      : '';
+  return `<section class="seo-travel"><h2>${esc(copy.heading)}</h2><p>${esc(copy.centerLine)}</p>${
+    copy.target?`<p>${esc(copy.target)}</p>`:copy.otherEclipse?`<p>${esc(copy.otherEclipse)}</p>`:`<p>${esc(copy.stay!)}</p>`
+  }${link}</section>`;
+}
+
 function cityPage(locale:Locale,eclipse:EclipseEntry,city:SeoCity): Page {
   const name=city.name[locale];
   const s=seoStrings(locale),route:Route={kind:'city',id:city.id,eclipseId:eclipse.id},data=facts(locale,eclipse,city.lat,city.lon);
-  const year=eclipse.id.slice(0,4),kind=eclipseKind(locale,eclipse);
-  const title=shorten(locale==='ca'?`Eclipsi ${kind} ${year} a ${name}: hora i visibilitat | eclipsi.info`:locale==='es'?`Eclipse ${kind} ${year} en ${name}: hora y visibilidad | eclipsi.info`:locale==='fr'?`Éclipse ${kind} ${year} à ${name} : horaires et visibilité | eclipsi.info`:`${year} ${kind} eclipse in ${name}: times and visibility | eclipsi.info`,72);
-  const description=shorten(locale==='ca'?`Hora, fase i altura del Sol de l’eclipsi ${year} a ${name}. Simulador amb relleu, previsió del temps i punts oficials pròxims.`:locale==='es'?`Hora, fase y altura del Sol del eclipse ${year} en ${name}. Simulador con relieve, previsión del tiempo y puntos oficiales cercanos.`:locale==='fr'?`Heure, phase et hauteur du Soleil pour l’éclipse ${year} à ${name}. Simulateur du relief, météo et sites officiels proches.`:`Time, phase and Sun altitude for the ${year} eclipse in ${name}. Terrain simulator, weather forecast and nearby official sites.`,160);
+  const year=eclipse.id.slice(0,4);
+  // El títol porta el VEREDICTE i no la mena global de l'eclipsi. «Eclipsi 2026
+  // a Barcelona: 99,8 % del disc tapat» diu la veritat i, de passada, respon la
+  // pregunta abans del clic; «Eclipsi total 2026 a Barcelona» no era cert.
+  const title=shorten(seoLocalTitle(locale,year,name,data.verdict.summary),72);
+  const description=shorten(localDescription(locale,year,name,data.verdict.summary,data.circumstances),160);
   const nearby=nearbyPointCards(locale,eclipse,city.lat,city.lon);
   const nearbySection=nearby?`<h2>${esc(nearbyHeading(locale,name))}</h2><ul class="spot-list">${nearby}</ul>`:'';
-  const body=`${liveLocalWidgets(locale,eclipse.id,city.lat,city.lon,0,name)}<p>${esc(s.intro)}</p><p>${esc(city.context[locale])}</p><p>${esc(localContext(locale,data.circumstances))}</p><p><strong>${esc(safetyText(locale,data.circumstances.kind,data.circumstances.edgeUncertain))}</strong></p>${toolActions(locale,city.lat,city.lon,eclipse.id,name)}${nearbySection}<h2>${esc(s.related)}</h2><ul class="links"><li><a href="${urlFor(locale,{kind:'eclipse',id:eclipse.id})}">${esc(eclipse.label[locale])}</a></li>${guideLinks(locale,eclipse.id)}</ul>`;
+  /*
+   * L'ORDRE, QUE ANAVA AL REVÉS I ES MENJAVA LA RESPOSTA.
+   *
+   * Aquest cos començava amb `liveLocalWidgets` —el simulador de relleu, la
+   * previsió en directe i un mapa de MapLibre, tot arrencant en carregar— i
+   * `data.html`, que és on `facts()` deixa la cronologia de contactes, la
+   * posició respecte de la franja i la taula de dades, NO S'HI POSAVA MAI. Es
+   * calculava i es llençava.
+   *
+   * O sigui que una pàgina titulada «hora i visibilitat» no publicava cap hora
+   * a l'HTML: ni C1, ni el màxim, ni C4, ni la durada, ni la distància a la
+   * línia central. Tot allò només existia dins del JavaScript, que Google no
+   * espera i que qui té la xarxa justa no arriba a veure.
+   *
+   * Ara va primer el que es pot llegir sense executar res, i els widgets vius
+   * queden a sota, que és on han d'estar: són per aprofundir, no per respondre.
+   */
+  const body=[
+    data.html,
+    travelSection(locale,eclipse,city.lat,city.lon,name,city.id),
+    `<p>${esc(city.context[locale])}</p>`,
+    `<p>${esc(localContext(locale,data.circumstances))}</p>`,
+    `<p><strong>${esc(safetyText(locale,data.circumstances.kind,data.circumstances.edgeUncertain))}</strong></p>`,
+    toolActions(locale,city.lat,city.lon,eclipse.id,name),
+    liveLocalWidgets(locale,eclipse.id,city.lat,city.lon,0,name),
+    nearbySection,
+    `<h2>${esc(s.related)}</h2><ul class="links"><li><a href="${urlFor(locale,{kind:'eclipse',id:eclipse.id})}">${esc(eclipse.label[locale])}</a></li>${guideLinks(locale,eclipse.id)}</ul>`,
+  ].join('');
   const page={'@context':'https://schema.org','@type':'WebPage','@id':`${urlFor(locale,route)}#webpage`,name:title,url:urlFor(locale,route),inLanguage:locale,about:{'@type':'Place',name,addressRegion:city.region[locale],geo:{'@type':'GeoCoordinates',latitude:city.lat,longitude:city.lon}}};
-  return {route,html:shell(locale,route,title,description,localPageHeading(locale,eclipse,name),body,[page,breadcrumb(locale,route,name)])};
+  return {route,html:shell(locale,{
+    route,title,description,
+    h1:seoLocalHeading(locale,fmtLongDate(locale,eclipse.id),name),
+    lede:data.verdict.sentence,
+    verdict:data.verdict,dial:data.dial,
+    body,schemas:[page,breadcrumb(locale,route,name)],
+  })};
 }
 
 function pointPage(locale:Locale,eclipse:EclipseEntry,point:ObservationPoint): Page {
@@ -360,20 +783,57 @@ function pointPage(locale:Locale,eclipse:EclipseEntry,point:ObservationPoint): P
   const duplicateName=pointsForEclipse(eclipse.id).filter(candidate=>candidate.name[locale]===name).length>1;
   const displayName=duplicateName?`${name} · ${point.lat.toFixed(4)}, ${point.lon.toFixed(4)}`:name;
   const year=eclipse.id.slice(0,4);
-  const title=shorten(locale==='ca'?`Eclipsi ${year} a ${displayName}: punt oficial | eclipsi.info`:locale==='es'?`Eclipse ${year} en ${displayName}: punto oficial | eclipsi.info`:locale==='fr'?`Éclipse ${year} à ${displayName} : site officiel | eclipsi.info`:`${year} eclipse at ${displayName}: official site | eclipsi.info`,64);
-  const phase=data.circumstances.edgeUncertain?edgeText(locale):point.phase==='central'?s.central:s.partial;
+  // 84 i no 72: aquest títol porta el qualificador «punt oficial» al davant, i
+  // amb el tall curt el que es perdia era la marca del final. Google en talla
+  // el que li sembla de totes maneres; el que no pot passar és que el tallem
+  // nosaltres enmig d'una paraula.
+  const title=shorten(seoOfficialTitle(locale,year,displayName,data.verdict.summary),84);
   const officialBy=locale==='ca'?`Punt oficial d’observació publicat per ${point.source.who}.`:locale==='es'?`Punto oficial de observación publicado por ${point.source.who}.`:locale==='fr'?`Site officiel d’observation publié par ${point.source.who}.`:`Official viewing site published by ${point.source.who}.`;
-  const description=shorten(`${name}: ${phase}, ${s.maximum.toLowerCase()} ${fmtTime(locale,data.circumstances.contacts.max.time)}. ${officialBy}`,148);
+  const description=shorten(`${name}: ${data.verdict.summary}, ${s.maximum.toLowerCase()} ${fmtTime(locale,data.circumstances.contacts.max.time)}. ${officialBy}`,155);
   const precision=point.precision==='exact'?s.exact:s.estimated;
   const nearby=nearbyPointCards(locale,eclipse,point.lat,point.lon,point.id);
   const kindContext=point.kind==='event'?s.event:point.kind==='observatory'?s.observatory:s.openSite;
   const elevation=point.elevationM===undefined?'':`<p><strong>${esc(s.elevation)}:</strong> ${fmtNum(locale,point.elevationM,0)} m</p>`;
+  /*
+   * CINC DECIMALS SÓN UN METRE, I 112 DELS 274 PUNTS NO EN TENEN CAP.
+   *
+   * `precision: 'estimated'` vol dir que la font publica el LLOC —«el passeig
+   * marítim», «el camp de futbol»— i no cap coordenada; la que tenim l'hem
+   * situada nosaltres. Escriure-la amb `toFixed(5)` és donar-li una resolució
+   * d'un metre que ningú no ha mesurat: una estimació vestida de mesura, que és
+   * el que la regla 2 prohibeix amb totes les lletres.
+   *
+   * Tres decimals són uns cent metres, que és l'ordre de magnitud del que de
+   * debò sabem, i la frase de `s.estimated` ja diu al costat que és estimada.
+   */
+  const digits=point.precision==='exact'?5:3;
+  const coordinates=`<p><strong>${esc(s.coords)}:</strong> ${point.lat.toFixed(digits)}, ${point.lon.toFixed(digits)}</p>`;
   const nearbySection=nearby?`<h2>${esc(nearbyHeading(locale,name,true))}</h2><ul class="spot-list">${nearby}</ul>`:'';
   const officialLabel=locale==='ca'?'Punt oficial d’observació':locale==='es'?'Punto oficial de observación':locale==='fr'?'Site officiel d’observation':'Official viewing site';
   const identity=`<aside class="official-identity"><span class="official-identity__eyebrow">${esc(officialLabel)}</span><strong>${esc(point.source.who)}</strong><p>${esc(kindContext)} ${esc(precision)} · <a href="${esc(point.source.url)}" rel="nofollow external">${esc(s.source)}</a></p></aside>`;
-  const body=`${identity}${liveLocalWidgets(locale,eclipse.id,point.lat,point.lon,point.elevationM??0,name)}<p><strong>${esc(officialBy)}</strong></p>${point.note?`<p>${esc(point.note[locale])}</p>`:''}<p>${esc(localContext(locale,data.circumstances))}</p><p><strong>${esc(safetyText(locale,data.circumstances.kind,data.circumstances.edgeUncertain))}</strong></p><p><strong>${esc(s.coords)}:</strong> ${point.lat.toFixed(5)}, ${point.lon.toFixed(5)}</p>${elevation}${toolActions(locale,point.lat,point.lon,eclipse.id,name)}${nearbySection}<h2>${esc(s.related)}</h2><ul class="links"><li><a href="${urlFor(locale,{kind:'eclipse',id:eclipse.id})}">${esc(eclipse.label[locale])}</a></li>${guideLinks(locale,eclipse.id)}</ul>`;
+  const body=[
+    identity,
+    data.html,
+    travelSection(locale,eclipse,point.lat,point.lon,name),
+    point.note?`<p>${esc(point.note[locale])}</p>`:'',
+    `<p>${esc(localContext(locale,data.circumstances))}</p>`,
+    `<p><strong>${esc(safetyText(locale,data.circumstances.kind,data.circumstances.edgeUncertain))}</strong></p>`,
+    coordinates,
+    elevation,
+    toolActions(locale,point.lat,point.lon,eclipse.id,name),
+    liveLocalWidgets(locale,eclipse.id,point.lat,point.lon,point.elevationM??0,name),
+    nearbySection,
+    `<h2>${esc(s.related)}</h2><ul class="links"><li><a href="${urlFor(locale,{kind:'eclipse',id:eclipse.id})}">${esc(eclipse.label[locale])}</a></li>${guideLinks(locale,eclipse.id)}</ul>`,
+  ].join('');
   const place={'@context':'https://schema.org','@type':'Place','@id':`${urlFor(locale,route)}#place`,name,description,url:urlFor(locale,route),geo:{'@type':'GeoCoordinates',latitude:point.lat,longitude:point.lon},subjectOf:point.source.url};
-  return {route,html:shell(locale,route,title,description,localPageHeading(locale,eclipse,displayName),body,[place,breadcrumb(locale,route,displayName)])};
+  return {route,html:shell(locale,{
+    route,title,description,
+    h1:seoLocalHeading(locale,fmtLongDate(locale,eclipse.id),displayName),
+    lede:data.verdict.sentence,
+    verdict:data.verdict,dial:data.dial,
+    eyebrow:officialLabel,
+    body,schemas:[place,breadcrumb(locale,route,displayName)],
+  })};
 }
 
 function renderGuideBlock(block:GuideBlock):string {
@@ -429,12 +889,29 @@ function guideHubPage(locale:Locale):Page {
   const cards=EDITORIAL_GUIDE_IDS.map((id,index)=>{const guide=getEditorialGuide(id,locale);return `<article class="guide-hub__card"><span>${esc(copy.labels[index])}</span><h2>${esc(guide.title)}</h2><p>${esc(guide.description)}</p><a class="btn" href="${urlFor(locale,{kind:'guide',id})}">${esc(copy.open)}</a></article>`;}).join('');
   const body=`<section class="guide-hub"><p class="guide-hub__intro">${esc(copy.intro)}</p><div class="guide-hub__grid">${cards}</div><h2>${esc(copy.route)}</h2><ol class="guide-hub__route">${copy.steps.map(([title,text])=>`<li><strong>${esc(title)}</strong><span>${esc(text)}</span></li>`).join('')}</ol></section>`;
   const collection={'@context':'https://schema.org','@type':'CollectionPage','@id':`${urlFor(locale,route)}#page`,name:copy.title,description:copy.description,url:urlFor(locale,route),inLanguage:locale,hasPart:EDITORIAL_GUIDE_IDS.map(id=>({'@type':'Article',url:urlFor(locale,{kind:'guide',id}),name:getEditorialGuide(id,locale).title}))};
-  return {route,html:shell(locale,route,`${copy.title} | eclipsi.info`,copy.description,copy.title,body,[collection,breadcrumb(locale,route,copy.title)])};
+  return {route,html:shell(locale,{route,title:`${copy.title} | eclipsi.info`,description:copy.description,h1:copy.title,lede:copy.intro,body,schemas:[collection,breadcrumb(locale,route,copy.title)]})};
 }
 
 function guidePage(locale: Locale, id: EditorialGuideId): Page {
   const guide=getEditorialGuide(id,locale), route:Route={kind:'guide',id};
-  const allAppSections=getGuide(locale,'2026-08-12',{sunAltitudeDeg:4.4});
+  /*
+   * SENSE CONTEXT D'ALTURA, I AIXÒ ÉS TOT EL MOTIU D'AQUEST COMENTARI.
+   *
+   * Aquí hi deia `getGuide(locale,'2026-08-12',{sunAltitudeDeg:4.4})`. Aquell
+   * 4.4 era un número escrit a mà, i `content/guide.ts` el fa servir per
+   * personalitzar la secció del Sol baix: les pàgines publicades deien, als
+   * quatre idiomes, «Al teu punt, el Sol serà a només 4,4° al màxim. Aquesta
+   * altura surt del càlcul de l'eclipsi i canvia quan canvies de lloc».
+   *
+   * Una guia estàtica no té cap punt. No hi havia cap càlcul: hi havia una
+   * constant fent-se passar per una mesura, amb la frase que ho desmenteix
+   * escrita al costat. L'altura de debò només la poden dir les fitxes de ciutat
+   * i de punt, que sí que tenen coordenades.
+   *
+   * El paràmetre tampoc no calia per res: la secció `lowsun` ja passa el filtre
+   * de `getGuide` pel seu `criticalFor`, amb altura o sense.
+   */
+  const allAppSections=getGuide(locale,'2026-08-12');
   const wanted=id==='safety'?new Set(['phases']):id==='photography'?new Set(['photo']):new Set(['lowsun']);
   const appSections=allAppSections.filter(section=>wanted.has(section.id));
   const sections=appSections.map(section=>`<details class="guide__section" open><summary class="guide__summary"><span class="guide__summaryhead"><span class="guide__title">${esc(section.title)}</span></span><span class="guide__lead">${esc(section.lead)}</span></summary><div class="guide__body">${section.blocks.map(renderGuideBlock).join('')}</div></details>`).join('');
@@ -459,7 +936,7 @@ function guidePage(locale: Locale, id: EditorialGuideId): Page {
   const metaTitle=id==='safety'?(locale==='ca'?'Seguretat en un eclipsi: ulleres i filtres | eclipsi.info':locale==='es'?'Seguridad en un eclipse: gafas y filtros | eclipsi.info':locale==='fr'?'Sécurité pendant une éclipse : lunettes et filtres | eclipsi.info':'Solar eclipse safety: glasses and filters | eclipsi.info'):id==='photography'?(locale==='ca'?'Com fotografiar un eclipsi amb càmera o mòbil | eclipsi.info':locale==='es'?'Cómo fotografiar un eclipse con cámara o móvil | eclipsi.info':locale==='fr'?'Photographier une éclipse avec appareil ou mobile | eclipsi.info':'How to photograph an eclipse with a camera or phone | eclipsi.info'):(locale==='ca'?'Eclipsi amb el Sol baix: horitzó i azimut | eclipsi.info':locale==='es'?'Eclipse con el Sol bajo: horizonte y acimut | eclipsi.info':locale==='fr'?'Éclipse avec Soleil bas : horizon et azimut | eclipsi.info':'Low-Sun eclipse: horizon and azimuth | eclipsi.info');
   const article={'@context':'https://schema.org','@type':'Article','@id':`${urlFor(locale,route)}#article`,headline:guide.title,description:guide.description,datePublished:'2026-08-05',dateModified:'2026-08-05',inLanguage:locale,mainEntityOfPage:urlFor(locale,route),isPartOf:{'@id':`${urlFor(locale,{kind:'guides',id:'index'})}#page`},image:`${ogImage(locale)}`,citation:relevantSources.map(source=>source.url),author:{'@type':'Organization',name:'eclipsi.info',url:SEO_SITE},publisher:{'@type':'Organization',name:'eclipsi.info',url:SEO_SITE,logo:{'@type':'ImageObject',url:`${SEO_SITE}brand/logo.svg`}}};
   const faqSchema={'@context':'https://schema.org','@type':'FAQPage','@id':`${urlFor(locale,route)}#faq`,url:urlFor(locale,route),inLanguage:locale,mainEntity:guide.faq.map(item=>({'@type':'Question',name:item.question,acceptedAnswer:{'@type':'Answer',text:item.answer}}))};
-  return {route,html:shell(locale,route,metaTitle,guide.description,guide.title,body,[article,faqSchema,breadcrumb(locale,route,guide.title)])};
+  return {route,html:shell(locale,{route,title:metaTitle,description:guide.description,h1:guide.title,lede:guide.intro,body,schemas:[article,faqSchema,breadcrumb(locale,route,guide.title)]})};
 }
 
 async function main() {
@@ -480,7 +957,7 @@ async function main() {
     const pages: Page[] = [guideHubPage(locale),...EDITORIAL_GUIDE_IDS.map(id=>guidePage(locale,id))];
     for (const eclipse of ECLIPSES) pages.push(eclipsePage(locale,eclipse),...SEO_CITIES.map(city=>cityPage(locale,eclipse,city)),...pointsForEclipse(eclipse.id).map(point=>pointPage(locale,eclipse,point)));
     for (const page of pages) {
-      const html=page.html.replace(`<link rel="icon" href="${SEO_SITE}favicon.ico">`,'');
+      const html=page.html;
       const canonicals=[...html.matchAll(/<link rel="canonical" href="([^"]+)"/g)].map(match=>match[1]);
       const expected=urlFor(locale,page.route);
       if(canonicals.length!==1||canonicals[0]!==expected) throw new Error(`Canonical incorrecta: ${expected}`);
@@ -502,46 +979,133 @@ async function main() {
     if(!rootHtml.includes(`<html lang="${locale}">`)) throw new Error(`Idioma d’arrel incorrecte: ${rootUrl}`);
     canonicalUrls.add(rootUrl);
   }
-  const lastModified='2026-08-07';
-  const sitemapEntry=(url:string,alternates:string,xDefault:string)=>[
+  /* ══════════════════════════════════════════════════════════════════════════
+     EL SITEMAP
+
+     ── QUÈ HI HAVIA, I PER QUÈ NO SERVIA ────────────────────────────────────
+
+     Un sol fitxer d'1 MB amb 1.328 URL, cadascuna amb cinc `hreflang`. Dos
+     problemes, i el segon és el greu:
+
+     1. A Search Console un sitemap és la unitat d'informe. Amb un de sol,
+        l'única cosa que se'n pot llegir és «1.328 enviades, N indexades», que
+        no diu res accionable. Amb un per mena es veu de seguida si el que no
+        entra són les fitxes de punt oficial —que és el que un catàleg de 274
+        emplaçaments amb la mateixa plantilla té números de fer— o alguna
+        altra cosa.
+
+     2. El `lastmod` era la constant `'2026-08-07'` escrita a mà. Mentia el dia
+        8 i mentiria cada dia a partir d'aleshores, i mentia igual per a totes
+        les pàgines: la fitxa d'un punt que s'acabava d'afegir al catàleg i la
+        d'una ciutat que no havia canviat des de feia setmanes deien el mateix.
+        Un `lastmod` que no es mou és pitjor que cap: Google aprèn a no
+        creure-se'l i deixa de fer-ne cas per a tot el domini.
+
+     ── D'ON SURT ARA LA DATA ────────────────────────────────────────────────
+
+     Del que de debò determina el contingut de cada pàgina. Aquestes pàgines no
+     tenen text escrit a mà: surten del motor astronòmic i dels catàlegs. Per
+     tant la data de l'última modificació és la del fitxer més nou d'entre els
+     que hi entren —el catàleg de punts d'aquell eclipsi, la llista de ciutats,
+     el generador mateix— i es mou sola quan alguna cosa canvia de debò.
+
+     No és la data del build a posta: amb la data del build, cada desplegament
+     marcaria les 1.328 pàgines com a modificades encara que no hagués canviat
+     ni una coma, que és exactament la manera de fer que el camp deixi de
+     valer.
+     ═════════════════════════════════════════════════════════════════════════ */
+  const sourceDate=async(...files:string[]):Promise<string>=>{
+    const times=await Promise.all(files.map(async file=>(await stat(resolve(file))).mtimeMs));
+    return new Date(Math.max(...times)).toISOString().slice(0,10);
+  };
+  const GENERATOR='scripts/build-seo-pages.ts';
+  const lastmodFor=new Map<Kind,string>([
+    ['eclipse',await sourceDate(GENERATOR,'src/core/eclipses/catalog.ts','src/content/seo/cities.ts','src/data/observation-points/catalog.ts')],
+    ['city',await sourceDate(GENERATOR,'src/content/seo/cities.ts','src/core/eclipses/catalog.ts')],
+    ['point',await sourceDate(GENERATOR,'src/data/observation-points/catalog.ts',...ECLIPSES.map(e=>`src/data/observation-points/${e.id}.json`))],
+    ['guide',await sourceDate(GENERATOR,'src/content/editorial-guides.ts','src/content/guide.ts')],
+    ['guides',await sourceDate(GENERATOR,'src/content/editorial-guides.ts')],
+  ]);
+  const appLastmod=await sourceDate(GENERATOR,'index.html');
+
+  const sitemapEntry=(url:string,lastmod:string,alternates:string,xDefault:string)=>[
     '  <url>',
     `    <loc>${url}</loc>`,
-    `    <lastmod>${lastModified}</lastmod>`,
+    `    <lastmod>${lastmod}</lastmod>`,
     alternates,
     `    <xhtml:link rel="alternate" hreflang="x-default" href="${xDefault}"/>`,
     '  </url>',
   ].join('\n');
-  const rootRoutes=SEO_LOCALES.map(locale=>sitemapEntry(
-    `${SEO_SITE}${prefix(locale)}`,
-    SEO_LOCALES.map(language=>`    <xhtml:link rel="alternate" hreflang="${language}" href="${SEO_SITE}${prefix(language)}"/>`).join('\n'),
-    SEO_SITE,
-  ));
-  const projectRoutes=['com-funciona/','com-funciona/premsa/'].flatMap(suffix=>
-    SEO_LOCALES.map(locale=>sitemapEntry(
-      `${SEO_SITE}${prefix(locale)}${suffix}`,
-      SEO_LOCALES.map(language=>`    <xhtml:link rel="alternate" hreflang="${language}" href="${SEO_SITE}${prefix(language)}${suffix}"/>`).join('\n'),
-      `${SEO_SITE}${suffix}`,
-    )),
-  );
-  const entries=generated
-    .toSorted((a,b)=>a.url.localeCompare(b.url,'en'))
-    .map(({url,route})=>sitemapEntry(
-      url,
-      SEO_LOCALES.map(locale=>`    <xhtml:link rel="alternate" hreflang="${locale}" href="${urlFor(locale,route)}"/>`).join('\n'),
-      urlFor('ca',route),
-    ));
-  const sitemap=[
+  const urlset=(entries:string[])=>[
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
     '        xmlns:xhtml="http://www.w3.org/1999/xhtml">',
-    ...rootRoutes,
-    ...projectRoutes,
     ...entries,
     '</urlset>',
     '',
   ].join('\n');
-  await writeFile(resolve(OUT,'sitemap.xml'),sitemap);
+
+  // L'app i les seves pàgines de projecte: poques, i canvien amb el codi.
+  const appEntries=[
+    ...SEO_LOCALES.map(locale=>sitemapEntry(
+      `${SEO_SITE}${prefix(locale)}`,
+      appLastmod,
+      SEO_LOCALES.map(language=>`    <xhtml:link rel="alternate" hreflang="${language}" href="${SEO_SITE}${prefix(language)}"/>`).join('\n'),
+      SEO_SITE,
+    )),
+    ...['com-funciona/','com-funciona/premsa/'].flatMap(suffix=>
+      SEO_LOCALES.map(locale=>sitemapEntry(
+        `${SEO_SITE}${prefix(locale)}${suffix}`,
+        appLastmod,
+        SEO_LOCALES.map(language=>`    <xhtml:link rel="alternate" hreflang="${language}" href="${SEO_SITE}${prefix(language)}${suffix}"/>`).join('\n'),
+        `${SEO_SITE}${suffix}`,
+      )),
+    ),
+  ];
+
+  const entriesFor=(kinds:Kind[])=>generated
+    .filter(({route})=>kinds.includes(route.kind))
+    .toSorted((a,b)=>a.url.localeCompare(b.url,'en'))
+    .map(({url,route})=>sitemapEntry(
+      url,
+      lastmodFor.get(route.kind)!,
+      SEO_LOCALES.map(locale=>`    <xhtml:link rel="alternate" hreflang="${locale}" href="${urlFor(locale,route)}"/>`).join('\n'),
+      urlFor('ca',route),
+    ));
+
+  const SITEMAPS:Array<{file:string;entries:string[]}>=[
+    { file:'sitemap-app.xml', entries:appEntries },
+    { file:'sitemap-eclipsis.xml', entries:entriesFor(['eclipse']) },
+    { file:'sitemap-ciutats.xml', entries:entriesFor(['city']) },
+    { file:'sitemap-punts.xml', entries:entriesFor(['point']) },
+    { file:'sitemap-guies.xml', entries:entriesFor(['guide','guides']) },
+  ];
+  let indexed=0;
+  for(const {file,entries} of SITEMAPS){
+    // Un sitemap buit és un fitxer que Search Console marca com a error i que
+    // no diu res: si una mena no genera cap pàgina, no se'n publica cap.
+    if(entries.length===0) continue;
+    await writeFile(resolve(OUT,file),urlset(entries));
+    indexed+=entries.length;
+  }
+
+  const sitemapIndex=[
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...SITEMAPS.filter(({entries})=>entries.length>0).map(({file,entries})=>[
+      '  <sitemap>',
+      `    <loc>${SEO_SITE}${file}</loc>`,
+      // La data de l'índex és la més nova de les que conté: si no, un sitemap
+      // acabat de refer quedaria anunciat amb la data d'un altre.
+      `    <lastmod>${entries.map(entry=>/<lastmod>([^<]+)</.exec(entry)![1]).toSorted().at(-1)}</lastmod>`,
+      '  </sitemap>',
+    ].join('\n')),
+    '</sitemapindex>',
+    '',
+  ].join('\n');
+  await writeFile(resolve(OUT,'sitemap.xml'),sitemapIndex);
   console.log(`Generated ${generated.length} useful SEO pages in ${OUT}`);
+  console.log(`Sitemap: índex amb ${SITEMAPS.filter(s=>s.entries.length>0).length} fitxers i ${indexed} URL.`);
 }
 
 await main();

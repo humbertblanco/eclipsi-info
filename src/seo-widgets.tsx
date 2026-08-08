@@ -16,6 +16,11 @@ import { LocateFixed, Search } from 'lucide-react';
 import './styles/index.css';
 import './index.css';
 import './seo-widgets.css';
+// El full dels blocs estàtics de les pàgines editorials. L'importa aquesta
+// entrada perquè és l'única que Vite compila per a aquestes pàgines: així el
+// CSS surt amb hash i minificat, i el generador el troba sol buscant el
+// `seoWidgets-*.css` que ja enllaça. Vegeu-ne la capçalera.
+import './seo-pages.css';
 
 interface WidgetData {
   eclipse: string;
@@ -72,7 +77,10 @@ function HeaderLocationTools({ locale, eclipseId }: { locale: Locale; eclipseId:
         {!search.loading && search.outcome === 'empty' && <span className="seo-header-search__status">{copy.empty}</span>}
       </div>}
     </form>
-    <button className="seo-header-locate" type="button" onClick={locate} disabled={locating} title={copy.locate}><LocateFixed aria-hidden="true" /><span>{locating ? copy.locating : copy.locate}</span></button>
+    {/* `aria-label` i no només `title`: a la barra superior el rètol va amagat
+        amb `display:none` (no hi cap; vegeu `seo-widgets.css`) i un `title` sol
+        deixa el nom accessible del botó a la bona voluntat del navegador. */}
+    <button className="seo-header-locate" type="button" onClick={locate} disabled={locating} title={copy.locate} aria-label={copy.locate}><LocateFixed aria-hidden="true" /><span>{locating ? copy.locating : copy.locate}</span></button>
   </div>;
 }
 
