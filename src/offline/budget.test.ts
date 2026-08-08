@@ -560,8 +560,8 @@ describe('les URL que no són tessel·les', () => {
 
   it('els serveis en línia NO tenen regla de memòria cau, i és a posta', () => {
     /*
-     * Photon (noms de lloc) i Open-Meteo (predicció) es demanen en temps
-     * d'execució i no els cobreix cap regla. NO és cap oblit i per això ho diu
+     * Photon (noms de lloc) i Open-Meteo —predicció, arxiu i conjunt— es
+     * demanen en temps d'execució i no els cobreix cap regla. NO és cap oblit i per això ho diu
      * una prova:
      *
      *  · Una predicció servida de la memòria cau del service worker seria una
@@ -579,6 +579,10 @@ describe('les URL que no són tessel·les', () => {
       'https://photon.komoot.io/api?q=Reinosa',
       'https://api.open-meteo.com/v1/forecast?latitude=43&longitude=-4',
       'https://archive-api.open-meteo.com/v1/archive?latitude=43&longitude=-4',
+      // El conjunt val el mateix que la previsió, i encara més: una resposta
+      // desada seria una dispersió VELLA presentada com a mesura d'ara, que és
+      // pitjor que un número vell perquè el que anuncia és la confiança.
+      'https://ensemble-api.open-meteo.com/v1/ensemble?latitude=43&longitude=-4',
       'https://www.googletagmanager.com/gtag/js?id=G-1KCV75E6K8',
     ]) {
       expect(patterns.filter((p) => p.test(url))).toHaveLength(0);

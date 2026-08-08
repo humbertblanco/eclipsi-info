@@ -1,5 +1,6 @@
 /** Genera pàgines editorials estàtiques després de Vite, fora del precache PWA. */
 import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { statSync } from 'node:fs';
 /*
  * `readFileSync` I NO LA VERSIÓ AMB PROMESA, i és l'única raó per la qual
  * aquest import existeix: `cityPage()` i `pointPage()` són síncrones i les
@@ -44,6 +45,21 @@ import { Badge, Card, PhaseDial, SafetyNotice, Stat, TimelineTrack } from '../sr
 import type { BadgeProps, CardProps, SafetyNoticeProps } from '../src/ui';
 
 const OUT = resolve(process.env.ECLIPSI_OUT_DIR ?? 'dist');
+
+/**
+ * Quan es va tocar per última vegada el text de les guies.
+ *
+ * Surt del fitxer més nou d'entre els que l'escriuen, i no d'una data a mà. La
+ * que hi havia («5 d'agost de 2026», i el mateix al `dateModified` de les dades
+ * estructurades) es va quedar quieta mentre el contingut canviava: el dia 8 ja
+ * mentia dues vegades, una al lector i una a Google.
+ */
+const GUIDE_REVISED_MS = Math.max(
+  ...['src/content/editorial-guides.ts', 'src/content/guide.ts'].map(
+    (file) => statSync(resolve(file)).mtimeMs,
+  ),
+);
+const GUIDE_REVISED_ISO = new Date(GUIDE_REVISED_MS).toISOString().slice(0, 10);
 type Kind = 'eclipse' | 'city' | 'point' | 'guide' | 'guides';
 interface Route { kind: Kind; id: string; eclipseId?: string }
 interface Page { route: Route; html: string }
@@ -143,7 +159,23 @@ function eclipseOverviewMap(locale:Locale,eclipseId:string):string {
   const label=locale==='ca'?'Mapa interactiu de la franja':locale==='es'?'Mapa interactivo de la franja':locale==='fr'?'Carte interactive de la bande':'Interactive eclipse-path map';
   return `<section class="overview-map"><h2>${esc(label)}</h2><div data-eclipse-overview-widget data-eclipse="${eclipseId}" data-locale="${locale}" data-label="${esc(label)}" data-map-url="/${prefix(locale)}?e=${eclipseId}#/mapa"></div></section>`;
 }
-const nearbyPoints = (eclipseId:string,lat:number,lon:number,exclude?:string) => [...pointsForEclipse(eclipseId)].filter(point=>point.id!==exclude).sort((a,b)=>distance2(lat,lon,a.lat,a.lon)-distance2(lat,lon,b.lat,b.lon)).slice(0,3);
+/**
+ * Fins on arriba «a prop».
+ *
+ * No n'hi havia cap límit: s'ordenaven tots els punts de l'eclipsi per
+ * distància i se n'agafaven tres, diguessin el que diguessin. A la fitxa d'A
+ * Coruña això oferia un punt a 110 km sota l'encapçalament «Punts oficials a
+ * prop de A Coruña» — i cent deu quilòmetres no són a prop de res.
+ *
+ * Vuitanta és el que es fa en una hora llarga de carretera secundària sense que
+ * el desplaçament sigui el pla del dia. Quan no n'hi ha cap dins del radi, la
+ * secció no surt: és millor no dir res que dir una cosa que no serveix.
+ */
+const NEARBY_MAX_KM = 80;
+const nearbyPoints = (eclipseId:string,lat:number,lon:number,exclude?:string) => [...pointsForEclipse(eclipseId)]
+  .filter(point=>point.id!==exclude&&distanceKm(lat,lon,point.lat,point.lon)<=NEARBY_MAX_KM)
+  .sort((a,b)=>distance2(lat,lon,a.lat,a.lon)-distance2(lat,lon,b.lat,b.lon))
+  .slice(0,3);
 
 function nearbyPointCards(locale:Locale,eclipse:EclipseEntry,lat:number,lon:number,exclude?:string):string {
   const altitudeLabel=locale==='ca'?'Sol':locale==='es'?'Sol':locale==='fr'?'Soleil':'Sun';
@@ -550,7 +582,16 @@ function eclipseSummary(locale:Locale,eclipse:EclipseEntry):string {
   const badge=renderToStaticMarkup(createElement(Badge,{tone:eclipse.kind==='annular'?'partial':'clear',dot:true} as BadgeProps,eclipseKind(locale,eclipse)));
   const stats=[
     createElement(Stat,{key:'date',label:locale==='ca'?'Data':locale==='es'?'Fecha':locale==='fr'?'Date':'Date',value:eclipseDateSlug(eclipse.id)}),
-    createElement(Stat,{key:'max',label:locale==='ca'?'Màxim global':locale==='es'?'Máximo global':locale==='fr'?'Maximum global':'Global maximum',value:fmtTime(locale,new Date(eclipse.greatestEclipseUtc))}),
+    /*
+     * L'HORA VA AMB EL SEU FUS, PERQUÈ TOTES LES D'AQUEST LLOC HI VAN.
+     *
+     * `fmtTime()` formata en `Europe/Madrid` i la pàgina no ho deia enlloc. A
+     * les fitxes locals això encara s'endevina —qui mira Barcelona espera hora
+     * de Barcelona—, però «màxim GLOBAL» és, per definició, un instant que
+     * passa en un altre lloc del món. Sense el fus, un lector de fora hi posa
+     * el seu i li surt un eclipsi a una hora que no existeix.
+     */
+    createElement(Stat,{key:'max',label:locale==='ca'?'Màxim global':locale==='es'?'Máximo global':locale==='fr'?'Maximum global':'Global maximum',value:fmtTime(locale,new Date(eclipse.greatestEclipseUtc)),unit:locale==='en'?'Madrid time':'hora de Madrid'}),
     createElement(Stat,{key:'cities',label:locale==='ca'?'Ciutats calculades':locale==='es'?'Ciudades calculadas':locale==='fr'?'Villes calculées':'Calculated cities',value:String(SEO_CITIES.length)}),
     createElement(Stat,{key:'points',label:locale==='ca'?'Punts oficials':locale==='es'?'Puntos oficiales':locale==='fr'?'Sites officiels':'Official sites',value:String(pointsForEclipse(eclipse.id).length)}),
   ];
@@ -1052,13 +1093,26 @@ function guidePage(locale: Locale, id: EditorialGuideId): Page {
   const essentialsLabel=locale==='ca'?'Guia pas a pas':locale==='es'?'Guía paso a paso':locale==='fr'?'Guide pas à pas':'Step-by-step guide';
   const deeperLabel=locale==='ca'?'Dades pràctiques de l’app':locale==='es'?'Datos prácticos de la app':locale==='fr'?'Données pratiques de l’app':'Practical app data';
   const sourcesLabel=locale==='ca'?'Fonts i criteri editorial':locale==='es'?'Fuentes y criterio editorial':locale==='fr'?'Sources et critères éditoriaux':'Sources and editorial criteria';
-  const sourceNote=locale==='ca'?'Contingut revisat el 5 d’agost de 2026. Prioritzem fonts astronòmiques, normatives i institucionals; no substitueix assessorament mèdic.':locale==='es'?'Contenido revisado el 5 de agosto de 2026. Priorizamos fuentes astronómicas, normativas e institucionales; no sustituye asesoramiento médico.':locale==='fr'?'Contenu révisé le 5 août 2026. Nous privilégions les sources astronomiques, normatives et institutionnelles ; ce guide ne remplace pas un avis médical.':'Content reviewed on 5 August 2026. We prioritise astronomical, standards and institutional sources; this guide is not medical advice.';
+  /*
+   * LA DATA DE REVISIÓ NO S'ESCRIU: SURT DEL FITXER QUE CONTÉ EL TEXT.
+   *
+   * Deia «revisat el 5 d'agost de 2026» i el `dateModified` de les dades
+   * estructurades deia el mateix. Totes dues es van quedar quietes mentre el
+   * contingut canviava, i el 8 d'agost ja mentien — una davant del lector i
+   * l'altra davant de Google, que el llegeix per decidir si val la pena tornar
+   * a rastrejar.
+   *
+   * Ara surt de la data del fitxer més nou d'entre els que escriuen aquest
+   * text. Es mou sola quan el text es mou, i només llavors.
+   */
+  const revisedLong=new Intl.DateTimeFormat(locale,{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Madrid'}).format(new Date(GUIDE_REVISED_MS));
+  const sourceNote=locale==='ca'?`Contingut revisat el ${revisedLong}. Prioritzem fonts astronòmiques, normatives i institucionals; no substitueix assessorament mèdic.`:locale==='es'?`Contenido revisado el ${revisedLong}. Priorizamos fuentes astronómicas, normativas e institucionales; no sustituye asesoramiento médico.`:locale==='fr'?`Contenu révisé le ${revisedLong}. Nous privilégions les sources astronomiques, normatives et institutionnelles ; ce guide ne remplace pas un avis médical.`:`Content reviewed on ${revisedLong}. We prioritise astronomical, standards and institutional sources; this guide is not medical advice.`;
   const relevantSources=GUIDE_SOURCES.filter(source=>id==='safety'?/IGN|Safety|ISO/.test(source.label):id==='photography'?/Photography|Exposure|Safety/.test(source.label):/IGN|Dark/.test(source.label));
   const sources=`<section class="guide-sources"><h2>${esc(sourcesLabel)}</h2><p>${esc(sourceNote)}</p><ul>${relevantSources.map(source=>`<li><a href="${esc(source.url)}" rel="external">${esc(source.label)}</a></li>`).join('')}</ul></section>`;
   const relatedGuides=EDITORIAL_GUIDE_IDS.filter(other=>other!==id).map(other=>{const candidate=getEditorialGuide(other,locale);return `<li><a href="${urlFor(locale,{kind:'guide',id:other})}">${esc(candidate.title)}</a></li>`;}).join('');
   const body=`<p>${esc(guide.intro)}</p>${safety}${guideDecision(locale,id)}${guideTool(locale,id)}<div class="editorial-guide"><nav class="editorial-guide__toc guidescreen__toc" aria-label="${esc(indexLabel)}"><span class="guidescreen__tochead">${esc(indexLabel)}</span><ul class="guidescreen__toclist">${guide.sections.map(section=>`<li><a class="btn" href="#${esc(section.id)}">${esc(section.title)}</a></li>`).join('')}</ul></nav><article class="editorial-guide__body guide"><h2>${esc(essentialsLabel)}</h2>${editorialSections}<section class="guide-essentials"><h2>${esc(deeperLabel)}</h2><div class="guide__sections">${sections}</div></section><div class="editorial-guide__faq"><h2>${esc(faqLabel)}</h2><div class="guide__sections">${faq}</div></div>${sources}<h2>${esc(seoStrings(locale).related)}</h2><ul class="links">${relatedGuides}${related}</ul></article></div>`;
   const metaTitle=id==='safety'?(locale==='ca'?'Seguretat en un eclipsi: ulleres i filtres | eclipsi.info':locale==='es'?'Seguridad en un eclipse: gafas y filtros | eclipsi.info':locale==='fr'?'Sécurité pendant une éclipse : lunettes et filtres | eclipsi.info':'Solar eclipse safety: glasses and filters | eclipsi.info'):id==='photography'?(locale==='ca'?'Com fotografiar un eclipsi amb càmera o mòbil | eclipsi.info':locale==='es'?'Cómo fotografiar un eclipse con cámara o móvil | eclipsi.info':locale==='fr'?'Photographier une éclipse avec appareil ou mobile | eclipsi.info':'How to photograph an eclipse with a camera or phone | eclipsi.info'):(locale==='ca'?'Eclipsi amb el Sol baix: horitzó i azimut | eclipsi.info':locale==='es'?'Eclipse con el Sol bajo: horizonte y acimut | eclipsi.info':locale==='fr'?'Éclipse avec Soleil bas : horizon et azimut | eclipsi.info':'Low-Sun eclipse: horizon and azimuth | eclipsi.info');
-  const article={'@context':'https://schema.org','@type':'Article','@id':`${urlFor(locale,route)}#article`,headline:guide.title,description:guide.description,datePublished:'2026-08-05',dateModified:'2026-08-05',inLanguage:locale,mainEntityOfPage:urlFor(locale,route),isPartOf:{'@id':`${urlFor(locale,{kind:'guides',id:'index'})}#page`},image:`${ogImage(locale)}`,citation:relevantSources.map(source=>source.url),author:{'@type':'Organization',name:'eclipsi.info',url:SEO_SITE},publisher:{'@type':'Organization',name:'eclipsi.info',url:SEO_SITE,logo:{'@type':'ImageObject',url:`${SEO_SITE}brand/logo.svg`}}};
+  const article={'@context':'https://schema.org','@type':'Article','@id':`${urlFor(locale,route)}#article`,headline:guide.title,description:guide.description,datePublished:'2026-08-05',dateModified:GUIDE_REVISED_ISO,inLanguage:locale,mainEntityOfPage:urlFor(locale,route),isPartOf:{'@id':`${urlFor(locale,{kind:'guides',id:'index'})}#page`},image:`${ogImage(locale)}`,citation:relevantSources.map(source=>source.url),author:{'@type':'Organization',name:'eclipsi.info',url:SEO_SITE},publisher:{'@type':'Organization',name:'eclipsi.info',url:SEO_SITE,logo:{'@type':'ImageObject',url:`${SEO_SITE}brand/logo.svg`}}};
   const faqSchema={'@context':'https://schema.org','@type':'FAQPage','@id':`${urlFor(locale,route)}#faq`,url:urlFor(locale,route),inLanguage:locale,mainEntity:guide.faq.map(item=>({'@type':'Question',name:item.question,acceptedAnswer:{'@type':'Answer',text:item.answer}}))};
   return {route,html:shell(locale,{route,title:metaTitle,description:guide.description,h1:guide.title,lede:guide.intro,body,schemas:[article,faqSchema,breadcrumb(locale,route,guide.title)]})};
 }
