@@ -1834,3 +1834,100 @@
 .seo-travel .btn {
   margin-top: var(--sp-2);
 }
+
+/* ── El cel que sol fer-hi ────────────────────────────────────────────────── */
+
+/*
+ * ── AQUEST BLOC NO POT SER AMBRE, I ÉS LA PRIMERA DECISIÓ ───────────────────
+ *
+ * L'ambre d'una fitxa ja està gastat: és la xifra del veredicte
+ * (`.seo-verdict__figure`), que és la que decideix si val la pena el viatge. Un
+ * «78 / 100» ambre a mig camí en faria dos que competeixen, i el segon guanyaria
+ * per proximitat sense manar res. Les xifres d'aquí van amb `--text-primary` i
+ * la tipografia de dades: es distingeixen per composició, no per color.
+ *
+ * Tampoc no es pinta la banda de color de la cel·la (`--status-clear`,
+ * `--status-partial`, `--status-cloudy`). Al mapa aquell color és dada perquè
+ * s'hi comparen mil cel·les l'una al costat de l'altra; en una fitxa d'un sol
+ * punt no hi ha res amb què comparar-lo, i a més `--status-partial` ÉS ambre.
+ *
+ * ── I L'AVÍS NO ÉS LLETRA PETITA ────────────────────────────────────────────
+ *
+ * `.seo-clim__caveat` no baixa de mida ni de to respecte del text corregut de
+ * la pàgina, i va per damunt de les xifres. La confusió entre «78» i «farà bo
+ * el dia 12» és l'error més fàcil de provocar des d'aquí, i una nota al peu en
+ * cos petit arriba tard: quan s'hi llegeix, la xifra ja s'ha interpretat.
+ *
+ * La nota de procedència (`__note`) sí que és secundària de to —és qui firma,
+ * no què es diu— però tampoc no baixa de mida: hi ha la superfície de la
+ * cel·la, i publicar «78» sense dir sobre quins 28 × 21 km és mentir per
+ * omissió.
+ */
+.seo-clim {
+  margin: var(--seo-block-lg) 0;
+  padding-top: var(--sp-7);
+  border-top: var(--bw-hair) solid var(--border-hairline);
+}
+
+.seo-clim h2 {
+  margin: 0 0 var(--sp-5);
+}
+
+.seo-clim__caveat {
+  max-width: var(--seo-measure);
+  margin: 0 0 var(--sp-6);
+  color: var(--text-secondary);
+}
+
+.seo-clim__figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin: 0 0 var(--sp-5);
+}
+
+.seo-clim__figures > div {
+  min-width: 0;
+  padding: var(--sp-5);
+  border: var(--bw-hair) solid var(--border-hairline);
+  border-radius: var(--r-md);
+  background: var(--surface-card);
+}
+
+.seo-clim__figures dt {
+  color: var(--text-muted);
+  font: var(--text-overline);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+}
+
+/*
+ * `margin-left: 0` NO ÉS DECORACIÓ: el navegador dona 40 px d'entrada a tot
+ * `dd`, i sense treure'ls la xifra quedaria desplaçada respecte del seu rètol
+ * dins de la mateixa targeta.
+ */
+.seo-clim__figures dd {
+  margin: var(--sp-3) 0 0;
+  margin-left: 0;
+  color: var(--text-primary);
+  font: var(--text-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.seo-clim__note {
+  max-width: var(--seo-measure);
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/*
+ * A 375 px els rètols són frases de tres i quatre paraules («Mostres amb cel
+ * molt tapat») i en tres columnes de 100 px cauen a quatre línies cadascun. Una
+ * columna: la xifra és la que ha de destacar, i apilades encara es comparen.
+ */
+@media (max-width: 760px) {
+  .seo-clim__figures {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-3);
+  }
+}

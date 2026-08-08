@@ -1,4 +1,9 @@
 import type { Locale } from '../../i18n';
+import {
+  CONFIDENCE_LABEL,
+  climatologyCaveat,
+  confidenceForYears,
+} from '../../core/weather/outlook';
 import type { SeoOutcome } from './verdict';
 
 export const SEO_LOCALES: readonly Locale[] = ['ca', 'es', 'en', 'fr'];
@@ -7,10 +12,10 @@ export const SEO_SITE = 'https://eclipsi.info/';
 export function prefix(locale: Locale): string { return locale === 'ca' ? '' : `${locale}/`; }
 
 const TEXT = {
-  ca: { eclipse:'Eclipsi', city:'Eclipsi a', point:'Punt oficial', home:'Inici', cities:'Ciutats', points:'Punts oficials', guides:'Guies pràctiques', conjunction:'i', calculate:'Calcula-ho al punt exacte', source:'Font oficial', coords:'Coordenades', elevation:'Altitud publicada', climatology:'Climatologia local', skyScore:'Índex històric de cel favorable', clearYears:'Mostres amb cel favorable', cloudyYears:'Mostres amb cel molt tapat', climCaveat:'És climatologia històrica d’Open-Meteo, NO una previsió del dia de l’eclipsi.', central:'fase central', partial:'eclipsi parcial', maximum:'Màxim', duration:'Durada de la fase central', obscuration:'Disc solar tapat', sun:'Altura del Sol al màxim', noCentral:'Sense fase central en aquest punt', related:'També et pot interessar', intro:'Horaris i visibilitat calculats per a aquest punt amb el motor topocèntric d’eclipsi.info.', disclaimer:'El relleu, els edificis i els núvols poden canviar el que veuràs. Obre el simulador per calcular l’horitzó real.', official:'Aquest emplaçament consta al catàleg publicat per l’administració indicada.', estimated:'La font publica el lloc però no una coordenada exacta; la posició del mapa és estimada.', exact:'Coordenada publicada per la font.', event:'Activitat amb entrada o reserva segons la convocatòria original.', observatory:'Observatori o planetari amb activitat anunciada.', openSite:'Punt d’observació oficial d’accés lliure segons la font.' },
-  es: { eclipse:'Eclipse', city:'Eclipse en', point:'Punto oficial', home:'Inicio', cities:'Ciudades', points:'Puntos oficiales', guides:'Guías prácticas', conjunction:'y', calculate:'Calcúlalo en el punto exacto', source:'Fuente oficial', coords:'Coordenadas', elevation:'Altitud publicada', climatology:'Climatología local', skyScore:'Índice histórico de cielo favorable', clearYears:'Muestras con cielo favorable', cloudyYears:'Muestras con cielo muy cubierto', climCaveat:'Es climatología histórica de Open-Meteo, NO una previsión para el día del eclipse.', central:'fase central', partial:'eclipse parcial', maximum:'Máximo', duration:'Duración de la fase central', obscuration:'Disco solar cubierto', sun:'Altura del Sol en el máximo', noCentral:'Sin fase central en este punto', related:'También te puede interesar', intro:'Horarios y visibilidad calculados para este punto con el motor topocéntrico de eclipsi.info.', disclaimer:'El relieve, los edificios y las nubes pueden cambiar lo que verás. Abre el simulador para calcular el horizonte real.', official:'Este emplazamiento figura en el catálogo publicado por la administración indicada.', estimated:'La fuente publica el lugar, pero no una coordenada exacta; la posición del mapa es estimada.', exact:'Coordenada publicada por la fuente.', event:'Actividad con entrada o reserva según la convocatoria original.', observatory:'Observatorio o planetario con actividad anunciada.', openSite:'Punto oficial de observación de acceso libre según la fuente.' },
-  en: { eclipse:'Eclipse', city:'Eclipse in', point:'Official viewing site', home:'Home', cities:'Cities', points:'Official sites', guides:'Practical guides', conjunction:'and', calculate:'Calculate your exact point', source:'Official source', coords:'Coordinates', elevation:'Published elevation', climatology:'Local climatology', skyScore:'Historical favourable-sky score', clearYears:'Samples with favourable sky', cloudyYears:'Samples with heavy cloud', climCaveat:'This is historical Open-Meteo climatology, NOT a forecast for eclipse day.', central:'central phase', partial:'partial eclipse', maximum:'Maximum', duration:'Central phase duration', obscuration:'Solar disc covered', sun:'Sun altitude at maximum', noCentral:'No central phase at this point', related:'Related pages', intro:'Times and visibility calculated for this point with eclipsi.info’s topocentric engine.', disclaimer:'Terrain, buildings and clouds can change what you see. Open the simulator to calculate the real horizon.', official:'This location appears in the catalogue published by the named public authority.', estimated:'The source names the place but gives no exact coordinates; its map position is estimated.', exact:'Coordinates published by the source.', event:'Ticket or reservation required according to the original announcement.', observatory:'Observatory or planetarium with an announced activity.', openSite:'Official free-access viewing site according to the source.' },
-  fr: { eclipse:'Éclipse', city:'Éclipse à', point:'Site officiel', home:'Accueil', cities:'Villes', points:'Sites officiels', guides:'Guides pratiques', conjunction:'et', calculate:'Calculer votre point exact', source:'Source officielle', coords:'Coordonnées', elevation:'Altitude publiée', climatology:'Climatologie locale', skyScore:'Indice historique de ciel favorable', clearYears:'Échantillons avec ciel favorable', cloudyYears:'Échantillons avec ciel très couvert', climCaveat:'Il s’agit de climatologie historique Open-Meteo, PAS d’une prévision pour le jour de l’éclipse.', central:'phase centrale', partial:'éclipse partielle', maximum:'Maximum', duration:'Durée de la phase centrale', obscuration:'Disque solaire couvert', sun:'Hauteur du Soleil au maximum', noCentral:'Aucune phase centrale en ce point', related:'À voir aussi', intro:'Horaires et visibilité calculés pour ce point avec le moteur topocentrique d’eclipsi.info.', disclaimer:'Le relief, les bâtiments et les nuages peuvent modifier ce que vous verrez. Ouvrez le simulateur pour calculer l’horizon réel.', official:'Ce site figure dans le catalogue publié par l’autorité indiquée.', estimated:'La source nomme le lieu sans fournir de coordonnées exactes ; sa position sur la carte est estimée.', exact:'Coordonnées publiées par la source.', event:'Billet ou réservation requis selon l’annonce originale.', observatory:'Observatoire ou planétarium avec activité annoncée.', openSite:'Site officiel d’observation en accès libre selon la source.' },
+  ca: { eclipse:'Eclipsi', city:'Eclipsi a', point:'Punt oficial', home:'Inici', cities:'Ciutats', points:'Punts oficials', guides:'Guies pràctiques', conjunction:'i', calculate:'Calcula-ho al punt exacte', source:'Font oficial', coords:'Coordenades', elevation:'Altitud publicada', climatology:'Climatologia local', skyScore:'Índex històric de cel favorable', clearYears:'Mostres amb cel favorable', cloudyYears:'Mostres amb cel molt tapat', central:'fase central', partial:'eclipsi parcial', maximum:'Màxim', duration:'Durada de la fase central', obscuration:'Disc solar tapat', sun:'Altura del Sol al màxim', noCentral:'Sense fase central en aquest punt', related:'També et pot interessar', intro:'Horaris i visibilitat calculats per a aquest punt amb el motor topocèntric d’eclipsi.info.', disclaimer:'El relleu, els edificis i els núvols poden canviar el que veuràs. Obre el simulador per calcular l’horitzó real.', official:'Aquest emplaçament consta al catàleg publicat per l’administració indicada.', estimated:'La font publica el lloc però no una coordenada exacta; la posició del mapa és estimada.', exact:'Coordenada publicada per la font.', event:'Activitat amb entrada o reserva segons la convocatòria original.', observatory:'Observatori o planetari amb activitat anunciada.', openSite:'Punt d’observació oficial d’accés lliure segons la font.' },
+  es: { eclipse:'Eclipse', city:'Eclipse en', point:'Punto oficial', home:'Inicio', cities:'Ciudades', points:'Puntos oficiales', guides:'Guías prácticas', conjunction:'y', calculate:'Calcúlalo en el punto exacto', source:'Fuente oficial', coords:'Coordenadas', elevation:'Altitud publicada', climatology:'Climatología local', skyScore:'Índice histórico de cielo favorable', clearYears:'Muestras con cielo favorable', cloudyYears:'Muestras con cielo muy cubierto', central:'fase central', partial:'eclipse parcial', maximum:'Máximo', duration:'Duración de la fase central', obscuration:'Disco solar cubierto', sun:'Altura del Sol en el máximo', noCentral:'Sin fase central en este punto', related:'También te puede interesar', intro:'Horarios y visibilidad calculados para este punto con el motor topocéntrico de eclipsi.info.', disclaimer:'El relieve, los edificios y las nubes pueden cambiar lo que verás. Abre el simulador para calcular el horizonte real.', official:'Este emplazamiento figura en el catálogo publicado por la administración indicada.', estimated:'La fuente publica el lugar, pero no una coordenada exacta; la posición del mapa es estimada.', exact:'Coordenada publicada por la fuente.', event:'Actividad con entrada o reserva según la convocatoria original.', observatory:'Observatorio o planetario con actividad anunciada.', openSite:'Punto oficial de observación de acceso libre según la fuente.' },
+  en: { eclipse:'Eclipse', city:'Eclipse in', point:'Official viewing site', home:'Home', cities:'Cities', points:'Official sites', guides:'Practical guides', conjunction:'and', calculate:'Calculate your exact point', source:'Official source', coords:'Coordinates', elevation:'Published elevation', climatology:'Local climatology', skyScore:'Historical favourable-sky score', clearYears:'Samples with favourable sky', cloudyYears:'Samples with heavy cloud', central:'central phase', partial:'partial eclipse', maximum:'Maximum', duration:'Central phase duration', obscuration:'Solar disc covered', sun:'Sun altitude at maximum', noCentral:'No central phase at this point', related:'Related pages', intro:'Times and visibility calculated for this point with eclipsi.info’s topocentric engine.', disclaimer:'Terrain, buildings and clouds can change what you see. Open the simulator to calculate the real horizon.', official:'This location appears in the catalogue published by the named public authority.', estimated:'The source names the place but gives no exact coordinates; its map position is estimated.', exact:'Coordinates published by the source.', event:'Ticket or reservation required according to the original announcement.', observatory:'Observatory or planetarium with an announced activity.', openSite:'Official free-access viewing site according to the source.' },
+  fr: { eclipse:'Éclipse', city:'Éclipse à', point:'Site officiel', home:'Accueil', cities:'Villes', points:'Sites officiels', guides:'Guides pratiques', conjunction:'et', calculate:'Calculer votre point exact', source:'Source officielle', coords:'Coordonnées', elevation:'Altitude publiée', climatology:'Climatologie locale', skyScore:'Indice historique de ciel favorable', clearYears:'Échantillons avec ciel favorable', cloudyYears:'Échantillons avec ciel très couvert', central:'phase centrale', partial:'éclipse partielle', maximum:'Maximum', duration:'Durée de la phase centrale', obscuration:'Disque solaire couvert', sun:'Hauteur du Soleil au maximum', noCentral:'Aucune phase centrale en ce point', related:'À voir aussi', intro:'Horaires et visibilité calculés pour ce point avec le moteur topocentrique d’eclipsi.info.', disclaimer:'Le relief, les bâtiments et les nuages peuvent modifier ce que vous verrez. Ouvrez le simulateur pour calculer l’horizon réel.', official:'Ce site figure dans le catalogue publié par l’autorité indiquée.', estimated:'La source nomme le lieu sans fournir de coordonnées exactes ; sa position sur la carte est estimée.', exact:'Coordonnées publiées par la source.', event:'Billet ou réservation requis selon l’annonce originale.', observatory:'Observatoire ou planétarium avec activité annoncée.', openSite:'Site officiel d’observation en accès libre selon la source.' },
 } as const;
 
 export function seoStrings(locale: Locale) { return TEXT[locale]; }
@@ -307,4 +312,158 @@ export function seoTravel(locale: Locale, values: TravelValues): SeoTravelCopy {
   }
 
   return copy;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EL CEL QUE SOL FER-HI, QUE ÉS L'ALTRA MEITAT DE LA DECISIÓ
+
+   ── PER QUÈ AQUESTES PÀGINES NO EN DEIEN RES ────────────────────────────────
+
+   Les cadenes `climatology`, `skyScore`, `clearYears` i `cloudyYears` són a
+   `TEXT`, en els quatre idiomes, des del primer dia — i no les feia servir
+   NINGÚ. Zero usos. És exactament la família d'errors que descriu `CLAUDE.md`:
+   una capa sencera de codi mort perquè ningú no omplia la seva propietat. Les
+   1.592 fitxes publicades no deien res del temps, que és la pregunta que porta
+   la gent a una fitxa de ciutat un mes abans.
+
+   La climatologia és, a més, la dada que aquestes pàgines poden tenir i la
+   previsió no: no caduca entre el build i la visita, s'indexa sense JavaScript
+   i es respon amb un fitxer estàtic que ja tenim generat.
+
+   ── L'AVÍS NO ÉS LLETRA PETITA, I ES COMPON AQUÍ ────────────────────────────
+
+   La confusió entre «78» i «farà bo el dia 12» és l'error més fàcil de
+   provocar des d'aquest bloc, i seria el pitjor: algú fent sis-cents
+   quilòmetres per una estadística. Per això el `caveat` NO és un paràmetre
+   d'entrada d'aquesta funció sinó que el deriva ella mateixa de `years` amb
+   `climatologyCaveat()` —la mateixa frase que diu la fitxa del punt dins de
+   l'app, amb el «NO» en majúscules i el nombre d'anys escrit— i la fiabilitat
+   surt de `confidenceForYears()`. Si arribessin de fora, el generador podria
+   publicar una xifra amb l'avís d'una altra, o sense.
+
+   ── PER QUÈ LES XIFRES ES FORMATEN AQUÍ I NO AL GENERADOR ───────────────────
+
+   `seoVerdict` i `seoTravel` reben els números ja formatats perquè el
+   generador els composa amb la resta de la fitxa. Aquest bloc no: rep la
+   cel·la crua i la formata ell. Així una prova pot agafar la cel·la que dona
+   `climCellAt()` per a unes coordenades i comprovar que el text publicat porta
+   AQUELLS números, que és la comparació que a aquest projecte li ha faltat cada
+   vegada que ha publicat una cosa que no era certa.
+
+   ── I EL QUE NO ES POT CALLAR: LA MIDA DE LA CEL·LA ─────────────────────────
+
+   El valor és el del CENTRE d'una cel·la de 0,25° i es publica en una fitxa que
+   du el nom d'una ciutat. Barcelona és a 41,39° i la seva cel·la té el centre a
+   41,50°: dotze quilòmetres al nord. Dir «78» sense dir sobre quina superfície
+   —i sobre quin punt— és mentir per omissió, i per això la nota va dins del
+   bloc i no en una llegenda.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** Els fets d'una cel·la de la graella, tal com surten de `climCellAt()`. */
+export interface SeoClimatologyValues {
+  /** Puntuació mitjana de cel favorable de la cel·la, 0-100. */
+  score: number;
+  /** Percentatge d'observacions classificades com a cel favorable, 0-100. */
+  clearPercent: number;
+  /** Percentatge d'observacions classificades com a cel molt tapat, 0-100. */
+  cloudyPercent: number;
+  /** Anys d'arxiu que han donat dades a AQUESTA cel·la (12 o 13, no 15). */
+  years: number;
+  /** Primer i últim any de la sèrie de la graella sencera. */
+  firstYear: number;
+  lastYear: number;
+  /** Observacions horàries que han entrat a l'estadística d'aquesta cel·la. */
+  samples: number;
+  /** Dies a banda i banda de la data que entren a la finestra. */
+  windowDays: number;
+  /** Pas de la malla, en graus. */
+  stepDeg: number;
+  /** Centre de la cel·la: el punt que s'ha consultat de veritat. */
+  cellLat: number;
+  cellLon: number;
+}
+
+/** El bloc sencer, ja en paraules. Cap peça n'és opcional. */
+export interface SeoClimatologyCopy {
+  heading: string;
+  /** L'avís. Va abans de les xifres i amb la mida del text corregut. */
+  caveat: string;
+  /** Rètol i valor de cada xifra, en l'ordre en què es llegeixen. */
+  figures: Array<{ label: string; value: string }>;
+  /** D'on surt tot això: mida de la cel·la, centre, anys, mostres i fiabilitat. */
+  note: string;
+}
+
+export function seoClimatology(
+  locale: Locale,
+  values: SeoClimatologyValues,
+): SeoClimatologyCopy {
+  const s = TEXT[locale];
+  const number = (value: number, digits = 0) =>
+    new Intl.NumberFormat(locale, {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    }).format(value);
+
+  /*
+   * ELS DOS COSTATS DE LA CEL·LA, I NO UN «UNS 25 KM» RODÓ.
+   *
+   * Un grau de meridià fa 111,32 km i no depèn de la latitud; un grau de
+   * paral·lel es va escurçant amb el cosinus. A 41° una cel·la de 0,25° fa 28
+   * km de nord a sud i 21 d'est a oest: dir-ne «uns 25 km» és una mitjana que
+   * no és cap dels dos costats, i qui vulgui saber si el seu poble hi cau ha de
+   * poder-ho estimar amb el número de la direcció que li interessa.
+   */
+  const KM_PER_DEGREE = 111.32;
+  const northSouthKm = Math.round(values.stepDeg * KM_PER_DEGREE);
+  const eastWestKm = Math.round(
+    values.stepDeg * KM_PER_DEGREE * Math.cos((values.cellLat * Math.PI) / 180),
+  );
+  /*
+   * EL SÍMBOL DE GRAU HI ÉS PERQUÈ SENSE ELL LA PARELLA ES LLEGEIX MALAMENT.
+   * En català, castellà i francès el separador decimal és la coma, i «41,50,
+   * 2,25» són quatre números seguits per a qui llegeix de pressa. Amb el grau,
+   * «41,50°, 2,25°» és una coordenada.
+   */
+  const centre = `${number(values.cellLat, 2)}°, ${number(values.cellLon, 2)}°`;
+  const span = number(values.stepDeg, 2);
+  const years = number(values.years);
+  const range = `${values.firstYear}-${values.lastYear}`;
+  const samples = number(values.samples);
+  const window = number(values.windowDays);
+  const trust = CONFIDENCE_LABEL[confidenceForYears(values.years)][locale];
+
+  const note = {
+    ca:
+      `Cel·la de ${span}° de costat —uns ${northSouthKm} km de nord a sud i ${eastWestKm} d’est a oest en aquesta latitud— amb el centre a ${centre}. ` +
+      `El valor és el del centre, no la mitjana del rectangle. ` +
+      `Surt de ${samples} observacions horàries de ${years} anys d’arxiu dins de ${range}, en una finestra de ±${window} dies al voltant del màxim local. ` +
+      `Fiabilitat: ${trust.toLowerCase()}. Font: Open-Meteo.`,
+    es:
+      `Celda de ${span}° de lado —unos ${northSouthKm} km de norte a sur y ${eastWestKm} de este a oeste en esta latitud— con el centro en ${centre}. ` +
+      `El valor es el del centro, no la media del rectángulo. ` +
+      `Sale de ${samples} observaciones horarias de ${years} años de archivo dentro de ${range}, en una ventana de ±${window} días alrededor del máximo local. ` +
+      `Fiabilidad: ${trust.toLowerCase()}. Fuente: Open-Meteo.`,
+    en:
+      `Grid cell ${span}° across —about ${northSouthKm} km north to south and ${eastWestKm} km east to west at this latitude— centred on ${centre}. ` +
+      `The value is the one at that centre, not an average over the rectangle. ` +
+      `It comes from ${samples} hourly observations across ${years} archive years within ${range}, in a ±${window}-day window around local maximum. ` +
+      `Confidence: ${trust.toLowerCase()}. Source: Open-Meteo.`,
+    fr:
+      `Maille de ${span}° de côté —environ ${northSouthKm} km du nord au sud et ${eastWestKm} d’est en ouest à cette latitude— centrée sur ${centre}. ` +
+      `La valeur est celle de ce centre, pas la moyenne du rectangle. ` +
+      `Elle provient de ${samples} observations horaires sur ${years} années d’archive comprises dans ${range}, dans une fenêtre de ±${window} jours autour du maximum local. ` +
+      `Fiabilité : ${trust.toLowerCase()}. Source : Open-Meteo.`,
+  }[locale];
+
+  return {
+    heading: s.climatology,
+    caveat: climatologyCaveat(values.years, locale),
+    figures: [
+      { label: s.skyScore, value: `${number(values.score)} / 100` },
+      { label: s.clearYears, value: `${number(values.clearPercent)} %` },
+      { label: s.cloudyYears, value: `${number(values.cloudyPercent)} %` },
+    ],
+    note,
+  };
 }

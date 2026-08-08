@@ -1,5 +1,14 @@
 /** Genera pàgines editorials estàtiques després de Vite, fora del precache PWA. */
 import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+/*
+ * `readFileSync` I NO LA VERSIÓ AMB PROMESA, i és l'única raó per la qual
+ * aquest import existeix: `cityPage()` i `pointPage()` són síncrones i les
+ * criden mil cinc-centes vegades des d'un bucle síncron. Fer-les asíncriques
+ * per llegir un fitxer de 55 kB que a més es llegeix UNA sola vegada per
+ * eclipsi (vegeu `CLIM_GRIDS`) seria propagar `await` per tot el generador a
+ * canvi de res.
+ */
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -13,10 +22,12 @@ import { SEO_CITIES } from '../src/content/seo/cities';
 import { eclipseDateSlug } from '../src/content/seo/dateSlug';
 import { SEO_EVENT_WINDOWS } from '../src/content/seo/events';
 import type { SeoCity } from '../src/content/seo/types';
-import { SEO_LOCALES, SEO_SITE, prefix, seoLocalHeading, seoLocalTitle, seoOfficialTitle, seoStrings, seoTravel, seoVerdict } from '../src/content/seo/strings';
+import { SEO_LOCALES, SEO_SITE, prefix, seoClimatology, seoLocalHeading, seoLocalTitle, seoOfficialTitle, seoStrings, seoTravel, seoVerdict } from '../src/content/seo/strings';
 import { seoOutcome } from '../src/content/seo/verdict';
 import { travelAdvice } from '../src/content/seo/travel';
 import type { SeoVerdictCopy } from '../src/content/seo/strings';
+import { climCellAt, climGridFileName, parseCloudClimGrid } from '../src/core/weather/climGrid';
+import type { CloudClimGrid } from '../src/core/weather/climGrid';
 /*
  * LA FRASE DE PRIVADESA S'IMPORTA, NO ES REESCRIU.
  *
@@ -81,9 +92,23 @@ const eclipseMetaTitle = (locale:Locale,eclipse:EclipseEntry) => {
   const year=eclipse.id.slice(0,4);
   return locale==='ca'?`Eclipsi solar ${year}: hora, mapa i on veure’l | eclipsi.info`:locale==='es'?`Eclipse solar ${year}: hora, mapa y dónde verlo | eclipsi.info`:locale==='fr'?`Éclipse solaire ${year} : horaires, carte et où la voir | eclipsi.info`:`${year} solar eclipse: times, map and where to watch | eclipsi.info`;
 };
+/**
+ * PROMET NOMÉS EL QUE LA PÀGINA D'ECLIPSI DONA.
+ *
+ * Aquesta frase deia «…seguretat, CLIMATOLOGIA i càlcul exacte» a les tres
+ * pàgines d'eclipsi, i cap de les tres no en té. La climatologia viu a les
+ * fitxes de ciutat i de punt —que és on té sentit, perquè és una cel·la d'un
+ * lloc concret— i, a més, només existeix per al 2026: per als altres dos
+ * eclipsis no hi ha graella.
+ *
+ * O sigui que la promesa era falsa tres vegades: al 2027 i al 2028 perquè la
+ * dada no existeix, i al 2026 perquè és en una altra pàgina. Una meta
+ * descripció és el contracte que Google ensenya abans del clic; trencar-lo és
+ * la manera més barata de fer que algú se'n vagi de seguida.
+ */
 const eclipseMetaDescription = (locale:Locale,eclipse:EclipseEntry) => {
   const year=eclipse.id.slice(0,4),kind=eclipseKind(locale,eclipse);
-  return locale==='ca'?`Guia de l’eclipsi ${kind} de ${year}: franja, ciutats, punts oficials, seguretat, climatologia i càlcul exacte per al teu lloc.`:locale==='es'?`Guía del eclipse ${kind} de ${year}: franja, ciudades, puntos oficiales, seguridad, climatología y cálculo exacto para tu ubicación.`:locale==='fr'?`Guide de l’éclipse ${kind} de ${year} : bande, villes, sites officiels, sécurité, climatologie et calcul pour votre position.`:`Guide to the ${year} ${kind} eclipse: path, cities, official sites, safety, climatology and calculations for your exact location.`;
+  return locale==='ca'?`Guia de l’eclipsi ${kind} de ${year}: per on passa la franja, quins segons toquen a cada ciutat, els punts oficials i el càlcul exacte per al teu lloc.`:locale==='es'?`Guía del eclipse ${kind} de ${year}: por dónde pasa la franja, qué segundos tocan en cada ciudad, los puntos oficiales y el cálculo exacto para tu ubicación.`:locale==='fr'?`Guide de l’éclipse ${kind} de ${year} : par où passe la bande, combien de secondes pour chaque ville, les sites officiels et le calcul pour votre position.`:`Guide to the ${year} ${kind} eclipse: where the path runs, how many seconds each city gets, the official sites and the calculation for your exact location.`;
 };
 const routeSlug = (locale: Locale, route: Route): string => route.kind === 'guide'
   ? getEditorialGuide(route.id as EditorialGuideId, locale).slug
@@ -728,6 +753,103 @@ function travelSection(locale:Locale,eclipse:EclipseEntry,lat:number,lon:number,
   }${link}</section>`;
 }
 
+/* ════════════════════════════════════════════════════════════════════════════
+   «I QUIN CEL SOL FER-HI?», QUE ÉS LA PREGUNTA QUE AQUESTES PÀGINES CALLAVEN
+
+   ── PER QUÈ CLIMATOLOGIA I NO PREVISIÓ ──────────────────────────────────────
+
+   La previsió en directe se'n va treure i no ha de tornar: aquestes pàgines es
+   generen un cop i es llegeixen setmanes després. Una xifra de previsió cuita
+   al build seria falsa el mateix vespre, i a més viuria dins del JavaScript,
+   que és on Google no la llegeix i on qui té la xarxa justa no hi arriba.
+
+   La climatologia no té cap d'aquests dos problemes: no canvia entre el build
+   i la visita —`CLIMATOLOGY_TTL_MS` són cent vuitanta dies a posta— i s'escriu
+   a l'HTML. És, a més, la pregunta de debò de qui obre una fitxa de ciutat un
+   mes abans: no «quin temps farà» sinó «des d'on tinc més números».
+
+   ── LES TRES PORTES, I TOTES TRES SÓN LA MATEIXA ────────────────────────────
+
+   El bloc només surt si `climCellAt()` troba una cel·la. Això tanca sol els
+   tres casos que no es poden publicar, sense cap any escrit a mà enlloc:
+
+   · Els eclipsis del 2027 i del 2028 no tenen graella —`climGridFileName()` no
+     troba cap fitxer— i les seves 1.060 fitxes no en porten ni un rastre.
+   · Els punts que cauen fora del rectangle de la graella tampoc. En són pocs i
+     reals: Tarifa i les altres quinze ciutats del sud queden fora de la franja
+     del 2026, i dos punts oficials de la serra de Madrid en cauen just al
+     costat.
+   · Una graella malmesa o generada amb uns altres pesos fa cridar
+     `parseCloudClimGrid()`, i aleshores el build S'ATURA. No es publica un
+     bloc a mitges: si la dada no es pot validar, la de 1.592 pàgines no és una
+     xifra dubtosa sinó cap xifra, i val més saber-ho abans del `rsync`.
+
+   ── ON VA I QUIN COLOR NO POT SER ───────────────────────────────────────────
+
+   Va després de la taula de dades i d'«On has d'anar» —primer quants segons,
+   després on, i finalment amb quines probabilitats de veure-ho— i sempre ABANS
+   dels widgets vius, que són per aprofundir.
+
+   I no és ambre. L'ambre d'aquestes fitxes ja el gasta la xifra del veredicte
+   (`.seo-verdict__figure`), que és la que decideix; una segona xifra ambre a
+   mitja pàgina en faria dues que competeixen i guanyaria la que menys mana.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/*
+ * La graella es llegeix UNA vegada per eclipsi i el `null` també es recorda:
+ * sense això, les 1.060 fitxes del 2027 i del 2028 provarien d'obrir un fitxer
+ * que no existeix quatre-centes vegades cadascuna.
+ */
+const CLIM_GRIDS=new Map<string,CloudClimGrid|null>();
+function climGridFor(eclipseId:string):CloudClimGrid|null {
+  const cached=CLIM_GRIDS.get(eclipseId);
+  if(cached!==undefined) return cached;
+  let grid:CloudClimGrid|null=null;
+  try {
+    grid=parseCloudClimGrid(JSON.parse(readFileSync(resolve('public/data',climGridFileName(eclipseId)),'utf8')));
+  } catch(error) {
+    // Que el fitxer no hi sigui és NORMAL —només el 2026 en té—, i llavors el
+    // bloc no surt. Qualsevol altra cosa vol dir que la graella que sí que
+    // tenim està malmesa, i això no es pot publicar en silenci.
+    if((error as NodeJS.ErrnoException).code!=='ENOENT') throw error;
+  }
+  CLIM_GRIDS.set(eclipseId,grid);
+  return grid;
+}
+
+function climatologySection(locale:Locale,eclipse:EclipseEntry,lat:number,lon:number):string {
+  const grid=climGridFor(eclipse.id);
+  if(!grid) return '';
+  const cell=climCellAt(grid,lat,lon);
+  if(!cell) return '';
+  const copy=seoClimatology(locale,{
+    score:cell.score,
+    // La graella desa fraccions; els rètols parlen de tants per cent.
+    clearPercent:cell.clearFraction*100,
+    cloudyPercent:cell.cloudyFraction*100,
+    // ELS ANYS SÓN ELS D'AQUESTA CEL·LA, no els de la sèrie: dins d'una mateixa
+    // graella n'hi ha de 12 i n'hi ha de 13, i l'avís els escriu.
+    years:cell.years,
+    firstYear:grid.firstYear,
+    lastYear:grid.lastYear,
+    samples:cell.sampleCount,
+    windowDays:grid.windowDays,
+    stepDeg:grid.stepDeg,
+    cellLat:cell.lat,
+    cellLon:cell.lon,
+  });
+  const figures=copy.figures.map(figure=>`<div><dt>${esc(figure.label)}</dt><dd>${esc(figure.value)}</dd></div>`).join('');
+  /*
+   * L'AVÍS VA ABANS DE LES XIFRES I AMB LA MIDA DEL TEXT CORREGUT.
+   *
+   * Com a nota al peu del bloc, en cos petit, no evita res: qui llegeix «78»
+   * ja ha decidit què vol dir abans d'arribar-hi. Aquí es llegeix primer, i el
+   * que hi diu no és «pot variar» sinó que NO és una previsió i de quants anys
+   * surt.
+   */
+  return `<section class="seo-clim"><h2>${esc(copy.heading)}</h2><p class="seo-clim__caveat">${esc(copy.caveat)}</p><dl class="seo-clim__figures">${figures}</dl><p class="seo-clim__note">${esc(copy.note)}</p></section>`;
+}
+
 function cityPage(locale:Locale,eclipse:EclipseEntry,city:SeoCity): Page {
   const name=city.name[locale];
   const s=seoStrings(locale),route:Route={kind:'city',id:city.id,eclipseId:eclipse.id},data=facts(locale,eclipse,city.lat,city.lon);
@@ -759,6 +881,7 @@ function cityPage(locale:Locale,eclipse:EclipseEntry,city:SeoCity): Page {
   const body=[
     data.html,
     travelSection(locale,eclipse,city.lat,city.lon,name,city.id),
+    climatologySection(locale,eclipse,city.lat,city.lon),
     `<p>${esc(city.context[locale])}</p>`,
     `<p>${esc(localContext(locale,data.circumstances))}</p>`,
     `<p><strong>${esc(safetyText(locale,data.circumstances.kind,data.circumstances.edgeUncertain))}</strong></p>`,
@@ -815,6 +938,7 @@ function pointPage(locale:Locale,eclipse:EclipseEntry,point:ObservationPoint): P
     identity,
     data.html,
     travelSection(locale,eclipse,point.lat,point.lon,name),
+    climatologySection(locale,eclipse,point.lat,point.lon),
     point.note?`<p>${esc(point.note[locale])}</p>`:'',
     `<p>${esc(localContext(locale,data.circumstances))}</p>`,
     `<p><strong>${esc(safetyText(locale,data.circumstances.kind,data.circumstances.edgeUncertain))}</strong></p>`,
