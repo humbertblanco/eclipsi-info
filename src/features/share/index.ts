@@ -21,8 +21,6 @@ export {
   buildReadableShareUrl,
   findReadablePlace,
   readablePlacePath,
-  readableSlug,
-  resolveReadablePlacePath,
 } from './readable';
 export type { ReadablePlace, ReadablePlaceKind } from './readable';
 

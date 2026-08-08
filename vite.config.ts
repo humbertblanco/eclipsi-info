@@ -5,6 +5,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { transform } from 'esbuild'
+// Amb `.js`: `tsconfig.node.json` compila aquest fitxer amb `moduleResolution:
+// nodenext`, que exigeix l'extensió a les importacions relatives.
+import { SEO_PRECACHE_IGNORES, seoNavigationDenylist } from './src/content/seo/routes.js'
 
 async function publicHtml(html: string): Promise<string> {
   let clean = html
@@ -256,15 +259,108 @@ export default defineConfig(({ command }) => ({
         await writeFile(resolve(outDir, 'es/index.html'), spanishIndex(html), 'utf8')
         await writeFile(resolve(outDir, 'en/index.html'), englishIndex(html), 'utf8')
         await writeFile(resolve(outDir, 'fr/index.html'), frenchIndex(html), 'utf8')
+        /*
+         * «COM FUNCIONA» I «PREMSA»: VUIT URL QUE ERAN LA PORTADA AMB UN
+         * CANONICAL DIFERENT.
+         *
+         * Aquest bucle copia l'index de cada idioma i, fins avui, només en
+         * reescrivia DUES etiquetes: la canònica i l'`og:url`. Tota la resta es
+         * quedava com a la portada, i el resultat comprovat al `dist/` era:
+         *
+         *  · les vuit pàgines duien el `<title>` «Eclipsi solar 2026:
+         *    visibilitat i durada al teu punt», la mateixa descripció i el
+         *    mateix `og:title` que l'arrel. Vuit URL indexables amb el títol
+         *    d'una novena: Google les llegeix com a duplicats i tria ell quina
+         *    ensenya, si n'ensenya cap;
+         *
+         *  · i els `hreflang` seguien apuntant a l'ARREL de cada idioma. O
+         *    sigui que `/com-funciona/` deia «la meva versió en castellà és
+         *    `/es/`», i `/es/` deia que la seva canònica era `/es/` i no
+         *    tornava a apuntar a cap «com funciona». Cap parella era recíproca,
+         *    que és l'única cosa que Google demana dels `hreflang` — i, a
+         *    sobre, el `sitemap.xml` sí que declarava les parelles bones. Dues
+         *    fonts nostres dient coses diferents del mateix.
+         *
+         * Ara es reescriuen les cinc alternatives, el títol i la descripció.
+         * Els textos surten d'aquí i no de `features/about/strings.ts` perquè
+         * `vite.config.ts` es compila amb `moduleResolution: nodenext` i aquell
+         * fitxer arrossega React; són quatre parelles de frases i tenir-les
+         * aquí, al costat del bucle que les escriu, no amaga res.
+         *
+         * `scripts/check-built-html.ts` comprova que dues canòniques diferents
+         * no comparteixin `<title>`: aquest comentari no és una prova.
+         */
+        const PAGE_META: Record<string, Record<string, { title: string; description: string }>> = {
+          'com-funciona': {
+            '': {
+              title: 'Com funciona eclipsi.info: mètode, fonts i límits | eclipsi.info',
+              description: 'Com es calculen els segons de totalitat, l’horitzó real i la nuvolositat: motor topocèntric, model digital del terreny i fonts obertes, amb els límits dits en clar.',
+            },
+            es: {
+              title: 'Cómo funciona eclipsi.info: método, fuentes y límites | eclipsi.info',
+              description: 'Cómo se calculan los segundos de totalidad, el horizonte real y la nubosidad: motor topocéntrico, modelo digital del terreno y fuentes abiertas, con los límites dichos claramente.',
+            },
+            en: {
+              title: 'How eclipsi.info works: method, sources and limits | eclipsi.info',
+              description: 'How the seconds of totality, the real horizon and the cloud cover are computed: topocentric engine, digital terrain model and open sources, with the limits stated plainly.',
+            },
+            fr: {
+              title: 'Comment fonctionne eclipsi.info : méthode, sources et limites | eclipsi.info',
+              description: 'Comment sont calculées les secondes de totalité, l’horizon réel et la nébulosité : moteur topocentrique, modèle numérique de terrain et sources ouvertes, avec les limites énoncées clairement.',
+            },
+          },
+          'com-funciona/premsa': {
+            '': {
+              title: 'Sala de premsa: material, dades i contacte | eclipsi.info',
+              description: 'Kit de premsa de l’eclipsi del 12 d’agost del 2026: logotips, captures, nota de premsa, dades verificables i contacte directe amb qui signa el projecte.',
+            },
+            es: {
+              title: 'Sala de prensa: material, datos y contacto | eclipsi.info',
+              description: 'Kit de prensa del eclipse del 12 de agosto de 2026: logotipos, capturas, nota de prensa, datos verificables y contacto directo con quien firma el proyecto.',
+            },
+            en: {
+              title: 'Press room: assets, data and contact | eclipsi.info',
+              description: 'Press kit for the 12 August 2026 eclipse: logos, screenshots, press release, verifiable figures and direct contact with the person behind the project.',
+            },
+            fr: {
+              title: 'Espace presse : ressources, données et contact | eclipsi.info',
+              description: 'Kit de presse pour l’éclipse du 12 août 2026 : logos, captures, communiqué, données vérifiables et contact direct avec l’auteur du projet.',
+            },
+          },
+        }
+        const localePrefix = (locale: string) => (locale === '' ? '' : `${locale}/`)
+
         for (const locale of ['', 'es', 'en', 'fr']) {
           const localeDir = resolve(outDir, locale)
           const localeHtml = await readFile(resolve(localeDir, 'index.html'), 'utf8')
           for (const suffix of ['com-funciona', 'com-funciona/premsa']) {
             const directory = resolve(localeDir, suffix)
-            const target = `${SITE_URL}${locale === '' ? '' : `${locale}/`}${suffix}/`
-            const pageHtml = localeHtml
+            const target = `${SITE_URL}${localePrefix(locale)}${suffix}/`
+            const meta = PAGE_META[suffix][locale]
+            // Les alternatives del MATEIX camí, no de l'arrel. La catalana fa
+            // de x-default perquè és la que viu sense prefix.
+            const alternates = ['', 'es', 'en', 'fr']
+              .map((language) => {
+                const href = `${SITE_URL}${localePrefix(language)}${suffix}/`
+                return `<link rel="alternate" hreflang="${language === '' ? 'ca' : language}" href="${href}" />`
+              })
+              .concat(`<link rel="alternate" hreflang="x-default" href="${SITE_URL}${suffix}/" />`)
+              .join('\n    ')
+            let pageHtml = localeHtml
               .replace(/<link rel="canonical" href="[^"]+" \/>/, `<link rel="canonical" href="${target}" />`)
               .replace(/<meta property="og:url" content="[^"]+" \/>/, `<meta property="og:url" content="${target}" />`)
+              .replace(/<title>[^<]*<\/title>/, `<title>${meta.title}</title>`)
+              .replace(/<meta name="description" content="[^"]*" \/>/, `<meta name="description" content="${meta.description}" />`)
+              .replace(/<meta property="og:title" content="[^"]*" \/>/, `<meta property="og:title" content="${meta.title}" />`)
+              .replace(/<meta property="og:description" content="[^"]*" \/>/, `<meta property="og:description" content="${meta.description}" />`)
+              .replace(/<meta name="twitter:title" content="[^"]*" \/>/, `<meta name="twitter:title" content="${meta.title}" />`)
+              .replace(/<meta name="twitter:description" content="[^"]*" \/>/, `<meta name="twitter:description" content="${meta.description}" />`)
+            // Les cinc alternatives de cop: es substitueix el bloc sencer, que
+            // és consecutiu a `index.html`, i no cadascuna pel seu compte.
+            pageHtml = pageHtml.replace(
+              /<link rel="alternate" hreflang="ca"[^>]*>[\s\S]*?<link rel="alternate" hreflang="x-default"[^>]*>/,
+              alternates,
+            )
             await mkdir(directory, { recursive: true })
             await writeFile(resolve(directory, 'index.html'), pageHtml, 'utf8')
           }
@@ -321,29 +417,37 @@ export default defineConfig(({ command }) => ({
          */
         // El material editorial només es baixa quan algú el demana a Premsa;
         // no ha d'afegir més de 3 MB a la primera instal·lació de tothom.
-        globIgnores: [
-          '**/brand/og*.png',
-          '**/press/**',
-          // Les pàgines SEO són documents HTML independents, generats després
-          // de Workbox. Indexables i compartibles, però no formen part de la
-          // instal·lació offline de l'app ni han d'inflar-ne el precache.
-          '**/eclipsi/**',
-          '**/eclipse/**',
-          '**/ciutat/**',
-          '**/ciudad/**',
-          '**/city/**',
-          '**/ville/**',
-          '**/punt-oficial/**',
-          '**/punto-oficial/**',
-          '**/official-site/**',
-          '**/site-officiel/**',
-          '**/guia/**',
-          '**/guide/**',
-        ],
+        //
+        // Les pàgines editorials són documents HTML independents, generats
+        // DESPRÉS de Workbox: indexables i compartibles, però no formen part de
+        // la instal·lació offline de l'app ni n'han d'inflar el precache. Els
+        // camins surten de `src/content/seo/routes.ts` i no d'una llista escrita
+        // aquí — vegeu la capçalera d'aquell fitxer: la còpia va ser el defecte.
+        globIgnores: ['**/brand/og*.png', '**/press/**', ...SEO_PRECACHE_IGNORES],
         // L'app és una SPA: qualsevol ruta ha de tornar l'esquelet. Ha
         // d'incloure el subdirectori, o el service worker respondria amb una
         // ruta que al servidor no existeix.
         navigateFallback: `${command === 'build' ? BASE : '/'}index.html`,
+        /*
+         * ...QUALSEVOL RUTA MENYS LES EDITORIALS, I AQUESTA LÍNIA VAL LES 1.328.
+         *
+         * `globIgnores` només diu què NO es desa. La ruta de navegació és una
+         * altra cosa: diu què es RESPON, i sense aquesta llista responia
+         * l'esquelet de l'app a TOTES les URL editorials. Comprovat amb el
+         * Chrome contra producció el 8 d'agost de 2026: el servidor tornava la
+         * fitxa de Barcelona (33 kB, títol correcte) i el navegador ensenyava
+         * l'app amb el punt desat de l'última sessió, enmig de l'Atlàntic.
+         *
+         * Qui ho patia era exactament qui més val: la persona que ja havia obert
+         * l'app un cop —i per tant tenia el service worker instal·lat— i hi
+         * tornava des d'un enllaç de Google o d'un titular. Googlebot no executa
+         * service workers; per això la indexació semblava perfecta i cap
+         * visitant real no veia mai cap d'aquestes pàgines.
+         *
+         * `offline/navigation-fallback.test.ts` ho compara amb el `dist/sw.js`
+         * de debò, perquè aquest comentari no és una prova.
+         */
+        navigateFallbackDenylist: seoNavigationDenylist(),
         // El worker de l'horitzó i astronomy-engine són trossos grossos; el
         // límit per defecte (2 MiB) els deixaria fora del precache i l'app no
         // podria calcular res offline.

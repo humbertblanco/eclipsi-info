@@ -57,6 +57,10 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import viteConfigSource from '../../vite.config.ts?raw';
+// La meitat de `globIgnores` ja no és un literal del `vite.config.ts`: els
+// camins editorials surten d'aquí perquè el service worker també els necessita.
+// Vegeu `precacheIgnores()`.
+import { SEO_PRECACHE_IGNORES } from '../content/seo/routes';
 import {
   AVG_BASEMAP_TILE_BYTES,
   AVG_TERRAIN_TILE_BYTES,
@@ -150,7 +154,28 @@ function precacheExtensions(): string[] {
 function precacheIgnores(): RegExp[] {
   const block = viteConfigSource.match(/globIgnores:\s*\[([^\]]*)\]/);
   if (block === null) return [];
-  return [...block[1].matchAll(/'([^']+)'/g)].map(([, glob]) => {
+  /*
+   * DOS ORÍGENS, I TOTS DOS SÓN DECLARACIONS ESCRITES.
+   *
+   * Fins al 8 d'agost de 2026 aquí hi havia només els literals del
+   * `vite.config.ts`, i n'hi havia prou perquè la llista sencera vivia allà.
+   * Ara els camins editorials surten de `content/seo/routes.ts`, i el motiu
+   * val la pena: el `navigateFallbackDenylist` del service worker els necessita
+   * també, i tenir-los escrits dues vegades és el que va fer que les 1.328
+   * pàgines quedessin invisibles durant tres dies.
+   *
+   * El que aquesta prova vigila no canvia: el descart EN SILENCI, el que fa
+   * Workbox quan un fitxer passa de mida. Una exclusió declarada segueix sent
+   * una decisió escrita, i que estigui escrita en un mòdul importat en comptes
+   * d'un literal no la fa menys explícita. El que NO es pot fer és deixar-la de
+   * comptar: aleshores la prova diria que 1.316 pàgines s'han perdut del
+   * precache quan és exactament el que volem.
+   */
+  const globs = [
+    ...[...block[1].matchAll(/'([^']+)'/g)].map(([, glob]) => glob),
+    ...(/\.\.\.SEO_PRECACHE_IGNORES/.test(block[1]) ? SEO_PRECACHE_IGNORES : []),
+  ];
+  return globs.map((glob) => {
     const source = glob
       .split('/')
       .map((part) =>

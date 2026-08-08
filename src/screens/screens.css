@@ -2396,3 +2396,22 @@
 @media (max-width: 390px) {
   .home__planninglinks { grid-template-columns: 1fr; }
 }
+
+/*
+ * ELS CRÈDITS DEL PEU.
+ *
+ * Vuit fonts amb la seva llicència són una línia llarga, i és a posta que sigui
+ * una línia i no una llista: al peu ha de pesar el mateix que la resta de la
+ * lletra menuda. Dues d'aquestes atribucions (ODbL i CC BY) són obligacions de
+ * llicència i per això surten aquí i no només darrere de l'enllaç de «Com
+ * funciona»; el que no poden fer és cridar més que la frase de privadesa, que
+ * és el que la gent hi ve a buscar.
+ */
+.sitefoot__credits {
+  max-width: 78ch;
+  text-wrap: pretty;
+}
+
+.sitefoot__creditshead {
+  color: var(--text-secondary);
+}

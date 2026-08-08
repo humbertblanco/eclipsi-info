@@ -2,9 +2,34 @@
 <html lang="ca">
   <head>
     <meta charset="UTF-8" />
-    <!-- Nom versionat: navegadors i cercadors no poden reutilitzar la icona
-         antiga d'una plantilla desada a la memòria cau. -->
+    <!--
+      LES TRES DECLARACIONS D'ICONA, I PER QUÈ SÓN TRES.
+
+      El 8 d'agost de 2026 Google encara ensenyava a la SERP el llamp lila de
+      Vite, la icona que porta la plantilla amb què va néixer el projecte. No
+      era cap error del servidor: `/favicon.ico`, `/favicon.svg`,
+      `/favicon-48.png` i `/brand/favicon-google-96.png` es servien tots amb
+      200 i amb el checksum idèntic al del repositori, i `/vite.svg` feia estona
+      que era 404. Era la CÒPIA que Google es va desar el dia que va rastrejar
+      la plantilla, i que no renova fins que li ve de gust.
+
+      Contra això només es pot fer una cosa des d'aquí: deixar-li el senyal el
+      més inequívoc possible. Fins ara la portada declarava UNA sola icona —el
+      PNG de 96— i prou. Ara en declara tres, i cadascuna té la seva feina:
+
+        · `.ico` amb `sizes="48x48"`, que és el camí que Google mira per
+          defecte quan la pàgina no diu res, i el que entenen els clients vells.
+        · el PNG de 96, múltiple de 48 tal com demana la documentació de Google.
+        · l'SVG, que és el que agafen els navegadors moderns per a la pestanya
+          i el que es veu bé a qualsevol densitat.
+
+      El que NO es pot fer des del codi és forçar-ne la renovació: això demana
+      demanar la indexació de l'arrel a Search Console. Vegeu `public/.htaccess`
+      per a la redirecció de `/vite.svg`, que és l'altra meitat del senyal.
+    -->
+    <link rel="icon" href="%BASE_URL%favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/png" sizes="96x96" href="%BASE_URL%brand/favicon-google-96.png" />
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
 
     <!-- viewport-fit=cover: sense això, l'app instal·lada a un iPhone amb
          osca queda emmarcada per bandes negres i el mapa no arriba a la vora.

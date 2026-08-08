@@ -31,6 +31,7 @@ import { skyStateFromSample, toCss } from '../core/sky';
 import { getEclipse } from '../core/eclipses/catalog';
 import { SEO_CITIES } from '../content/seo/cities';
 import { eclipseDateSlug } from '../content/seo/dateSlug';
+import { seoPath } from '../content/seo/routes';
 import type { EclipseSample } from '../core/astro/types';
 import type { EclipseContext } from './context';
 import { EphemerisTable } from './EphemerisTable';
@@ -86,14 +87,16 @@ const PLAN_TEXT = {
 
 const FEATURED_CITY_IDS = ['tarragona', 'zaragoza', 'valencia', 'palma'] as const;
 
+/*
+ * La setena còpia de la taula de segments d'URL d'aquest repositori vivia aquí.
+ * Ara el camí el fa `seoPath()`, que és el mateix que fa servir el generador
+ * que escriu aquestes pàgines: si un segment canvia, no hi pot haver dues
+ * versions de la veritat. Vegeu la capçalera de `content/seo/routes.ts`.
+ */
 function planningPath(locale: EclipseContext['locale'], kind: 'eclipse' | 'city', id: string, eclipseId: string): string {
-  const language=locale==='ca'?'':`/${locale}`;
-  const segment=kind==='eclipse'
-    ? (locale==='ca'?'eclipsi':'eclipse')
-    : ({ca:'ciutat',es:'ciudad',en:'city',fr:'ville'} as const)[locale];
-  return kind==='eclipse'
-    ? `${language}/${segment}/${eclipseDateSlug(eclipseId)}/`
-    : `${language}/${segment}/${id}/${eclipseDateSlug(eclipseId)}/`;
+  return kind === 'eclipse'
+    ? seoPath(locale, { kind: 'eclipse', slug: eclipseDateSlug(eclipseId) })
+    : seoPath(locale, { kind: 'city', slug: id, eclipseSlug: eclipseDateSlug(eclipseId) });
 }
 
 /**

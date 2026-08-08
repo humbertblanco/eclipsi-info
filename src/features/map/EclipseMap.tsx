@@ -615,6 +615,34 @@ export function EclipseMap({
     let framed = false;
     const frameIfPossible = (): void => {
       if (framed) return;
+      /*
+       * SI EL MAPA NEIX AMB UN PUNT ENFOCAT, L'ENQUADRAMENT EL MANA EL PUNT.
+       *
+       * Aquí hi havia una cursa que es perdia justament al cas per al qual es
+       * va escriure el focus. La seqüència, amb un mapa que es munta abans que
+       * el seu contenidor tingui mida —una fitxa de ciutat, o la pantalla del
+       * mapa acabada d'obrir:
+       *
+       *   1. `frameIfPossible()` surt sense fer res perquè la caixa fa 0×0…
+       *      però ho fa SENSE marcar `framed`, que és correcte per al cas
+       *      general: encara s'ha d'enquadrar quan hi hagi mida.
+       *   2. `style.load` dispara `apply()`, que fa `jumpTo` al punt enfocat.
+       *      El mapa ja ensenya el que ha d'ensenyar.
+       *   3. el `ResizeObserver` salta amb la mida de debò, `framed` continua
+       *      sent fals, i `fitBounds` enquadra la franja sencera.
+       *
+       * Resultat: la fitxa de Tarragona obria un mapa de tota la Península. El
+       * `jumpTo` es feia i es desfeia sol, i com que passava en dos fotogrames
+       * seguits ni tan sols es veia el salt.
+       *
+       * Marcar-ho aquí i no al `jumpTo` és a posta: així la decisió queda presa
+       * ABANS que qualsevol observador pugui disparar, i no depèn de quin dels
+       * dos camins arribi primer.
+       */
+      if (initialFocusRef.current !== null) {
+        framed = true;
+        return;
+      }
       // Marge inclòs: enquadrar contra una caixa que amb prou feines hi cap
       // dona el mateix problema que enquadrar contra una de buida.
       if (container.clientWidth <= 120 || container.clientHeight <= 120) return;

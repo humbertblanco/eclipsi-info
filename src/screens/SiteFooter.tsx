@@ -22,8 +22,11 @@
  */
 
 import type { Locale } from '../i18n';
+import { ECLIPSES } from '../core/eclipses/catalog';
+import { eclipseDateSlug } from '../content/seo/dateSlug';
+import { seoPath, seoPrefix } from '../content/seo/routes';
 import type { ConsentState } from '../core/analytics';
-import { PRIVACY_NOTE } from '../features/about/credits';
+import { CREDITS, PRIVACY_NOTE, SOURCES_HEADING } from '../features/about/credits';
 import { cs } from '../features/consent/strings';
 import './screens.css';
 import '../features/consent/consent.css';
@@ -112,12 +115,37 @@ const TEXT = {
   guides: { ca: 'Guies pràctiques', es: 'Guías prácticas', en: 'Practical guides', fr: 'Guides pratiques' },
 } as const;
 
-const SEO_PATHS: Record<Locale, { eclipse: string; guide: string; about: string }> = {
-  ca: { eclipse: '/eclipsi/12-08-2026/', guide: '/guia/', about: '/com-funciona/' },
-  es: { eclipse: '/es/eclipse/12-08-2026/', guide: '/es/guia/', about: '/es/com-funciona/' },
-  en: { eclipse: '/en/eclipse/12-08-2026/', guide: '/en/guide/', about: '/en/com-funciona/' },
-  fr: { eclipse: '/fr/eclipse/12-08-2026/', guide: '/fr/guide/', about: '/fr/com-funciona/' },
-};
+/*
+ * ELS CAMINS DEL PEU: DERIVATS, I L'ECLIPSI TAMPOC NO S'ESCRIU.
+ *
+ * Aquí hi havia una taula amb els dotze camins escrits a mà, `12-08-2026`
+ * inclòs. Era la sisena còpia dels mateixos segments d'URL en aquest
+ * repositori, i la duplicació d'aquesta llista ja va costar que 1.328 pàgines
+ * quedessin invisibles durant tres dies —vegeu la capçalera de
+ * `content/seo/routes.ts`.
+ *
+ * La data escrita a mà era pitjor que la duplicació: el peu de l'app apunta al
+ * proper eclipsi, i el 13 d'agost del 2026 aquell enllaç passa a portar a una
+ * pàgina d'un fet que ja ha passat. Ara surt del catàleg, ordenat per data, i
+ * es mou sol.
+ */
+function nextEclipseId(nowMs: number): string {
+  const upcoming = [...ECLIPSES]
+    .map((eclipse) => ({ id: eclipse.id, at: Date.parse(eclipse.greatestEclipseUtc) }))
+    .sort((a, b) => a.at - b.at);
+  return (upcoming.find((eclipse) => eclipse.at >= nowMs) ?? upcoming[upcoming.length - 1]).id;
+}
+
+function seoPaths(locale: Locale, nowMs: number) {
+  return {
+    eclipse: seoPath(locale, {
+      kind: 'eclipse',
+      slug: eclipseDateSlug(nextEclipseId(nowMs)),
+    }),
+    guide: seoPath(locale, { kind: 'guides', slug: '' }),
+    about: `/${seoPrefix(locale)}com-funciona/`,
+  };
+}
 
 const REPO_URL = 'https://github.com/humbertblanco/eclipsi-info';
 
@@ -177,6 +205,16 @@ export function SiteFooter({ locale, consentState, onChangeConsent }: SiteFooter
    */
   const canChangeConsent =
     onChangeConsent !== undefined && consentState !== undefined && consentState !== 'unknown';
+  const paths = seoPaths(locale, Date.now());
+  /*
+   * El punt de l'usuari sobreviu al salt.
+   *
+   * «Com funciona» és una navegació de document i no un canvi de fragment:
+   * sense arrossegar el `search`, qui hi va des del peu torna a l'app sense el
+   * `?p=` i, per tant, sense el lloc que havia triat. Es llegeix del `window`
+   * perquè és qui el té; a Node no hi ha `window` i el peu no es pinta.
+   */
+  const keepPoint = typeof window === 'undefined' ? '' : window.location.search;
   return (
     <footer className="sitefoot">
       <p className="sitefoot__by">
@@ -203,19 +241,64 @@ export function SiteFooter({ locale, consentState, onChangeConsent }: SiteFooter
       </p>
 
       <nav className="sitefoot__meta" aria-label={TEXT.plan[locale]}>
-        <a href={SEO_PATHS[locale].eclipse}>{TEXT.plan[locale]}</a>
+        <a href={paths.eclipse}>{TEXT.plan[locale]}</a>
         {' · '}
-        <a href={SEO_PATHS[locale].guide}>{TEXT.guides[locale]}</a>
+        <a href={paths.guide}>{TEXT.guides[locale]}</a>
       </nav>
+
+      {/*
+        ELS CRÈDITS, AL PEU I NO NOMÉS A UN CLIC.
+
+        Fins ara el peu deia «Fonts i atribucions, a “Com funciona”» i prou. Per
+        a la majoria de les vuit fonts n'hi ha prou, però DUES no són una
+        cortesia: l'ODbL d'OpenStreetMap i la CC BY 4.0 d'Open-Meteo són
+        obligacions de llicència, i s'incompleixen mentre la dada es pinta i
+        l'atribució viu darrere d'un enllaç que la majoria no obre. La manera de
+        complir-les que no depèn de si algú fa clic és dir-ho on la dada es veu.
+
+        LA LLISTA ES DERIVA DE `CREDITS`, no s'escriu. És la mateixa constant que
+        pinta «Com funciona» i el diàleg del mapa, i `tests/credits-de-les-fonts.test.ts`
+        ja exigeix que tota font que el codi demani hi tingui fila. Si algú
+        n'afegeix una, apareix aquí sola; si l'escrivíssim, el peu es quedaria
+        enrere exactament com es va quedar l'agost del 2026, quan van entrar els
+        miradors d'OSM i la climatologia d'Open-Meteo i cap de les dues llistes
+        que hi havia ho deia.
+
+        Només se'n diu `who` i la llicència: el peu no és la pàgina de fonts,
+        és la constància que hi són. El «què n'obtenim» de cada fila continua a
+        «Com funciona», que és on hi ha lloc per explicar-ho.
+      */}
+      <p className="sitefoot__meta sitefoot__credits">
+        <span className="sitefoot__creditshead">{SOURCES_HEADING[locale]}:</span>{' '}
+        {CREDITS.map((credit, index) => (
+          <span key={credit.who}>
+            {index > 0 && ' · '}
+            <a href={credit.url} target="_blank" rel="noreferrer noopener">
+              {credit.who}
+            </a>
+            {credit.licence !== null && ` (${credit.licence})`}
+          </span>
+        ))}
+      </p>
 
       <p className="sitefoot__meta eclipsi-data">
         {/*
-          Enllaç d'àncora i no botó: el canvi de hash el recull el popstate de
-          l'App i la pantalla «Com funciona» s'obre com qualsevol altra ruta.
+          NAVEGACIÓ DE DOCUMENT, I EL COMENTARI QUE HI HAVIA DEIA EL CONTRARI.
+
+          Aquí hi deia «enllaç d'àncora i no botó: el canvi de hash el recull el
+          popstate de l'App». Va deixar de ser cert el dia que `#/com-funciona`
+          va passar a `/com-funciona/`: ara això rearrenca la SPA i es perd el
+          `?p=` que hi hagués a la barra, o sigui el punt de l'usuari.
+
+          Es manté la recàrrega a posta —el camí curat és el que s'indexa i el
+          que la gent enganxa— i es paga afegint-hi el `search` actual, que és
+          el que conserva el punt. Un comentari i el seu codi dient coses
+          diferents és pitjor que no tenir-ne cap: el següent que hi passi es
+          creurà el comentari.
         */}
-        <a href={SEO_PATHS[locale].about}>{TEXT.sourcesLink[locale]}</a>
+        <a href={`${paths.about}${keepPoint}`}>{TEXT.sourcesLink[locale]}</a>
         {' · '}
-        <a href={`${SEO_PATHS[locale].about}premsa/`}>{TEXT.pressLink[locale]}</a>
+        <a href={`${paths.about}premsa/${keepPoint}`}>{TEXT.pressLink[locale]}</a>
         {' · '}
         <a href={REPO_URL} target="_blank" rel="noreferrer noopener">
           {TEXT.code[locale]}

@@ -1,17 +1,24 @@
+/**
+ * L'ADREÇA QUE ES COMPARTEIX, CONTRA LA DECISIÓ QUE DIU EL MÒDUL.
+ *
+ * Aquest fitxer tenia una prova que es deia «usa el slug traduït» i que
+ * comprovava que `readablePlacePath(barcelona, 'fr')` fos
+ * `/fr/ville/barcelona/…`. Passava per casualitat: el nom francès de Barcelona
+ * és «Barcelone», i si el camí fes servir el topònim traduït hauria sortit
+ * `barcelone`. El que hi ha al camí és l'id, que val `barcelona`, i per a
+ * aquella ciutat les dues coses s'assemblen prou perquè ningú no ho notés.
+ *
+ * Les proves d'aquesta mena són pitjor que no tenir-ne: diuen que vigilen una
+ * decisió i el que vigilen és una coincidència.
+ *
+ * Ara es prova amb els dos casos on l'id i el topònim traduït NO s'assemblen
+ * gens —A Coruña / «La Corogne» i Saragossa / «Saragosse»—, de manera que la
+ * prova només pot passar si el camí es construeix de debò amb l'id.
+ */
 import { describe, expect, it } from 'vitest';
-import {
-  buildReadableShareUrl,
-  findReadablePlace,
-  readablePlacePath,
-  readableSlug,
-  resolveReadablePlacePath,
-} from './readable';
+import { buildReadableShareUrl, findReadablePlace, readablePlacePath } from './readable';
 
-describe('slugs llegibles', () => {
-  it('normalitza accents, puntuació i espais', () => {
-    expect(readableSlug('  Castelló de la Plana  ')).toBe('castello-de-la-plana');
-  });
-
+describe('adreces llegibles', () => {
   it('localitza la ciutat sense perdre la coordenada exacta compartida', () => {
     const url = buildReadableShareUrl(
       { lat: 41.118881, lon: 1.244491, eclipseId: '2026-08-12', label: 'Tarragona' },
@@ -23,10 +30,34 @@ describe('slugs llegibles', () => {
     );
   });
 
-  it('usa el slug traduït', () => {
-    const place = findReadablePlace({ lat: 41.3874, lon: 2.16857 });
-    expect(place).not.toBeNull();
-    expect(readablePlacePath(place!, 'fr', '2026-08-12')).toBe('/fr/ville/barcelona/12-08-2026/');
+  it('el camí porta l’id estable i no el topònim traduït', () => {
+    // A Coruña en francès és «La Corogne»: si el camí fes servir el topònim,
+    // aquí sortiria `la-corogne` i la prova cauria. És justament el cas que la
+    // versió anterior d'aquesta prova no mirava.
+    const coruna = findReadablePlace({ lat: 43.3623, lon: -8.4115 });
+    expect(coruna).not.toBeNull();
+    expect(coruna!.label.fr).toBe('La Corogne');
+    expect(readablePlacePath(coruna!, 'fr', '2026-08-12')).toBe(
+      '/fr/ville/a-coruna/12-08-2026/',
+    );
+
+    // I el segon: Saragossa en francès és «Saragosse».
+    const zaragoza = findReadablePlace({ lat: 41.6488, lon: -0.8891 });
+    expect(zaragoza!.label.fr).toBe('Saragosse');
+    expect(readablePlacePath(zaragoza!, 'fr', '2026-08-12')).toBe(
+      '/fr/ville/zaragoza/12-08-2026/',
+    );
+  });
+
+  it('el segment sí que es tradueix, i surt del mateix lloc que el generador', () => {
+    // El que es tradueix és la MENA de pàgina, no el nom del lloc. Els quatre
+    // segments han de coincidir amb els que escriu `build-seo-pages.ts`, i
+    // coincideixen perquè tots dos criden `seoPath()`.
+    const place = findReadablePlace({ lat: 41.3874, lon: 2.16857 })!;
+    expect(readablePlacePath(place, 'ca', '2026-08-12')).toBe('/ciutat/barcelona/12-08-2026/');
+    expect(readablePlacePath(place, 'es', '2026-08-12')).toBe('/es/ciudad/barcelona/12-08-2026/');
+    expect(readablePlacePath(place, 'en', '2026-08-12')).toBe('/en/city/barcelona/12-08-2026/');
+    expect(readablePlacePath(place, 'fr', '2026-08-12')).toBe('/fr/ville/barcelona/12-08-2026/');
   });
 
   it('manté l’URL compatible per a un punt lliure', () => {
@@ -71,21 +102,5 @@ describe('registre oficial', () => {
       eclipseId: '2026-08-12',
     });
     expect(place).toBeNull();
-  });
-});
-
-describe('resolució de pathname', () => {
-  it('resol els quatre segments localitzats', () => {
-    expect(resolveReadablePlacePath('/ciutat/zaragoza/12-08-2026/')?.place.id).toBe('zaragoza');
-    expect(resolveReadablePlacePath('/es/ciudad/zaragoza/12-08-2026')?.place.id).toBe('zaragoza');
-    expect(resolveReadablePlacePath('/en/city/zaragoza/12-08-2026/')?.locale).toBe('en');
-    expect(resolveReadablePlacePath('/fr/ville/zaragoza/12-08-2026/')?.locale).toBe('fr');
-    // Compatibilitat durant la migració dels primers enllaços publicats.
-    expect(resolveReadablePlacePath('/ciutat/zaragoza/2026-08-12/')?.place.id).toBe('zaragoza');
-  });
-
-  it('rebutja segments i slugs desconeguts', () => {
-    expect(resolveReadablePlacePath('/es/ciutat/zaragoza/2026-08-12/')).toBeNull();
-    expect(resolveReadablePlacePath('/es/ciudad/inventat/2026-08-12/')).toBeNull();
   });
 });
