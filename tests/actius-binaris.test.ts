@@ -208,6 +208,45 @@ const RASTER: RasterAsset[] = [
     fullBleed: true,
     alpha: 'opac',
   },
+  /*
+   * ELS LOGOTIPS DELS MITJANS. Són silueta amb alfa i els pinta
+   * `.about__mentionlogo` amb `grayscale(1) brightness(0) invert(1)`: el filtre
+   * els torna blancs sobre el fons fosc sigui quin sigui el color d'origen. Per
+   * això `alpha: 'lliure'` —la transparència de fora de la lletra és la marca,
+   * no cap forat— i per això els talls de lluminositat es mesuren igualment:
+   * el filtre pot emblanquinar una silueta, però no pot inventar-ne una que no
+   * hi sigui. Un logotip buit sortiria com un rectangle invisible dins d'una
+   * targeta amb vora, exactament com el mini-mapa.
+   *
+   * Mesurat el 8 d'agost de 2026, lluminositat sobre negre abans del filtre:
+   *   timeout.png          900×465   max 255,0  mitj 54,72  desv 97,91
+   *   diari-barcelona.png 1200×703   max 255,0  mitj 26,93  desv 77,42
+   *   diari-catalunya.png 1200×184   max 255,0  mitj 41,43  desv 89,88
+   */
+  {
+    path: 'press/media-logos/timeout.png',
+    role: 'logotip de Time Out Barcelona a la cobertura editorial',
+    width: 900,
+    height: 465,
+    fullBleed: false,
+    alpha: 'lliure',
+  },
+  {
+    path: 'press/media-logos/diari-barcelona.png',
+    role: 'logotip del Diari de Barcelona a la cobertura editorial',
+    width: 1200,
+    height: 703,
+    fullBleed: false,
+    alpha: 'lliure',
+  },
+  {
+    path: 'press/media-logos/diari-catalunya.png',
+    role: 'logotip del Diari de Catalunya a la cobertura editorial',
+    width: 1200,
+    height: 184,
+    fullBleed: false,
+    alpha: 'lliure',
+  },
 ];
 
 /** Contenidor ICO de compatibilitat; replica el favicon de 48 px ja auditat. */
@@ -227,7 +266,18 @@ const VECTOR: { path: string; role: string }[] = [
   { path: 'brand/logo-mark-mono.svg', role: 'marca monocroma — kit de premsa' },
   { path: 'brand/logo-daylight.svg', role: 'logotip sobre fons clar — kit de premsa' },
   { path: 'brand/favicon.svg', role: 'favicon de marca — kit de premsa' },
-  { path: 'brand/favicon-eclipse.svg', role: 'favicon canònic amb URL renovada' },
+  /*
+   * Els logotips dels mitjans que ens han citat. No són nostres: arriben tal com
+   * els publica cadascú i per això la majoria pinten amb `fill="currentColor"`
+   * heretat d'un `<g>` o de l'arrel, i no amb un color escrit a cada forma.
+   * Vegeu `formesPintades()`: aquesta prova ho ha de saber llegir, perquè la
+   * pregunta és si el fitxer dibuixa res, no com ho declara.
+   */
+  { path: 'press/media-logos/vilaweb.svg', role: 'logotip de VilaWeb a la cobertura editorial' },
+  { path: 'press/media-logos/diari-tarragona.svg', role: 'logotip del Diari de Tarragona' },
+  { path: 'press/media-logos/metadata.svg', role: 'logotip de MetaData' },
+  { path: 'press/media-logos/dbalears.svg', role: 'logotip de dBalears' },
+  { path: 'press/media-logos/el3devuit.svg', role: 'logotip d’el 3 de vuit' },
 ];
 
 /* ── Els talls ───────────────────────────────────────────────────────────── */
@@ -459,6 +509,49 @@ describe('el que el projecte promet d’aquests actius', () => {
     }
   });
 
+  /*
+   * CAP DECLARACIÓ D'ICONA POT APUNTAR A UN FITXER QUE NO EXISTEIX.
+   *
+   * El 8 d'agost de 2026 Google encara pintava a la SERP el llamp lila de Vite,
+   * la icona de la plantilla amb què va néixer el projecte. Aquella còpia se la
+   * va endur el cercador quan la portada declarava `/vite.svg`, i el fitxer feia
+   * mesos que no existia: ningú no ho podia veure, perquè un `<link rel="icon">`
+   * trencat no fa soroll enlloc —el navegador es queda amb el que tingui i no
+   * escriu res a la consola.
+   *
+   * Aquesta prova és la que hi hauria d'haver hagut: recorre TOTES les
+   * declaracions d'icona de la portada i de la 404 i exigeix que cada camí
+   * existeixi a `public/` i, a més, que sigui un dels actius auditats aquí
+   * dalt. Declarar una icona que aquest fitxer no mira seria tornar a obrir la
+   * porta pel cantó de sempre.
+   */
+  it('cada icona declarada existeix i és una de les auditades', () => {
+    const auditats = new Set<string>([
+      ...RASTER.map((asset) => asset.path),
+      ...VECTOR.map((asset) => asset.path),
+      ...COMPATIBILITY_IMAGES,
+    ]);
+    const documents: [string, string][] = [
+      ['index.html', indexHtml],
+      ['public/404.html', readFileSync(join(PUBLIC, '404.html'), 'utf8')],
+    ];
+
+    for (const [nom, html] of documents) {
+      const declarades = (html.match(/<link\b[^>]*>/g) ?? [])
+        .filter((tag) => /\brel="(?:icon|apple-touch-icon)"/.test(tag))
+        .map((tag) => /\bhref="([^"]*)"/.exec(tag)?.[1] ?? '');
+
+      // Una portada sense cap icona declarada és el cas que Google resol
+      // agafant el que tingui desat, que és exactament d'on venia el llamp.
+      expect(declarades.length, `${nom} no declara cap icona`).toBeGreaterThan(0);
+
+      for (const href of declarades) {
+        const path = href.replace('%BASE_URL%', '').replace(/^\//, '');
+        expect(auditats, `${nom} declara ${href}, que no és cap actiu auditat`).toContain(path);
+      }
+    }
+  });
+
   it('les etiquetes Open Graph declaren la mida que la targeta fa de debò', () => {
     // WhatsApp i X reserven la caixa amb aquests dos números abans de baixar
     // la imatge: si menteixen, la targeta surt deformada o retallada.
@@ -469,6 +562,57 @@ describe('el que el projecte promet d’aquests actius', () => {
     expect(metaContent('twitter:image')).toMatch(/brand\/og-ca\.png$/);
   });
 });
+
+/** Les etiquetes que dibuixen alguna cosa per si soles. */
+const FORMES = /^(?:path|circle|rect|ellipse|polygon|polyline|line|text|image)$/;
+
+/**
+ * Les formes d'un SVG que de debò deixen tinta, amb la pintura HEREDADA.
+ *
+ * PER QUÈ NO N'HI HA PROU MIRANT CADA FORMA PEL SEU COMPTE. La versió anterior
+ * llegia el `fill` de l'etiqueta i prou, i deia al comentari que una forma sense
+ * atribut també pinta —perquè el negre és el valor inicial de l'SVG— però el codi
+ * feia el contrari i la descartava. Amb els logotips de la marca no es va notar
+ * mai: tots escriuen el color a cada cercle. Amb els logotips dels mitjans, que
+ * el declaren un sol cop a `<svg fill="currentColor">` o a un `<g>` que els
+ * embolcalla, la prova hauria dit que cinc fitxers amb lletres ben visibles no
+ * dibuixen res.
+ *
+ * O sigui: el criteri és `fill` EFECTIU, i per tenir-lo cal la pila d'elements
+ * oberts. Només es descarta el que declara `none` —o hereta un `none` que ningú
+ * no sobreescriu— i tampoc no té traç.
+ *
+ * QUÈ NO SAP LLEGIR, dit perquè consti: un `fill` que arribi des d'un `<style>`
+ * intern o d'un full de fora. Si algun dia entra un actiu així, aquesta prova el
+ * declararà buit i haurà de créixer; és la direcció segura de fallar.
+ */
+function formesPintades(svg: string): string[] {
+  const inherited: { fill: string; stroke: string }[] = [{ fill: 'black', stroke: 'none' }];
+  const painted: string[] = [];
+
+  for (const match of svg.matchAll(/<(\/?)([a-zA-Z][\w:-]*)\b([^>]*?)(\/?)>/g)) {
+    const [tag, closing, name, attributes, selfClosing] = match;
+    const top = inherited[inherited.length - 1];
+
+    if (closing === '/') {
+      if (inherited.length > 1) inherited.pop();
+      continue;
+    }
+
+    const own = {
+      fill: /\bfill="([^"]*)"/.exec(attributes)?.[1] ?? top.fill,
+      stroke: /\bstroke="([^"]*)"/.exec(attributes)?.[1] ?? top.stroke,
+    };
+
+    if (FORMES.test(name.toLowerCase())) {
+      if (own.fill !== 'none' || own.stroke !== 'none') painted.push(tag);
+    }
+    // Un contenidor obert passa la seva pintura als fills; un d'autotancat, no.
+    if (selfClosing !== '/') inherited.push(own);
+  }
+
+  return painted;
+}
 
 describe('els SVG que es publiquen', () => {
   for (const asset of VECTOR) {
@@ -489,17 +633,8 @@ describe('els SVG que es publiquen', () => {
       });
 
       it('té geometria pintada, no un document buit', () => {
-        const shapes = painted.match(
-          /<(?:path|circle|rect|ellipse|polygon|polyline|line|text|image)\b[^>]*>/g,
-        );
-        expect(shapes, 'cap forma fora de <defs>').not.toBeNull();
-        const inked = shapes!.filter((shape) => {
-          const fill = /\bfill="([^"]*)"/.exec(shape)?.[1] ?? '';
-          const stroke = /\bstroke="([^"]*)"/.exec(shape)?.[1] ?? '';
-          // Sense atribut, l'SVG omple de negre per defecte: també és pintar.
-          return (fill !== 'none' && fill !== '') || (stroke !== 'none' && stroke !== '');
-        });
-        expect(inked.length).toBeGreaterThan(0);
+        const inked = formesPintades(painted);
+        expect(inked, 'cap forma pintada fora de <defs>').not.toEqual([]);
       });
     });
   }

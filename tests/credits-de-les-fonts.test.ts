@@ -104,6 +104,30 @@ const NO_SON_FONTS: Readonly<Record<string, string>> = {
     'la màquina mateixa: els guions de premsa (`press-*.ts`) hi parlen amb el Chrome ' +
     'que condueixen i hi serveixen les seves pròpies plantilles. No hi ha cap dada de ' +
     'ningú al darrere ni res que l’app ensenyi, i no surt del paquet publicat',
+
+  /*
+   * LA COBERTURA EDITORIAL VA EN DIRECCIÓ CONTRÀRIA A UNA FONT.
+   *
+   * Aquests vuit amfitrions són els mitjans que han escrit sobre l'app, i
+   * `AboutScreen.tsx` en publica el titular enllaçat. La fletxa apunta cap a
+   * fora: no baixem cap byte seu ni n'ensenyem cap dada, i per tant no hi ha res
+   * a atribuir. El logotip que sí que ensenyem no és una dada de ningú, és la
+   * seva marca, i qui el vigila és `tests/actius-binaris.test.ts`.
+   *
+   * Si algun dia se n'extreu res —un titular llegit en execució, una portada
+   * incrustada—, aleshores sí que serà una font i haurà de sortir d'aquí.
+   */
+  'www.vilaweb.cat': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.timeout.es': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.diaridetarragona.com':
+    'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.diaridebarcelona.cat':
+    'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.metadata.cat': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.dbalears.cat': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'el3devuit.cat': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'diaricatalunya.cat':
+    'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
 };
 
 /* ── El codi que es publica ───────────────────────────────────────────────── */

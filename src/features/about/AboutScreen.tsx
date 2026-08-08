@@ -75,7 +75,7 @@ const MEDIA_MENTIONS: MediaMention[] = [
   },
   {
     name: 'Time Out Barcelona',
-    logo: 'timeout-user.png',
+    logo: 'timeout.png',
     url: 'https://www.timeout.es/barcelona/es/noticias/un-disenador-catalan-crea-una-app-para-el-eclipse-solar-que-te-permite-comprobar-si-un-edificio-o-un-arbol-te-tapara-la-vision-080626',
   },
   {
@@ -85,7 +85,7 @@ const MEDIA_MENTIONS: MediaMention[] = [
   },
   {
     name: 'Diari de Barcelona',
-    logo: 'diari-barcelona-user.png',
+    logo: 'diari-barcelona.png',
     url: 'https://www.diaridebarcelona.cat/w/saps-on-veuras-eclipsi-web-ajuda-decisio?redirect=%2F',
   },
   {
@@ -105,7 +105,7 @@ const MEDIA_MENTIONS: MediaMention[] = [
   },
   {
     name: 'Diari de Catalunya',
-    logo: 'diari-catalunya-user.png',
+    logo: 'diari-catalunya.png',
     url: 'https://diaricatalunya.cat/baix-penedes/general/expectacio-per-leclipsi-solar-total-al-penedes',
   },
 ];
