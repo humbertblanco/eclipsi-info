@@ -3,11 +3,27 @@
 # nostra 404 fosca i bilingüe.
 ErrorDocument 404 /404.html
 
-# Les primeres pàgines editorials es van publicar amb la data ISO al camí.
-# La canònica pública és europea (dia-mes-any); aquestes redireccions 301
-# preserven query i fragment i eviten duplicats o enllaços morts.
 <IfModule mod_rewrite.c>
   RewriteEngine On
+
+  # EL LLAMP DE VITE, QUE ENCARA SURT A GOOGLE.
+  #
+  # El projecte va néixer d'una plantilla de Vite i, durant un temps, la portada
+  # declarava `/vite.svg` com a icona: un llamp lila. Google se'l va desar i el
+  # 8 d'agost de 2026 encara el pintava a la SERP, tot i que `/vite.svg` ja feia
+  # estona que era 404 i que totes les icones de debò es servien amb 200 i amb
+  # el checksum idèntic al del repositori.
+  #
+  # Un 404 no li diu res al cercador —la lectura més natural és «ara no hi és,
+  # ja tornaré»— i mentrestant es queda amb l'última còpia bona. Una 301, en
+  # canvi, és una frase completa: «aquell recurs ara és aquest altre». És l'únic
+  # senyal que es pot enviar des del servidor; la resta és demanar la indexació
+  # de l'arrel a Search Console, i això no ho pot fer cap fitxer d'aquí.
+  RewriteRule ^vite\.svg$ /brand/favicon-google-96.png [R=301,L]
+
+  # Les primeres pàgines editorials es van publicar amb la data ISO al camí.
+  # La canònica pública és europea (dia-mes-any); aquestes redireccions 301
+  # preserven query i fragment i eviten duplicats o enllaços morts.
   RewriteRule ^((?:es|en|fr)/)?(eclipsi|eclipse)/(\d{4})-(\d{2})-(\d{2})/?$ /$1$2/$5-$4-$3/ [R=301,L,NE]
   RewriteRule ^((?:es|en|fr)/)?(ciutat|ciudad|city|ville|punt-oficial|punto-oficial|official-site|site-officiel)/([^/]+)/(\d{4})-(\d{2})-(\d{2})/?$ /$1$2/$3/$6-$5-$4/ [R=301,L,NE]
 </IfModule>
