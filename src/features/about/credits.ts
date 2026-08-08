@@ -214,11 +214,21 @@ export const CREDITS: readonly Credit[] = [
      * fer servir la dada. `OPEN_METEO_ATTRIBUTION` (`core/weather/openMeteo.ts`)
      * sí que la deia, i el panell de núvols la pinta; els crèdits, no.
      *
-     * Els dos amfitrions són les dues API que el mòdul distingeix i que no es
-     * poden confondre: previsió (fins a 16 dies) i reanàlisi ERA5 (des de 1940).
+     * Els TRES amfitrions són les tres API que el mòdul distingeix i que no es
+     * poden confondre: previsió (fins a 16 dies), reanàlisi ERA5 (des de 1940)
+     * i el conjunt (el mateix model corregut cinquanta-un cops, que és el que
+     * permet dir quants escenaris acaben bé en comptes d'un sol número).
+     * Mateixa casa i mateixa llicència; amfitrions diferents, i la prova de
+     * `tests/credits-de-les-fonts.test.ts` busca els amfitrions dins del codi,
+     * o sigui que el que no hi consti aquí surt com a orfe.
      */
     licence: 'CC BY 4.0',
-    hosts: ['api.open-meteo.com', 'archive-api.open-meteo.com', 'open-meteo.com'],
+    hosts: [
+      'api.open-meteo.com',
+      'archive-api.open-meteo.com',
+      'ensemble-api.open-meteo.com',
+      'open-meteo.com',
+    ],
   },
   {
     what: { ca: 'Seguretat ocular', es: 'Seguridad ocular', en: 'Eye safety', fr: 'Sécurité oculaire' },

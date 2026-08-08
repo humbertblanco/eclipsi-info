@@ -18,21 +18,30 @@
 
 import { readCachedOutlook, writeCachedOutlook } from './cache';
 import {
-  LAYER_ORDER,
+  combineAlongLineOfSight,
+  percentile,
+  readSample,
+  scoreEnsembleMembers,
+  summariseEnsemble,
+  type RawSample,
+} from './ensemble';
+import {
   SCORING_VERSION,
   averageLayers,
   bandForScore,
   estimateHaze,
   scoreCloudLayers,
 } from './layers';
-import { planLineOfSight, planSignature, pointsForLayer } from './lineOfSight';
+import { planLineOfSight, planSignature } from './lineOfSight';
 import {
   ARCHIVE_LAG_DAYS,
+  ENSEMBLE_MODELS,
   MAX_FORECAST_DAYS,
   fetchArchiveWindow,
+  fetchEnsembleWindow,
   fetchForecastWindow,
   nearestIndex,
-  type HourlySeries,
+  type EnsemblePointResponse,
   type PointResponse,
   type QueryPoint,
 } from './openMeteo';
@@ -45,6 +54,7 @@ import {
   type CloudOutlookOptions,
   type CloudOutlookRequest,
   type Confidence,
+  type EnsembleSummary,
   type ForecastOutlook,
   type LocalisedText,
   type OutlookMode,
@@ -146,72 +156,60 @@ export const CONFIDENCE_LABEL: Record<Confidence, LocalisedText> = {
 
 /* ------------------------------------------------------- lectura de dades */
 
-function readNumber(series: (number | null)[] | undefined, index: number): number | null {
-  if (!series || index < 0 || index >= series.length) return null;
-  const value = series[index];
-  return value === null || value === undefined || !Number.isFinite(value) ? null : value;
-}
-
-interface RawSample {
-  low: number | null;
-  mid: number | null;
-  high: number | null;
-  total: number | null;
-  visibility: number | null;
-}
-
-function readSample(series: HourlySeries, index: number): RawSample {
-  return {
-    low: readNumber(series.cloud_cover_low, index),
-    mid: readNumber(series.cloud_cover_mid, index),
-    high: readNumber(series.cloud_cover_high, index),
-    total: readNumber(series.cloud_cover, index),
-    visibility: readNumber(series.visibility, index),
-  };
-}
-
-/** Superposició aleatòria: la mateixa regla amb què el model calcula el total. */
-function randomOverlapTotal(low: number, mid: number, high: number): number {
-  const t = (1 - low / 100) * (1 - mid / 100) * (1 - high / 100);
-  return 100 * (1 - t);
-}
-
-/**
- * Ajunta les lectures dels punts de la línia de visió en un sol joc de capes.
- *
- * Cada capa es promitja NOMÉS entre els punts on la línia de visió travessa
- * aquella capa. És tot el sentit del mostreig: llegir els cirrus a cent
- * quilòmetres de distància i els estrats a deu, perquè és on són els que et
- * taparan.
+/*
+ * `readSample`, `combineAlongLineOfSight` i `percentile` vivien aquí i ara
+ * s'importen d'`ensemble.ts`. Hi són senceres i sense tocar; el motiu de la
+ * mudança és que el conjunt ha de projectar les capes sobre la visual amb la
+ * MATEIXA regla que aquest camí, i tenir-ne dues còpies era demanar que un dia
+ * divergissin. Vegeu-ho explicat a la capçalera d'`ensemble.ts`.
  */
-function combineAlongLineOfSight(
-  plan: SamplingPlan,
-  samples: readonly RawSample[],
-): { layers: CloudLayers; hasLayers: boolean } {
-  const layers: CloudLayers = { low: 0, mid: 0, high: 0, total: 0 };
-  let hasLayers = false;
-
-  for (const layer of LAYER_ORDER) {
-    const indices = pointsForLayer(plan, layer);
-    const values: number[] = [];
-    for (const i of indices) {
-      const value = samples[i]?.[layer];
-      if (value !== null && value !== undefined) values.push(value);
-    }
-    if (values.length > 0) {
-      hasLayers = true;
-      layers[layer] = values.reduce((a, b) => a + b, 0) / values.length;
-    }
-  }
-
-  layers.total = hasLayers
-    ? randomOverlapTotal(layers.low, layers.mid, layers.high)
-    : (samples[0]?.total ?? 0);
-
-  return { layers, hasLayers };
-}
 
 /* --------------------------------------------------------------- previsió */
+
+/**
+ * El conjunt, demanat de manera que NO PUGUI FER MAL.
+ *
+ * Tres coses, i totes tres són la mateixa idea escrita tres vegades:
+ *
+ *  1. La promesa es crea amb el `.catch` ja enganxat i no llança mai. Si
+ *     l'amfitrió del conjunt cau, si triga massa (el temps màxim el posa
+ *     `openMeteo.ts` i és el mateix per a tothom) o si torna una resposta que
+ *     no es pot llegir, això val `null` i la previsió determinista segueix el
+ *     seu camí sense assabentar-se'n.
+ *  2. Es dispara ABANS d'esperar la petició determinista, no després. Són dos
+ *     amfitrions diferents i van en paral·lel: el conjunt no afegeix ni un
+ *     mil·lisegon a l'espera de l'usuari, només amplada de banda —3,7 kB
+ *     comprimits, mesurats.
+ *  3. `null` és una resposta legítima i vol dir «no en tenim». Qui pinti això
+ *     ha de saber ensenyar la fitxa sense conjunt, perquè és el que veurà
+ *     qualsevol que estigui fora de la cobertura del model.
+ */
+function requestEnsemble(
+  request: CloudOutlookRequest,
+  plan: SamplingPlan,
+  points: readonly QueryPoint[],
+  options: CloudOutlookOptions,
+): Promise<EnsembleSummary | null> {
+  if (options.ensemble !== true) return Promise.resolve(null);
+
+  const labels = new Map(ENSEMBLE_MODELS.map((m) => [m.id, m.label]));
+
+  return fetchEnsembleWindow(
+    points,
+    request.targetTimeMs - HOUR_MS,
+    request.targetTimeMs + HOUR_MS,
+    { fetchImpl: options.fetchImpl, signal: options.signal },
+  )
+    .then((byPoint: EnsemblePointResponse[]) => {
+      // Menys punts dels demanats NO és motiu per llençar-ho: el conjunt es
+      // pot projectar sobre els punts que hagin arribat, i `pointsForLayer`
+      // ja promitja només sobre les lectures que existeixen. Aquí, a
+      // diferència del camí determinista, mitja dada val més que cap.
+      const scored = scoreEnsembleMembers(plan, byPoint, request.targetTimeMs);
+      return summariseEnsemble(scored, labels);
+    })
+    .catch(() => null);
+}
 
 async function buildForecast(
   request: CloudOutlookRequest,
@@ -220,6 +218,8 @@ async function buildForecast(
   options: CloudOutlookOptions,
 ): Promise<ForecastOutlook> {
   const points: QueryPoint[] = plan.points.map((p) => ({ lat: p.lat, lon: p.lon }));
+
+  const ensemblePromise = requestEnsemble(request, plan, points, options);
 
   // Una hora abans i una després: així `nearestIndex` sempre té veïns i una
   // hora que caigui just al límit de la passada no ens deixa sense dada.
@@ -267,7 +267,23 @@ async function buildForecast(
       : null;
 
   const lead = Math.max(0, leadDays(request.targetTimeMs, nowMs));
-  const confidence = confidenceForLead(lead);
+
+  /*
+   * LA FIABILITAT: MESURADA SI ES POT, DEDUÏDA SI NO.
+   *
+   * `confidenceForLead` continua sent la reserva i no s'ha tocat: quan no hi
+   * ha conjunt, la fitxa diu exactament el que deia abans. Però quan n'hi ha,
+   * mana la seva, perquè és la que ha comptat en quants futurs passa el mateix
+   * en comptes de mirar el calendari. Que les dues xifres puguin no coincidir
+   * no és cap defecte: si a set dies vista els cinquanta-un membres diuen el
+   * mateix, la deducció del calendari («fiabilitat baixa») és senzillament
+   * FALSA, i tot aquest fitxer existeix per no dir coses falses amb cara de
+   * xifra. Totes dues viatgen dins de l'objecte —`confidence` i
+   * `ensemble.confidence`— perquè qui pinti la fitxa pugui dir d'on surt la
+   * que ensenya.
+   */
+  const ensemble = await ensemblePromise;
+  const confidence = ensemble ? ensemble.confidence : confidenceForLead(lead);
 
   return {
     mode: 'forecast',
@@ -283,6 +299,7 @@ async function buildForecast(
     leadDays: lead,
     validAtMs,
     haze: estimateHaze(meanVisibility, request.sunAltitudeDeg),
+    ensemble,
   };
 }
 
@@ -400,14 +417,9 @@ function localiseCaveat(outlook: CloudOutlook, locale: WeatherLocale): CloudOutl
 
 /* ----------------------------------------------------------- climatologia */
 
-function percentile(sorted: readonly number[], q: number): number {
-  if (sorted.length === 0) return 0;
-  const pos = (sorted.length - 1) * q;
-  const lo = Math.floor(pos);
-  const hi = Math.ceil(pos);
-  if (lo === hi) return sorted[lo];
-  return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
-}
+/* `percentile` també se n'ha anat a `ensemble.ts` sencera: els quartils de la
+   climatologia i els decils del conjunt han de sortir de la mateixa aritmètica,
+   o dues xifres que la fitxa ensenya de costat es calcularien diferent. */
 
 /** Distància circular entre dues hores del dia, en hores (0 a 12). */
 function hourDistance(a: number, b: number): number {
@@ -558,12 +570,23 @@ function cacheKey(
   request: CloudOutlookRequest,
   plan: SamplingPlan,
   mode: OutlookMode,
+  withEnsemble = false,
 ): string {
   const la = request.location.lat.toFixed(3);
   const lo = request.location.lon.toFixed(3);
   if (mode === 'forecast') {
     const hour = Math.round(request.targetTimeMs / HOUR_MS);
-    return `v${SCORING_VERSION}:f:${la},${lo}:${hour}:${planSignature(plan)}`;
+    /*
+     * EL SUFIX DEL CONJUNT NOMÉS S'AFEGEIX QUAN N'HI HA, i és a posta: així la
+     * clau de tot el que ja hi ha desat continua sent byte a byte la mateixa i
+     * ningú no perd la seva previsió per haver actualitzat l'app. El que sí
+     * que ha de tenir clau pròpia és el resultat AMB conjunt: si compartissin
+     * clau, encendre el conjunt tornaria l'objecte desat sense conjunt i
+     * semblaria que la funció no serveix, o a l'inrevés, apagar-lo tornaria
+     * una fiabilitat mesurada dins d'una fitxa que diu que és deduïda.
+     */
+    const suffix = withEnsemble ? ':e' : '';
+    return `v${SCORING_VERSION}:f:${la},${lo}:${hour}:${planSignature(plan)}${suffix}`;
   }
   const target = new Date(request.targetTimeMs);
   const stamp = `${target.getUTCMonth() + 1}-${target.getUTCDate()}-${target.getUTCHours()}`;
@@ -595,7 +618,7 @@ export async function getCloudOutlook(
     request.sunAzimuthDeg,
     request.sunAltitudeDeg,
   );
-  const key = cacheKey(request, plan, mode);
+  const key = cacheKey(request, plan, mode, options.ensemble === true);
   const ttl = mode === 'forecast' ? FORECAST_TTL_MS : CLIMATOLOGY_TTL_MS;
 
   const cached = await readCachedOutlook(key);

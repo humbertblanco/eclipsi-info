@@ -149,6 +149,75 @@ interface OutlookBase {
   caveat: string;
 }
 
+/* ------------------------------------------------------------- el conjunt */
+
+/**
+ * Què va dir un model del conjunt, comptat a part de la resta.
+ *
+ * Hi és encara que avui la llista tingui un sol model. La feina que va portar
+ * aquest tipus va començar volent-ne tres i va acabar amb un perquè els altres
+ * dos no serveixen les capes (la taula és a `openMeteo.ts`); el dia que
+ * Open-Meteo n'ompli un segon, el que ha de canviar és la llista de models, no
+ * la forma del resultat, i sobretot ha de poder-se ENSENYAR que dos models
+ * discrepen en comptes de barrejar-los en un sol número.
+ */
+export interface EnsembleModelReport {
+  /** `id` del model tal com es demana a l'API. */
+  modelId: string;
+  /** Nom propi del model, per ensenyar. No es tradueix. */
+  label: string;
+  /** Membres d'aquest model que han donat dada utilitzable. */
+  memberCount: number;
+  /** Membres que han donat prou cel per veure la totalitat. */
+  favourableCount: number;
+  /** Puntuació mediana d'aquest model, de 0 a 100. */
+  medianScore: number;
+}
+
+/**
+ * El resultat del conjunt: quants escenaris acaben bé.
+ *
+ * ÉS UNA TERCERA CARA, i no es pot pintar amb la cara de les altres dues. La
+ * previsió determinista diu «60 sobre 100» i és una passada d'un model; la
+ * climatologia diu «va passar això els últims quinze anys»; això diu «de
+ * cinquanta-un futurs possibles, en divuit veus la totalitat». Cap dels tres
+ * respon la pregunta de l'altre.
+ */
+export interface EnsembleSummary {
+  /** Membres utilitzables de tots els models junts. */
+  memberCount: number;
+  /** Membres amb el cel prou net per veure la totalitat. */
+  favourableCount: number;
+  /** `favourableCount / memberCount`, de 0 a 1. LA XIFRA QUE DECIDEIX. */
+  favourableFraction: number;
+  /** Puntuació mínima perquè un membre compti com a favorable. */
+  thresholdScore: number;
+  /** Membres per banda de cel. Sumen `memberCount`. */
+  byBand: Record<SkyBand, number>;
+  /** Puntuació de cada membre, ordenada de menys a més. Per pintar-ne la forma. */
+  scores: number[];
+  medianScore: number;
+  /** Decils extrems: vuit membres de cada deu cauen entre els dos. */
+  p10: number;
+  p90: number;
+  /**
+   * Acord mesurat entre membres, de 0 a 1. 1 és unanimitat i 0 és una moneda
+   * a l'aire. D'aquí surt `confidence`, i és tota la diferència amb el que hi
+   * havia abans: la fiabilitat es MESURA en comptes de deduir-se del calendari.
+   */
+  agreement: number;
+  /** La fiabilitat que surt d'`agreement`. No la dels dies que falten. */
+  confidence: Confidence;
+  /** Què ha dit cada model per separat. */
+  models: EnsembleModelReport[];
+  /**
+   * Capes MEDIANES del conjunt, només per poder-les ensenyar al costat.
+   * NO SÓN EL QUE PUNTUA: cada membre s'ha puntuat sol i després s'han comptat
+   * els favorables. Vegeu la capçalera d'`ensemble.ts`.
+   */
+  medianLayers: CloudLayers;
+}
+
 /** Previsió de model numèric. Només té sentit a pocs dies vista. */
 export interface ForecastOutlook extends OutlookBase {
   mode: 'forecast';
@@ -158,6 +227,18 @@ export interface ForecastOutlook extends OutlookBase {
   validAtMs: number;
   /** Extinció per aerosols, si el model ha donat visibilitat. */
   haze: HazeEstimate | null;
+  /**
+   * El conjunt, quan s'ha pogut obtenir.
+   *
+   * ÉS OPCIONAL A POSTA, i per dos motius que no són el mateix. El primer és
+   * que el conjunt és un afegit i el camí determinista és la reserva: si la
+   * petició del conjunt falla, triga massa o no cobreix el punt, aquí hi ha
+   * `null` i l'usuari no perd absolutament res del que ja tenia. El segon és
+   * que a la memòria cau hi ha objectes desats abans que això existís, i quan
+   * tornin no portaran el camp: `undefined` vol dir «no ho sabem», que és una
+   * cosa diferent de `null`, «s'ha provat i no hi és».
+   */
+  ensemble?: EnsembleSummary | null;
 }
 
 /** Resum estadístic d'una sèrie de puntuacions històriques. */
@@ -215,6 +296,25 @@ export interface CloudOutlookOptions {
    * l'app i perquè així qui ja cridava això no ha de canviar res.
    */
   locale?: WeatherLocale;
+  /**
+   * Demanar també el conjunt. PER DEFECTE NO, i el defecte és la part
+   * important.
+   *
+   * El conjunt és una SEGONA petició a un SEGON amfitrió. Amb el defecte a
+   * cert, qualsevol camí que ja cridava `getCloudOutlook` passaria a fer dues
+   * peticions sense haver-ho demanat, i tres proves d'`outlook.test.ts` que
+   * compten peticions (`toHaveLength(1)`) passarien a mesurar una altra cosa
+   * de la que van ser escrites per mesurar: que mostrejar SET punts de la
+   * línia de visió costa UNA petició. Aquella decisió segueix sent certa i la
+   * seva prova no s'ha tocat.
+   *
+   * Per tant això s'encén des de fora, amb `{ ensemble: true }`, i qui l'encén
+   * és la capa de vista. Mentre no s'encengui, l'aplicació es comporta EXACTAMENT
+   * com abans: mateixes peticions, mateixa puntuació, mateixa fiabilitat
+   * deduïda del calendari. És el sentit de tot això: el camí d'ara és la
+   * reserva i no depèn de res del que hi ha de nou.
+   */
+  ensemble?: boolean;
 }
 
 /**

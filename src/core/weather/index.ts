@@ -95,9 +95,33 @@ export {
 export {
   OPEN_METEO_ATTRIBUTION,
   MAX_FORECAST_DAYS,
+  MAX_ENSEMBLE_DAYS,
   FORECAST_ENDPOINT,
   ARCHIVE_ENDPOINT,
+  ENSEMBLE_ENDPOINT,
+  ENSEMBLE_MODELS,
 } from './openMeteo';
+
+/**
+ * El conjunt. `getCloudOutlook` l'adjunta a `ForecastOutlook.ensemble` quan se
+ * li demana amb `{ ensemble: true }`; la resta s'exporta perquè la interfície
+ * pugui explicar la xifra —quin és el llindar, què vol dir l'acord— sense
+ * tornar-se a inventar cap constant pel seu compte.
+ */
+export {
+  scoreEnsembleMembers,
+  summariseEnsemble,
+  measureAgreement,
+  confidenceForAgreement,
+  bandForEnsemble,
+  ENSEMBLE_VISIBLE_MIN_SCORE,
+  MIN_ENSEMBLE_MEMBERS,
+  AGREEMENT_HIGH,
+  AGREEMENT_MEDIUM,
+  AGREEMENT_LOW,
+} from './ensemble';
+export type { ScoredMember } from './ensemble';
+export type { EnsembleSummary, EnsembleModelReport } from './types';
 
 export { clearWeatherCache } from './cache';
 

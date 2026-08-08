@@ -13,11 +13,14 @@
  * dia. Una consulta completa nostra en gasta una (previsió) o quinze
  * (climatologia, una per any d'arxiu), i totes dues es desen a la memòria cau.
  *
- * DUES API DIFERENTS, I NO ES PODEN CONFONDRE:
+ * TRES API DIFERENTS, I NO ES PODEN CONFONDRE:
  *  - /v1/forecast  → model numèric, fins a 16 dies. Diu QUÈ PASSARÀ.
  *  - /v1/archive   → reanàlisi ERA5 des de 1940. Diu QUÈ VA PASSAR.
- * El mòdul d'orquestració tria l'una o l'altra i ho marca al resultat; aquí
- * només hi ha el transport.
+ *  - /v1/ensemble  → el mateix model corregut moltes vegades amb condicions
+ *                    inicials pertorbades. Diu QUANTS ESCENARIS ACABEN BÉ, que
+ *                    és una pregunta diferent de les altres dues.
+ * El mòdul d'orquestració tria què demana i ho marca al resultat; aquí només
+ * hi ha el transport.
  *
  * Cap dependència de DOM: aquest mòdul ha de poder córrer en un Worker o en Node.
  */
@@ -26,6 +29,14 @@ import { CloudOutlookError, type LocalisedText } from './types';
 
 export const FORECAST_ENDPOINT = 'https://api.open-meteo.com/v1/forecast';
 export const ARCHIVE_ENDPOINT = 'https://archive-api.open-meteo.com/v1/archive';
+
+/**
+ * API del conjunt. Un amfitrió diferent de la previsió determinista, i per
+ * això s'ha hagut de declarar a `features/about/credits.ts`: la prova
+ * `tests/credits-de-les-fonts.test.ts` busca els amfitrions dins del codi i no
+ * deixa passar cap servidor que serveixi una dada que l'app ensenyi.
+ */
+export const ENSEMBLE_ENDPOINT = 'https://ensemble-api.open-meteo.com/v1/ensemble';
 
 /**
  * Atribució obligatòria per la llicència CC-BY 4.0 de les dades.
@@ -242,6 +253,257 @@ export async function fetchArchiveWindow(
   const [first] = normalizeResponse(payload);
   if (!first) throw new CloudOutlookError('L’arxiu d’Open-Meteo no ha tornat cap punt');
   return first;
+}
+
+/* ------------------------------------------------------------- el conjunt */
+
+/**
+ * QUIN MODEL DEL CONJUNT ENTRA, I PER QUÈ NOMÉS UN.
+ *
+ * Mesurat el 8-8-2026 contra `ensemble-api.open-meteo.com/v1/ensemble`, un sol
+ * punt de la franja (41,5 N / 2,5 O) i l'hora del màxim (2026-08-12T20:00Z).
+ * La taula és el que va tornar cada model, comptant quantes de les sèries
+ * publicades portaven ALGUN valor no nul:
+ *
+ *   model                        membres  cloud_cover  low/mid/high  visibility
+ *   ecmwf_ifs025_ensemble             51    51/51         51/51          0/51
+ *   icon_seamless_eps                 40    40/40          0/40          0/40
+ *   icon_global_eps                   40    40/40          0/40          0/40
+ *   icon_eu_eps                       40    40/40          0/40          0/40
+ *   ncep_gefs025 / gefs05 / seamless  31    31/31          0/31         31/31
+ *   gem_global_ensemble               21    21/21          0/21          0/21
+ *   bom_access_global_ensemble        18     0/18          0/18          0/18
+ *   ecmwf_ifs04                        1      0/1           0/1           0/1
+ *
+ * LA TRAMPA QUE AIXÒ DESTAPA: l'API publica les claus `cloud_cover_low`,
+ * `_mid` i `_high` per a TOTS els models, amb els seus quaranta o trenta
+ * membres, i les omple de `null`. Qui compti claus en comptes de mirar valors
+ * es pensarà que té tres capes de tres models i estarà puntuant no-res. Es va
+ * comptar claus primer i la taula deia que hi eren totes.
+ *
+ * Per tant l'acord entre models que demanava la feina (ICON diu que sí, GFS
+ * diu que no) NOMÉS ES POT FER SOBRE LA NUVOLOSITAT TOTAL, i la nuvolositat
+ * total és justament el que aquest projecte va decidir no fer servir mai sol:
+ * un 90 % de cirrus i un 90 % d'estrats són el mateix número i eclipsis
+ * diferents. Entre tenir tres models sense capes i un model amb capes
+ * projectades sobre la visual, guanya el segon, i aquest comentari és perquè
+ * qui hi torni no ho hagi de tornar a mesurar per descobrir-ho.
+ *
+ * `AROME` no hi surt perquè no és un conjunt: `meteofrance_arome_france` a
+ * aquest endpoint torna UNA sèrie, i plena de `null`. Fora de la seva
+ * cobertura, el cos de la resposta arriba amb `"latitude":nan` —que no és JSON
+ * vàlid i `JSON.parse` rebutja—, o sigui que un model fora de zona no torna
+ * dades dolentes: fa caure la petició sencera. Per això no hi ha cap
+ * substitució silenciosa: no hi ha res a substituir.
+ */
+export interface EnsembleModel {
+  /** El que s'envia a `models=`. */
+  readonly id: string;
+  /**
+   * El sufix amb què torna les claus, que NO és el mateix: es demana
+   * `ecmwf_ifs025` i torna `..._ecmwf_ifs025_ensemble`. Només apareix quan es
+   * demana més d'un model; amb un de sol les claus van sense sufix.
+   */
+  readonly suffix: string;
+  /** Membres que va servir el dia de la mesura. Serveix per notar-ne la falta. */
+  readonly measuredMembers: number;
+  /** Nom curt per a l'atribució. No es tradueix: és el nom propi del model. */
+  readonly label: string;
+}
+
+export const ENSEMBLE_MODELS: readonly EnsembleModel[] = [
+  {
+    id: 'ecmwf_ifs025',
+    suffix: 'ecmwf_ifs025_ensemble',
+    measuredMembers: 51,
+    label: 'ECMWF IFS 0,25°',
+  },
+];
+
+/**
+ * Horitzó del conjunt, en dies. Mesurat: `ecmwf_ifs025` va servir 360 hores
+ * plenes amb `forecast_days=15`. És el mateix horitzó útil que la previsió
+ * determinista, i per tant el conjunt no allarga mai el que ja diem.
+ */
+export const MAX_ENSEMBLE_DAYS = 15;
+
+/**
+ * Variables que demanem al conjunt.
+ *
+ * Les mateixes que a la previsió MENYS `visibility`, que per a ECMWF torna
+ * buida (vegeu la taula). Demanar-la no falla, però ompliria la resposta de
+ * cinquanta-una sèries de `null`, i el mòdul de boirina ja té la seva dada del
+ * camí determinista, que sí que la serveix.
+ */
+export const ENSEMBLE_HOURLY = [
+  'cloud_cover',
+  'cloud_cover_low',
+  'cloud_cover_mid',
+  'cloud_cover_high',
+] as const;
+
+/** Una passada del conjunt: un model i un número de membre. */
+export interface EnsembleMember {
+  /** `id` del model d'`ENSEMBLE_MODELS`. */
+  modelId: string;
+  /** 0 és la sèrie sense sufix (el control); 1..N són els `_memberNN`. */
+  member: number;
+  /** Les mateixes sèries que la previsió determinista, per a aquest membre. */
+  hourly: HourlySeries;
+}
+
+/** Resposta del conjunt per a un punt: el mateix instant vist N vegades. */
+export interface EnsemblePointResponse {
+  latitude: number;
+  longitude: number;
+  elevation: number;
+  members: EnsembleMember[];
+}
+
+/** Les variables ordenades de més llarga a més curta. Vegeu `splitMemberKey`. */
+const ENSEMBLE_VARIABLES_BY_LENGTH = [...ENSEMBLE_HOURLY].sort(
+  (a, b) => b.length - a.length,
+);
+
+type EnsembleVariable = (typeof ENSEMBLE_HOURLY)[number];
+
+/**
+ * Desmunta una clau de l'API del conjunt en variable, membre i model.
+ *
+ * QUATRE FORMES, I S'HAN DE SABER TOTES QUATRE. Mesurades el 8-8-2026:
+ *
+ *   cloud_cover_low                              un model, control
+ *   cloud_cover_low_member07                     un model, membre 7
+ *   cloud_cover_low_ecmwf_ifs025_ensemble        més d'un model, control
+ *   cloud_cover_low_member07_ecmwf_ifs025_ensemble  més d'un model, membre 7
+ *
+ * L'ORDRE DE PROVA NO ÉS INDIFERENT: `cloud_cover` és prefix de
+ * `cloud_cover_low`, i si es prova primer, la clau `cloud_cover_low_member07`
+ * es llegeix com la variable `cloud_cover` amb un membre que es diu
+ * `low_member07`. Per això es proven de més llarga a més curta.
+ */
+export function splitMemberKey(
+  key: string,
+): { variable: EnsembleVariable; member: number; suffix: string | null } | null {
+  for (const variable of ENSEMBLE_VARIABLES_BY_LENGTH) {
+    if (key === variable) return { variable, member: 0, suffix: null };
+    if (!key.startsWith(`${variable}_`)) continue;
+    const rest = key.slice(variable.length + 1);
+
+    const withMember = /^member(\d+)(?:_(.+))?$/.exec(rest);
+    if (withMember) {
+      return {
+        variable,
+        member: Number(withMember[1]),
+        suffix: withMember[2] ?? null,
+      };
+    }
+
+    // Sense `member`: la resta només pot ser el sufix d'un model conegut. Si
+    // no ho és, aquesta variable no és la bona i s'ha de continuar provant —
+    // `cloud_cover` amb resta `low` cau exactament aquí.
+    if (ENSEMBLE_MODELS.some((m) => m.suffix === rest)) {
+      return { variable, member: 0, suffix: rest };
+    }
+  }
+  return null;
+}
+
+/**
+ * Converteix la resposta plana de l'API en una sèrie per membre.
+ *
+ * ES DESCARTEN ELS MEMBRES BUITS, i és la comprovació que justifica tota la
+ * taula de la capçalera: un membre que no porti cap valor no nul en cap de les
+ * seves variables no és un escenari, és una columna de `null` amb nom. Si
+ * comptés, la fracció de membres favorables es dividiria entre membres que no
+ * han dit res i sortiria sistemàticament baixa.
+ */
+export function parseEnsemblePoint(
+  entry: unknown,
+  requestedModels: readonly EnsembleModel[],
+): EnsemblePointResponse {
+  const point = entry as Partial<PointResponse> & { error?: boolean; reason?: string };
+  if (point.error) {
+    throw new CloudOutlookError(point.reason ?? 'Resposta d’error d’Open-Meteo');
+  }
+  const hourly = point.hourly as (HourlySeries & Record<string, unknown>) | undefined;
+  if (!hourly || !Array.isArray(hourly.time)) {
+    throw new CloudOutlookError('Resposta del conjunt sense sèrie horària');
+  }
+
+  const time = hourly.time;
+  /** Clau «model|membre» → sèries a mig omplir. */
+  const byMember = new Map<string, EnsembleMember>();
+
+  for (const [key, values] of Object.entries(hourly)) {
+    if (key === 'time' || !Array.isArray(values)) continue;
+    const parsed = splitMemberKey(key);
+    if (!parsed) continue;
+
+    // Amb un sol model demanat les claus no porten sufix, i aleshores el model
+    // és, sense ambigüitat, l'únic que hem demanat.
+    const model =
+      parsed.suffix === null
+        ? requestedModels.length === 1
+          ? requestedModels[0]
+          : null
+        : (requestedModels.find((m) => m.suffix === parsed.suffix) ?? null);
+    if (!model) continue;
+
+    const id = `${model.id}|${parsed.member}`;
+    let member = byMember.get(id);
+    if (!member) {
+      member = { modelId: model.id, member: parsed.member, hourly: { time } };
+      byMember.set(id, member);
+    }
+    member.hourly[parsed.variable] = values as (number | null)[];
+  }
+
+  const members = [...byMember.values()].filter((m) =>
+    ENSEMBLE_HOURLY.some((v) => m.hourly[v]?.some((x) => x !== null && x !== undefined)),
+  );
+
+  return {
+    latitude: point.latitude ?? 0,
+    longitude: point.longitude ?? 0,
+    elevation: point.elevation ?? 0,
+    members,
+  };
+}
+
+/**
+ * El conjunt per a un o més punts, en una sola petició.
+ *
+ * MESURAT EL 8-8-2026 amb el pla de visual sencer de Sòria (sis punts, Sol a
+ * 4°), tres hores i les quatre variables: 80.260 B en cru i 3.746 B comprimits
+ * amb gzip. La comparació que importa és amb la petició determinista d'ara,
+ * que en són uns 4 KB: el conjunt de cinquanta-un membres amb les tres capes
+ * projectades sobre la visual cap dins del MATEIX ordre de magnitud, perquè
+ * cinquanta-una sèries de percentatges d'un o dos dígits comprimeixen com el
+ * que són. Per això la projecció sobre la visual no s'ha hagut de retallar:
+ * era la por raonable abans de mesurar-ho i la mesura diu que no cal.
+ */
+export async function fetchEnsembleWindow(
+  points: readonly QueryPoint[],
+  startMs: number,
+  endMs: number,
+  options: FetchOptions & { models?: readonly EnsembleModel[] } = {},
+): Promise<EnsemblePointResponse[]> {
+  const models = options.models ?? ENSEMBLE_MODELS;
+  const { lat, lon } = joinCoordinates(points);
+  const params = new URLSearchParams({
+    latitude: lat,
+    longitude: lon,
+    hourly: ENSEMBLE_HOURLY.join(','),
+    models: models.map((m) => m.id).join(','),
+    start_hour: toApiHour(startMs),
+    end_hour: toApiHour(endMs),
+    timeformat: 'unixtime',
+    timezone: 'UTC',
+  });
+  const payload = await requestJson(`${ENSEMBLE_ENDPOINT}?${params.toString()}`, options);
+  const list = Array.isArray(payload) ? payload : [payload];
+  return list.map((entry) => parseEnsemblePoint(entry, models));
 }
 
 /**
