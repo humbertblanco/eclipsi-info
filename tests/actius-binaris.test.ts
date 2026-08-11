@@ -226,6 +226,11 @@ const RASTER: RasterAsset[] = [
    * I l'11 d'agost, amb la tanda nova:
    *   vilapress.png        470×106   max 230,2  mitj 70,60  desv 85,73
    *   laxarxames.png       235× 59   max 255,0  mitj 63,28  desv 93,04
+   *   laciutat.png         300× 56   max 201,3  mitj 32,12  desv 47,84
+   *   radiodesvern.png    1059×414   max 229,3  mitj 29,25  desv 46,79
+   *   radiomaricel.png     900×815   max 255,0  mitj 140,95 desv 126,11
+   *   radiosantandreu.png  319×209   max 198,6  mitj 29,60  desv 43,43
+   *   nextllobregat.png   1315×359   max 255,0  mitj 54,80  desv 79,18
    *
    * AQUEST ÚLTIM NO ARRIBA TAL COM EL PUBLICA EL MITJÀ, i és l'única raó per la
    * qual la seva mitjana és la més alta de totes: Vilapress publica el logotip
@@ -274,6 +279,52 @@ const RASTER: RasterAsset[] = [
     fullBleed: false,
     alpha: 'lliure',
   },
+  {
+    path: 'press/media-logos/laciutat.png',
+    role: 'logotip de La Ciutat, amb el paper passat a alfa',
+    width: 300,
+    height: 56,
+    fullBleed: false,
+    alpha: 'lliure',
+  },
+  {
+    path: 'press/media-logos/radiodesvern.png',
+    role: 'logotip de Ràdio Desvern, amb el paper passat a alfa',
+    width: 1059,
+    height: 414,
+    fullBleed: false,
+    alpha: 'lliure',
+  },
+  {
+    /*
+     * L'ÚNIC QUE ES VA CONSTRUIR A L'INREVÉS, i per això la mitjana és el doble
+     * que la de qualsevol altre: la marca de Ràdio Maricel és blanca sobre una
+     * plaça blava plena, o sigui que aquí la tinta és el BLANC. Qui s'hagués
+     * quedat la tinta s'hauria quedat la plaça i hauria publicat un quadrat.
+     */
+    path: 'press/media-logos/radiomaricel.png',
+    role: 'logotip de Ràdio Maricel — blanc calat, la plaça blava és el fons',
+    width: 900,
+    height: 815,
+    fullBleed: false,
+    alpha: 'lliure',
+  },
+  {
+    path: 'press/media-logos/radiosantandreu.png',
+    role: 'logotip de Ràdio Sant Andreu, amb el paper passat a alfa',
+    width: 319,
+    height: 209,
+    fullBleed: false,
+    alpha: 'lliure',
+  },
+  {
+    path: 'press/media-logos/nextllobregat.png',
+    role: 'logotip de Next Llobregat, retallat del muntatge amb què el publiquen',
+    width: 1315,
+    height: 359,
+    fullBleed: false,
+    alpha: 'lliure',
+  },
 ];
 
 /** Contenidor ICO de compatibilitat; replica el favicon de 48 px ja auditat. */
@@ -309,6 +360,8 @@ const VECTOR: { path: string; role: string }[] = [
   { path: 'press/media-logos/cadena-ser.svg', role: 'logotip de la Cadena SER' },
   { path: 'press/media-logos/ouest-france.svg', role: 'logotip d’Ouest-France' },
   { path: 'press/media-logos/laverdad.svg', role: 'logotip de La Verdad' },
+  { path: 'press/media-logos/lleida.svg', role: 'logotip de Lleida.com' },
+  { path: 'press/media-logos/esplugues.svg', role: 'logotip d’Esplugues.digital' },
   /*
    * El de RAC1 és el mateix SVG que la ràdio incrusta al seu full d'estil, MENYS
    * el `<path d="M0,0h500v500H0"/>` que li fa de quadrat negre de fons. Amb el

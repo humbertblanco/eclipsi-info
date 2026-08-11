@@ -148,6 +148,17 @@ const NO_SON_FONTS: Readonly<Record<string, string>> = {
   'www.vilapress.cat': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
   'laxarxames.cat': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
   'www.laverdad.es': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.lleida.com': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'laciutat.cat': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.nextllobregat.cat':
+    'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.radiosantandreu.com':
+    'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.radiomaricel.cat':
+    'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'esplugues.digital': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.radiodesvern.com':
+    'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
 };
 
 /* ── El codi que es publica ───────────────────────────────────────────────── */

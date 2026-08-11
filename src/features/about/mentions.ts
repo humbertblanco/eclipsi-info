@@ -39,11 +39,28 @@
  *   · `rac1.svg` — és l'SVG que RAC1 mateix incrusta al seu full d'estil, sense
  *     el `<path d="M0,0h500v500H0"/>` que li fa de quadrat negre de fons. Amb el
  *     quadrat, el filtre donava un quadrat blanc i prou.
- *   · `vilapress.png` — el seu logotip es publica sobre paper (254,254,254).
- *     El paper s'ha passat a alfa 0 i les lletres a alfa 255, i després s'ha
- *     retallat a la caixa de la tinta perquè ocupi la seva targeta com els
- *     altres. La distància al blanc de la tinta més fluixa —el gris de «TE
- *     INFORMA»— és 87, i la del paper 1: el sòl de 8 no toca cap lletra.
+ *   · `vilapress.png`, `laciutat.png`, `radiosantandreu.png`, `radiodesvern.png`
+ *     — es publiquen sobre paper blanc. El paper s'ha passat a alfa 0 i la
+ *     tinta a alfa 255, i després s'ha retallat a la caixa de la tinta perquè
+ *     ocupin la targeta com els altres. A Vilapress, la distància al blanc de
+ *     la tinta més fluixa —el gris de «TE INFORMA»— és 87 i la del paper 1: el
+ *     sòl de 8 no toca cap lletra. El de Ràdio Desvern arriba en JPEG i el
+ *     paper hi porta soroll de compressió, i per això el seu sòl és 18.
+ *
+ *     De passada, això arregla sol un cas que semblava un problema i no ho és:
+ *     els logotips amb una placa de color i el dibuix CALAT a dins —el quadrat
+ *     de Ràdio Desvern, la rodona de La Ciutat— surten amb el calat convertit
+ *     en forat, que és exactament com es dibuixa el negatiu d'una marca així.
+ *
+ *   · `radiomaricel.png` — aquest va A L'INREVÉS i és l'excepció que val la
+ *     pena tenir escrita: la seva marca és BLANCA sobre una plaça blava plena.
+ *     Qui s'hi quedés la tinta es quedaria la plaça, i publicaria un quadrat.
+ *     Aquí la tinta és el blanc i la plaça és el fons.
+ *
+ *   · `nextllobregat.png` — el fitxer que publiquen és el logotip MÉS un
+ *     muntatge d'un portàtil i un mòbil. El muntatge no és la marca, i sota el
+ *     filtre hauria sortit una taca blanca al costat del nom. S'ha retallat pel
+ *     buit de 57 px que separa les dues coses.
  *
  * Els altres arriben tal com els publica cadascú. Qui vigila que cap d'aquests
  * fitxers no sigui un document buit és `tests/actius-binaris.test.ts`, que els
@@ -138,9 +155,21 @@ export const MEDIA_MENTIONS: MediaMention[] = [
     kind: 'article',
   },
   {
+    name: 'Lleida.com',
+    logo: 'lleida.svg',
+    url: 'https://www.lleida.com/noticia_canal/una-eina-catalana-permet-calcular-el-millor-punt-veure-leclipsi-solar-del-12-dagost',
+    kind: 'article',
+  },
+  {
     name: 'Diari de Barcelona',
     logo: 'diari-barcelona.png',
     url: 'https://www.diaridebarcelona.cat/w/saps-on-veuras-eclipsi-web-ajuda-decisio?redirect=%2F',
+    kind: 'article',
+  },
+  {
+    name: 'La Ciutat',
+    logo: 'laciutat.png',
+    url: 'https://laciutat.cat/catalunya/eclipsi-total-sol-12-agost-5-dubtes-has-resoldre-abans-veure_898193_102.html',
     kind: 'article',
   },
   {
@@ -162,6 +191,12 @@ export const MEDIA_MENTIONS: MediaMention[] = [
     kind: 'article',
   },
   {
+    name: 'Next Llobregat',
+    logo: 'nextllobregat.png',
+    url: 'https://www.nextllobregat.cat/ca/noticia/un-jove-emprenedor-del-baix-crea-una-app-gratuita-per-triar-el-millor-lloc-des-don-veure-leclipsi/ciencia',
+    kind: 'article',
+  },
+  {
     name: 'Vilapress',
     logo: 'vilapress.png',
     url: 'https://www.vilapress.cat/articulo/baix-llobregat/2026-08-08/5979200-emprendedor-baix-llobregat-crea-app-encontrar-mejor-lugar-ver-eclipse',
@@ -171,6 +206,40 @@ export const MEDIA_MENTIONS: MediaMention[] = [
     name: 'Diari de Catalunya',
     logo: 'diari-catalunya.png',
     url: 'https://diaricatalunya.cat/baix-penedes/general/expectacio-per-leclipsi-solar-total-al-penedes',
+    kind: 'article',
+  },
+  /*
+   * LA CUA SÓN ELS MITJANS DE POBLE, i no hi és per condescendència: hi és
+   * perquè el criteri d'aquesta llista és l'abast, i el d'un municipi és el
+   * d'un municipi. Val la pena dir què hi ha aquí baix, perquè de contingut en
+   * tenen més que uns quants de més amunt: Ràdio Maricel va seure a parlar amb
+   * l'autor mitja hora, i Ràdio Sant Andreu i Esplugues.digital van escriure
+   * peces senceres sobre com mirar l'eclipsi des del seu carrer. Si algun dia
+   * el criteri d'ordre passa a ser la profunditat de la peça i no l'abast del
+   * mitjà, aquestes quatre files pugen, i el comentari de dalt s'ha de reescriure.
+   */
+  {
+    name: 'Ràdio Sant Andreu',
+    logo: 'radiosantandreu.png',
+    url: 'https://www.radiosantandreu.com/es-podra-veure-leclipsi-des-de-sant-andreu-de-la-barca-un-emprenedor-baixllobregati-crea-un-app-per-comprovar-ho/',
+    kind: 'article',
+  },
+  {
+    name: 'Ràdio Maricel',
+    logo: 'radiomaricel.png',
+    url: 'https://www.radiomaricel.cat/eclipsi-info-un-web-que-us-pot-ajudar-a-tenir-clar-des-don-es-pot-veure-millor-leclipsi-de-dimecres-nhem-parlat-amb-el-seu-creador-humbert-blanco/',
+    kind: 'audio',
+  },
+  {
+    name: 'Esplugues.digital',
+    logo: 'esplugues.svg',
+    url: 'https://esplugues.digital/com-veure-eclipsi-12-agost-esplugues/',
+    kind: 'article',
+  },
+  {
+    name: 'Ràdio Desvern',
+    logo: 'radiodesvern.png',
+    url: 'https://www.radiodesvern.com/news/sant-just-desvern-es-prepara-per-observar-leclipsi-solar-del-12-dagost/',
     kind: 'article',
   },
 ];
