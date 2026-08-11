@@ -8,6 +8,13 @@ import { ab, ABOUT_AUTHORS, type AboutStringKey } from './strings';
  * vegeu la capçalera de `credits.ts`. Ara la pàgina només la pinta.
  */
 import { CREDITS } from './credits';
+/*
+ * LA COBERTURA EDITORIAL TAMPOC NO ÉS D'AQUESTA PANTALLA, i per la mateixa raó
+ * que les fonts: dins d'un `.tsx` cap prova de Node la pot llegir, i el nom de
+ * fitxer de cada logotip era una cadena que no havia tocat mai el disc. Viu a
+ * `./mentions.ts` i la compara `tests/cobertura-editorial.test.ts`.
+ */
+import { MEDIA_MENTIONS } from './mentions';
 import { ObservationSources } from './ObservationSources';
 import './about.css';
 
@@ -58,56 +65,6 @@ const PRESS_ASSETS: PressAsset[] = [
   { file: 'logo-mark-mono.svg', labelKey: 'assets.markMono' },
   { file: 'logo-daylight.svg', labelKey: 'assets.daylight' },
   { file: 'og.png', labelKey: 'assets.og' },
-];
-
-interface MediaMention {
-  name: string;
-  logo: string;
-  url: string;
-}
-
-/** Cobertura editorial, ordenada per abast del mitjà i rellevància de la peça. */
-const MEDIA_MENTIONS: MediaMention[] = [
-  {
-    name: 'VilaWeb',
-    logo: 'vilaweb.svg',
-    url: 'https://www.vilaweb.cat/noticies/on-veure-eclipsi-12-agost-coses-tenir-compte-veure-platja/',
-  },
-  {
-    name: 'Time Out Barcelona',
-    logo: 'timeout.png',
-    url: 'https://www.timeout.es/barcelona/es/noticias/un-disenador-catalan-crea-una-app-para-el-eclipse-solar-que-te-permite-comprobar-si-un-edificio-o-un-arbol-te-tapara-la-vision-080626',
-  },
-  {
-    name: 'Diari de Tarragona',
-    logo: 'diari-tarragona.svg',
-    url: 'https://www.diaridetarragona.com/tarragona/267731/eclipse-solar-total-2026-web-gratuita-buscar-mejor-sitio-tarragona-ver-12-agosto_amp.html',
-  },
-  {
-    name: 'Diari de Barcelona',
-    logo: 'diari-barcelona.png',
-    url: 'https://www.diaridebarcelona.cat/w/saps-on-veuras-eclipsi-web-ajuda-decisio?redirect=%2F',
-  },
-  {
-    name: 'MetaData',
-    logo: 'metadata.svg',
-    url: 'https://www.metadata.cat/reportatge/6458/eclipsi-tecnologic-historia-eines-digitals-millor-punt-sol',
-  },
-  {
-    name: 'dBalears',
-    logo: 'dbalears.svg',
-    url: 'https://www.dbalears.cat/balears/balears/2026/08/06/421691/eclipsi-info-eina-gratuita-ajuda-trobar-millor-lloc-per-veure-eclipsi.html',
-  },
-  {
-    name: 'el 3 de vuit',
-    logo: 'el3devuit.svg',
-    url: 'https://el3devuit.cat/2026/08/06/143001/actualitat/expectacio-per-veure-leclipsi-solar-de-dimecres/',
-  },
-  {
-    name: 'Diari de Catalunya',
-    logo: 'diari-catalunya.png',
-    url: 'https://diaricatalunya.cat/baix-penedes/general/expectacio-per-leclipsi-solar-total-al-penedes',
-  },
 ];
 
 /** Quant dura el «Copiat» abans de tornar a ser un botó de copiar. */
@@ -267,7 +224,12 @@ export function AboutScreen({ locale, initialSection, onOpenGuideSafety }: About
                     decoding="async"
                   />
                   <span className="ui-visually-hidden">{mention.name}</span>
-                  <span className="about__mentioncta">{ab('mentions.read', locale)} ↗</span>
+                  {/* Dues d'aquestes peces són de ràdio: la crida ho ha de dir.
+                      Un botó que promet un text i obre un reproductor és una
+                      mentida petita, i aquí no se'n fan. */}
+                  <span className="about__mentioncta">
+                    {ab(mention.kind === 'audio' ? 'mentions.listen' : 'mentions.read', locale)} ↗
+                  </span>
                 </a>
               </li>
             ))}

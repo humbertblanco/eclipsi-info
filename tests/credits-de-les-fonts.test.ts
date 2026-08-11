@@ -113,11 +113,14 @@ const NO_SON_FONTS: Readonly<Record<string, string>> = {
   /*
    * LA COBERTURA EDITORIAL VA EN DIRECCIÓ CONTRÀRIA A UNA FONT.
    *
-   * Aquests vuit amfitrions són els mitjans que han escrit sobre l'app, i
-   * `AboutScreen.tsx` en publica el titular enllaçat. La fletxa apunta cap a
+   * Aquests tretze amfitrions són els mitjans que han parlat de l'app, i
+   * `features/about/mentions.ts` en publica l'enllaç. La fletxa apunta cap a
    * fora: no baixem cap byte seu ni n'ensenyem cap dada, i per tant no hi ha res
    * a atribuir. El logotip que sí que ensenyem no és una dada de ningú, és la
    * seva marca, i qui el vigila és `tests/actius-binaris.test.ts`.
+   *
+   * DOS SÓN DE RÀDIO i el seu enllaç obre un reproductor. Tampoc no els demanem
+   * res: qui prem el botó se'n va del nostre lloc, com amb els altres onze.
    *
    * Si algun dia se n'extreu res —un titular llegit en execució, una portada
    * incrustada—, aleshores sí que serà una font i haurà de sortir d'aquí.
@@ -133,6 +136,13 @@ const NO_SON_FONTS: Readonly<Record<string, string>> = {
   'el3devuit.cat': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
   'diaricatalunya.cat':
     'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.elperiodico.com':
+    'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'cadenaser.com': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.rac1.cat': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.ouest-france.fr':
+    'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.vilapress.cat': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
 };
 
 /* ── El codi que es publica ───────────────────────────────────────────────── */

@@ -222,6 +222,16 @@ const RASTER: RasterAsset[] = [
    *   timeout.png          900×465   max 255,0  mitj 54,72  desv 97,91
    *   diari-barcelona.png 1200×703   max 255,0  mitj 26,93  desv 77,42
    *   diari-catalunya.png 1200×184   max 255,0  mitj 41,43  desv 89,88
+   *
+   * I l'11 d'agost, amb la tanda nova:
+   *   vilapress.png        470×106   max 230,2  mitj 70,60  desv 85,73
+   *
+   * AQUEST ÚLTIM NO ARRIBA TAL COM EL PUBLICA EL MITJÀ, i és l'única raó per la
+   * qual la seva mitjana és la més alta de totes: Vilapress publica el logotip
+   * sobre paper blanc, i un paper blanc que el filtre emblanquina és un
+   * RECTANGLE blanc dins d'una targeta. El paper s'ha passat a alfa 0 i s'ha
+   * retallat a la caixa de la tinta. El perquè, amb els números del llindar,
+   * és a la capçalera de `src/features/about/mentions.ts`.
    */
   {
     path: 'press/media-logos/timeout.png',
@@ -244,6 +254,14 @@ const RASTER: RasterAsset[] = [
     role: 'logotip del Diari de Catalunya a la cobertura editorial',
     width: 1200,
     height: 184,
+    fullBleed: false,
+    alpha: 'lliure',
+  },
+  {
+    path: 'press/media-logos/vilapress.png',
+    role: 'logotip de Vilapress, amb el paper passat a alfa',
+    width: 470,
+    height: 106,
     fullBleed: false,
     alpha: 'lliure',
   },
@@ -278,6 +296,17 @@ const VECTOR: { path: string; role: string }[] = [
   { path: 'press/media-logos/metadata.svg', role: 'logotip de MetaData' },
   { path: 'press/media-logos/dbalears.svg', role: 'logotip de dBalears' },
   { path: 'press/media-logos/el3devuit.svg', role: 'logotip d’el 3 de vuit' },
+  { path: 'press/media-logos/elperiodico.svg', role: 'logotip d’El Periódico' },
+  { path: 'press/media-logos/cadena-ser.svg', role: 'logotip de la Cadena SER' },
+  { path: 'press/media-logos/ouest-france.svg', role: 'logotip d’Ouest-France' },
+  /*
+   * El de RAC1 és el mateix SVG que la ràdio incrusta al seu full d'estil, MENYS
+   * el `<path d="M0,0h500v500H0"/>` que li fa de quadrat negre de fons. Amb el
+   * quadrat, el filtre de `.about__mentionlogo` no donava el logotip: donava un
+   * quadrat blanc. Aquesta prova mira que hi quedi geometria pintada, que és
+   * justament el que la retallada podria haver-se endut de més.
+   */
+  { path: 'press/media-logos/rac1.svg', role: 'logotip de RAC1, sense el quadrat de fons' },
 ];
 
 /* ── Els talls ───────────────────────────────────────────────────────────── */
