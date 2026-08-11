@@ -14,7 +14,7 @@ import { CREDITS } from './credits';
  * fitxer de cada logotip era una cadena que no havia tocat mai el disc. Viu a
  * `./mentions.ts` i la compara `tests/cobertura-editorial.test.ts`.
  */
-import { MEDIA_MENTIONS } from './mentions';
+import { MEDIA_MENTIONS, type MentionKind } from './mentions';
 import { ObservationSources } from './ObservationSources';
 import './about.css';
 
@@ -66,6 +66,22 @@ const PRESS_ASSETS: PressAsset[] = [
   { file: 'logo-daylight.svg', labelKey: 'assets.daylight' },
   { file: 'og.png', labelKey: 'assets.og' },
 ];
+
+/**
+ * Què promet el botó de cada peça, segons si es llegeix, s'escolta o es mira.
+ *
+ * ÉS UNA TAULA I NO UN CONDICIONAL A POSTA. Aquí hi va haver-hi un ternari
+ * `kind === 'audio' ? … : …`, i tenia el defecte de sempre: la mena que no
+ * contemplava queia a la branca de per defecte sense dir res. Quan va entrar la
+ * peça de televisió, el botó hauria dit «Llegeix la peça» a sobre d'un vídeo.
+ * Amb un `Record<MentionKind, …>` la mena nova no compila fins que algú li
+ * escriu la crida, que és quan toca decidir-la.
+ */
+const MENTION_CTA: Record<MentionKind, AboutStringKey> = {
+  article: 'mentions.read',
+  audio: 'mentions.listen',
+  video: 'mentions.watch',
+};
 
 /** Quant dura el «Copiat» abans de tornar a ser un botó de copiar. */
 const COPIED_FEEDBACK_MS = 2000;
@@ -224,11 +240,11 @@ export function AboutScreen({ locale, initialSection, onOpenGuideSafety }: About
                     decoding="async"
                   />
                   <span className="ui-visually-hidden">{mention.name}</span>
-                  {/* Dues d'aquestes peces són de ràdio: la crida ho ha de dir.
-                      Un botó que promet un text i obre un reproductor és una
-                      mentida petita, i aquí no se'n fan. */}
+                  {/* Dues d'aquestes peces són de ràdio i una de televisió: la
+                      crida ho ha de dir. Un botó que promet un text i obre un
+                      reproductor és una mentida petita, i aquí no se'n fan. */}
                   <span className="about__mentioncta">
-                    {ab(mention.kind === 'audio' ? 'mentions.listen' : 'mentions.read', locale)} ↗
+                    {ab(MENTION_CTA[mention.kind], locale)} ↗
                   </span>
                 </a>
               </li>

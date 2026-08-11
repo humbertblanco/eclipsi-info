@@ -136,18 +136,25 @@ const STRINGS = {
   'mentions.overline': { ca: 'Als mitjans', es: 'En los medios', en: 'In the media', fr: 'Dans les médias' },
   'mentions.title': { ca: 'Han parlat d’eclipsi.info', es: 'Han hablado de eclipsi.info', en: 'eclipsi.info in the press', fr: 'La presse parle d’eclipsi.info' },
   'mentions.note': {
-    ca: 'Una selecció de mitjans —premsa i ràdio— que han explicat el projecte.',
-    es: 'Una selección de medios —prensa y radio— que han explicado el proyecto.',
-    en: 'A selection of outlets—press and radio—that have covered the project.',
-    fr: 'Une sélection de médias — presse et radio — qui ont présenté le projet.',
+    ca: 'Una selecció de mitjans —premsa, ràdio i televisió— que han explicat el projecte.',
+    es: 'Una selección de medios —prensa, radio y televisión— que han explicado el proyecto.',
+    en: 'A selection of outlets—press, radio and television—that have covered the project.',
+    fr: 'Une sélection de médias — presse, radio et télévision — qui ont présenté le projet.',
   },
   'mentions.read': { ca: 'Llegeix la peça', es: 'Lee el artículo', en: 'Read the story', fr: 'Lire l’article' },
-  /* La ràdio no es llegeix. Vegeu `kind` a `./mentions.ts`. */
+  /* La ràdio no es llegeix i la televisió tampoc. Vegeu `kind` a
+     `./mentions.ts` i la taula `MENTION_CTA` d'`./AboutScreen.tsx`. */
   'mentions.listen': {
     ca: 'Escolta la peça',
     es: 'Escucha el audio',
     en: 'Listen to the segment',
     fr: 'Écouter le sujet',
+  },
+  'mentions.watch': {
+    ca: 'Mira la peça',
+    es: 'Mira el vídeo',
+    en: 'Watch the segment',
+    fr: 'Voir le sujet',
   },
 
   /* --- premsa ---------------------------------------------------------------- */

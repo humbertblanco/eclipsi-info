@@ -225,6 +225,7 @@ const RASTER: RasterAsset[] = [
    *
    * I l'11 d'agost, amb la tanda nova:
    *   vilapress.png        470×106   max 230,2  mitj 70,60  desv 85,73
+   *   laxarxames.png       235× 59   max 255,0  mitj 63,28  desv 93,04
    *
    * AQUEST ÚLTIM NO ARRIBA TAL COM EL PUBLICA EL MITJÀ, i és l'única raó per la
    * qual la seva mitjana és la més alta de totes: Vilapress publica el logotip
@@ -265,6 +266,14 @@ const RASTER: RasterAsset[] = [
     fullBleed: false,
     alpha: 'lliure',
   },
+  {
+    path: 'press/media-logos/laxarxames.png',
+    role: 'logotip de La Xarxa — el més petit del bloc, i és l’únic que publiquen',
+    width: 235,
+    height: 59,
+    fullBleed: false,
+    alpha: 'lliure',
+  },
 ];
 
 /** Contenidor ICO de compatibilitat; replica el favicon de 48 px ja auditat. */
@@ -299,6 +308,7 @@ const VECTOR: { path: string; role: string }[] = [
   { path: 'press/media-logos/elperiodico.svg', role: 'logotip d’El Periódico' },
   { path: 'press/media-logos/cadena-ser.svg', role: 'logotip de la Cadena SER' },
   { path: 'press/media-logos/ouest-france.svg', role: 'logotip d’Ouest-France' },
+  { path: 'press/media-logos/laverdad.svg', role: 'logotip de La Verdad' },
   /*
    * El de RAC1 és el mateix SVG que la ràdio incrusta al seu full d'estil, MENYS
    * el `<path d="M0,0h500v500H0"/>` que li fa de quadrat negre de fons. Amb el

@@ -8,7 +8,7 @@
  * havia tocat el disc en cap moment, ni en compilar ni en provar. Una lletra de
  * més i el navegador no diu res: pinta la targeta amb la seva vora, el seu botó
  * i un forat al mig on hi hauria d'haver la marca. És el mini-mapa transparent
- * una altra vegada, amb tretze ocasions de repetir-lo en comptes d'una.
+ * una altra vegada, amb una ocasió de repetir-lo per cada fila de la llista.
  *
  * ── LES DUES DIRECCIONS ─────────────────────────────────────────────────────
  *
@@ -46,8 +46,8 @@
  * ── QUÈ NO VIGILA, DIT PERQUÈ CONSTI ────────────────────────────────────────
  *
  * Que l'enllaç sigui viu i que la peça parli de nosaltres. Això vol sortir a
- * demanar bytes a tretze mitjans cada vegada que algú corri la bateria, i una
- * prova que depèn de la xarxa és una prova que es desactiva el primer dia que
+ * demanar bytes a tots els mitjans de la llista cada vegada que algú corri la
+ * bateria, i una prova que depèn de la xarxa es desactiva el primer dia que
  * un servidor va lent. Es comprova a mà quan s'hi afegeix una fila.
  */
 
@@ -176,12 +176,12 @@ describe('la cobertura editorial', () => {
   /*
    * SENSE AQUESTES DUES LÍNIES, LA PROVA DE SOTA NO PROVA RES.
    *
-   * Tretze logotips que passen un detector és exactament el que passaria si el
-   * detector tornés `false` sempre —i durant una estona ho va fer al revés, va
-   * declarar tapa la M de MetaData—, o sigui que el verd de sota no diu si el
-   * criteri funciona. Aquí hi ha els dos casos de debò, amb la geometria tal
-   * com va arribar: el fons que RAC1 incrusta al seu logotip, que ha de ser
-   * tapa, i una lletra recta que ocupa tota la caixa, que no.
+   * Una llista sencera de logotips que passa un detector és exactament el que
+   * es veuria si el detector tornés `false` sempre —i durant una estona va fer
+   * el contrari, declarar tapa la M de MetaData—, o sigui que el verd de sota no
+   * diu si el criteri funciona. Aquí hi ha els dos casos de debò, amb la
+   * geometria tal com va arribar: el fons que RAC1 incrusta al seu logotip, que
+   * ha de ser tapa, i una lletra recta que ocupa tota la caixa, que no.
    */
   it('el detector caça la tapa de debò i no confon una lletra recta amb un fons', () => {
     expect(esTapa('M0,0h500v500H0', 500, 500), 'el fons negre de RAC1').toBe(true);

@@ -113,14 +113,17 @@ const NO_SON_FONTS: Readonly<Record<string, string>> = {
   /*
    * LA COBERTURA EDITORIAL VA EN DIRECCIÓ CONTRÀRIA A UNA FONT.
    *
-   * Aquests tretze amfitrions són els mitjans que han parlat de l'app, i
-   * `features/about/mentions.ts` en publica l'enllaç. La fletxa apunta cap a
-   * fora: no baixem cap byte seu ni n'ensenyem cap dada, i per tant no hi ha res
-   * a atribuir. El logotip que sí que ensenyem no és una dada de ningú, és la
-   * seva marca, i qui el vigila és `tests/actius-binaris.test.ts`.
+   * Els amfitrions que vénen a continuació són els mitjans que han parlat de
+   * l'app, i `features/about/mentions.ts` en publica l'enllaç. La fletxa apunta
+   * cap a fora: no baixem cap byte seu ni n'ensenyem cap dada, i per tant no hi
+   * ha res a atribuir. El logotip que sí que ensenyem no és una dada de ningú,
+   * és la seva marca, i qui el vigila és `tests/actius-binaris.test.ts`.
    *
-   * DOS SÓN DE RÀDIO i el seu enllaç obre un reproductor. Tampoc no els demanem
-   * res: qui prem el botó se'n va del nostre lloc, com amb els altres onze.
+   * ALGUNS SÓN DE RADIODIFUSIÓ i el seu enllaç obre un reproductor. Tampoc no
+   * els demanem res: qui prem el botó se'n va del nostre lloc, exactament com
+   * amb els de text. (Aquí no s'hi escriu quants n'hi ha de cada mena a posta:
+   * un recompte dins d'un comentari és una còpia de la llista, i les còpies
+   * d'aquest fitxer ja tenen la seva pròpia lliçó escrita més amunt.)
    *
    * Si algun dia se n'extreu res —un titular llegit en execució, una portada
    * incrustada—, aleshores sí que serà una font i haurà de sortir d'aquí.
@@ -143,6 +146,8 @@ const NO_SON_FONTS: Readonly<Record<string, string>> = {
   'www.ouest-france.fr':
     'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
   'www.vilapress.cat': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'laxarxames.cat': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
+  'www.laverdad.es': 'mitjà que ens ha citat: l’enllaç surt de nosaltres, no en baixem cap dada',
 };
 
 /* ── El codi que es publica ───────────────────────────────────────────────── */

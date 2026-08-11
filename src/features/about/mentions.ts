@@ -20,11 +20,14 @@
  * comptes d'enganxar-la al final, que és on acaben totes les llistes que no
  * diuen com s'ordenen.
  *
- * PER QUÈ HI HA `kind`. Perquè dues d'aquestes peces són de ràdio i el botó
- * deia «Llegeix la peça» a totes tretze. Un enllaç que promet un text i obre un
- * reproductor és una mentida petita, però és de la família que aquest projecte
- * no es permet: la mateixa que anunciava «Galícia» d'una franja que no passa
- * per Vigo. La capa de vista tria la crida amb aquest camp.
+ * PER QUÈ HI HA `kind`. Perquè dues d'aquestes peces són de ràdio, una és de
+ * televisió i el botó deia «Llegeix la peça» a totes. Un enllaç que promet un
+ * text i obre un reproductor és una mentida petita, però és de la família que
+ * aquest projecte no es permet: la mateixa que anunciava «Galícia» d'una franja
+ * que no passa per Vigo. La capa de vista tria la crida amb aquest camp, i ho
+ * fa amb una taula i no amb un condicional (`MENTION_CTA` a `AboutScreen.tsx`):
+ * així, el dia que entri una peça d'una mena que encara no existeix, qui no li
+ * escrigui la crida es trobarà un error de compilació i no un botó que menteix.
  *
  * ELS LOGOTIPS NO SÓN NOSTRES i viuen a `public/press/media-logos/`. Els pinta
  * `.about__mentionlogo` amb `grayscale(1) brightness(0) invert(1)`: el filtre
@@ -42,16 +45,23 @@
  *     altres. La distància al blanc de la tinta més fluixa —el gris de «TE
  *     INFORMA»— és 87, i la del paper 1: el sòl de 8 no toca cap lletra.
  *
- * Els altres onze arriben tal com els publica cadascú. Qui vigila que cap
- * d'aquests fitxers no sigui un document buit és `tests/actius-binaris.test.ts`,
- * que els té declarats un per un.
+ * Els altres arriben tal com els publica cadascú. Qui vigila que cap d'aquests
+ * fitxers no sigui un document buit és `tests/actius-binaris.test.ts`, que els
+ * té declarats un per un.
+ *
+ * EL DE LA XARXA ÉS EL MÉS PETIT DE TOTS: 235 × 59, que és l'únic que publiquen
+ * al reproductor. A l'alçada de la targeta li'n caldrien 318 per anar fi en una
+ * pantalla de doble densitat, i per tant es veurà una mica tou. S'hi queda així:
+ * abans un logotip lleugerament tou que un d'inflat, que és mentir sobre una
+ * resolució que no hi és —la mateixa regla que amb les xifres.
  */
 
 /**
- * Si la peça es llegeix o s'escolta. No és cap detall d'estil: decideix què
- * promet el botó, i és l'única cosa que la vista necessita saber per no mentir.
+ * Si la peça es llegeix, s'escolta o es mira. No és cap detall d'estil:
+ * decideix què promet el botó, i és l'única cosa que la vista necessita saber
+ * per no mentir.
  */
-export type MentionKind = 'article' | 'audio';
+export type MentionKind = 'article' | 'audio' | 'video';
 
 export interface MediaMention {
   /**
@@ -89,6 +99,25 @@ export const MEDIA_MENTIONS: MediaMention[] = [
     logo: 'ouest-france.svg',
     url: 'https://www.ouest-france.fr/sciences/astronomie/cote-sauvage-pointe-de-keroch-nos-meilleurs-spots-pour-admirer-leclipse-du-12-aout-dans-le-morbihan-7376bdce-8f52-11f1-bac6-43ee9437487c',
     kind: 'article',
+  },
+  {
+    name: 'La Verdad',
+    logo: 'laverdad.svg',
+    url: 'https://www.laverdad.es/tecnologia/app-realidad-aumentada-simula-vera-eclipse-lugar-20260811191423-nt.html',
+    kind: 'article',
+  },
+  /*
+   * «Notícies en Xarxa Estiu», de l'11 d'agost del 2026. Va aquí i no més avall
+   * perquè no és una televisió: és LA XARXA DE MITJANS LOCALS, i el que hi surt
+   * el reemeten les televisions comarcals de tot el país. Sumat, arriba a més
+   * gent que qualsevol de les capçaleres que vénen a continuació —encara que
+   * cap d'elles sola no ho sembli.
+   */
+  {
+    name: 'La Xarxa',
+    logo: 'laxarxames.png',
+    url: 'https://laxarxames.cat/player/5057028?streamType=MAIN',
+    kind: 'video',
   },
   {
     name: 'VilaWeb',

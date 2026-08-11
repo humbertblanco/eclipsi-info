@@ -171,14 +171,21 @@ button.about__guidelink {
 
 .about__mentions li { min-width: 0; }
 
+/* Dues files: la de la marca, que s'estira i la centra, i la de la crida, que
+   fa el que necessita i es queda al peu. Abans era un `flex` amb
+   `space-between`, i amb 160 px d'alçada mínima per a un logotip de 40 això
+   deixava 65 px d'aire A SOTA de la marca i cap a sobre: quinze logotips
+   enganxats al sostre de la seva targeta, cadascun amb un forat al davant.
+   El `1fr` reparteix aquell aire a banda i banda, que és el que la graella
+   havia de fer des del principi. */
 .about__mentions a {
-  display: flex;
+  display: grid;
+  grid-template-rows: 1fr auto;
   min-height: calc(var(--sp-13) + var(--sp-8));
   height: 100%;
-  flex-direction: column;
+  justify-items: center;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-5);
+  gap: var(--sp-4);
   padding: var(--sp-4);
   border: var(--bw-hair) solid var(--border-hairline);
   border-radius: var(--r-sm);
