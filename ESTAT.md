@@ -66,6 +66,34 @@ Per saber si el que serveix el CDN és el que hi ha al disc, `?cb=<a l'atzar>`
 salta la cau i respon amb l'origen: si amb el paràmetre el checksum quadra i
 sense no, el problema és de cau i no de desplegament.
 
+### Les icones, i com es mira si Google ja les ha vist
+
+```bash
+npm run check:favicon
+```
+
+Compara cada icona del disc amb la seva URL pública, comprova les rutes que el
+món demana sense llegir mai l'HTML (`/apple-touch-icon.png` i companyia) i diu
+si el magatzem d'icones de Google encara té el llamp lila de la plantilla de
+Vite. Surt amb codi 1 si alguna cosa demana atenció. **Fes-lo servir en comptes
+de mirar la SERP a ull**: el navegador té la seva pròpia còpia i menteix.
+
+El que l'script no pot veure és si el robot de Google ha arribat a trucar mai.
+Això només ho diuen els registres de l'origen, i és la comprovació que durant
+setmanes no es va poder fer:
+
+```bash
+# Al servidor, sobre el log del vhost: qui demana icones i què rep.
+grep -E "GET /(favicon|apple-touch|brand/favicon)" access_ssl_log.webstat \
+  | grep -oE '"GET [^"]+" [0-9]{3}' | sort | uniq -c | sort -rn | head
+# I si el robot de favicons de Google hi ha estat mai:
+grep -ci "Google Favicon" access_ssl_log.webstat
+```
+
+L'11-8-2026 la segona comanda va donar 2, i totes dues eren proves nostres: en
+nou dies el robot de favicons de Google no havia vingut. Vegeu la capçalera de
+`public/.htaccess`, que en guarda la mesura sencera.
+
 ### Saber quina versió corres
 
 El peu de l'app diu la data i hora de compilació (`2026-08-01 16:42`). Amb el
@@ -157,6 +185,19 @@ d'aquests tests es posa vermell, **no el toquis: has trencat alguna cosa**.
 6. **El calibratge de la focal es reinicia en aplicar-se.** Si no, el guany es
    mesura contra una focal i s'aplica a una altra, i el camp de visió cau de 50°
    a 25° en tres segons — i es desa.
+10. **La icona que publiquem ha de ser LA MARCA, no una figura vàlida
+    qualsevol.** Durant setmanes Google va pintar a la SERP el llamp lila de la
+    plantilla de Vite i es va revisar tot menys el que calia: no hi havia res
+    que comparés la icona amb la marca. `actius-binaris.test.ts` mesura els PNG
+    per lluminositat i llença el color; dels SVG només en llegia el marcatge amb
+    expressions regulars; i `favicon.ico` no s'obria mai, era una cadena dins
+    d'una llista. **Un llamp lila de 48×48 amb prou contrast passava totes les
+    proves del projecte.** Ara ho vigila `tests/icona-es-la-marca.test.ts`:
+    obre el `.ico` i el compara píxel a píxel amb `favicon-48.png`, exigeix que
+    la mitja lluna es construeixi amb els dos cercles de sempre i que el cercle
+    pintat calqui el de la màscara, i demana l'ambre de `readPalette()` a la
+    immensa majoria de píxels opacs. Les quatre comprovacions s'han vist fallar
+    de debò abans de donar-les per bones.
 
 ---
 

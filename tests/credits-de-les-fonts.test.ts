@@ -104,6 +104,11 @@ const NO_SON_FONTS: Readonly<Record<string, string>> = {
     'la màquina mateixa: els guions de premsa (`press-*.ts`) hi parlen amb el Chrome ' +
     'que condueixen i hi serveixen les seves pròpies plantilles. No hi ha cap dada de ' +
     'ningú al darrere ni res que l’app ensenyi, i no surt del paquet publicat',
+  't1.gstatic.com':
+    'el magatzem d’icones de Google, i el sentit de la consulta és el contrari al d’una ' +
+    'font: `scripts/check-favicon.ts` hi va a veure quina icona NOSTRA té desada Google, ' +
+    'per saber si encara ensenya el llamp de la plantilla de Vite. No en baixem cap dada ' +
+    'de ningú, no s’ensenya res a l’app i l’script no entra al paquet publicat',
 
   /*
    * LA COBERTURA EDITORIAL VA EN DIRECCIÓ CONTRÀRIA A UNA FONT.

@@ -23,9 +23,26 @@
         · l'SVG, que és el que agafen els navegadors moderns per a la pestanya
           i el que es veu bé a qualsevol densitat.
 
-      El que NO es pot fer des del codi és forçar-ne la renovació: això demana
-      demanar la indexació de l'arrel a Search Console. Vegeu `public/.htaccess`
-      per a la redirecció de `/vite.svg`, que és l'altra meitat del senyal.
+      El que NO es pot fer des del codi és forçar-ne la renovació. El 9 d'agost
+      de 2026 es va comprovar que el senyal ja està lliurat: la còpia de la
+      portada que Google té desada al Search Console PORTA LES TRES
+      DECLARACIONS, i el que segueix vell és només la imatge del seu magatzem
+      d'icones. Aquell mateix dia s'hi va demanar la indexació de l'arrel.
+
+      Si tornes a trobar el llamp, la temptació serà tocar aquestes tres
+      línies. No ho facis: estan bé i està mesurat. La propietat del Search
+      Console és `sc-domain:eclipsi.info` i viu al compte `humbert@estic.online`
+      —NO al personal, i per això durant setmanes ningú no va trobar la palanca.
+
+      L'11-8-2026, llegint els registres de l'origen, es va veure que el robot
+      de favicons de Google no havia demanat res en nou dies, i que
+      `/favicon.ico` havia estat 404 fins al 5 d'agost. Vegeu `public/.htaccess`
+      per la mesura sencera, i `npm run check:favicon` per saber com està avui
+      sense haver-ho d'endevinar.
+
+      La prova que faltava —i que hauria aturat tot això el primer dia— és
+      `tests/icona-es-la-marca.test.ts`: compara la icona que publiquem amb la
+      marca. Abans no ho feia res, i un llamp lila passava totes les proves.
     -->
     <link rel="icon" href="%BASE_URL%favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/png" sizes="96x96" href="%BASE_URL%brand/favicon-google-96.png" />

@@ -17,9 +17,79 @@ ErrorDocument 404 /404.html
   # Un 404 no li diu res al cercador —la lectura més natural és «ara no hi és,
   # ja tornaré»— i mentrestant es queda amb l'última còpia bona. Una 301, en
   # canvi, és una frase completa: «aquell recurs ara és aquest altre». És l'únic
-  # senyal que es pot enviar des del servidor; la resta és demanar la indexació
-  # de l'arrel a Search Console, i això no ho pot fer cap fitxer d'aquí.
+  # senyal que es pot enviar des del servidor.
   RewriteRule ^vite\.svg$ /brand/favicon-google-96.png [R=301,L]
+
+  # QUI TÉ LA CÒPIA VELLA, MESURAT EL 9-8-2026 I NO SUPOSAT.
+  #
+  # Aquell dia es va comprovar per les dues bandes alhora. Del nostre costat,
+  # tot correcte: les quatre icones amb 200 i el checksum igual que al
+  # repositori —com a Googlebot, com a «Google Favicon» i sense user-agent—,
+  # les 1.605 pàgines publicades declarant-les totes tres, i el servei de
+  # favicons de DuckDuckGo retornant la mitja lluna en aquell mateix moment.
+  # O sigui que qui pregunta avui, rep la lluna, i CLOUDFLARE NO HI TÉ RES A
+  # VEURE: l'HTML surt `DYNAMIC` i les capçaleres de l'origen es respecten.
+  #
+  # Del costat de Google, `t2.gstatic.com/faviconV2` retornava un JPEG de
+  # 48×46 —la mida del llamp, que no és quadrat; les nostres són totes
+  # quadrades— amb la capçalera `content-location: /favicon.svg`. Traduït:
+  # Google ja ha actualitzat QUINA URL considera la nostra icona i encara no
+  # ha tornat a llegir la imatge. I la portada que té desada al Search Console
+  # ja porta les tres declaracions. El senyal està lliurat; falta que el
+  # renovi ell.
+  #
+  # La palanca que faltava era el Search Console, i el motiu pel qual no
+  # s'havia estirat mai: `eclipsi.info` NO és propietat del compte personal,
+  # sinó de `humbert@estic.online`, com a propietat de domini
+  # (`sc-domain:eclipsi.info`). Allà s'hi va demanar la indexació de l'arrel
+  # el 9-8-2026.
+  #
+  # I EL QUE HO VA ACABAR D'EXPLICAR, DOS DIES DESPRÉS, VAN SER ELS REGISTRES.
+  #
+  # L'11-8-2026, amb accés a l'origen, es va poder respondre per fi la pregunta
+  # que durant setmanes s'havia contestat a ull. Finestra del 2 a l'11 d'agost:
+  #
+  #   · El robot de favicons de Google NO HA VINGUT NI UNA VEGADA. Les úniques
+  #     dues línies amb `Google Favicon` són proves nostres del 9 a les 19:56.
+  #     Mentrestant Googlebot hi ha passat 2.369 cops i el de DuckDuckGo ha
+  #     demanat favicons 79 vegades — per això DDG ensenya la lluna i Google no.
+  #   · `/favicon.ico` VA SER 404 FINS AL 5 D'AGOST a les 12:26, 1.688 vegades.
+  #     Aquesta és, amb diferència, la millor explicació de per què Google es va
+  #     quedar el llamp tant de temps: durant bona part de la vida indexada del
+  #     lloc, el camí que un cercador mira per defecte no existia.
+  #
+  # Conclusió, i val per a qui hi torni: el senyal és correcte des del 8-8 i
+  # aquí no hi ha res a arreglar. Si el llamp encara hi és, no toquis les
+  # declaracions d'icona ni aquest fitxer — mira-ho amb `npm run check:favicon`,
+  # que ho diu amb xifres, i torna al Search Console.
+
+  # EL QUE DEMANA UN IPHONE I NO LLEGEIX L'HTML.
+  #
+  # Mesurat als registres de l'origen l'11-8-2026, finestra del 2 a l'11:
+  #
+  #     /apple-touch-icon.png                     3.656 × 404
+  #     /apple-touch-icon-precomposed.png         3.154 × 404
+  #     /apple-touch-icon-120x120(-precomposed)   1.198 × 404
+  #     ... i les de 152, 167 i 240              ~   150 × 404
+  #
+  # Vuit mil quatre-cents 404 en nou dies, i pujant. La portada declara
+  # `/app-icons/apple-touch-icon.png` i és correcte, però iOS —i una bona part
+  # dels robots de previsualització— demanen aquests noms A L'ARREL per
+  # convenció, sense obrir l'HTML ni mirar cap `<link>`. Si no hi són, no
+  # tornen a preguntar: es queden sense icona.
+  #
+  # Va de bracet amb l'avís d'`ESTAT.md` §1: **Cloudflare es desa els 404
+  # quatre hores**. Cada un d'aquests forats es multiplica per la vora del CDN.
+  #
+  # Reescriptura INTERNA (`[L]`), no `R=301`, i això és la decisió que importa:
+  # iOS no segueix redireccions per a l'`apple-touch-icon` —se'n va amb les
+  # mans buides— i alguns robots de favicon tampoc. Amb la reescriptura reben
+  # el PNG de debò amb un 200 i sense cap salt.
+  #
+  # `-precomposed` vol dir «ja porta els brillants aplicats, no li'n posis».
+  # És d'iOS 6 i anterior; es respon igual perquè qui ho demana no sap que ha
+  # passat una dècada.
+  RewriteRule ^apple-touch-icon(-\d+x\d+)?(-precomposed)?\.png$ /app-icons/apple-touch-icon.png [L]
 
   # Les primeres pàgines editorials es van publicar amb la data ISO al camí.
   # La canònica pública és europea (dia-mes-any); aquestes redireccions 301
@@ -116,5 +186,44 @@ ErrorDocument 404 /404.html
     RewriteRule ^assets/ - [E=ACTIU_AMB_HASH:1]
   </IfModule>
   Header always set Cache-Control "public, max-age=31536000, immutable" env=ACTIU_AMB_HASH
+
+  # --- LES ICONES: EL CAS CONTRARI AL D'`/assets/` -------------------------
+  #
+  # Aquestes són l'excepció exacta al raonament de dalt: el contingut canvia i
+  # el NOM NO. `/favicon.ico` es diu igual el dia que hi havia un llamp lila i
+  # el dia que hi ha una mitja lluna, o sigui que no hi ha cap hash que avisi
+  # ningú del canvi.
+  #
+  # Fins al 9-8-2026 aquest fitxer no en deia res, i el que s'hi veia a la
+  # resposta pública era `max-age=14400` — que NO és nostre: és el «Browser
+  # Cache TTL» per defecte de Cloudflare omplint el silenci. Quatre hores
+  # decidides per un tercer per als únics fitxers del lloc que poden canviar
+  # sense canviar de nom.
+  #
+  # Una hora, i `public` perquè el CDN també la pugui servir.
+  #
+  # ATENCIÓ: AVUI AQUESTA REGLA NO ARRIBA A L'USUARI, i està mesurat. El
+  # 9-8-2026, just després de desplegar-la, la cadena sencera deia això per a
+  # `/favicon.ico`:
+  #
+  #     Apache (aquest fitxer, port 7081)   public, max-age=3600
+  #     nginx de Plesk (per IP, 37.187…)    public, max-age=3600
+  #     resposta pública per Cloudflare     public, max-age=14400
+  #
+  # O sigui que els dos salts de casa nostra respecten la regla i és
+  # CLOUDFLARE qui la reescriu cap amunt. Encaixa amb les altres dues mesures
+  # del mateix dia: `/assets/` (31536000) i l'HTML (`no-cache`) sí que passen
+  # sencers. La lectura que quadra amb les tres és que el «Browser Cache TTL»
+  # del tauler —4 hores— s'aplica com a MÍNIM, no com a substitut: guanya el
+  # valor més gran, i `no-cache` es respecta a part.
+  #
+  # Es deixa igualment, per dues raons: l'origen ha de dir la veritat encara
+  # que un intermediari l'estiri, i el dia que algú posi «Respect Existing
+  # Headers» al tauler de Cloudflare això començarà a funcionar sol. Mentre
+  # no es toqui allà, els canvis d'icona segueixen trigant quatre hores i no
+  # una, i no hi ha res en aquest fitxer que ho pugui canviar.
+  <FilesMatch "^(favicon\.ico|favicon\.svg|favicon-48\.png|favicon-google-96\.png|icon\.svg|icon-192\.png|icon-512\.png|icon-maskable-512\.png|apple-touch-icon\.png)$">
+    Header always set Cache-Control "public, max-age=3600"
+  </FilesMatch>
 
 </IfModule>
