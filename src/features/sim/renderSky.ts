@@ -60,6 +60,68 @@ function skyColor(sample: EclipseSample): string {
   return `rgb(${r},${g},${b})`;
 }
 
+/** L'enquadrament de sempre: prou per al disc i per als 3° de corona. */
+export const BASE_FOV_DEG = 3.2;
+
+/**
+ * Sostre del camp de visió, i per què n'hi ha d'haver un.
+ *
+ * Un penya-segat a tocar pot quedar cinquanta graus per damunt del Sol. Obrir
+ * el camp fins a encabir-lo faria el disc solar més petit que un píxel: hauríem
+ * canviat un rectangle negre per un rectangle gris, que no és cap millora. A
+ * partir d'aquí qui ho ha d'explicar és la frase, no el dibuix.
+ */
+const MAX_FOV_DEG = 30;
+
+/** Aire per damunt de la carena, perquè no quedi enganxada a la vora. */
+const MARGIN_DEG = 1.5;
+
+/**
+ * Opacitat dels astres quan el terreny els tapa. El mateix valor que la vista
+ * de càmera (`features/ar/renderMixed.ts`), i pel mateix motiu: que es vegi on
+ * és el Sol que et perds sense fer creure que el veuràs.
+ */
+const OCCLUDED_ALPHA = 0.28;
+
+/**
+ * Quin camp de visió necessita aquesta vista per no ser un rectangle buit.
+ *
+ * EL DEFECTE QUE AIXÒ TANCA. La vista tenia 3,2° clavats. A Valdelavilla el
+ * Sol surt a 7,08° i la carena és a 12,85°: la línia de terreny queia uns
+ * cinc-cents píxels per damunt de la vora superior i el polígon del terreny
+ * omplia el llenç sencer, tapant el Sol, la Lluna i la corona que ja s'havien
+ * dibuixat. Negre de dalt a baix, sense cap error a la consola, i a l'instant
+ * que la vista obre per defecte.
+ *
+ * El dibuix era correcte —el que tenies al davant era la muntanya— però mut.
+ * Amb el camp obert es veuen les dues coses alhora: la carena que et tapa i,
+ * a sota, on és el Sol que no veuràs.
+ *
+ * Torna SEMPRE `BASE_FOV_DEG` quan no hi ha obstacle, perquè un punt amb
+ * l'horitzó lliure no ha de canviar d'escala per un arranjament que no el mira.
+ */
+export function skyFieldOfView(
+  sample: EclipseSample,
+  horizonProfile: ((azimuthDeg: number) => number) | undefined,
+  width: number,
+  height: number,
+  baseFovDeg: number = BASE_FOV_DEG,
+): number {
+  if (!horizonProfile || width <= 0 || height <= 0) return baseFovDeg;
+
+  const drop = horizonProfile(sample.sun.azimuth) - sample.sun.altitudeApparent;
+  if (!Number.isFinite(drop) || drop <= 0) return baseFovDeg;
+
+  // EL CAMP EL FIXA L'AMPLADA, PERÒ LA CARENA HA DE CABRE EN ALÇADA, i el
+  // llenç és clarament apaïsat. Amb `scale = width / fov`, mig camp vertical
+  // val `(height / 2) · fov / width` graus; perquè hi càpiga el desnivell cal
+  // multiplicar pel quocient de les dues mides. Sense aquest factor el càlcul
+  // sortia curt i la carena continuava caient fora per dalt — que és
+  // exactament el defecte que això havia d'arreglar.
+  const needed = 2 * (drop + MARGIN_DEG) * (width / height);
+  return Math.min(MAX_FOV_DEG, Math.max(baseFovDeg, needed));
+}
+
 /**
  * Dibuixa el retall del cel al voltant del Sol: els dos discos, la corona si
  * escau, i l'horitzó.
@@ -107,10 +169,45 @@ export function renderEclipseSky(
   const isTotal = sample.separation <= Math.abs(moon.angularRadius - sun.angularRadius);
   const isTotalNotAnnular = isTotal && moon.angularRadius >= sun.angularRadius;
 
-  if (isTotalNotAnnular) {
-    drawCorona(ctx, cx, cy, sunR, scale);
+  /*
+   * EL TERRENY TAPA EL SOL: QUI VA PRIMER.
+   *
+   * Amb l'ordre de sempre —astres i després terreny— el polígon de la muntanya
+   * els cobria opacs i la vista es quedava sense dir el més important: ON és
+   * el Sol que no veuràs. Quan hi ha oclusió s'inverteix l'ordre i els astres
+   * es dibuixen a sobre, esmorteïts.
+   *
+   * El 0,28 no és inventat: és el mateix que fa servir la vista de càmera
+   * (`features/ar/renderMixed.ts`) per al mateix cas. Dues pantalles que
+   * expliquen la mateixa cosa de dues maneres diferents és el que fa dubtar de
+   * totes dues.
+   */
+  const groundAlt = options.horizonProfile ? options.horizonProfile(sun.azimuth) : 0;
+  const occluded = options.showHorizon && sun.altitudeApparent < groundAlt;
+
+  const drawBodies = (): void => {
+    if (isTotalNotAnnular) {
+      drawCorona(ctx, cx, cy, sunR, scale);
+    }
+    drawDiscs();
+  };
+
+  if (occluded) {
+    drawHorizon(ctx, sample, width, height, scale, cy, options);
+    ctx.save();
+    ctx.globalAlpha = OCCLUDED_ALPHA;
+    drawBodies();
+    ctx.restore();
+    return;
   }
 
+  drawBodies();
+
+  if (options.showHorizon) {
+    drawHorizon(ctx, sample, width, height, scale, cy, options);
+  }
+
+  function drawDiscs(): void {
   // Disc solar. Durant la totalitat no es dibuixa: només hi ha corona.
   if (!isTotalNotAnnular) {
     ctx.save();
@@ -138,9 +235,6 @@ export function renderEclipseSky(
   ctx.fillStyle = isTotalNotAnnular ? '#05060a' : 'rgba(8,10,16,0.97)';
   ctx.fill();
   ctx.restore();
-
-  if (options.showHorizon) {
-    drawHorizon(ctx, sample, width, height, scale, cy, options);
   }
 }
 

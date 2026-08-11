@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { computeLocalCircumstances, findSunset } from '../../core/astro/contacts';
 import { STANDARD_ATMOSPHERE } from '../../core/astro/constants';
 import type { GeoLocation } from '../../core/astro/types';
@@ -6,7 +6,7 @@ import { getEclipse } from '../../core/eclipses/catalog';
 import { horizonSampler, type HorizonProfile } from '../../core/horizon/profile';
 import { computeVisibility } from '../../core/visibility/verdict';
 import { sampleIndexForTime, timelineFromContacts } from '../../core/timeline';
-import { renderEclipseSky } from './renderSky';
+import { BASE_FOV_DEG, renderEclipseSky, skyFieldOfView } from './renderSky';
 import { renderTrajectory } from './renderTrajectory';
 import { trajectorySamples } from './samples';
 import { TimelineControls } from './TimelineControls';
@@ -144,18 +144,34 @@ export function SimulationView({ location, eclipseId, locale, horizon }: Props) 
   const skyRef = useRef<HTMLCanvasElement>(null);
   const trajRef = useRef<HTMLCanvasElement>(null);
 
+  /*
+   * El camp de visió del retall, que ja no és una constant.
+   *
+   * Es desa a l'estat perquè la lectura de sota el llenç el pugui dir: si el
+   * retall deixa de ser el de sempre, qui mira ha de saber a quina escala
+   * mira. `null` vol dir «el de sempre» i llavors no s'escriu res.
+   */
+  const [skyFovDeg, setSkyFovDeg] = useState<number | null>(null);
+
   useEffect(() => {
     const canvas = skyRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     setupHiDpi(canvas, ctx);
-    renderEclipseSky(ctx, current, canvas.clientWidth, canvas.clientHeight, {
-      fovDeg: 3.2,
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    // Amb el terreny per damunt del Sol, 3,2° clavats deixaven el polígon de
+    // la muntanya cobrint el llenç sencer: negre de dalt a baix i cap pista
+    // que allò fos una carena. Vegeu `renderSky.test.ts`.
+    const fovDeg = skyFieldOfView(current, horizonProfile, width, height);
+    renderEclipseSky(ctx, current, width, height, {
+      fovDeg,
       atmosphere: STANDARD_ATMOSPHERE,
       showHorizon: true,
       horizonProfile,
     });
+    setSkyFovDeg(fovDeg > BASE_FOV_DEG ? fovDeg : null);
   }, [current, horizonProfile]);
 
   useEffect(() => {
@@ -286,6 +302,13 @@ export function SimulationView({ location, eclipseId, locale, horizon }: Props) 
             ),
           })}
         </span>
+        {skyFovDeg !== null && (
+          <span>
+            {s('sim.readoutFov', locale, {
+              deg: `${formatDecimal(skyFovDeg, 1, locale)}°`,
+            })}
+          </span>
+        )}
       </div>
 
       <canvas ref={trajRef} className="canvas canvas--traj" />

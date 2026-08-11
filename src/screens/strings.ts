@@ -502,6 +502,12 @@ const STRINGS = {
   'sim.readoutAlt': { ca: 'alt {deg}', es: 'alt {deg}', en: 'alt {deg}', fr: 'alt {deg}' },
   'sim.readoutAz': { ca: 'Az {deg}', es: 'Az {deg}', en: 'Az {deg}', fr: 'Az {deg}' },
   'sim.readoutObsc': { ca: 'obsc {pct}', es: 'obsc {pct}', en: 'obsc {pct}', fr: 'obsc {pct}' },
+  /*
+   * La quarta lectura NOMÉS surt quan la vista ha hagut d'obrir el camp perquè
+   * el terreny tapa el Sol. Una escala que es mou sense dir-ho és una xifra
+   * vestida de mesura: si el retall deixa de ser el de sempre, s'ha de llegir.
+   */
+  'sim.readoutFov': { ca: 'camp {deg}', es: 'campo {deg}', en: 'field {deg}', fr: 'champ {deg}' },
   'sim.sunset': {
     ca: 'Posta de Sol a les {time}, amb horitzó pla de mar.',
     es: 'Puesta de Sol a las {time}, con horizonte plano de mar.', en: 'Sunset at {time}, with a flat sea horizon.', fr: 'Coucher de soleil à {time}, avec un horizon marin plat.',
