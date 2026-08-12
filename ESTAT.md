@@ -29,7 +29,11 @@ npm run build
 Després **verifica per checksum**, no per vista:
 
 ```bash
-BUNDLE=$(ls -t dist/assets/index-*.js | head -1 | xargs basename)
+# El nom surt de l'HTML i no d'un `ls`: el paquet d'entrada es diu `app-*.js`
+# des que hi ha divisió per pantalles, i aquesta línia deia `index-*.js` i
+# responia «no matches found» amb un `BUNDLE` buit. Un `shasum` d'una cadena
+# buida no falla de manera sorollosa: el que falla és la comprovació.
+BUNDLE=$(grep -oE 'assets/app-[^"]+\.js' dist/index.html | head -1 | xargs basename)
 shasum -a 256 dist/assets/$BUNDLE
 curl -s "https://eclipsi.info/assets/$BUNDLE" | shasum -a 256
 ```
