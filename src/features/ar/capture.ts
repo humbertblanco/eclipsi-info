@@ -48,6 +48,81 @@ export function captionBarHeight(outputHeight: number): number {
   return Math.max(44, Math.round(outputHeight * 0.055));
 }
 
+/** Cos de lletra del peu quan el text hi cap sense estrènyer: el de sempre. */
+const CAPTION_FONT_RATIO = 0.38;
+
+/**
+ * Fins on es pot abaixar el cos abans que el peu deixi de ser llegible.
+ *
+ * 0,24 de l'alçada de la barra, I EL NÚMERO ESTÀ MESURAT, no triat. El marc més
+ * estret que fa aquesta app és un mòbil de 390 × 844 amb captura a 1080p: dona
+ * 499 × 1080, barra de 59 px i 440 px per al text. Amb el topònim més llarg del
+ * catàleg de proves —«a 3,1 km de l'Ametlla de Mar · 12.08.2026 · 20:29 ·
+ * eclipsi.info»— les amplades són:
+ *
+ *     22 px → 628      18 px → 514      16 px → 457
+ *     20 px → 571      17 px → 486      14 px → 400  ← hi cap
+ *
+ * O sigui que un sòl de 0,28 (17 px) es quedava curt i el peu seguia
+ * estrenyent-se al 86 %: es va provar i no n'hi havia prou. 0,24 dona 14 px,
+ * que en una imatge de 1080 d'alt és petit però es llegeix.
+ *
+ * PER SOTA D'AIXÒ NO S'ABAIXA MÉS. Si algun dia un topònim no hi cap ni a 0,24,
+ * el que s'ha d'escurçar és el TEXT —`captureCaption()` ja sap fer un peu sense
+ * topònim— i no la lletra: un peu que no es llegeix no és cap peu.
+ */
+const CAPTION_FONT_MIN_RATIO = 0.24;
+
+/**
+ * El cos amb què s'ha de pintar el peu perquè hi càpiga SENSE ESTRÈNYER.
+ *
+ * PER QUÈ EXISTEIX AQUESTA FUNCIÓ. Aquí hi havia una sola línia:
+ *
+ *     ctx.fillText(caption, x, y, outW - barH)
+ *
+ * i el quart argument de `fillText` NO RETALLA: CONDENSA. Un peu que no hi cabia
+ * no es tallava, s'aplanava horitzontalment fins que les lletres es tocaven, i
+ * ningú no ho podia veure perquè el canvas no es podia provar en aquest
+ * repositori (vegeu `tests/dom-setup.ts`).
+ *
+ * MESURAT el 12-8-2026, un cop es va poder mesurar: amb el peu ja escurçat
+ * d'aquell matí, en un marc de 499 × 1080 encara s'estrenyien 32 combinacions
+ * de topònim i idioma, entre el 69 % i el 89 %. «a 3,1 km de Valls · 12.08.2026
+ * · 20:29 · eclipsi.info» sortia al 86 %.
+ *
+ * PER QUÈ ENCONGIR I NO RETALLAR. Perquè el que sobra sempre és pel mig —el
+ * topònim— i el que es perdria retallant és el final: la marca. Un peu una mica
+ * més petit segueix dient-ho tot; un de retallat perd justament allò que fa que
+ * la foto es pugui rastrejar fins aquí.
+ *
+ * I si ni al cos mínim hi cap, es torna el mínim i s'estreny: val més un peu
+ * condensat que un de tan petit que no es llegeixi. Aquell cas queda vigilat per
+ * `caption-fit.test.tsx`, que el llistarà si algun dia torna a aparèixer.
+ */
+export function captionFontPx(
+  ctx: Pick<CanvasRenderingContext2D, 'font' | 'measureText'>,
+  caption: string,
+  barHeightPx: number,
+  maxWidthPx: number,
+): number {
+  const ideal = Math.round(barHeightPx * CAPTION_FONT_RATIO);
+  const minim = Math.max(1, Math.round(barHeightPx * CAPTION_FONT_MIN_RATIO));
+  for (let px = ideal; px >= minim; px--) {
+    ctx.font = `500 ${px}px system-ui, sans-serif`;
+    if (ctx.measureText(caption).width <= maxWidthPx) return px;
+  }
+  /*
+   * NI AL MÍNIM HI CAP. Es deixa la lletra al mínim —el bucle ja l'hi ha
+   * deixada— i el `maxWidth` de `fillText` farà d'última xarxa estrenyent-la.
+   * AQUÍ HI HAVIA UN ERROR: el bucle acabava a `minim + 1` i la funció tornava
+   * `minim`, o sigui que el número que es retornava no era el que quedava
+   * escrit al context. Ningú no ho hauria vist mai, perquè el valor de retorn
+   * no el llegeix el codi de pintar: el que val és `ctx.font`.
+   */
+  ctx.font = `500 ${minim}px system-ui, sans-serif`;
+  return minim;
+}
+
 /**
  * Compon la captura: vídeo (amb el fosc de l'eclipsi) + superposició + peu.
  *
@@ -101,10 +176,14 @@ export function composeCapture(
   ctx.fillStyle = 'rgba(8, 10, 18, 0.92)';
   ctx.fillRect(0, outH, outW, barH);
   ctx.fillStyle = 'rgba(245, 240, 228, 0.92)';
-  ctx.font = `500 ${Math.round(barH * 0.38)}px system-ui, sans-serif`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillText(caption, Math.round(barH * 0.45), outH + barH / 2, outW - barH);
+  // El cos es tria mesurant, no per proporció fixa: vegeu `captionFontPx`. La
+  // crida deixa `ctx.font` a punt; el `maxWidth` de `fillText` es queda com a
+  // última xarxa per al cas que ni el cos mínim hi càpiga.
+  const maxTextWidth = outW - barH;
+  captionFontPx(ctx, caption, barH, maxTextWidth);
+  ctx.fillText(caption, Math.round(barH * 0.45), outH + barH / 2, maxTextWidth);
 
   return canvas;
 }

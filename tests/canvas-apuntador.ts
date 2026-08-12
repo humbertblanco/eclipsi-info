@@ -17,21 +17,38 @@
  * exactament la família de preguntes que en aquest projecte s'han de poder
  * respondre.
  *
- * NO TÉ `measureText`, I ÉS LA DECISIÓ MÉS IMPORTANT D'AQUEST FITXER.
- * Un `measureText` aquí dins hauria de tornar un número, i qualsevol número que
- * es tregués del barret seria l'única xifra que de debò importa. El context de
+ * EL `measureText` MESURA AMB UNA FONT DE DEBÒ, I ÉS LA DECISIÓ MÉS IMPORTANT
+ * D'AQUEST FITXER. Aquí hi havia un `throw`, amb un motiu bo: qualsevol número
+ * tret del barret seria l'única xifra que de debò importa. El context de
  * `features/sim/renderSky.test.ts` en té un que torna `text.length * 8`; allà
  * no fa mal perquè aquella prova no en llegeix el resultat, però copiat aquí
- * seria una mentida amb forma de mesura. Qui necessiti amplades que vagi a
- * `tests/amplada-de-text.ts`, que les treu d'una font de debò i diu a la seva
- * capçalera què no sap. Demanar `measureText` en aquest context peta, i el
- * missatge assenyala l'altre mòdul.
+ * seria una mentida amb forma de mesura.
+ *
+ * El `throw` va durar el que va trigar el codi de producció a necessitar-ne un.
+ * `composeCapture()` va deixar de confiar el peu al `maxWidth` de `fillText`
+ * —que CONDENSA en comptes de retallar— i ara tria el cos de lletra mesurant.
+ * Amb el `throw`, aquell camí no es podia provar: just al revés del que aquest
+ * fitxer existeix per fer.
+ *
+ * La sortida no ha estat inventar-se un número, sinó donar-li la regla:
+ * `tests/amplada-de-text.ts` mesura amb les mètriques del WOFF que l'app
+ * publica i diu a la seva capçalera què no sap. La prohibició que es queda
+ * dempeus és la que valia: cap amplada que no surti d'una font de debò.
  *
  * TAMPOC SIMULA CAP ALTRE TIPUS DE CONTEXT: `getContext('webgl')` segueix
  * tornant `null`. Ni el sabem fer ni cap prova d'aquest projecte el necessita;
  * tornar-hi un objecte buit faria que un codi que comprova si hi ha WebGL es
  * pensés que en té.
  */
+
+import { ampladaPx } from './amplada-de-text';
+
+/** «500 30px system-ui, sans-serif» → 30. La mateixa lectura que fa la prova. */
+function cosDeFont(font: string): number {
+  const trobat = /(\d+(?:\.\d+)?)px/.exec(font);
+  if (trobat === null) throw new Error(`no hi ha cap cos de lletra a «${font}»`);
+  return Number(trobat[1]);
+}
 
 /** L'estat del context en el moment d'una crida. Només el que algú fixa. */
 export interface EstatDibuix {
@@ -111,10 +128,28 @@ function creaApuntador(llenc: HTMLCanvasElement): {
         if (clau === 'canvas') return llenc;
         if (clau in estat) return estat[clau as keyof EstatDibuix];
         if (clau === 'measureText') {
-          throw new Error(
-            'aquest context no mesura text: no té cap font. ' +
-              'Les amplades es demanen a tests/amplada-de-text.ts, que en té una de debò.',
-          );
+          /*
+           * AQUÍ HI HAVIA UN `throw`, I EL MOTIU ERA BO: un `measureText` que
+           * es tragués un número del barret seria una mentida amb forma de
+           * mesura, i aquell número és justament l'única xifra que importa.
+           *
+           * El que ha canviat és que el codi de producció ara EN DEMANA un.
+           * `composeCapture()` va deixar de confiar el peu al `maxWidth` de
+           * `fillText` —que condensa en comptes de retallar— i tria el cos de
+           * lletra mesurant, que és el que arregla el peu esclafat. Amb el
+           * `throw`, aquell camí no es podia provar: exactament al revés del
+           * que aquest fitxer existeix per fer.
+           *
+           * La sortida NO és inventar-se un número: és donar-li la regla de
+           * debò. `ampladaPx()` mesura amb les mètriques del WOFF que l'app
+           * publica, i la seva capçalera diu què no sap. La diferència amb el
+           * `system-ui` que pinta el navegador està mesurada (+5 a +7 %, sempre
+           * cap al cantó segur) i vigilada per `caption-fit.test.tsx`.
+           *
+           * La prohibició que es queda dempeus és la d'abans, i és la que val:
+           * cap número que no surti d'una font de debò.
+           */
+          return (text: string) => ({ width: ampladaPx(String(text), cosDeFont(estat.font)) });
         }
         /*
          * QUALSEVOL ALTRA CRIDA S'APUNTA. Res no es descarta en silenci: si

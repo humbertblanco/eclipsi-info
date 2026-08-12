@@ -354,10 +354,20 @@ describe('el peu que es crema a la foto', () => {
      */
     const elQueSortia = 'Eclipse total del 12 de agosto de 2026 · a 3,1 km de Valls · 20:29';
     const peu = pinta(elQueSortia, MARC_CAPCALERA);
-    expect(peu.amplada).toBeGreaterThan(peu.maxW);
-    // Condensat a menys del 90 % de l'amplada que li tocaria: no és un pèl,
-    // és el que fa que el peu costi de llegir a la foto que es comparteix.
-    expect(peu.maxW / peu.amplada).toBeLessThan(0.9);
+
+    // AVUI JA NO S'ESTRENY, i no perquè el text hagi encongit: perquè
+    // `composeCapture()` abaixa el cos de lletra fins que hi cap.
+    expect(peu.amplada).toBeLessThanOrEqual(peu.maxW);
+
+    // I ES VEU QUE HA HAGUT DE BAIXAR-LO. Aquesta és la part que fa d'anti-
+    // mirall: si el regle digués que tot hi cap sempre, el cos no hauria
+    // baixat mai i aquesta comprovació cauria.
+    const idealPx = Math.round(peu.barra * 0.38);
+    expect(peu.cosPx).toBeLessThan(idealPx);
+
+    // Amb el cos ideal NO hi cabia: els 841 px de 731 que la capçalera de
+    // `caption.ts` va mesurar, i que ningú no podia veure.
+    expect(ampladaPx(elQueSortia, idealPx)).toBeGreaterThan(peu.maxW);
   });
 });
 
@@ -426,7 +436,7 @@ describe('el marc de la capçalera era el més generós de tots', () => {
    *
    * No és una tolerància relaxada: és un recordatori que salta sol.
    */
-  it.fails('[PENDENT] cap peu no s’estreny, amb cap topònim ni a cap marc', () => {
+  it('cap peu no s’estreny, amb cap topònim ni a cap marc', () => {
     const esclafats = totsElsPeus()
       .filter(({ peu }) => peu.amplada > peu.maxW)
       .map(({ que, peu }) => `${que} → ${((peu.maxW / peu.amplada) * 100).toFixed(0)} %`);
@@ -442,16 +452,21 @@ describe('el marc de la capçalera era el més generós de tots', () => {
         return peu.amplada <= peu.maxW;
       });
 
-    // Amb el nom sol, al marc de la capçalera hi caben tots quatre…
+    // Des que el cos s'abaixa fins que hi cap, hi caben TOTS: amb el nom sol
+    // i amb «a 3,1 km de …», que era el cas que abans se n'anava al 87 %.
     expect(hiCaben(MARC_CAPCALERA, 'at')).toEqual(TOPONIMS);
-    // …i amb «a 3,1 km de …» ja només els dos curts.
-    expect(hiCaben(MARC_CAPCALERA, 'near')).toEqual(['Sòria', 'Valls']);
+    expect(hiCaben(MARC_CAPCALERA, 'near')).toEqual(TOPONIMS);
 
-    // Al mòbil d'avui, el nom sol ja només hi cap si és curt…
-    expect(hiCaben(MARC_MOBIL, 'at')).toEqual(['Sòria', 'Valls']);
-    // …i amb «a 3,1 km de …», que és la forma de tot punt que no sigui dins
-    // d'un poble —o sigui, la del camp, que és on es va a veure un eclipsi—,
-    // no n'hi cap cap.
-    expect(hiCaben(MARC_MOBIL, 'near')).toEqual([]);
+    // I AL MÒBIL MÉS ESTRET TAMBÉ HI CABEN TOTS, que és el que decideix si
+    // aquesta arreglada val res: abans, amb «a 3,1 km de …» —la forma de tot
+    // punt que no sigui dins d'un poble, o sigui la del camp, que és on es va
+    // a veure un eclipsi— no n'hi cabia CAP.
+    expect(hiCaben(MARC_MOBIL, 'at')).toEqual(TOPONIMS);
+    expect(hiCaben(MARC_MOBIL, 'near')).toEqual(TOPONIMS);
+
+    // El preu és el cos de lletra, i queda mesurat: al marc ample no s'abaixa
+    // mai del tot i al marc estret, amb el topònim més llarg, arriba al mínim.
+    const ample = pinta(peuDe(geocodificat('Sòria', 'at', 3.1), 'ca'), MARC_CAPCALERA);
+    expect(ample.cosPx).toBe(Math.round(ample.barra * 0.38));
   });
 });
