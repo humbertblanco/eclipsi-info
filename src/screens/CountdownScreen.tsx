@@ -26,7 +26,7 @@ import {
 import { EclipseFingerprint } from '../features/eclipse-visuals/EclipseFingerprint';
 import { ShadowApproach } from '../features/eclipse-visuals/ShadowApproach';
 import { computeShadowMotion } from '../core/astro/shadow';
-import { Countdown } from '../ui/eclipse/Countdown';
+import { HeroCountdown } from './HeroCountdown';
 import { skyStateFromSample, toCss } from '../core/sky';
 import { getEclipse } from '../core/eclipses/catalog';
 import { SEO_CITIES } from '../content/seo/cities';
@@ -125,6 +125,12 @@ export function CountdownScreen({
   // L'instant que de veritat s'espera: el segon contacte si hi ha fase central,
   // i el màxim si des d'aquí només hi ha parcial. Comptar enrere fins a un C2
   // que no existeix seria comptar fins a res.
+  //
+  // AQUEST OBJECTIU JA NO ÉS L'ÚLTIM QUE ENSENYA EL TITULAR. Ho va ser, i quan
+  // quedava enrere el número gros es girava a comptar cap amunt mentre el
+  // rellotge del costat ja comptava cap a la fita següent. Ara és només el punt
+  // fins on mana: `HeroCountdown` el fa servir tal qual i, passat, passa la mà
+  // a `resolveCountdown()`. El perquè, a `heroTarget.ts`.
   const target = contacts?.c2 ?? contacts?.max ?? null;
   const central = circumstances?.kind === 'total' || circumstances?.kind === 'annular';
 
@@ -377,12 +383,13 @@ export function CountdownScreen({
               {s(`kind.${circumstances.kind}` as 'kind.total', locale)}
             </Badge>
           </div>
-          <Countdown
+          <HeroCountdown
             className="home__countdown"
-            size="md"
-            label={countdownLabel}
-            pastLabel={s('home.past', locale)}
-            targetMs={target ? target.time.getTime() : null}
+            contacts={contacts}
+            kind={circumstances.kind}
+            baseTargetMs={target ? target.time.getTime() : null}
+            baseLabel={countdownLabel}
+            locale={locale}
           />
         </section>
 
