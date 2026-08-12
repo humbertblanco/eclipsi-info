@@ -5,6 +5,13 @@
  * les dues direccions. `parseShareLink` llegeix el que arriba per l'adreça i
  * `buildShareLink` escriu el que hi ha d'anar.
  *
+ * I `buildShareUrl` munta l'ADREÇA SENCERA, que és el que necessita qui
+ * comparteix des d'un botó i no des de la barra del navegador: hi conserva el
+ * camí que hi ha (l'idioma i el subdirectori de desplegament) i el fragment,
+ * que és la vista. Sumar `origin + pathname + buildShareLink(...)` a mà sembla
+ * el mateix i no ho és —es deixa el fragment pel camí—, i per això la funció és
+ * aquí i no a cada punt de crida.
+ *
  * NO HI HA CAP COMPONENT NI CAP HOOK, i és a posta. Compartir no és una pantalla:
  * és una propietat de l'URL. Qui llegeix el `location.search` és
  * `state/useObserver.ts` (en arrencar) i qui l'escriu és `App.tsx` (amb
@@ -13,7 +20,13 @@
  * aquest mòdul és pur i es pot provar sense DOM.
  */
 
-export { buildShareLink, parseShareLink, MAX_LABEL_CHARS, SHARE_DECIMALS } from './link';
+export {
+  buildShareLink,
+  buildShareUrl,
+  parseShareLink,
+  MAX_LABEL_CHARS,
+  SHARE_DECIMALS,
+} from './link';
 export type { SharedPoint, ShareLinkParams } from './link';
 
 export {

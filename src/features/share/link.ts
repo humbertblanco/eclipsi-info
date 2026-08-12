@@ -261,7 +261,38 @@ export function buildShareLink(params: ShareLinkParams): string {
   return `?${parts.join('&')}`;
 }
 
-/** Munta l'URL completa sense perdre ni l'idioma del pathname ni la vista hash. */
+/**
+ * L'adreça sencera: el camí que hi ha, la consulta nova i la vista intacta.
+ *
+ * PER QUÈ NO N'HI HA PROU AMB `buildShareLink`. Qui escriu la barra del
+ * navegador (`App.tsx`, amb `replaceState`) ja té el camí i el fragment a la mà
+ * i només n'ha de canviar la consulta. Qui comparteix des d'un botó, no: ha de
+ * dir una adreça absoluta i completa, i muntar-la sumant trossos —
+ * `origin + pathname + buildShareLink(...)`— és exactament on es perd el
+ * fragment, perquè en aquella suma no hi ha cap lloc on posar-lo.
+ *
+ * I NO ÉS TEÒRIC: `SpotCard` ho feia així. Compartir un candidat des de la
+ * vista de llocs (`#/mapa/llocs`, que és l'única pantalla des d'on es pot
+ * prémer aquell botó) enviava una adreça sense fragment, o sigui que qui la
+ * rebia obria el compte enrere i no la llista de candidats que li acabaven
+ * d'ensenyar. Aquesta funció existia des del primer dia per evitar-ho i no la
+ * cridava ningú.
+ *
+ * LES TRES PECES, I D'ON SURT CADA UNA:
+ *
+ *   · EL CAMÍ ES CONSERVA TAL COM ÉS. Hi va l'idioma (`/es/`, `/fr/`) i hi va
+ *     el subdirectori de desplegament si n'hi ha. Es pren del `pathname` de
+ *     l'adreça actual i no d'`import.meta.env.BASE_URL` pel mateix motiu que hi
+ *     ha escrit a `App.tsx`: el servidor pot estar servint `/eclipsi/index.html`
+ *     i llavors la ruta de `BASE_URL` no és la que hi ha a la barra.
+ *   · LA CONSULTA ES SUBSTITUEIX SENCERA. El que hi hagués abans —el `?p=` del
+ *     punt de qui comparteix, un `utm_source` enganxat per una xarxa social— no
+ *     ha de viatjar: l'enllaç parla d'UN punt, i és el que se li passa aquí.
+ *   · EL FRAGMENT ES CONSERVA si no se'n demana un altre. Quan és nostre és la
+ *     vista que l'altra persona ha d'obrir; quan no ho és, no tenim cap dret a
+ *     esborrar-lo. `destinationHash` hi és per a qui vulgui enviar a una
+ *     pantalla concreta en comptes de la que està mirant.
+ */
 export function buildShareUrl(
   params: ShareLinkParams,
   currentUrl: string,

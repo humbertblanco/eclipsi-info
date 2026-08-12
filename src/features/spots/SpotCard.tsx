@@ -43,7 +43,7 @@ import {
   formatPercent,
   mapUrl,
 } from './format';
-import { buildShareLink, isAbortError } from '../share';
+import { buildShareUrl, isAbortError } from '../share';
 import { sp } from './strings';
 import { DEFAULT_SPOT_WEIGHTS } from '../../core/spots/score';
 import { useSpotPlaceName } from './useSpotPlaceName';
@@ -148,6 +148,11 @@ function CopyCoords({ lat, lon, locale }: { lat: number; lon: number; locale: Lo
  * aquest encara no ho és. Per això els dos esdeveniments que en poden sortir
  * són `native_link` i `clipboard_link` — i és informació, no un descuit: si
  * `surface: spot` pesa a l'informe, la targeta per candidat es guanya el cost.
+ *
+ * I L'ENLLAÇ PORTA LA VISTA, no només el punt: qui el rep obre la mateixa
+ * pantalla des d'on s'ha compartit. `SpotCard.test.tsx` compara l'adreça que
+ * surt del botó amb la que sortiria de sumar els trossos a mà, que és com
+ * estava escrit i és com es perdia el fragment.
  */
 function ShareSpot({
   lat,
@@ -165,9 +170,14 @@ function ShareSpot({
   const [copied, setCopied] = useState(false);
 
   const share = async () => {
-    const url = `${window.location.origin}${window.location.pathname}${buildShareLink(
-      { lat, lon, eclipseId, label },
-    )}`;
+    // L'ADREÇA LA MUNTA `buildShareUrl` I NO ES TORNA A ESCRIURE AQUÍ. Això era
+    // `origin + pathname + buildShareLink(...)`, i aquella suma es deixava el
+    // fragment pel camí: l'únic lloc des d'on es prem aquest botó és la vista de
+    // llocs del mapa (`#/mapa/llocs`), o sigui que l'enllaç que sortia obria el
+    // compte enrere i qui el rebia no veia la llista de candidats que li
+    // acabaven d'ensenyar. El helper ja existia per a això exacte i no el
+    // cridava ningú.
+    const url = buildShareUrl({ lat, lon, eclipseId, label }, window.location.href);
     if (typeof navigator.share === 'function') {
       try {
         await navigator.share({ url });
