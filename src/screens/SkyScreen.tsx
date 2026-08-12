@@ -16,6 +16,7 @@ import {
   type Tone,
 } from '../ui';
 import { ARView } from '../features/ar/ARView';
+import { captureCaption } from '../features/ar/caption';
 import { useWakeLock } from '../features/countdown/useWakeLock';
 import { getEclipse } from '../core/eclipses/catalog';
 import { shareFileOrDownload } from '../features/share';
@@ -146,9 +147,14 @@ export function SkyScreen({
   const captureView = async () => {
     const fn = arCaptureRef.current;
     if (!fn || location === null || circumstances === null) return;
-    const caption = `${getEclipse(eclipseId).label[locale]} · ${
-      placeLabel ?? `${location.lat.toFixed(3)}°, ${location.lon.toFixed(3)}°`
-    } · ${formatClock(new Date(instantMs), locale)}`;
+    // El peu el munta `features/ar/caption`, i no aquí, perquè aquí no es podia
+    // provar: hi havia un recanvi que pintava la coordenada de l'usuari dins de
+    // la imatge que estava a punt de compartir. Vegeu-hi la capçalera.
+    const caption = captureCaption({
+      eclipseLabel: getEclipse(eclipseId).label[locale],
+      placeLabel,
+      clock: formatClock(new Date(instantMs), locale),
+    });
     const blob = await fn(caption);
     if (!blob) return;
 
