@@ -18,14 +18,20 @@ import {
 import { ARView } from '../features/ar/ARView';
 import { captureCaption } from '../features/ar/caption';
 import { useWakeLock } from '../features/countdown/useWakeLock';
-import { getEclipse } from '../core/eclipses/catalog';
 import { shareFileOrDownload } from '../features/share';
 import { sampleAt } from '../core/astro/ephemeris';
 import { horizonAltitudeAt } from '../core/horizon/profile';
 import { bearingToCardinal } from '../core/astro/gradient';
 import type { EclipseContext } from './context';
 import { s } from './strings';
-import { formatClock, formatDegrees, formatDuration, NO_DATA } from './format';
+import {
+  formatClock,
+  formatClockShort,
+  formatDateShort,
+  formatDegrees,
+  formatDuration,
+  NO_DATA,
+} from './format';
 import './screens.css';
 
 export interface SkyScreenProps extends EclipseContext {
@@ -151,9 +157,9 @@ export function SkyScreen({
     // provar: hi havia un recanvi que pintava la coordenada de l'usuari dins de
     // la imatge que estava a punt de compartir. Vegeu-hi la capçalera.
     const caption = captureCaption({
-      eclipseLabel: getEclipse(eclipseId).label[locale],
       placeLabel,
-      clock: formatClock(new Date(instantMs), locale),
+      date: formatDateShort(new Date(instantMs), locale),
+      clock: formatClockShort(new Date(instantMs), locale),
     });
     const blob = await fn(caption);
     if (!blob) return;

@@ -13,44 +13,59 @@
  * servir i on el geocodificador falla. D'allà la imatge se'n va a un grup de
  * WhatsApp, i cap neteja d'EXIF no ho treu, perquè no és metadada: és tinta.
  *
- * La regla d'aquesta casa és que la ubicació no surt del dispositiu si no és
- * per posar nom al lloc o per la previsió. Una foto amb les coordenades pintades
- * a sobre se les endú a tot arreu on l'usuari la deixi anar, i sense que ell ho
- * sàpiga: quan mira la pantalla abans de compartir, el peu de la imatge composta
- * no el veu enlloc.
+ * ─────────────────────────────────────────────────────────────────────────────
+ * PER QUÈ EL PEU ÉS CURT, I ELS NÚMEROS QUE HO DECIDEIXEN.
  *
- * QUÈ ES FA EN COMPTES D'AIXÒ: si no hi ha topònim, no es diu el lloc. El peu es
- * queda amb l'eclipsi i l'hora, que és el que dona sentit a la foto d'aquí a un
- * any. Es va valorar de caure a `findReadablePlace()` de `features/share`, i no
- * serveix: aquella llista casa dins d'un radi curt i per a un punt qualsevol de
- * muntanya torna `null` igual.
+ * `composeCapture()` pinta aquest text amb `ctx.fillText(caption, x, y, maxW)`,
+ * i el quart argument NO RETALLA: ESTRENY. Un peu massa llarg no es talla, es
+ * condensa fins que costa de llegir, i com que el canvas no es pot provar per
+ * píxels en aquest repositori (`tests/dom-setup.ts` anul·la `getContext` a
+ * posta) ningú no ho hauria vist mai.
  *
- * Aquí no hi ha DOM ni cap dependència de React a posta: així la decisió es pot
- * provar, que era l'altra meitat del problema.
+ * MESURAT el 12-8-2026 amb la geometria real de `composeCapture` per a una foto
+ * vertical de mòbil (810 × 1440, que dona una barra de 79 px i una font de 30),
+ * on `maxW` és 731 px:
+ *
+ *     «Eclipsi total del 12 d'agost de 2026 · Sòria · 20:29»         650 px
+ *     «Eclipse total del 12 de agosto de 2026 · a 3,1 km de Valls…»  841 px  ← ja s'estrenyia al 87 %
+ *     amb el domini afegit al final                                 1002 px ← 73 %, il·legible
+ *     «Sòria · 12.08.2026 · 20:29 · eclipsi.info»                    508 px
+ *     el pitjor cas d'aquest format, amb topònim llarg               656 px  ← hi cap
+ *
+ * O sigui que el problema no era el domini: eren els 37 caràcters que gastava a
+ * dir «Eclipsi total del 12 d'agost de 2026» DINS D'UNA FOTO D'UN ECLIPSI. Amb
+ * la data en xifres hi cap el domini i encara sobra espai, i de passada
+ * desapareix l'estrenyiment que el castellà ja patia.
+ *
+ * La paraula «eclipsi» no es perd: la porta el domini.
  */
 
+/** On es pot anar a saber de què va la foto. Va cremat i també al text de compartir. */
+const ORIGEN = 'eclipsi.info';
+
+/** El separador del peu, el mateix que fa servir la resta de la interfície. */
+const SEPARADOR = ' · ';
+
 export interface CaptureCaptionParts {
-  /** Com es diu l'eclipsi, ja traduït. */
-  eclipseLabel: string;
   /** El topònim resolt, o `null` si encara no n'hi ha cap. */
   placeLabel: string | null;
-  /** L'hora, ja formatada per la capa de vista. */
+  /** La data en xifres, ja formatada: «12.08.2026». */
+  date: string;
+  /** L'hora sense segons, ja formatada: «20:29». */
   clock: string;
 }
 
-/** El separador del peu, el mateix que fa servir la resta de la interfície. */
-const SEPARATOR = ' · ';
-
 /**
- * El text que `composeCapture()` pinta a la barra de peu de la captura.
+ * El text que `composeCapture()` pinta a la barra de peu de la captura, i que
+ * viatja també com a text del full de compartir.
  *
  * MAI conté cap coordenada. Si algú hi torna a posar un recanvi numèric, la
- * prova d'aquest mòdul l'ha d'aturar: comprova que no hi ha ni decimals ni
- * signe de grau, no que la cadena sigui una de concreta.
+ * prova d'aquest mòdul l'ha d'aturar: comprova que no hi ha tres decimals
+ * seguits ni signe de grau, no que la cadena sigui una de concreta.
  */
-export function captureCaption({ eclipseLabel, placeLabel, clock }: CaptureCaptionParts): string {
+export function captureCaption({ placeLabel, date, clock }: CaptureCaptionParts): string {
   const place = placeLabel?.trim();
-  return [eclipseLabel, place === '' ? undefined : place, clock]
-    .filter((part): part is string => part !== undefined && part !== null)
-    .join(SEPARATOR);
+  return [place === '' ? undefined : place, date, clock, ORIGEN]
+    .filter((part): part is string => part !== undefined && part !== null && part !== '')
+    .join(SEPARADOR);
 }

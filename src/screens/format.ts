@@ -63,7 +63,20 @@ export function formatClockShort(date: Date, locale: Locale, timeZone?: string):
  * data numèrica en català i en castellà.
  */
 export function formatStamp(date: Date, locale: Locale, timeZone?: string): string {
-  const day = new Intl.DateTimeFormat(tag(locale), {
+  return `${formatDateShort(date, locale, timeZone)} · ${formatClock(date, locale, timeZone)}`;
+}
+
+/**
+ * Només la data, compacta: "12.08.2026".
+ *
+ * Es va separar de `formatStamp()`, que la construïa a dins, perquè el peu que
+ * es crema a les captures compartides la necessita SENSE hora —l'hora hi va a
+ * part i sense segons— i copiar-hi els mateixos quatre paràmetres d'`Intl`
+ * hauria estat la segona escriptura del mateix format. Els punts en comptes de
+ * les barres són el motiu de sempre: és com s'escriu una data numèrica aquí.
+ */
+export function formatDateShort(date: Date, locale: Locale, timeZone?: string): string {
+  return new Intl.DateTimeFormat(tag(locale), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -71,7 +84,6 @@ export function formatStamp(date: Date, locale: Locale, timeZone?: string): stri
   })
     .format(date)
     .replace(/\//g, '.');
-  return `${day} · ${formatClock(date, locale, timeZone)}`;
 }
 
 /** Data llarga amb hora i nom de zona: "12 d'agost de 2026, 20:29:47 CEST". */
