@@ -10,11 +10,32 @@
  *    buida fins que salta `voiceschanged`. Si es tria la veu al muntar el
  *    component, es tria «cap». Aquí s'escolta l'esdeveniment i es torna a triar.
  *
- * 2. NO HI HA VEU CATALANA A TOT ARREU. iOS en porta (ca-ES), Android sovint
- *    no. Llegir text català amb una veu castellana surt malament. La cadena de
- *    recurs és: veu de l'idioma demanat → veu de l'altre idioma que tenim, dient
- *    el text D'AQUELL idioma (millor un castellà correcte que un català
- *    destrossat) → veu per defecte amb el text demanat → només to.
+ * 2. NO HI HA VEU DE TOTS ELS IDIOMES A TOT ARREU. L'app parla en quatre (ca,
+ *    es, en, fr) i cap telèfon no els porta tots garantits: iOS sol portar-los,
+ *    un Android venut a Espanya sovint només porta `es-ES`. Llegir text català
+ *    amb una veu castellana surt malament, i llegir text anglès amb una veu
+ *    castellana surt pitjor. La cadena de recurs és: veu de l'idioma demanat →
+ *    veu del següent idioma de la cascada, dient el text D'AQUELL idioma
+ *    (millor un castellà correcte que un anglès destrossat) → veu per defecte
+ *    del sistema amb el text demanat → només to.
+ *
+ *    L'ordre de la cascada està triat per proximitat i per la probabilitat que
+ *    la veu estigui instal·lada en un telèfon que avui és a Espanya:
+ *
+ *        ca → ca, es, fr, en          en → en, es, fr, ca
+ *        es → es, ca, en, fr          fr → fr, es, en, ca
+ *
+ *    EL DEFECTE QUE HI HAVIA, i que es va arreglar el 12-8-2026: la cascada
+ *    estava escrita `locale === 'ca' ? 'es' : 'ca'`, de quan l'app només parlava
+ *    dos idiomes. Amb quatre, un usuari en anglès o en francès sense veu del
+ *    seu idioma acabava sentint CATALÀ. I el `lang` de la locució es posava
+ *    `voiceLocale === 'ca' ? 'ca-ES' : 'es-ES'`: un anglès amb veu anglesa
+ *    instal·lada rebia `lang='es-ES'` malgrat la veu, i un anglès SENSE cap veu
+ *    instal·lada rebia una veu castellana llegint text anglès, perquè quan no
+ *    s'assigna `utterance.voice` el motor la tria pel `lang`. Ara el `lang`
+ *    surt de la veu triada quan n'hi ha —`en-US` i `en-GB` no són el mateix per
+ *    a tots els motors— i, quan no n'hi ha cap, de l'etiqueta de l'idioma que
+ *    de veritat s'està dient.
  *
  * 3. L'ÀUDIO ESTÀ BLOQUEJAT FINS QUE L'USUARI TOCA LA PANTALLA. A iOS i a
  *    Chrome, ni `speechSynthesis.speak()` ni `AudioContext` funcionen si no
@@ -67,6 +88,31 @@ function getAudioContextCtor(): AudioContextCtor | null {
   return w.AudioContext ?? w.webkitAudioContext ?? null;
 }
 
+/**
+ * Ordre en què es busca veu per a cada idioma (vegeu el punt 2 de la capçalera).
+ * El primer element és sempre l'idioma mateix; la resta és per on es baixa quan
+ * el telèfon no en porta cap veu instal·lada.
+ */
+const VOICE_FALLBACKS: Record<TimerLocale, readonly TimerLocale[]> = {
+  ca: ['ca', 'es', 'fr', 'en'],
+  es: ['es', 'ca', 'en', 'fr'],
+  en: ['en', 'es', 'fr', 'ca'],
+  fr: ['fr', 'es', 'en', 'ca'],
+};
+
+/**
+ * Etiqueta BCP-47 per a cada idioma, per quan NO hi ha cap veu triada.
+ * Sense `utterance.voice`, el motor tria la veu llegint el `lang`: aquesta és
+ * l'única cosa que evita que un text anglès el llegeixi una veu castellana.
+ * Quan sí que hi ha veu, mana l'etiqueta exacta de la veu i no aquesta.
+ */
+const LANG_TAG: Record<TimerLocale, string> = {
+  ca: 'ca-ES',
+  es: 'es-ES',
+  en: 'en-US',
+  fr: 'fr-FR',
+};
+
 /** Patrons de to: un bip curt per als informatius, tres aguts per als de seguretat. */
 const TONE_INFO = { freq: 880, beeps: 1, beepMs: 120, gapMs: 0 };
 const TONE_SAFETY = { freq: 1320, beeps: 3, beepMs: 130, gapMs: 90 };
@@ -109,25 +155,31 @@ export function createAnnouncer(options: AnnouncerOptions): Announcer {
   function pickVoice(): void {
     if (!synth) return;
     const voices = synth.getVoices();
-    if (voices.length === 0) return;
+    if (voices.length === 0) {
+      // Encara no han arribat (punt 1 de la capçalera). No es pot triar res,
+      // però el que es DIU sí que s'ha de dir en l'idioma demanat: deixar-hi el
+      // `voiceLocale` anterior faria que un canvi d'idioma abans que carreguin
+      // les veus llegís el text vell.
+      voice = null;
+      voiceLocale = locale;
+      return;
+    }
 
     const byLang = (prefix: string): SpeechSynthesisVoice | undefined => {
       const matches = voices.filter((v) => v.lang.toLowerCase().startsWith(prefix));
       return matches.find((v) => v.localService) ?? matches[0];
     };
 
-    const wanted = byLang(locale);
-    if (wanted) {
-      voice = wanted;
-      voiceLocale = locale;
-      return;
-    }
-    const other: TimerLocale = locale === 'ca' ? 'es' : 'ca';
-    const alternative = byLang(other);
-    if (alternative) {
-      voice = alternative;
-      voiceLocale = other;
-      return;
+    for (const candidate of VOICE_FALLBACKS[locale]) {
+      const found = byLang(candidate);
+      if (found) {
+        voice = found;
+        // Aquestes dues línies van sempre juntes: la veu i l'idioma del text
+        // que se li donarà. Si es desaparellen, algú sent un idioma llegit amb
+        // la fonètica d'un altre.
+        voiceLocale = candidate;
+        return;
+      }
     }
     // Sense cap veu dels nostres idiomes val més la veu per defecte del sistema
     // que res: dirà el text amb accent estrany però s'entendrà.
@@ -217,7 +269,11 @@ export function createAnnouncer(options: AnnouncerOptions): Announcer {
       if (!synth) return;
       try {
         const utterance = new SpeechSynthesisUtterance(text[voiceLocale] ?? text[locale]);
-        utterance.lang = voiceLocale === 'ca' ? 'ca-ES' : 'es-ES';
+        // Amb veu triada mana l'etiqueta EXACTA de la veu: hi ha motors que
+        // tracten `en-US` i `en-GB` com a coses diferents i, si el `lang` no hi
+        // encaixa, ignoren la veu que se'ls ha donat. Sense veu, l'etiqueta de
+        // l'idioma que s'està dient és l'única pista que té el motor.
+        utterance.lang = voice ? voice.lang : LANG_TAG[voiceLocale];
         if (voice) utterance.voice = voice;
         utterance.volume = volume;
         // Una mica per sota del ritme normal: aquestes frases es diuen amb
