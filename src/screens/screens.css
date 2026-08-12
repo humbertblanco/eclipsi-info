@@ -948,7 +948,7 @@
   display: flex;
   flex-direction: column;
   /* Un graó menys d'aire que a l'escriptori (que recupera --sp-5 al seu bloc):
-     dins del sostre de 45dvh cada graó és mitja línia de dades que es veu o
+     dins del sostre de 36dvh cada graó és mitja línia de dades que es veu o
      no es veu abans del primer desplaçament. */
   gap: var(--sp-4);
   /*
@@ -1031,7 +1031,7 @@
   grid-auto-columns: max-content;
   grid-template-columns: none;
   /*
-   * QUE NO S'AIXAFI. La fitxa és una columna flexible amb sostre de 45dvh, i
+   * QUE NO S'AIXAFI. La fitxa és una columna flexible amb sostre de 36dvh, i
    * un element flexible sense aquesta línia s'encongeix per fer lloc a la
    * resta: mesurat al navegador, el control quedava a 5 px d'alçada amb les
    * seves opcions de 44 sobresortint per fora. Amb dues files no es notava
@@ -1655,7 +1655,7 @@
     position: static;
     max-height: none;
     overflow: visible;
-    /* L'aire de sempre: el graó compacte és del mòbil, on mana el 45dvh. */
+    /* L'aire de sempre: el graó compacte és del mòbil, on mana el 36dvh. */
     gap: var(--sp-5);
     background: var(--surface-card);
     backdrop-filter: none;
@@ -2096,7 +2096,7 @@
 /* ============================================================================
    Densitat de la fitxa del mapa a MÒBIL
 
-   La fitxa viu dins d'un sostre de 45dvh, i el que no es veu abans del primer
+   La fitxa viu dins d'un sostre de 36dvh, i el que no es veu abans del primer
    desplaçament és com si no hi fos. El primer cop d'ull ha de donar el
    veredicte sencer: distintiu, les tres xifres i la línia de temps C1–C4.
    Aquestes regles són la versió compacta del mòbil; l'escriptori les desfà

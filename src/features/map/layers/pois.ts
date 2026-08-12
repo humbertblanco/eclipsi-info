@@ -22,7 +22,7 @@
  *    `catalog.ts`). Amb un identificador, algú acabaria pintant una fitxa sense
  *    font el dia que la cerca fallés.
  *
- * 3. LA COORDENADA ESTIMADA NO ES DIBUIXA COM UNA D'EXACTA. De 222 punts, 60
+ * 3. LA COORDENADA ESTIMADA NO ES DIBUIXA COM UNA D'EXACTA. De 280 punts, 108
  *    surten d'un NOM DE LLOC que hem hagut de buscar a OpenStreetMap i poden
  *    ballar un quilòmetre llarg (`precision: 'estimated'`). Pintar-los amb el
  *    mateix disc de sis píxels seria dir amb el dibuix el contrari del que diu
@@ -236,7 +236,7 @@ export function applyPois(
     /*
      * L'HALO DE LA COORDENADA ESTIMADA, A SOTA DE TOT.
      *
-     * Filtrat a `estimated == 1`: els 162 punts que porten coordenada publicada
+     * Filtrat a `estimated == 1`: els 172 punts que porten coordenada publicada
      * no en tenen, i han de continuar sense tenir-ne. Un halo a tot arreu diria
      * que tot és aproximat, que és tan fals com dir que res no ho és.
      */
@@ -278,7 +278,7 @@ export function applyPois(
           /*
            * EL DISC ENCONGEIX QUAN EL MAPA S'ALLUNYA, i no és cosmètica.
            *
-           * Amb 5,5 px fixos i els 274 punts del 2026, a escala de país —que
+           * Amb 5,5 px fixos i els 280 punts del 2026, a escala de país —que
            * és com s'obre el mapa i com es mira en un telèfon de 390 px— la
            * Rioja i Burgos es converteixen en UNA TACA blava sòlida: no s'hi
            * distingeix cap punt, no se'n pot tocar cap i el que hauria de ser
