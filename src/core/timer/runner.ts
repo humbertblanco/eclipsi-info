@@ -251,6 +251,36 @@ export function createAlertRunner(options: RunnerOptions): AlertRunner {
     },
     poll(): void {
       if (!active) return;
+      /*
+       * AQUÍ ES RE-ANCORA SEMPRE, I ÉS L'ÚNIC LLOC ON ES FA A LA FORÇA.
+       *
+       * `poll()` només el crida el `visibilitychange` de `useEclipseTimer`, o
+       * sigui que arribar aquí vol dir que la pestanya TORNA de segon pla. I
+       * aquell és exactament el moment en què el rellotge d'aquest reproductor
+       * pot haver perdut temps: `performance.now()` NO AVANÇA MENTRE L'APARELL
+       * DORM, ni a iOS ni a Android. Un mòbil bloquejat un minut torna amb
+       * `clock.now()` un minut endarrerit.
+       *
+       * `arm()` no ho pot arreglar: el seu `clock.resync()` està condicionat a
+       * `RESYNC_GUARD_MS`, i aquella guarda existeix per un bon motiu —un salt
+       * de mig segon a mig compte enrere de totalitat és pitjor que la deriva
+       * que corregeix— però té una conseqüència que no s'havia vist: amb els
+       * avisos de C2−60, C2−10, C2+12, C3−60, C3−30, C3−15, C3−5 i C3+3, LA
+       * FINESTRA DE LA TOTALITAT NO ES RE-ANCORA MAI. Justament allà.
+       *
+       * El cas concret, i és de seguretat ocular: algú es guarda el mòbil a la
+       * butxaca durant l'última parcial i el treu amb la totalitat començada.
+       * Sense això, «posa't el filtre» (C3−15 s) li arriba tants segons tard com
+       * hagi dormit l'aparell, i les finestres de validesa no el protegeixen
+       * perquè `lateByMs` es mesura contra el mateix rellotge estancat.
+       *
+       * Per què és segur fer-ho a la força: `Date.now()` d'un mòbil va per NTP,
+       * el salt s'aplica UN cop i fora de qualsevol batec, i el `drain()` que ve
+       * tot seguit torna a decidir amb l'hora bona — descartant el que de debò
+       * ha caducat en comptes d'emetre-ho tard. La guarda d'`arm()` es queda
+       * tal com és: aquí no hi ha cap compte enrere corrent, hi ha una tornada.
+       */
+      clock.resync(true);
       tick();
     },
     now: () => clock.now(),

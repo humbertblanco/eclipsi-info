@@ -277,3 +277,84 @@ describe('createMonotonicClock', () => {
     expect(clock.now()).toBe(T0 + 1000);
   });
 });
+
+/*
+ * EL MÒBIL QUE DORM A LA BUTXACA.
+ *
+ * Aquest bloc no fa servir el rellotge fals de dalt: fa servir
+ * `createMonotonicClock` DE DEBÒ amb els seus dos rellotges injectats. És a
+ * posta. El simulacre de `createFakeEnv` porta `resync: () => false`, o sigui
+ * que una prova del re-ancoratge escrita amb ell s'estaria assertant damunt del
+ * seu propi doble i passaria igual amb el codi trencat.
+ *
+ * El que es reprodueix aquí és el que fan iOS i Android de veritat:
+ * `performance.now()` NO AVANÇA MENTRE L'APARELL DORM. Es simula deixant quiet
+ * el rellotge monòton mentre el de paret avança.
+ */
+describe('createAlertRunner — l’aparell ha dormit', () => {
+  /** Temporitzadors que anoten i no disparen mai: aquí manen `poll()` i el rellotge. */
+  function inertTimers(): TimerFns {
+    let seq = 0;
+    return { setTimer: () => ++seq, clearTimer: () => undefined };
+  }
+
+  it('en tornar de segon pla no diu tard el que ja no toca', () => {
+    let wall = T0;
+    let mono = 0;
+    const clock = createMonotonicClock({ wallNow: () => wall, monotonicNow: () => mono });
+
+    // Un avís curt de debò: els de seguretat en tenen entre 3 i 10 segons.
+    const filtre = alert('posa-t-el-filtre', T0 + 30_000, 5_000);
+    const fired: string[] = [];
+    const skipped: string[] = [];
+
+    const runner = createAlertRunner({
+      alerts: [filtre],
+      clock,
+      timers: inertTimers(),
+      onAlert: (e) => fired.push(e.alert.id),
+      onSkip: (a) => skipped.push(a.id),
+    });
+    runner.start();
+    expect(fired).toEqual([]);
+
+    // Dos minuts a la butxaca: el món avança, el rellotge monòton no.
+    wall += 120_000;
+    expect(clock.now()).toBe(T0);
+
+    runner.poll();
+
+    // El rellotge ha de tornar a l'hora de debò...
+    expect(runner.now()).toBe(T0 + 120_000);
+    // ...i l'avís, que fa 85 segons que ha caducat, s'ha de descartar.
+    // Sense el re-ancoratge sonaria com si fos ara, amb la fotosfera a fora.
+    expect(fired).toEqual([]);
+    expect(skipped).toEqual(['posa-t-el-filtre']);
+  });
+
+  it('el que encara és cert després de dormir, es diu', () => {
+    let wall = T0;
+    let mono = 0;
+    const clock = createMonotonicClock({ wallNow: () => wall, monotonicNow: () => mono });
+
+    // Marge ample: «el Sol ha tornat» val un minut sencer.
+    const tornada = alert('el-sol-ha-tornat', T0 + 30_000, 60_000);
+    const fired: string[] = [];
+    const skipped: string[] = [];
+
+    const runner = createAlertRunner({
+      alerts: [tornada],
+      clock,
+      timers: inertTimers(),
+      onAlert: (e) => fired.push(e.alert.id),
+      onSkip: (a) => skipped.push(a.id),
+    });
+    runner.start();
+
+    wall += 45_000;
+    runner.poll();
+
+    expect(fired).toEqual(['el-sol-ha-tornat']);
+    expect(skipped).toEqual([]);
+  });
+});
