@@ -31,6 +31,36 @@
  * JSON no s'escriu fins que la graella és sencera, així que no hi ha manera de
  * publicar-ne una a mitges sense adonar-se'n.
  *
+ * ── COM ES CORRE: UNA ORDRE PER DIA I PER ECLIPSI ───────────────────────────
+ *
+ * Una graella és UNA ordre i una espera; les tres del catàleg són tres dies,
+ * perquè el sostre diari del pla gratuït no en deixa cabre més d'una:
+ *
+ *     dia 1:  npx tsx scripts/build-cloud-clim.ts 2026-08-12
+ *     dia 2:  npx tsx scripts/build-cloud-clim.ts 2027-08-02
+ *     dia 3:  npx tsx scripts/build-cloud-clim.ts 2028-01-26
+ *
+ * QUÈ COSTA CADASCUNA, mesurat amb `--dry-run` el 12-08-2026:
+ *
+ *     eclipsi       cel·les   punt-any   peticions   crides d'API   mínim
+ *     2026-08-12        888     13.320         675          8.486    2,1 h
+ *     2027-08-02        557      8.355         420          5.280    1,3 h
+ *     2028-01-26        937     14.055         705          8.863    2,2 h
+ *
+ * El «mínim» és quota, no feina: és el temps que el sostre de 4.000 crides per
+ * hora obliga a esperar encara que la xarxa anés infinitament ràpida. Compta'n
+ * una mica més i no t'ho miris.
+ *
+ * SI ES TALLA, NO S'HA PERDUT RES. El punt de control guarda la feina I la quota
+ * gastada; la mateixa ordre, l'endemà, continua per on anava. El que NO s'ha de
+ * fer és tornar-hi tres vegades seguides en vint minuts creient que cada
+ * execució estrena comptador: ja va passar, i entre les tres van esgotar el
+ * sostre horari sense que cap es cregués haver-hi arribat.
+ *
+ * ABANS DE COMENÇAR, per veure el cost sense tocar la xarxa:
+ *
+ *     npx tsx scripts/build-cloud-clim.ts 2027-08-02 --dry-run
+ *
  * ── PER QUÈ ÉS UN SCRIPT I NO CODI DE L'APP ─────────────────────────────────
  *
  * `src/core/weather/outlook.ts` respon «què sol fer el cel AQUÍ» amb quinze
@@ -161,52 +191,27 @@ import {
   CLIMATOLOGY_YEARS,
 } from '../src/core/weather/outlook';
 import type { CloudLayers } from '../src/core/weather/types';
+import {
+  CLIM_BUFFER_KM,
+  CLIM_STEP_DEG,
+  CLIM_WINDOWS,
+  type ClimWindow,
+} from './lib/mascares';
 
 const DAY_MS = 86_400_000;
 
 /* ------------------------------------------------------------- paràmetres */
 
-/**
- * Pas de la graella, en graus.
- *
- * MESURAT, PERQUÈ LA SUPOSICIÓ ERA FALSA. La idea de partida era que 0,25° fos
- * la malla d'ERA5 i que baixar-ne més fos fingir detall. Es va comprovar contra
- * l'API abans d'escriure res, i s'ha tornat a comprovar en generar la graella
- * de debò: demanant latituds separades 0,02°, l'arxiu torna coordenades
- * enganxades a una malla de 0,0703125° —7,8 km— i valors de nuvolositat
- * diferents gairebé a cada salt.
- *
- * LA SEGONA MESURA ÉS LA QUE TANCA EL DUBTE, perquè la primera no distingia
- * entre dada nova i interpolació. Un transsecte de 20 punts a 0,0703° sobre
- * Burgos (−3,70°, del 41,58° al 42,92°, 12-11-2024) dona 10 valors diferents de
- * 20 a les 09 UTC, amb trams iguals d'1,25 cel·les de mitjana: 0,088°. Si el
- * que hi ha a sota fos una malla de 0,25° interpolada, els trams durarien 3,5
- * cel·les i es veurien esglaons de 0,25°. No s'hi veuen.
- *
- * Es queda a 0,25° per cost, i el cost està comptat: a 0,0703° la franja del
- * 2026 passaria de 888 cel·les a unes onze mil dues-centes (creixen amb el
- * quadrat del pas), i les 8.486 crides d'API d'aquesta graella passarien a més
- * de cent mil — deu dies sencers del límit diari del pla gratuït. El JSON, de
- * ~55 kB a més d'un megabyte que l'usuari s'ha de baixar per anar sense
- * cobertura.
- *
- * La distinció que importa i que no s'ha de perdre mai: 0,25° no INVENTA res
- * —cap cel·la ensenya més detall del que la font en sap—, però tampoc no és el
- * límit de la font. Si algun dia es baixa el pas, això no és una millora
- * cosmètica: és dada nova de veritat.
+/*
+ * El pas de la graella, el marge i les finestres de món viuen a
+ * `lib/mascares.ts`, amb el perquè de cada número escrit al costat. Han sortit
+ * d'aquí perquè aquest fitxer crida `main()` a l'última línia i una prova que
+ * l'importés per mirar-los engegaria dies de peticions; ara
+ * `tests/mascares-dels-generadors.test.ts` els llegeix i els compara amb la
+ * franja que dona el motor, ciutat per ciutat.
  */
-const STEP_DEG = 0.25;
-
-/**
- * Marge al voltant de la franja, en km.
- *
- * La capa no serveix només per triar dins de la franja: serveix per veure si
- * val la pena moure's. Cinquanta quilòmetres és, aproximadament, el que es
- * recorre en tres quarts d'hora de carretera secundària el dia de l'eclipsi,
- * que és el que algú es pot plantejar el mateix matí. Més enllà d'això ja no
- * és una decisió de mapa, és un altre viatge.
- */
-const BUFFER_KM = 50;
+const STEP_DEG = CLIM_STEP_DEG;
+const BUFFER_KM = CLIM_BUFFER_KM;
 
 /**
  * Punts per petició d'arxiu.
@@ -275,30 +280,6 @@ const BUDGET_PER_MINUTE = 380;
 const BUDGET_PER_HOUR = 4_000;
 const BUDGET_PER_DAY = 9_000;
 
-/**
- * Finestres de món que té sentit calcular, per eclipsi.
- *
- * NO ÉS TOTA LA FRANJA, i tampoc no ho pretén. La del 12 d'agost de 2026
- * comença a Sibèria, passa pel pol i baixa per Islàndia: calcular-la sencera
- * serien desenes de milers de cel·les i unes quantes hores de peticions per
- * pintar oceà que ningú d'aquesta app no mirarà mai. Aquesta aplicació parla
- * d'anar a veure l'eclipsi des d'Espanya, i aquests rectangles són el tros de
- * franja al qual s'hi pot arribar conduint.
- *
- * Els límits estan arrodonits a graus sencers a posta: així la retallada de
- * veritat la fa la geometria de la franja (`BUFFER_KM`) i no un rectangle
- * escrit a mà que algú hauria d'anar ajustant.
- */
-const AREAS: Record<string, { west: number; south: number; east: number; north: number }> = {
-  // Galícia i la cornisa cantàbrica fins a les Balears, passant per Castella,
-  // la Rioja, l'Aragó i el litoral valencià.
-  '2026-08-12': { west: -10, south: 36, east: 5, north: 45 },
-  // L'Estret: Cadis, Màlaga, Ceuta i Melilla, amb el nord del Marroc.
-  '2027-08-02': { west: -10, south: 33, east: 1, north: 40 },
-  // De Sevilla a la costa catalana, amb el Sol ponent-se durant l'anularitat.
-  '2028-01-26': { west: -10, south: 34, east: 5, north: 43 },
-};
-
 /* -------------------------------------------------------------- la graella */
 
 interface Cell {
@@ -362,7 +343,7 @@ function bandWidthAt(path: EclipsePath, center: PathPoint): number {
 function buildCells(
   eclipseId: string,
   path: EclipsePath,
-  area: { west: number; south: number; east: number; north: number },
+  area: ClimWindow,
 ): Cell[] {
   const cells: Cell[] = [];
   const ixFrom = Math.ceil(area.west / STEP_DEG);
@@ -415,7 +396,8 @@ function buildCells(
 
   if (cells.length === 0) {
     throw new Error(
-      `Cap cel·la per a ${eclipseId}: revisa AREAS, la franja no hi passa.`,
+      `Cap cel·la per a ${eclipseId}: revisa CLIM_WINDOWS (lib/mascares.ts), ` +
+        'la franja no hi passa.',
     );
   }
   return cells;
@@ -1194,10 +1176,17 @@ async function main(): Promise<void> {
     args.find((a) => a.startsWith('--concurrency='))?.slice(14) ?? DEFAULT_CONCURRENCY,
   );
 
-  const area = AREAS[eclipseId];
+  const area = CLIM_WINDOWS[eclipseId];
   if (!area) {
+    /*
+     * UN ECLIPSI DEL CATÀLEG SENSE FINESTRA S'ATURA AQUÍ, i és a posta: decidir
+     * fins on paguem de baixar és una decisió humana. La mateixa condició la
+     * vigila `tests/mascares-dels-generadors.test.ts`, que es posa vermell sol
+     * el dia que algú afegeix un eclipsi al catàleg i no passa per aquí.
+     */
     throw new Error(
-      `No hi ha finestra definida per a ${eclipseId}. Tria un de: ${Object.keys(AREAS).join(', ')}`,
+      `No hi ha finestra definida per a ${eclipseId} a lib/mascares.ts. ` +
+        `N'hi ha de: ${Object.keys(CLIM_WINDOWS).join(', ')}`,
     );
   }
   // Peta aquí i no més tard si l'identificador no és del catàleg.

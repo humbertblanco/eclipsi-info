@@ -6,6 +6,38 @@
  *
  * Sortida: `public/data/viewpoints-<eclipseId>.json`.
  *
+ * ── COM ES CORRE: UNA ORDRE I UNA ESPERA ────────────────────────────────────
+ *
+ * Els tres eclipsis del catàleg, seguits, són una sola ordre i una tarda:
+ *
+ *     npx tsx scripts/build-viewpoints.ts
+ *
+ * QUÈ COSTA, mesurat amb `--dry` el 12-08-2026 (rectangles) i amb els
+ * cronòmetres del 3-8-2026 (segons per rectangle):
+ *
+ *     2026-08-12    110 rectangles    ~45 min
+ *     2027-08-02    146 rectangles    ~60 min
+ *     2028-01-26    144 rectangles    ~60 min
+ *     ───────────────────────────────────────
+ *     els tres      400 rectangles    ~2 h 45 min
+ *
+ * El comptador: cada rectangle val entre 21 i 47 s de CUA d'Overpass (buit o
+ * ple, tant li fa: vegeu `VIEWPOINTS_SPAN_DEG`) més la pausa d'1,5 s, i van dos
+ * fils en paral·lel, un per mirall. Amb 45 s de mitjana surten uns 23 s de
+ * rellotge per rectangle. La xifra ballarà: depèn de com de plens estiguin
+ * aquell dia dos servidors de voluntaris, i els reintents amb espera creixent
+ * poden doblar-la sense que res vagi malament.
+ *
+ * NO CAL VIGILAR-HO. Si un mirall cau, es passa a l'altre; si tots dos donen
+ * 429 o 504, s'espera i es torna a provar fins a sis vegades. El que sí que val
+ * la pena saber: el resultat cru de cada eclipsi es desa al directori temporal
+ * i, si vols refer NOMÉS el criteri de rellevància, `--reuse` te'l torna a
+ * escriure en mil·lisegons i sense tocar la xarxa.
+ *
+ * ABANS DE COMENÇAR, si vols veure què es demanarà sense demanar-ho:
+ *
+ *     npx tsx scripts/build-viewpoints.ts --dry
+ *
  * ── LA DECISIÓ: EN TEMPS DE COMPILACIÓ, MAI EN TEMPS D'EXECUCIÓ ─────────────
  *
  * Overpass és un servei comunitari amb dos fils per IP i una cua compartida per
@@ -29,8 +61,15 @@
  * La franja és global (la del 2026 comença a l'Àrtic i acaba a les Balears) i
  * no es pot demanar d'una peça. `bandChunks` la talla en trams d'uns 220 km de
  * recorregut, i de cada tram `chunkQueryBoxes` en treu una malla de rectangles
- * de 2,4° retallada a la franja + 20 km de marge. Del 2026 en surten 92
- * rectangles.
+ * de 2,4° retallada a la franja + 20 km de marge. Del 2026 en surten 110
+ * rectangles; del 2027, 146; del 2028, 144.
+ *
+ * ELS TRES NÚMEROS D'AQUESTA MÀSCARA —marge, tram i costat del rectangle— viuen
+ * a `scripts/lib/mascares.ts` i no aquí, i el motiu és que hi ha una prova que
+ * els fa servir: aquest fitxer crida `main()` a l'última línia i importar-lo per
+ * comprovar res voldria dir engegar tres hores de descàrregues. La prova
+ * (`tests/mascares-dels-generadors.test.ts`) agafa els mateixos números, torna a
+ * muntar la màscara i comprova contra el motor que no hi hagi cap forat a dins.
  *
  * PER QUÈ LA MALLA I NO EL RECTANGLE DEL TRAM, amb els números que ho van
  * decidir (3 d'agost de 2026, contra `overpass-api.de`): el rectangle del tram
@@ -85,6 +124,11 @@ import {
   viewpointsFileName,
 } from '../src/core/places/viewpoints';
 import type { BandBox, OverpassElement, Viewpoint } from '../src/core/places/viewpoints';
+import {
+  VIEWPOINTS_CHUNK_KM,
+  VIEWPOINTS_MARGIN_KM,
+  VIEWPOINTS_SPAN_DEG,
+} from './lib/mascares';
 
 /* -------------------------------------------------------------- paràmetres */
 
@@ -110,30 +154,15 @@ const MIRRORS = [
   'https://overpass.openstreetmap.fr/api/interpreter',
 ];
 
-/** Marge al voltant de la franja, en km. */
-const MARGIN_KM = 20;
-
-/** Longitud de cada tram sobre la línia central, en km. */
-const DEFAULT_CHUNK_KM = 220;
-
-/**
- * Costat màxim del rectangle que es demana a Overpass, en graus.
- *
- * EL NÚMERO EL VA POSAR UNA MESURA QUE NO ESPERÀVEM. La intuïció deia
- * rectangles petits, per no ofegar el servidor; els cronòmetres del 3 d'agost
- * de 2026 diuen una altra cosa:
- *
- *     rectangle BUIT de l'Àrtic (1,2°)          37 s (.de) · 21 s (.fr)
- *     rectangle DENS dels Pirineus (2,4°)       47 s · 6.303 elements · 1,4 MB
- *
- * O sigui que el cost d'una petició és la CUA, no les dades: un rectangle buit
- * val gairebé el mateix que un que porta un megabyte i mig. Amb rectangles
- * d'1,2° el 2026 en fa 290 i s'hi anaven més de dues hores esperant torn; amb
- * 2,4° en fa 92 i el temps es divideix per tres sense que cap petició deixi de
- * cabre — el rectangle que el servidor SÍ que va rebutjar (26.708 elements,
- * 307.000 km²) és sis vegades més gros que el pitjor d'aquests.
+/*
+ * La màscara —marge, llargada del tram i costat del rectangle— és a
+ * `lib/mascares.ts`, amb el perquè de cada número i la prova que la compara amb
+ * el motor. Aquí només se'n posen els àlies curts que fa servir la resta del
+ * fitxer.
  */
-const DEFAULT_SPAN_DEG = 2.4;
+const MARGIN_KM = VIEWPOINTS_MARGIN_KM;
+const DEFAULT_CHUNK_KM = VIEWPOINTS_CHUNK_KM;
+const DEFAULT_SPAN_DEG = VIEWPOINTS_SPAN_DEG;
 
 /** Temps que se li deixa a Overpass per resoldre una consulta, en segons. */
 const OVERPASS_TIMEOUT_S = 180;
@@ -320,9 +349,9 @@ async function buildEclipse(eclipseId: string, options: BuildOptions): Promise<v
    * final del recorregut, on cinc trams seguits cobreixen gairebé el mateix
    * tros de Península. Com que la malla de `chunkQueryBoxes` està ancorada al
    * meridià zero, dues cel·les que es trepitgen tenen EXACTAMENT la mateixa
-   * clau i es demanen una sola vegada. Mesurat: 271 cel·les brutes → 92 (2026),
-   * 392 → 143 (2027), 379 → 138 (2028). Dos terços de les peticions estalviats
-   * per haver ancorat una malla on tocava.
+   * clau i es demanen una sola vegada. Mesurat el 12-08-2026: 304 cel·les
+   * brutes → 110 (2026), 423 → 146 (2027), 466 → 144 (2028). Dos terços de les
+   * peticions estalviats per haver ancorat una malla on tocava.
    *
    * El tram amb què es demana la cel·la ja no importa per al retall: aquest es
    * fa contra la franja SENCERA (vegeu `insideBand`).

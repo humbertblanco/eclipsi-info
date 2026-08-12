@@ -574,7 +574,18 @@ export interface BandOptions {
 
 const DEFAULT_MARGIN_KM = 20;
 const DEFAULT_CHUNK_KM = 220;
-const DEFAULT_LAT_LIMIT_DEG = 80;
+/**
+ * On es deixa de demanar, i és el mateix tall que fa `eclipsePathToGeoJson`.
+ *
+ * S'EXPORTA PERQUÈ HI HA UNA PROVA QUE HI COMPTA. `tests/mascares-dels-
+ * generadors.test.ts` comprova que tot punt que `insideBand` accepta caigui dins
+ * d'algun rectangle de consulta, i l'única excepció legítima és aquesta: per
+ * damunt d'aquesta latitud es demana el que caigui dins de les cel·les veïnes i
+ * res més. Si el número visqués només aquí, la prova hauria de repetir-lo escrit
+ * a mà i el dia que es canviés diria que passa una cosa que ja no passa.
+ */
+export const BAND_LAT_LIMIT_DEG = 80;
+const DEFAULT_LAT_LIMIT_DEG = BAND_LAT_LIMIT_DEG;
 const KM_PER_DEG_LAT = 111.195;
 
 /** Redueix una longitud a [−180°, 180°). Les del camí venen desenrotllades. */
@@ -629,6 +640,56 @@ export function bandChunks(path: EclipsePath, options: BandOptions = {}): BandCh
       windowStart = path.center[i].timeMs;
       walked = 0;
     }
+  }
+
+  /*
+   * LES FINESTRES ES MESUREN AMB LA CENTRAL I LA VORA NO HI CAP: LES DUES PUNTES
+   * S'HAN D'EIXAMPLAR. És el segon forat de la mateixa família que el de Palma, i
+   * es va trobar el 12-08-2026 amb la prova que compara el que es DEMANA amb el
+   * que `insideBand` ACCEPTA.
+   *
+   * Els talls surten de recórrer `path.center`, o sigui que la primera finestra
+   * comença quan comença la central i l'última acaba quan la central s'acaba.
+   * Però la vora no viu dins d'aquell interval: al 12-08-2026 la central va de
+   * les 17:00:04 a les 18:32:09 i el límit SUD de les 16:58:16 a les 18:33:53 —
+   * gairebé dos minuts abans i un minut i mig després. `sliceWithNeighbours` no
+   * troba aquells punts dins de cap finestra i els deixa fora de tots els trams;
+   * com que la caixa del tram es calcula amb els punts que hi han entrat, allà no
+   * es genera cap cel·la i no es demana res.
+   *
+   * EL QUE HI HAVIA A DINS DEL FORAT, mesurat: 103 sondes de dins de la franja
+   * —el límit sud de l'entrada per Sibèria, de 74,91°N/117,96°E fins a
+   * 80,00°N/121,02°E, mar de Làptev i costa de Taimir— quedaven fora de tots els
+   * rectangles. Als altres dos eclipsis del catàleg el forat no arribava a
+   * obrir-se perquè les tapes ja hi queien a sobre, cosa que és sort i no cap
+   * garantia.
+   *
+   * S'eixampla la primera finestra cap enrere i l'última cap endavant fins a
+   * cobrir la vora sencera. No es fan trams nous a posta: els punts orfes
+   * s'afegeixen als trams de les puntes, que és on toca geogràficament, i la seva
+   * caixa creix just el que cal. El preu, mesurat amb `--dry` sobre els tres
+   * eclipsis: el 2026 passa de 104 a 110 rectangles de consulta, el 2027 es queda
+   * a 146 i el 2028 a 144 (hi guanya un tram, però cap cel·la nova).
+   *
+   * EL FITXER PUBLICAT DEL 2026 ES VA GENERAR ABANS D'AIXÒ i, per tant, no porta
+   * res d'aquella franja siberiana. No es torna a generar per aquest motiu sol:
+   * el que hi ha allà és mar gelat i tundra sense cap topònim que ningú d'aquesta
+   * app hagi de fer servir. La correcció val per a les generacions següents.
+   */
+  const edgeTimes: number[] = [];
+  for (const point of path.northLimit) edgeTimes.push(point.timeMs);
+  for (const point of path.southLimit) edgeTimes.push(point.timeMs);
+  for (const point of path.startCap) edgeTimes.push(point.timeMs);
+  for (const point of path.endCap) edgeTimes.push(point.timeMs);
+  if (windows.length > 0 && edgeTimes.length > 0) {
+    let first = windows[0].startMs;
+    let last = windows[windows.length - 1].endMs;
+    for (const t of edgeTimes) {
+      if (t < first) first = t;
+      if (t > last) last = t;
+    }
+    windows[0].startMs = first;
+    windows[windows.length - 1].endMs = last;
   }
 
   const chunks: BandChunk[] = [];
