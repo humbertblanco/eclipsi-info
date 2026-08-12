@@ -442,6 +442,112 @@ describe('la vora de la franja és una corba llisa, sense dents de serra', () =>
     return worst;
   }
 
+  /*
+   * ─────────────────────────────────────────────────────────────────────────
+   * LA SEGONA XARXA: QUE L'ANELL NO ES CREUI ELL MATEIX.
+   *
+   * PER QUÈ EL BUCLE NO PORTA UN `expect` A DINS, I PER QUÈ EL TEMPS MÀXIM DE
+   * `vitest.config.ts` ES QUEDA ON ÉS.
+   *
+   * Aquesta comprovació esgotava els 60 s de `testTimeout` quan la bateria
+   * sencera corria en paral·lel, i va fer fallar la base DUES vegades el dia
+   * del desplegament. Un vermell fals el dia que calgui publicar d'urgència és
+   * car, i la sospita natural —que la comprovació és O(n²) sobre els vèrtexs de
+   * l'anell— era FALSA. Val la pena que consti amb els números, mesurats aquí:
+   *
+   *     anell del 2026:    543 vèrtexs →    146.069 parells
+   *     anell del 2027:  1.449 vèrtexs →  1.046.180 parells   ← el que petava
+   *     anell del 2028:  1.279 vèrtexs →    814.725 parells
+   *
+   * Aquell milió de parells, fent NOMÉS l'aritmètica dels quatre productes
+   * creuats, costa 13 ms. La prova en trigava 4.602 sola. El desglossament,
+   * mesurat un a un sobre les mateixes 1.046.180 voltes:
+   *
+   *     el bucle buit ..............................     2 ms
+   *     muntar la cadena del missatge ..............    28 ms
+   *     `expect(false).toBe(false)` ................ 4.746 ms
+   *
+   * O sigui que la geometria era el 0,3 % del temps i el 99 % era cridar
+   * `expect()` un milió de vegades —4,5 µs cadascuna— per muntar un milió de
+   * contextos d'asserció que ningú no llegiria mai. I això explica per què
+   * només petava amb càrrega: cada `expect` reserva memòria, i amb els deu
+   * fils de la bateria disputant-se la CPU i el recol·lector de brossa, el
+   * mateix test passava de 4,6 s a 13,9 s en aquest ordinador (i de 32 s a
+   * 60,3 s al del desplegament). L'aritmètica no s'immuta amb la càrrega; el
+   * que s'infla és el peatge per asserció, i n'hi havia un milió.
+   *
+   * Un `expect` per parell tampoc no era una prova més forta: hi ha UNA sola
+   * decisió —l'anell es creua o no— i s'afirma una sola vegada. El bucle passa
+   * a ser codi pla que torna el primer parell culpable, i el que s'assereix és
+   * el missatge que en surt, perquè quan falli digui ON. MESURAT DESPRÉS: les
+   * tres comprovacions passen de 643 + 4.602 + 3.592 ms a 7 + 14 + 5, i el
+   * fitxer sencer de 9,53 s a 0,74 s.
+   *
+   * NO S'HI HA POSAT CAP ESCOMBRAT NI CAP CAIXA ENGLOBANT, i és una decisió:
+   * estalviarien uns 25 ms d'un fitxer que ara en triga 744, i portarien codi
+   * de poda que pot deixar de trobar un creuament sense dir-ho — que és
+   * justament el que aquesta prova ha de caçar. La complexitat es paga quan es
+   * nota, i el llindar de 60 s de `vitest.config.ts` no s'ha tocat: ara hi
+   * sobren quatre ordres de magnitud.
+   *
+   * QUÈ NO CAÇA, perquè quedi escrit: només talls PROPIS. Dos segments
+   * col·lineals encavalcats, o un vèrtex que cau exactament damunt d'un altre
+   * segment, hi passen. És a posta — el cas que ha existit de debò és la dent,
+   * i un criteri amb tolerància dispararia sobre vèrtexs consecutius separats
+   * per metres.
+   * ─────────────────────────────────────────────────────────────────────────
+   */
+
+  /** Un vèrtex de l'anell tal com surt del GeoJSON: [longitud, latitud]. */
+  type Coord = readonly number[];
+
+  /** Tall PROPI: cada segment ha de deixar els extrems de l'altre a banda i banda. */
+  function segmentsCross(a: Coord, b: Coord, c: Coord, d: Coord): boolean {
+    const orient = (o: Coord, p: Coord, q: Coord) =>
+      (p[0] - o[0]) * (q[1] - o[1]) - (p[1] - o[1]) * (q[0] - o[0]);
+    const d1 = orient(c, d, a);
+    const d2 = orient(c, d, b);
+    const d3 = orient(a, b, c);
+    const d4 = orient(a, b, d);
+    return (
+      ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+      ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))
+    );
+  }
+
+  /**
+   * El primer parell de segments de l'anell que es creuen, o `null`.
+   *
+   * El darrer vèrtex duplica el primer: es recorre sense ell, i el parell
+   * (primer segment, últim segment) se salta perquè són adjacents pel
+   * tancament.
+   */
+  function firstSelfIntersection(ring: readonly Coord[]): { i: number; j: number } | null {
+    const n = ring.length - 1;
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 2; j < n; j++) {
+        if (i === 0 && j === n - 1) continue;
+        if (segmentsCross(ring[i], ring[i + 1], ring[j], ring[j + 1])) return { i, j };
+      }
+    }
+    return null;
+  }
+
+  /**
+   * El que ha de sortir quan falli, i `null` quan l'anell és net. S'assereix
+   * damunt d'aquesta cadena i no d'un booleà perquè amb `toBe(false)` només se
+   * sabria que hi ha un creuament, no quin ni on.
+   */
+  function crossingReport(ring: readonly Coord[]): string | null {
+    const hit = firstSelfIntersection(ring);
+    if (hit === null) return null;
+    const at = (k: number) => `${ring[k][1].toFixed(3)}/${ring[k][0].toFixed(3)}`;
+    return (
+      `segments ${hit.i} i ${hit.j} de ${ring.length - 1}: ` +
+      `[${at(hit.i)} → ${at(hit.i + 1)}] creua [${at(hit.j)} → ${at(hit.j + 1)}]`
+    );
+  }
+
   const IDS = ['2026-08-12', '2027-08-02', '2028-01-26'];
 
   for (const id of IDS) {
@@ -461,41 +567,73 @@ describe('la vora de la franja és una corba llisa, sense dents de serra', () =>
 
     it(`${id}: l'anell del polígon no s'autointerseca`, () => {
       // Una vora amb dent pot arribar a doblegar-se fins a creuar-se, i un
-      // polígon autointersecat es pinta amb forats imprevisibles. La prova és
-      // O(n²) sobre uns pocs centenars de segments: barata en un test.
+      // polígon autointersecat es pinta amb forats imprevisibles.
       const { band } = eclipsePathToGeoJson(computeEclipsePath(id));
       const ring = band.geometry.coordinates[0];
 
-      const crosses = (
-        a: readonly number[], b: readonly number[],
-        c: readonly number[], d: readonly number[],
-      ): boolean => {
-        const orient = (o: readonly number[], p: readonly number[], q: readonly number[]) =>
-          (p[0] - o[0]) * (q[1] - o[1]) - (p[1] - o[1]) * (q[0] - o[0]);
-        const d1 = orient(c, d, a);
-        const d2 = orient(c, d, b);
-        const d3 = orient(a, b, c);
-        const d4 = orient(a, b, d);
-        return (
-          ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
-          ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))
-        );
-      };
-
-      // El darrer vèrtex duplica el primer: es recorre sense ell i el parell
-      // (primer, últim segment) es salta perquè són adjacents pel tancament.
-      const n = ring.length - 1;
-      for (let i = 0; i < n; i++) {
-        for (let j = i + 2; j < n; j++) {
-          if (i === 0 && j === n - 1) continue;
-          expect(
-            crosses(ring[i], ring[i + 1], ring[j], ring[j + 1]),
-            `segments ${i} i ${j} es creuen`,
-          ).toBe(false);
-        }
-      }
+      // Sense aquesta línia la prova seria BUIDA amb un anell buit: el bucle no
+      // correria cap volta i el `null` passaria igual de bé.
+      expect(ring.length, `${id}: anell de ${ring.length} vèrtexs`).toBeGreaterThan(50);
+      expect(crossingReport(ring)).toBeNull();
     });
   }
+
+  /*
+   * I AQUESTA ÉS LA PROVA DEL DETECTOR, sense la qual les tres de dalt no
+   * valen res: un detector que no trobés mai res passaria els tres eclipsis
+   * igual de bé, i el guany de rendiment sortiria de no comprovar res.
+   *
+   * LA DENT DE LA CAPTURA NO S'AUTOINTERSECA, i és el primer que es va mesurar
+   * en escriure això. Injectada literalment damunt de l'anell sa del 2026
+   * —(40,31/4,36) → (39,97/4,22) → (39,59/4,27) → (40,18/4,52)—, la V invertida
+   * baixa 80 km i retrocedeix només 12 km en longitud: és un gir de 151°, però
+   * els dos braços no arriben a passar l'un per damunt de l'altre. Aquella dent
+   * la caça el test del gir, que és el de sobre. Són DUES xarxes diferents i
+   * per això n'hi ha dues.
+   *
+   * La que caça AQUEST test és la següent en gravetat: una branca falsa que
+   * baixa 50 km i retrocedeix 34 km cap a ponent —el triple que la real— fins
+   * que el braç de tornada creua el d'anada. Es fabrica damunt de l'anell de
+   * debò i al mateix lloc del mapa (sud-est de Menorca), perquè el detector
+   * l'hagi de trobar enmig de mig miler de segments sans i no dins d'una figura
+   * de joguina de cinc vèrtexs.
+   */
+  it("2026: una dent que arriba a creuar-se no passa el detector", () => {
+    const { band } = eclipsePathToGeoJson(computeEclipsePath('2026-08-12'));
+    const ring = band.geometry.coordinates[0];
+
+    // Si l'anell sa ja portés un creuament, el que ve a sota no demostraria res.
+    expect(crossingReport(ring)).toBeNull();
+
+    // El vèrtex es busca per COORDENADA i no per índex: el dia que la franja es
+    // remostregi, el 250 deixarà de ser aquest punt i la prova ha de continuar
+    // apuntant al mateix lloc del mapa.
+    const TOOTH = { lon: 4.29, lat: 40.33 };
+    let k = 0;
+    for (let idx = 1; idx < ring.length; idx++) {
+      const d = Math.hypot(ring[idx][0] - TOOTH.lon, ring[idx][1] - TOOTH.lat);
+      if (d < Math.hypot(ring[k][0] - TOOTH.lon, ring[k][1] - TOOTH.lat)) k = idx;
+    }
+    expect(ring[k][0], `vèrtex ${k} a ${ring[k][1]}/${ring[k][0]}`).toBeCloseTo(TOOTH.lon, 1);
+    expect(ring[k][1]).toBeCloseTo(TOOTH.lat, 1);
+
+    // PRIMER, la dent de la captura tal com es va publicar. NO es creua, i
+    // aquesta línia hi és perquè aquell fet quedi comprovat i no només escrit
+    // al comentari de sobre — com el test de la divergència del GSFC, no valida
+    // res: fixa la frontera entre les dues xarxes. Si un dia algú endureix el
+    // detector i això es posa vermell, el que toca és actualitzar la nota.
+    const captura = [[4.36, 40.31], [4.22, 39.97], [4.27, 39.59], [4.52, 40.18]];
+    const withRealDent = [...ring.slice(0, k), ...captura, ...ring.slice(k + 1)];
+    expect(crossingReport(withRealDent)).toBeNull();
+
+    // I ARA la branca falsa que sí que arriba a creuar-se, al lloc del vèrtex sa.
+    const withTooth = [...ring.slice(0, k), [4.45, 39.9], [4.05, 39.75], ...ring.slice(k + 1)];
+
+    // Ha de trobar EXACTAMENT els dos braços de la dent: el d'anada, que surt
+    // del vèrtex bo anterior (k−1), i el de tornada, que hi torna (k+1). Que
+    // trobi «alguna cosa» no demostraria que sap trobar AQUESTA.
+    expect(firstSelfIntersection(withTooth)).toEqual({ i: k - 1, j: k + 1 });
+  });
 
   it('2026: el límit nord es manté a la branca bona dins la finestra de la dent', () => {
     // El punt exacte on la captura ensenyava la dent. Amb el bug, a les
