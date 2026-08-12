@@ -1000,6 +1000,13 @@ export function MapScreen({
                 </div>
               )}
 
+              {/* La nota va FORA de la fila de botons: és de l'enllaç de Street
+                  View, i dins del `flex` s'hauria posat al costat com si fos un
+                  botó més. Vegeu per què existeix a `map.streetViewNote`. */}
+              {streetView !== null && (
+                <p className="screen__note">{s('map.streetViewNote', locale)}</p>
+              )}
+
               {/*
                 Les hores dels cinc contactes amb el segon exacte i el marge
                 sobre el terreny: NOMÉS A L'ESCRIPTORI. Al mòbil el bloc

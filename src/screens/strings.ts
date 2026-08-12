@@ -267,6 +267,32 @@ const STRINGS = {
     ca: 'Veure Google Street View',
     es: 'Ver Google Street View', en: 'See Google Street View', fr: 'Voir Google Street View',
   },
+  /*
+   * AQUESTA NOTA NO ÉS CORTESIA: ÉS EL QUE FA QUE EL PANELL BUIT SIGUI UN AVÍS.
+   *
+   * Google no ensenya el panorama del punt: ensenya el més proper que tingui, i
+   * si no en té cap a la vora, un rectangle buit amb «No hi ha imatges de Street
+   * View disponibles aquí».
+   *
+   * COMPROVAT EL 12 D'AGOST DE 2026, i el primer cop es va comprovar malament:
+   * es va donar per bo que el punt de Sòria de `streetView.test.ts` sortia
+   * negre, i el que passava és que la captura es va fer abans que el panorama
+   * acabés de carregar. Sòria en té, i de fet és el millor exemple del que
+   * aquest enllaç serveix: blocs de pisos justament a ponent, que el model
+   * d'elevacions no pot saber. El cas de debò és el mar obert: a 41,1 / 2,5
+   * l'URL torna amb el `panoid` BUIT i l'avís a la pantalla. Els cims i les
+   * pistes sense carretera van pel mateix camí.
+   *
+   * Saber-ho ABANS voldria dir l'API de metadades, amb clau i facturació: es
+   * diu i no es comprova, que és el tracte que descriu la capçalera de
+   * `features/sim/streetView.ts`.
+   */
+  'map.streetViewNote': {
+    ca: 'Google ensenya el panorama més proper: on no hi ha passat cap cotxe seu, pot sortir buit.',
+    es: 'Google muestra el panorama más cercano: donde no ha pasado ningún coche suyo, puede salir vacío.',
+    en: 'Google shows the nearest panorama: where none of its cars has been, it may come up empty.',
+    fr: 'Google affiche le panorama le plus proche : là où aucune de ses voitures n’est passée, il peut être vide.',
+  },
   'map.toLimit': {
     ca: 'Al límit {side}',
     es: 'Al límite {side}', en: 'On the edge {side}', fr: 'Sur le bord {side}',

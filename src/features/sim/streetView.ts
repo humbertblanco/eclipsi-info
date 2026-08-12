@@ -41,10 +41,22 @@
  *
  * AIXÒ NO ÉS API PÚBLICA i es pot trencar sense avisar ni versionar. Si un dia
  * deixa d'obrir Street View, la sortida ja està estudiada: `pano=<ID>` amb
- * `api=1`, alimentat per la Street View Image Metadata API — que és gratuïta i
- * il·limitada (SKU «Street View Metadata», 3168-48A9-5C8C) i té CORS obert
- * (`access-control-allow-origin: *`, comprovat amb `curl`), però demana la clau
- * i la facturació de sobre.
+ * `api=1`, alimentat per la Street View Image Metadata API. Té CORS obert
+ * (`access-control-allow-origin: *`, comprovat amb `curl`).
+ *
+ * AQUÍ HI DEIA QUE AQUELLA API ERA «GRATUÏTA I IL·LIMITADA», i ja no ho és.
+ * Comprovat contra la documentació de Google el 12 d'agost de 2026: les
+ * peticions de metadades i les d'imatge comparteixen llista de preus al nivell
+ * Essentials, i totes dues demanen clau i FACTURACIÓ ACTIVADA al projecte. La
+ * frase importava perquè aquesta és la sortida d'emergència de tot el mòdul:
+ * dir-la barata la feia semblar a tocar, i no ho és.
+ *
+ * Per si algú hi torna: l'única peça gratuïta de debò és la Maps Embed API
+ * (peticions il·limitades, sense cost, encara que amb clau), i el seu mode
+ * `streetview` sí que documenta `heading`, `pitch` i `fov`. Però és un
+ * `iframe`, no un enllaç: la coordenada de l'usuari sortiria cap a Google en
+ * PINTAR la fitxa i no en picar el botó. Per a aquesta app això és pitjor, no
+ * millor, i per això no s'ha fet.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * `t` NO ÉS EL `pitch`: ÉS `90 − pitch`. AIXÒ VA COSTAR DE VEURE, DUES VEGADES.
